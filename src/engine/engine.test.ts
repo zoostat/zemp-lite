@@ -1,0 +1,245 @@
+import { describe, expect, it } from "vitest";
+import { Engine, EngineError, type WorkerLike } from "./engine";
+import type { RunEvent } from "./messages";
+
+/**
+ * A stand-in for the worker: it keeps what the interface sent, and says what a test tells it
+ * to say. `ended` is true once the interface has ended it.
+ */
+class Stand implements WorkerLike {
+  onmessage: ((event: { data: unknown }) => void) | null = null;
+  onerror: ((event: { message?: string }) => void) | null = null;
+  sent: Record<string, unknown>[] = [];
+  transfers: (Transferable[] | undefined)[] = [];
+  ended = false;
+
+  postMessage(message: unknown, transfer?: Transferable[]): void {
+    this.sent.push(message as Record<string, unknown>);
+    this.transfers.push(transfer);
+  }
+
+  terminate(): void {
+    this.ended = true;
+  }
+
+  say(message: Record<string, unknown>): void {
+    this.onmessage?.({ data: message });
+  }
+
+  /** The last message the interface sent. */
+  get last(): Record<string, unknown> {
+    const last = this.sent.at(-1);
+    if (last === undefined) throw new Error("nothing was sent");
+    return last;
+  }
+
+  /** Answer the last message sent, with its `id`. */
+  answer(reply: Record<string, unknown>): void {
+    this.say({ ...reply, id: this.last["id"] });
+  }
+}
+
+/** An engine, and the stand-ins it has started, the newest last. */
+function engine(): { engine: Engine; workers: Stand[] } {
+  const workers: Stand[] = [];
+  const made = new Engine(() => {
+    const worker = new Stand();
+    workers.push(worker);
+    return worker;
+  });
+  return { engine: made, workers };
+}
+
+/** An engine started, with a project open in it. */
+async function opened(): Promise<{ engine: Engine; worker: Stand; workers: Stand[] }> {
+  const { engine: made, workers } = engine();
+  const start = made.start();
+  const worker = workers[0]!;
+  worker.say({ type: "ready", version: "0.7.0" });
+  await start;
+  const open = made.open("demo");
+  await Promise.resolve();
+  worker.answer({ type: "opened", name: "demo" });
+  await open;
+  return { engine: made, worker, workers };
+}
+
+/** Let the promises that are ready run. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+describe("the engine, from the interface's side", () => {
+  it("starts one worker and gives the engine's version", async () => {
+    const { engine: made, workers } = engine();
+    expect(made.version).toBeNull();
+    const first = made.start();
+    const second = made.start();
+    expect(workers).toHaveLength(1);
+    workers[0]!.say({ type: "ready", version: "0.7.0" });
+    expect(await first).toBe("0.7.0");
+    expect(await second).toBe("0.7.0");
+    expect(made.version).toBe("0.7.0");
+  });
+
+  it("opens a project with a cancel flag the two sides share", async () => {
+    const { engine: made, worker } = await opened();
+    expect(worker.last).toMatchObject({ type: "open", name: "demo" });
+    expect(worker.last["cancel"]).toBeInstanceOf(SharedArrayBuffer);
+    expect((worker.last["cancel"] as SharedArrayBuffer).byteLength).toBe(4);
+    expect(made.project).toBe("demo");
+    expect(made.cancellable).toBe(true);
+  });
+
+  it("gives every message an id of its own and matches each answer to its question", async () => {
+    const { engine: made, worker } = await opened();
+    const figure = made.read("output/a.svg");
+    const missing = made.read("output/b.svg");
+    await settle();
+    const [first, second] = worker.sent.slice(-2);
+    expect(first!["id"]).not.toBe(second!["id"]);
+    // Answered out of order, each goes to the one that asked.
+    worker.say({ type: "read", path: "output/b.svg", bytes: null, id: second!["id"] });
+    worker.say({
+      type: "read",
+      path: "output/a.svg",
+      bytes: new Uint8Array([1, 2]),
+      id: first!["id"],
+    });
+    expect(await missing).toBeNull();
+    expect(await figure).toEqual(new Uint8Array([1, 2]));
+  });
+
+  it("puts a file into the project, passing its bytes and not copying them", async () => {
+    const { engine: made, worker } = await opened();
+    const bytes = new TextEncoder().encode("id\n1\n");
+    const put = made.put("data/pay.csv", bytes);
+    await settle();
+    expect(worker.last).toMatchObject({ type: "file", path: "data/pay.csv" });
+    expect(worker.transfers.at(-1)).toEqual([bytes.buffer]);
+    worker.answer({ type: "filed", path: "data/pay.csv" });
+    await put;
+  });
+
+  it("runs a script, tells each event as it comes, and gives the outcome", async () => {
+    const { engine: made, worker } = await opened();
+    const heard: RunEvent[] = [];
+    const run = made.run("scripts/main.zeff", 'print("one")\n', (event) => heard.push(event));
+    await settle();
+    expect(made.running).toBe(true);
+    expect(worker.last).toMatchObject({
+      type: "run",
+      script: "scripts/main.zeff",
+      text: 'print("one")\n',
+    });
+    worker.say({ type: "started", statement: 1, of: 1, line: 1 });
+    worker.say({ type: "output", stdout: "one\n", stderr: "" });
+    worker.say({ type: "finished", statement: 1, of: 1, line: 1, failed: false });
+    worker.answer({
+      type: "done",
+      exit_code: 0,
+      stdout: "one\n",
+      stderr: "",
+      frames: [{ name: "pay", rows: 3, variables: 2 }],
+    });
+    expect(await run).toEqual({
+      exitCode: 0,
+      stdout: "one\n",
+      stderr: "",
+      frames: [{ name: "pay", rows: 3, variables: 2 }],
+      stopped: false,
+    });
+    expect(heard.map((event) => event.type)).toEqual(["started", "output", "finished"]);
+    expect(made.running).toBe(false);
+  });
+
+  it("lets one run go at a time, and none without a project", async () => {
+    const { engine: made, worker } = await opened();
+    const run = made.run("scripts/main.zeff", "1\n");
+    await expect(made.run("scripts/main.zeff", "2\n")).rejects.toThrow("a run is already going");
+    await settle();
+    worker.answer({ type: "done", exit_code: 0, stdout: "", stderr: "", frames: [] });
+    await run;
+    const { engine: closed } = engine();
+    await expect(closed.run("scripts/main.zeff", "1\n")).rejects.toThrow("no project is open");
+  });
+
+  it("cancels a run by writing the flag, which it clears before the next run", async () => {
+    const { engine: made, worker } = await opened();
+    expect(made.cancel()).toBe(false);
+    const flag = new Int32Array(worker.sent[0]!["cancel"] as SharedArrayBuffer);
+    const run = made.run("scripts/main.zeff", "for i in 1..9 { }\n");
+    await settle();
+    expect(made.cancel()).toBe(true);
+    expect(flag[0]).toBe(1);
+    // The engine answers in its own words: the interface writes none.
+    worker.answer({
+      type: "done",
+      exit_code: 1,
+      stdout: "",
+      stderr: "error[Z0705]: the run was cancelled before pass 4 of this loop\n",
+      frames: [],
+    });
+    const outcome = await run;
+    expect(outcome.exitCode).toBe(1);
+    expect(outcome.stopped).toBe(false);
+    expect(made.project).toBe("demo");
+    const again = made.run("scripts/main.zeff", "1\n");
+    await settle();
+    expect(flag[0]).toBe(0);
+    worker.answer({ type: "done", exit_code: 0, stdout: "", stderr: "", frames: [] });
+    await again;
+  });
+
+  it("stops a run by ending the worker, keeping what the run had printed", async () => {
+    const { engine: made, worker, workers } = await opened();
+    const run = made.run("scripts/main.zeff", "long()\n");
+    await settle();
+    worker.say({ type: "output", stdout: "so far\n", stderr: "note: a note\n" });
+    const pending = made.read("output/a.svg");
+    pending.catch(() => undefined);
+    made.stop();
+    expect(await run).toEqual({
+      exitCode: null,
+      stdout: "so far\n",
+      stderr: "note: a note\n",
+      frames: [],
+      stopped: true,
+    });
+    await expect(pending).rejects.toBeInstanceOf(EngineError);
+    expect(worker.ended).toBe(true);
+    expect(made.project).toBeNull();
+    expect(made.running).toBe(false);
+    // The next project starts a new worker.
+    const start = made.start();
+    expect(workers).toHaveLength(2);
+    workers[1]!.say({ type: "ready", version: "0.7.0" });
+    await start;
+  });
+
+  it("ends the worker when the project closes", async () => {
+    const { engine: made, worker } = await opened();
+    made.close();
+    expect(worker.ended).toBe(true);
+    expect(made.project).toBeNull();
+  });
+
+  it("gives the worker's own words when it cannot do what was asked", async () => {
+    const { engine: made, worker } = await opened();
+    const frame = made.frame("n");
+    await settle();
+    worker.answer({ type: "error", message: "no frame called `n` in the last run" });
+    await expect(frame).rejects.toThrow("no frame called `n` in the last run");
+    const good = made.frame("pay");
+    await settle();
+    worker.answer({ type: "frame", name: "pay", bytes: new Uint8Array([255, 255, 255, 255]) });
+    expect(await good).toEqual(new Uint8Array([255, 255, 255, 255]));
+  });
+
+  it("fails everything that waits when the worker fails", async () => {
+    const { engine: made, worker } = await opened();
+    const run = made.run("scripts/main.zeff", "1\n");
+    await settle();
+    worker.onerror?.({ message: "out of memory" });
+    await expect(run).rejects.toThrow("the engine's worker failed: out of memory");
+    expect(made.project).toBeNull();
+  });
+});

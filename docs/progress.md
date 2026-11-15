@@ -49,3 +49,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 4 `[engine]`: the interface's side of the worker (start it on a cross-origin-isolated page, run, hear each step, cancel), with the size and the cold start measured in the routine.
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 4 (the interface's side of the worker)
+
+**Done.** Step 4 `[engine]`: the interface starts the engine's worker on a cross-origin-isolated page, opens a project, runs Zeff, hears each step, cancels between steps or stops outright, and reads back frames and files. The page is a bench: a box of Zeff, Run, Cancel, and what it printed.
+
+**Green.** `npm run routine`: 14 unit tests, the worker's 7 native and 8 message tests, the measure (2,549.7 kB compressed, cold start 52.8 ms, both inside risk R4) and 8 browser tests (4 in each of Chromium and WebKit). The run on GitHub for step 3 was green.
+
+**Next.** Step 5 `[function]`: projects in the browser (the private file system, the welcome screen, the Scratch project with the example).
+
+**For the owner to decide.** Nothing.

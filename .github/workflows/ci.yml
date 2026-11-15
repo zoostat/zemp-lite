@@ -122,6 +122,9 @@ jobs:
       - name: The worker's messages, under a worker thread of Node
         run: npm run test:worker
 
+      - name: Measure the worker's compressed size and cold start (risk R4)
+        run: npm run measure:worker
+
       # The two browsers go into the project's own node_modules, as on a developer's machine;
       # --with-deps adds the system libraries a fresh runner lacks.
       - name: Install the test browsers (Chromium and WebKit)

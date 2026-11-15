@@ -25,10 +25,15 @@ export default ts.config(
     },
   },
   {
-    files: ["*.config.ts", "*.config.js", "tests/**/*.ts"],
+    files: ["*.config.ts", "*.config.js", "tests/**/*.ts", "tools/**/*.mjs"],
     languageOptions: {
       globals: { ...globals.node },
     },
+  },
+  {
+    // A test names the element it has just counted.
+    files: ["**/*.test.ts"],
+    rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },
   {
     // The worker's scripts run in a Web Worker of the browser and, for the tests, under Node.
