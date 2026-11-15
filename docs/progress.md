@@ -29,3 +29,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 2 `[function]`: the jobs on GitHub (the forbidden-words job, with the repository variable the owner allowed, the routine and the browser tests).
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 2 (the jobs on GitHub)
+
+**Done.** Step 2 `[function]`: every push now runs two jobs on GitHub, the forbidden-words check (names, contents, the whole history) and the routine with the browser tests in Chromium and WebKit. The repository variable the first reads was set, as the owner allowed. The owner's instruction of this day: work on through the steps, each with a note that it is finished, his approval given to the recommended course wherever a decision arises.
+
+**Green.** `npm run routine` here; the first run on GitHub, both jobs.
+
+**Next.** Step 3 `[engine]`: the worker (the engine Zeff 0.7.0 built to WebAssembly here, with a file of the project given back).
+
+**For the owner to decide.** Nothing.
