@@ -2,11 +2,13 @@
   // The main pane: the editor tabs, a strip saying what is open, and the tab shown. A script's
   // tab holds the editor above and the Output panel below it (open decision #146, item 7),
   // which is resized by dragging its upper edge, folds away, and is emptied with Clear.
+  import { tick } from "svelte";
   import Editor from "../editor/Editor.svelte";
   import OutputPanel from "../output/OutputPanel.svelte";
   import { took, type Run } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
   import Splitter from "./Splitter.svelte";
+  import { held } from "./steady";
   import { PLOTS, tabPath } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
@@ -41,6 +43,34 @@
     }[run.state];
     return `run ${run.clock} · ${ended}${run.ms === null ? "" : ` · ${took(run.ms)}`}`;
   }
+
+  // The Output panel stays where the reader is while a run replaces its results (see `steady.ts`).
+  let body = $state<HTMLElement | null>(null);
+  let release: (() => void) | null = null;
+  $effect.pre(() => {
+    const results = body?.firstElementChild;
+    if (
+      run?.state === "running" &&
+      release === null &&
+      body !== null &&
+      results instanceof HTMLElement
+    ) {
+      // A reader's place in the panel is the block at the top of their view, by its line.
+      release = held(results, body, () =>
+        [...results.querySelectorAll('[data-testid="block"]')].map((block): [string, Element] => [
+          block.getAttribute("data-line") ?? "",
+          block,
+        ]),
+      );
+    }
+  });
+  $effect(() => {
+    if (run?.state !== "running" && release !== null) {
+      const done = release;
+      release = null;
+      void tick().then(() => requestAnimationFrame(done));
+    }
+  });
 
   function dragged(_x: number, y: number): void {
     if (pane === null) return;
@@ -126,7 +156,7 @@
           >
         </div>
         {#if workspace.views.output.shown}
-          <div class="body" data-testid="output">
+          <div class="body" data-testid="output" bind:this={body}>
             <OutputPanel {run} edited={workspace.edited} {workspace} />
           </div>
         {/if}

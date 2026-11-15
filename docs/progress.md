@@ -149,3 +149,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** The owner tries the prototype (`npm run build`, then `npm run preview`, in `~/dev/zemp-lite`; the Scratch project, Run). When he says "Release 0.1": the closing routine of the standing instructions (the version set to 0.1.0, the notes made final, the tag and the GitHub release). After it, "Start release 0.2" once Zeff 0.8.0 is released.
 
 **For the owner to decide.** Whether the prototype is what he wants of 0.1, after trying it. For the Zeff sessions (a note is in the shared folder): the hand-over of plots to an interface, which the alpha needs of Zeff 0.8.0 and no step there names yet; and the amendment of section 5's paragraph "The look" with #146.
+
+## 15 November 2026, release 0.1, after the owner's first trial
+
+**Done.** The owner tried the prototype and reported that a run in Inline moved the page to its top: mended in both layouts, with tests. He asked how a dataset is viewed: answered (the Objects tab; `head` and `describe`; the viewer is the alpha's), and asked whether he wants the viewer brought forward.
+
+**Green.** `npm run routine`: 114 unit tests, the worker's 15, the measure, the eight sample projects, and the browser tests in both browsers.
+
+**Next.** The owner's further trial; then "Release 0.1", or his changes.
+
+**For the owner to decide.** Whether the data viewer stays with the 0.2 alpha or is brought forward into 0.1.

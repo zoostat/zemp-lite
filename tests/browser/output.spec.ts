@@ -177,3 +177,23 @@ test("Run answers ⌘↵ wherever the keyboard's focus is", async ({ page, press
   await page.keyboard.press("ControlOrMeta+Enter");
   await expect.poll(() => printed(page)).toBe("2\n");
 });
+
+test("in Panes a run leaves the Output panel where the reader was in it", async ({
+  page,
+  press,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
+  const body = page.getByTestId("output");
+  const top = () => body.evaluate((node) => Math.round(node.scrollTop));
+  await body.evaluate((node) => (node.scrollTop = 900));
+  await expect.poll(top).toBe(900);
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
+  await page.waitForTimeout(600);
+  expect(Math.abs((await top()) - 900)).toBeLessThan(30);
+});

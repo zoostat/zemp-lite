@@ -211,3 +211,45 @@ test("the Inline column widens with the size of the code", async ({ page, press 
   // At 18 pixels the column is 18/14 of 760.
   await expect.poll(width).toBe(Math.round((760 * 18) / 14));
 });
+
+test("a run leaves the reader where they were in the script, not at the top of the page", async ({
+  page,
+  press,
+}) => {
+  // A window of an ordinary height, in which the script with its output is far longer.
+  await page.setViewportSize({ width: 1280, height: 700 });
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  const pane = page.getByRole("region", { name: "Script with its output" });
+  const top = () => pane.evaluate((node) => Math.round(node.scrollTop));
+  // Down to the plots, which the editor draws as they come near the window.
+  await pane.evaluate((node) => (node.scrollTop = 1000));
+  await expect.poll(top).toBe(1000);
+  await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
+  // Where the reader is, by what they see: the line of code at the top of the window.
+  const seen = () =>
+    pane.evaluate((node) => {
+      const at = node.getBoundingClientRect().top;
+      const line = [...node.querySelectorAll(".cm-line")].find(
+        (one) => one.getBoundingClientRect().bottom > at + 4,
+      );
+      return line?.textContent ?? "";
+    });
+  const before = await seen();
+
+  // Run from the keyboard, with the keyboard in the script, and then from the button.
+  for (const how of ["key", "button"]) {
+    if (how === "key") {
+      await editor(page).evaluate((node) => (node as HTMLElement).focus({ preventScroll: true }));
+      await page.keyboard.press("ControlOrMeta+Enter");
+    } else {
+      await press(page.getByRole("button", { name: "Run" }));
+    }
+    await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+    await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
+    await page.waitForTimeout(600);
+    expect(Math.abs((await top()) - 1000)).toBeLessThan(30);
+    expect(await seen()).toBe(before);
+  }
+});
