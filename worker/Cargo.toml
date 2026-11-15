@@ -1,0 +1,44 @@
+[package]
+name = "zemp-worker"
+description = "The Zeff engine as Zemp's worker in the browser: a project in memory, a run that tells its steps, and the files a run wrote given back."
+version = "0.1.0-dev"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+# A package of its own, not a member of a workspace above it.
+[workspace]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+
+# The engine is the released Zeff 0.7.0, by the commit of its tag v0.7.0, and nothing else:
+# Zemp uses the engine through its released versions (docs/decisions.md).
+[dependencies]
+zeff-engine = { git = "https://github.com/zoostat/zeff", rev = "9a3cabd121d241a34e97ade5441c3fc9fd98928e" }
+zeff-diagnostics = { git = "https://github.com/zoostat/zeff", rev = "9a3cabd121d241a34e97ade5441c3fc9fd98928e" }
+zeff-columns = { git = "https://github.com/zoostat/zeff", rev = "9a3cabd121d241a34e97ade5441c3fc9fd98928e" }
+zeff-web = { git = "https://github.com/zoostat/zeff", rev = "9a3cabd121d241a34e97ade5441c3fc9fd98928e" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "=0.2.129"
+
+# The profile of the Zeff repository's own release build, so that the engine here is compiled
+# as the released one is (Engine Specification, section 8.3, point 3: integer overflow is
+# checked in every profile; nothing fuses a multiply-add or reorders floating-point work).
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = "fat"
+overflow-checks = true
+debug-assertions = false
+
+[profile.dev]
+overflow-checks = true
+debug = false

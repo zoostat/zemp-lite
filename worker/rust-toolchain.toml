@@ -1,0 +1,7 @@
+# The toolchain the Zeff repository pins for 0.7.0, so that the engine is built here by the
+# compiler that built its release.
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]

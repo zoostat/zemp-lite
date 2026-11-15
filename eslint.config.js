@@ -6,7 +6,15 @@ import svelteConfig from "./svelte.config.js";
 
 export default ts.config(
   {
-    ignores: ["dist/", "node_modules/", "target/", "docs/", "test-results/", "playwright-report/"],
+    ignores: [
+      "dist/",
+      "node_modules/",
+      "**/target/",
+      "worker/pkg/",
+      "docs/",
+      "test-results/",
+      "playwright-report/",
+    ],
   },
   js.configs.recommended,
   ...ts.configs.strict,
@@ -20,6 +28,13 @@ export default ts.config(
     files: ["*.config.ts", "*.config.js", "tests/**/*.ts"],
     languageOptions: {
       globals: { ...globals.node },
+    },
+  },
+  {
+    // The worker's scripts run in a Web Worker of the browser and, for the tests, under Node.
+    files: ["worker/**/*.mjs", "worker/**/*.js"],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.worker },
     },
   },
   {

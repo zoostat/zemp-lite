@@ -1,0 +1,71 @@
+//! The bindings of the WebAssembly build: what the worker script calls, and what it must
+//! provide.
+//!
+//! `wasm-bindgen` generates code that uses `unsafe`, which the rest of the package denies;
+//! the permission is given here and nowhere else.
+#![allow(unsafe_code)]
+
+use wasm_bindgen::prelude::wasm_bindgen;
+
+#[wasm_bindgen]
+extern "C" {
+    /// The worker script's `zeffHost.event`: one event of the run, as a line of JSON.
+    #[wasm_bindgen(js_namespace = zeffHost, js_name = event)]
+    fn host_event(json: &str);
+
+    /// The worker script's `zeffHost.cancelled`: whether the interface has set the flag the
+    /// two share.
+    #[wasm_bindgen(js_namespace = zeffHost, js_name = cancelled)]
+    fn host_cancelled() -> bool;
+}
+
+fn cancelled() -> bool {
+    host_cancelled()
+}
+
+/// A project in the worker's memory.
+#[wasm_bindgen]
+pub struct Project {
+    host: crate::Host,
+}
+
+#[wasm_bindgen]
+impl Project {
+    #[wasm_bindgen(constructor)]
+    pub fn new(name: &str) -> Project {
+        Project {
+            host: crate::Host::new(name),
+        }
+    }
+
+    /// Put a file into the project, by its path from the project's folder; `false` for a
+    /// path that would leave the project.
+    pub fn add_file(&self, path: &str, bytes: &[u8]) -> bool {
+        self.host.add_file(path, bytes)
+    }
+
+    /// A file of the project as its bytes, or nothing where there is none of that path.
+    pub fn file(&self, path: &str) -> Option<Vec<u8>> {
+        self.host.file(path)
+    }
+
+    /// Run a script. `device_bytes` is the memory the device reports, or 0 where it reports
+    /// none. The events go to `zeffHost.event`; the outcome comes back as a line of JSON.
+    pub fn run(&self, script: &str, text: &str, device_bytes: f64) -> String {
+        let device = (device_bytes > 0.0).then_some(device_bytes as u64);
+        self.host
+            .run(script, text, device, cancelled, &|json| host_event(json))
+    }
+
+    /// A frame of the last run as the bytes of an Arrow stream, or nothing where no binding
+    /// of that name held a frame.
+    pub fn frame(&self, name: &str) -> Option<Vec<u8>> {
+        self.host.frame(name)
+    }
+}
+
+/// The version of the Zeff engine in the worker.
+#[wasm_bindgen(js_name = engineVersion)]
+pub fn engine_version() -> String {
+    crate::engine_version().to_string()
+}

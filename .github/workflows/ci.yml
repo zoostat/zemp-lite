@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository with its full history
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -61,10 +61,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install the pinned Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -83,6 +83,44 @@ jobs:
 
       - name: Unit tests
         run: npm run test:unit
+
+      # The worker: the released Zeff engine, built here to WebAssembly. The compiler is the
+      # one worker/rust-toolchain.toml pins, which rustup installs when it is first asked for.
+      - name: Install the pinned Rust toolchain
+        working-directory: worker
+        run: rustup toolchain install
+
+      - name: Keep the engine's build between runs
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            worker/target
+          key: worker-${{ runner.os }}-${{ hashFiles('worker/Cargo.lock', 'worker/rust-toolchain.toml', 'worker/.cargo/config.toml') }}
+
+      - name: Keep the WebAssembly binding tool between runs
+        id: tool
+        uses: actions/cache@v6
+        with:
+          path: ~/.cargo/bin/wasm-bindgen
+          key: wasm-bindgen-0.2.129-${{ runner.os }}
+
+      - name: Install the WebAssembly binding tool at the pinned version
+        if: steps.tool.outputs.cache-hit != 'true'
+        run: cargo install wasm-bindgen-cli --version '=0.2.129' --locked
+
+      - name: The worker's Rust, formatted and linted with warnings denied
+        run: npm run check:rust
+
+      - name: The worker's tests, natively
+        run: npm run test:rust
+
+      - name: Build the worker to WebAssembly
+        run: npm run build:worker
+
+      - name: The worker's messages, under a worker thread of Node
+        run: npm run test:worker
 
       # The two browsers go into the project's own node_modules, as on a developer's machine;
       # --with-deps adds the system libraries a fresh runner lacks.

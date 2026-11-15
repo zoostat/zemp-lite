@@ -39,3 +39,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 3 `[engine]`: the worker (the engine Zeff 0.7.0 built to WebAssembly here, with a file of the project given back).
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 3 (the worker)
+
+**Done.** Step 3 `[engine]`: the released engine Zeff 0.7.0 built here to WebAssembly as Zemp's worker, by the compiler, the profile, the flags and the dependency versions of its release; the messages of the engine's own worker, with a file of the project given back. The example of the prototype is written (`examples/scratch/`).
+
+**Green.** `npm run routine`, now with the worker's Rust (format, lint, 7 tests) and its messages under Node (8 tests); the example prints in the worker what `zeff run` 0.7.0 prints, byte for byte. The worker is 2,550 kB compressed, against the limit of 5 MB.
+
+**Next.** Step 4 `[engine]`: the interface's side of the worker (start it on a cross-origin-isolated page, run, hear each step, cancel), with the size and the cold start measured in the routine.
+
+**For the owner to decide.** Nothing.
