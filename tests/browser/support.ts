@@ -160,3 +160,28 @@ export async function saidAsWritten(page: Page): Promise<string> {
       .join(""),
   );
 }
+
+/**
+ * What the blocks of a run show, as text, in the order they stand in: what each printed, the
+ * figure it carries, by its name, and what the engine said of it. The times are left out,
+ * which differ from run to run.
+ */
+export async function blocksAsText(page: Page): Promise<string[]> {
+  return page.getByTestId("block").evaluateAll((blocks) =>
+    blocks.map((block) => {
+      const lines: string[] = [];
+      const printed = block.querySelector('[data-testid="printed"]')?.textContent ?? "";
+      if (printed !== "") lines.push(printed.replace(/\n+$/, ""));
+      const figure = block.querySelector('[data-testid="figure"] img')?.getAttribute("alt");
+      if (figure) lines.push(`[${figure}]`);
+      for (const card of block.querySelectorAll('[data-testid="said"]')) {
+        const part = (name: string) => card.querySelector(name)?.textContent?.trim() ?? "";
+        lines.push([part(".kind"), part(".code"), part(".sentence")].filter(Boolean).join(" "));
+        const detail = card.querySelector(".detail")?.textContent ?? "";
+        if (detail !== "") lines.push(detail);
+        for (const help of card.querySelectorAll(".help")) lines.push(`help: ${help.textContent}`);
+      }
+      return lines.join("\n");
+    }),
+  );
+}

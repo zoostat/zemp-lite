@@ -2,10 +2,12 @@
   // The body of the Output panel of the Panes layout: the blocks of the last run, one under
   // another in the order of the script. When the script has been edited since, the whole is
   // marked "edited · not run".
+  import type { Workspace } from "../app/workspace-state.svelte";
   import OutputBlock from "./OutputBlock.svelte";
   import { blocks, type Run } from "./run";
 
-  let { run, edited }: { run: Run | null; edited: boolean } = $props();
+  let { run, edited, workspace }: { run: Run | null; edited: boolean; workspace: Workspace } =
+    $props();
 
   const shown = $derived(run === null ? [] : blocks(run));
 </script>
@@ -20,7 +22,7 @@
     <p class="none">The script ran and printed nothing.</p>
   {/if}
   {#each shown as block, at (at)}
-    <OutputBlock {block} edited={false} />
+    <OutputBlock {block} edited={false} {workspace} />
   {/each}
 </div>
 

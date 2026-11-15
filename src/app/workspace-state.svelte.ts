@@ -5,9 +5,11 @@ import type { Engine } from "../engine/engine";
 import type { FrameInfo } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { begin, blocks, clockOf, end, hear, type Run } from "../output/run";
+import { keyOf, plotsOf, withExports, type PlotStatement, type Wanted } from "../plots/figures";
 import { Session } from "../project/session";
 import { History, composed, consoleRun, outcomeOf, type Entry } from "./console";
 import {
+  PLOTS,
   fileTab,
   leftWidth,
   outputShare,
@@ -61,6 +63,19 @@ export class Workspace {
   frames = $state<FrameInfo[]>([]);
   /** Something the user asked for that could not be done, in words. */
   problem = $state("");
+
+  /**
+   * The figures drawn for the last run, each under the name of what was asked for: a plot,
+   * by the line of its statement, at a size. `svg` is `null` while it is being drawn;
+   * `problem` holds the engine's words where it could not be drawn.
+   */
+  figures = $state<Record<string, { svg: string | null; problem: string }>>({});
+  /** How long the last drawing of figures took, in milliseconds: one run of the script. */
+  drawMs = $state<number | null>(null);
+  // What is wanted is a plain list, never shown: nothing on the screen follows it.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  readonly #wanted = new Map<string, Wanted>();
+  #drawing: ReturnType<typeof setTimeout> | null = null;
 
   /** The console: what was typed there in this window, with what came of each line. */
   entries = $state<Entry[]>([]);
@@ -247,16 +262,23 @@ export class Workspace {
     if (this.running) {
       return;
     }
-    const work = this.#run();
+    this.running = true;
+    const work = this.#run(this.#busy);
     this.#busy = work;
     await work;
   }
 
-  async #run(): Promise<void> {
+  async #run(before: Promise<void>): Promise<void> {
+    // A drawing of figures that is going is let end first: the engine does one thing at a time.
+    await before;
     const script = this.scriptPath;
     await this.#load(script);
     const text = this.buffers[script]?.text ?? "";
     this.running = true;
+    // The figures of the run before are not this run's.
+    this.figures = {};
+    this.#wanted.clear();
+    this.drawMs = null;
     this.lastRun = begin(script, text, performance.now(), clockOf(Date.now()));
     // The run is read through the state, so that what the panel shows follows each event.
     const run = this.lastRun;
@@ -267,6 +289,11 @@ export class Workspace {
       );
       end(run, outcome, performance.now());
       this.frames = outcome.frames;
+      // A run that drew a plot puts the Plots tab beside the script's, without leaving the script.
+      if (plotsOf(run).length > 0 && !this.views.tabs.includes(PLOTS)) {
+        this.views.tabs = [...this.views.tabs, PLOTS];
+        this.#keep();
+      }
       this.status = outcome.stopped
         ? "stopped"
         : outcome.exitCode === 0
@@ -277,6 +304,89 @@ export class Workspace {
     } finally {
       this.running = false;
     }
+  }
+
+  /** The statements of the last run that ended in a plot, once the run is over. */
+  get plots(): PlotStatement[] {
+    const run = this.lastRun;
+    return run === null || run.state === "running" ? [] : plotsOf(run);
+  }
+
+  /**
+   * A figure is wanted: the plot whose statement begins on `line`, at this size on the
+   * screen. It is drawn a moment after the last thing asked for, so that a pane being
+   * resized is drawn once, when the resizing has stopped. Gives the name it is kept under.
+   */
+  want(line: number, width: number, height: number): string {
+    const wanted = { line, width: Math.round(width), height: Math.round(height) };
+    const key = keyOf(wanted);
+    if (!this.#wanted.has(key)) {
+      this.#wanted.set(key, wanted);
+    }
+    if (this.figures[key] === undefined) {
+      if (this.#drawing !== null) clearTimeout(this.#drawing);
+      this.#drawing = setTimeout(() => {
+        this.#drawing = null;
+        void this.#draw();
+      }, 250);
+    }
+    return key;
+  }
+
+  /** A figure is wanted no longer: its place was resized or closed. */
+  unwant(key: string): void {
+    this.#wanted.delete(key);
+  }
+
+  /**
+   * Draw the figures wanted and not yet drawn. The interface runs the text of the last run
+   * with an `export` added for each (see `plots/figures.ts`) and reads the files written.
+   */
+  async #draw(): Promise<void> {
+    const before = this.#busy;
+    const work = (async () => {
+      await before;
+      const run = this.lastRun;
+      if (run === null || run.state === "running") {
+        return;
+      }
+      const wanted = [...this.#wanted.values()].filter(
+        (one) => this.figures[keyOf(one)] === undefined,
+      );
+      if (wanted.length === 0) {
+        return;
+      }
+      for (const one of wanted) this.figures[keyOf(one)] = { svg: null, problem: "" };
+      const sent = withExports(run.text, plotsOf(run), wanted);
+      const told = consoleRun(run.script, sent.text);
+      const started = performance.now();
+      try {
+        const outcome = await this.session.run(run.script, sent.text, told.hear);
+        told.end(outcome);
+        // What the engine said of the lines the interface added, each under its own figure.
+        const said = blocks(told.run).flatMap((block) => block.said);
+        for (const [index, figure] of sent.figures.entries()) {
+          const next = sent.figures[index + 1]?.line ?? Infinity;
+          const bytes = outcome.stopped ? null : await this.engine.read(figure.file);
+          const problem = said
+            .filter((one) => one.line !== null && one.line >= figure.line && one.line < next)
+            .filter((one) => one.kind === "error")
+            .map((one) => one.sentence)
+            .join(" ");
+          this.figures[figure.key] = {
+            svg: bytes === null ? null : new TextDecoder().decode(bytes),
+            problem: bytes === null ? problem || "The engine wrote no figure." : "",
+          };
+        }
+        this.drawMs = performance.now() - started;
+      } catch (error) {
+        for (const figure of sent.figures) {
+          this.figures[figure.key] = { svg: null, problem: (error as Error).message };
+        }
+      }
+    })();
+    this.#busy = work;
+    await work;
   }
 
   /** How the output stands to the script: not run yet, running, in sync, or edited since. */
@@ -364,6 +474,8 @@ export class Workspace {
   clear(): void {
     if (!this.running) {
       this.lastRun = null;
+      this.figures = {};
+      this.#wanted.clear();
     }
   }
 

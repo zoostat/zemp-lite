@@ -119,3 +119,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 11 `[engine]`: a plot from the engine, at the size of its pane.
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 11 (a plot at the size of its pane)
+
+**Done.** Step 11 `[engine]`: each statement that ends in a plot has its figure under it, drawn by the engine itself at the size of the place it is shown in, and laid out afresh when the place is resized; the Plots tab of Panes shows the plots of the run. The interface asks for a figure by running the script with an `export` added; the script and its output are untouched.
+
+**Green.** `npm run routine`: the worker's 15, the measure, 106 unit tests (one runs the engine and holds the figures to the bytes the released `zeff run` 0.7.0 writes), and 120 browser tests in the two browsers (2 skipped by design). The run on GitHub for step 10 was green. A redraw of the example's two figures takes about 47 ms.
+
+**Next.** Step 12 `[function]`: the plot viewer (gallery strip, compare, pop out, journal sizes, export).
+
+**For the owner to decide.** Nothing.

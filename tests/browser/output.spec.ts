@@ -3,7 +3,7 @@
 // marked, and the output marked when the script has been edited since.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, printed, saidAsWritten, test, write } from "./support";
+import { blocksAsText, expect, printed, saidAsWritten, test, write } from "./support";
 
 const READY = "engine Zeff 0.7.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -62,16 +62,11 @@ test("the panel's text for the example is the text kept for it", async ({ page, 
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
-  // Everything the panel shows but the times, which differ from run to run.
-  const text = await page.getByTestId("block").evaluateAll((blocks) =>
-    blocks
-      .map((block) => {
-        const copy = block.cloneNode(true) as HTMLElement;
-        copy.querySelector('[data-testid="time"]')?.remove();
-        return (copy.textContent ?? "").replace(/[ \t]+\n/g, "\n").trim();
-      })
-      .join("\n\n"),
-  );
+  // Both plots are drawn before the panel is read.
+  await expect(page.locator('[data-testid="figure"] img')).toHaveCount(2);
+  const shown = await blocksAsText(page);
+  const at = await lines(page);
+  const text = shown.map((block, index) => `line ${at[index]}\n${block}`).join("\n\n");
   expect(`${text}\n`).toMatchSnapshot("example-output.txt");
 });
 

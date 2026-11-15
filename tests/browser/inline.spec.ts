@@ -3,7 +3,16 @@
 // Lite opens in (Zemp Specification, section 5).
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { editor, expect, printed, saidAsWritten, scriptText, test, write } from "./support";
+import {
+  blocksAsText,
+  editor,
+  expect,
+  printed,
+  saidAsWritten,
+  scriptText,
+  test,
+  write,
+} from "./support";
 
 // The editor draws the part of a script that is near the window, as editors do, and the rest
 // as it is scrolled to. These tests read the whole script with its output, so they are given
@@ -112,22 +121,21 @@ test("the Inline text of the example is the text kept for it", async ({ page, pr
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
-  // The script with its output as Inline shows it, without the times.
-  const text = await editor(page).evaluate((content) =>
-    [...content.children]
-      .map((child) => {
-        if (child.classList.contains("cm-line")) return child.textContent ?? "";
-        const copy = child.cloneNode(true) as HTMLElement;
-        copy.querySelector("header")?.remove();
-        return (copy.textContent ?? "")
-          .replace(/[ \t]+\n/g, "\n")
-          .trim()
-          .split("\n")
-          .map((line) => `    | ${line}`.trimEnd())
-          .join("\n");
-      })
-      .join("\n"),
-  );
+  // The script with its output as Inline shows it: each block after the line it stands under.
+  await expect(page.locator('[data-testid="figure"] img')).toHaveCount(2);
+  const shown = await blocksAsText(page);
+  const beneath = await under(page);
+  const script = (await scriptText(page)).split("\n");
+  const out: string[] = [];
+  let block = 0;
+  for (const line of script) {
+    out.push(line);
+    while (block < shown.length && beneath[block] === line && line !== "") {
+      out.push(...(shown[block] as string).split("\n").map((one) => `    | ${one}`.trimEnd()));
+      block += 1;
+    }
+  }
+  const text = out.join("\n");
   expect(`${text}\n`).toMatchSnapshot("example-inline.txt");
 });
 

@@ -17,12 +17,12 @@ w2010.summary([wage, educ, exper, hours], by: female)
     |   female   exper      260         0    9.838    6.451    0.000   25.000
     |   male     hours      277         0   38.794    8.922   15.500   66.200
     |   female   hours      259         1   37.233    8.464    9.000   60.100
-    |  warning W0201 6 rows with NA in wage, 1 with NA in exper and 1 with NA in hours were skipped
+    | warning W0201 6 rows with NA in wage, 1 with NA in exper and 1 with NA in hours were skipped
 
 // The return to schooling: log wage on schooling, experience, sex and union membership,
 // with standard errors clustered by worker.
 let fit = wages.reg(log(wage) ~ educ + exper + female + union, cluster: worker)
-    | note  33 of the 3,911 clusters hold one observation
+    | note 33 of the 3,911 clusters hold one observation
 fit
     | reg · log(wage) ~ educ + exper + female + union
     | N = 18,179 (233 rows dropped for NA in model variables)
@@ -39,7 +39,7 @@ fit
 
 // Log wage against schooling in 2010, with the fitted line.
 let schooling = w2010.scatter(educ, log(wage), fit: linear)
-    | note  6 rows with NA in educ or log(wage) dropped
+    | note 6 rows with NA in educ or log(wage) dropped
 schooling
     | plot · w2010 · log(wage) against educ
     |
@@ -53,10 +53,11 @@ schooling
     |       3   fit line   w2010      80   least squares of log(wage) on educ, width 1, 1 line
     |
     | caption: Band: 95% confidence interval of the fitted line
+    | [Plot: w2010 · log(wage) against educ]
 
 // The shape of log wages in 2010.
 let shape = w2010.plot(x: log(wage)).histogram(bins: 30)
-    | note  6 rows with NA in log(wage) dropped
+    | note 6 rows with NA in log(wage) dropped
 shape
     | plot · w2010 · log(wage)
     |
@@ -66,4 +67,5 @@ shape
     |
     |   layer   mark        data    marks   settings
     |       1   histogram   w2010      30   30 bins of 0.102102 from 1.5217
+    | [Plot: w2010 · log(wage)]
 

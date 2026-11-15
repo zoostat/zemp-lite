@@ -20,6 +20,7 @@
     placed: blocks,
     edited: workspace.edited,
     oncancel: () => workspace.cancel(),
+    workspace,
   });
 
   $effect(() => {

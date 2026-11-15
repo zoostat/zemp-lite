@@ -5,8 +5,9 @@
   import Editor from "../editor/Editor.svelte";
   import OutputPanel from "../output/OutputPanel.svelte";
   import { took, type Run } from "../output/run";
+  import PlotsPane from "../plots/PlotsPane.svelte";
   import Splitter from "./Splitter.svelte";
-  import { tabPath } from "./views";
+  import { PLOTS, tabPath } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
@@ -18,7 +19,7 @@
   const share = $derived(workspace.views.output.share);
 
   function title(tab: string): string {
-    return tabPath(tab)?.split("/").at(-1) ?? tab.slice(5);
+    return tabPath(tab)?.split("/").at(-1) ?? (tab === PLOTS ? "Plots" : tab.slice(5));
   }
 
   const run = $derived(workspace.lastRun);
@@ -66,6 +67,8 @@
   <div class="strip">
     {#if path !== null}
       <span>{path.split("/").join(" › ")}</span>
+    {:else if workspace.views.active === PLOTS}
+      <span>The plots of the last run, each drawn to fit this pane</span>
     {:else}
       <span>No file is open. Choose one in the Project tab.</span>
     {/if}
@@ -124,11 +127,13 @@
         </div>
         {#if workspace.views.output.shown}
           <div class="body" data-testid="output">
-            <OutputPanel {run} edited={workspace.edited} />
+            <OutputPanel {run} edited={workspace.edited} {workspace} />
           </div>
         {/if}
       </div>
     </div>
+  {:else if workspace.views.active === PLOTS}
+    <PlotsPane {workspace} />
   {:else}
     <div class="empty"></div>
   {/if}

@@ -55,26 +55,35 @@ function code(line: string): string {
   return line.replace(/r?"(?:[^"\\]|\\.)*"?/g, '""').replace(/\/\/.*$/, "");
 }
 
-/** The blocks of a run, each with the line it stands under. */
-export function placed(run: Run): Placed[] {
+/** The lines of the text that ran. A text that ends with a line break has no line after it. */
+export function linesOf(run: Run): string[] {
   const lines = run.text.split("\n");
-  // A text that ends with a line break has no line after it.
   if (lines.at(-1) === "") lines.pop();
+  return lines;
+}
+
+/**
+ * The last line of the statement of a run that begins on line `from`; `finished` says whether
+ * it ended well, which decides how its end is found where no statement began after it.
+ */
+export function endOf(run: Run, from: number, finished: boolean): number {
+  const lines = linesOf(run);
   const starts = [...new Set(run.statements.map((statement) => statement.line))].sort(
     (a, b) => a - b,
   );
-  return blocks(run).map((block) => {
-    if (block.line === null) {
-      return { after: Math.max(lines.length, 1), block };
-    }
-    const from = block.line;
-    const next = starts.find((start) => start > from) ?? null;
-    const unfinished = next === null && block.state !== "done";
-    return {
-      after: unfinished
-        ? lastLineByShape(lines, Math.min(from, Math.max(lines.length, 1)))
-        : lastLine(lines, from, next),
-      block,
-    };
-  });
+  const next = starts.find((start) => start > from) ?? null;
+  return next === null && !finished
+    ? lastLineByShape(lines, Math.min(from, Math.max(lines.length, 1)))
+    : lastLine(lines, from, next);
+}
+
+/** The blocks of a run, each with the line it stands under. */
+export function placed(run: Run): Placed[] {
+  return blocks(run).map((block) => ({
+    after:
+      block.line === null
+        ? Math.max(linesOf(run).length, 1)
+        : endOf(run, block.line, block.state === "done"),
+    block,
+  }));
 }

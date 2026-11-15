@@ -35,6 +35,9 @@ export const LEFT_WIDTH = { least: 180, most: 520, usual: 268 } as const;
 /** The least and the most of the script's pane the output takes. */
 export const OUTPUT_SHARE = { least: 0.12, most: 0.85, usual: 0.42 } as const;
 
+/** The tab of the plot viewer. */
+export const PLOTS = "view:plots";
+
 /** The tab of a file of the project. */
 export const fileTab = (path: string) => `file:${path}`;
 /** The path of a file's tab, or `null` for a tab that is not a file's. */

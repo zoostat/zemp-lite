@@ -5,6 +5,7 @@
 import { StateEffect, StateField, type Extension } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType, type DecorationSet } from "@codemirror/view";
 import { mount, unmount } from "svelte";
+import type { Workspace } from "../app/workspace-state.svelte";
 import OutputBlock from "../output/OutputBlock.svelte";
 import type { Placed } from "../output/place";
 
@@ -19,6 +20,8 @@ export interface InlineOutput {
   /** The script has been edited since the run. */
   edited: boolean;
   oncancel: () => void;
+  /** The window, which a block asks for the figure of a statement that ended in a plot. */
+  workspace: Workspace;
 }
 
 /** Show these blocks under their statements, in place of those shown. */
@@ -28,15 +31,19 @@ class BlockWidget extends WidgetType {
   readonly #placed: Placed;
   readonly #edited: boolean;
   readonly #oncancel: () => void;
+  readonly #workspace: Workspace;
+  #watch: ResizeObserver | null = null;
   /** What the widget shows, as text: two widgets that show the same are the same widget. */
   readonly #shows: string;
   #component: Record<string, unknown> | null = null;
 
-  constructor(placed: Placed, edited: boolean, oncancel: () => void) {
+  constructor(placed: Placed, output: InlineOutput) {
     super();
+    const { edited, oncancel, workspace } = output;
     this.#placed = placed;
     this.#edited = edited;
     this.#oncancel = oncancel;
+    this.#workspace = workspace;
     this.#shows = JSON.stringify([placed.block, edited]);
   }
 
@@ -44,7 +51,7 @@ class BlockWidget extends WidgetType {
     return other.#shows === this.#shows;
   }
 
-  override toDOM(): HTMLElement {
+  override toDOM(view: EditorView): HTMLElement {
     const dom = document.createElement("div");
     dom.className = "cm-zemp-output";
     this.#component = mount(OutputBlock, {
@@ -54,12 +61,19 @@ class BlockWidget extends WidgetType {
         edited: this.#edited,
         inline: true,
         oncancel: this.#oncancel,
+        workspace: this.#workspace,
       },
     });
+    // A block grows when its figure arrives: the editor is told, so that the line numbers
+    // stay in step with the lines.
+    this.#watch = new ResizeObserver(() => view.requestMeasure());
+    this.#watch.observe(dom);
     return dom;
   }
 
   override destroy(): void {
+    this.#watch?.disconnect();
+    this.#watch = null;
     if (this.#component !== null) {
       void unmount(this.#component);
       this.#component = null;
@@ -84,9 +98,9 @@ const field = StateField.define<Shown>({
     for (const effect of transaction.effects) {
       if (!effect.is(showOutput)) continue;
       const doc = transaction.state.doc;
-      const { basis, placed, edited, oncancel } = effect.value;
+      const { basis, placed } = effect.value;
       const widget = (one: Placed) =>
-        Decoration.widget({ widget: new BlockWidget(one, edited, oncancel), block: true, side: 1 });
+        Decoration.widget({ widget: new BlockWidget(one, effect.value), block: true, side: 1 });
       // The places the blocks have now, in order, where they are to be kept.
       const kept: number[] = [];
       if (basis === now.basis) {

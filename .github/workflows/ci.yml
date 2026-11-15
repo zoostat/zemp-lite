@@ -81,9 +81,6 @@ jobs:
       - name: Type check
         run: npm run check:types
 
-      - name: Unit tests
-        run: npm run test:unit
-
       # The worker: the released Zeff engine, built here to WebAssembly. The compiler is the
       # one worker/rust-toolchain.toml pins, which rustup installs when it is first asked for.
       - name: Install the pinned Rust toolchain
@@ -124,6 +121,11 @@ jobs:
 
       - name: Measure the worker's compressed size and cold start (risk R4)
         run: npm run measure:worker
+
+      # After the worker is built: one unit test runs the engine itself, to hold the figures
+      # the interface asks for to the bytes the released command line writes.
+      - name: Unit tests
+        run: npm run test:unit
 
       # The two browsers go into the project's own node_modules, as on a developer's machine;
       # --with-deps adds the system libraries a fresh runner lacks.

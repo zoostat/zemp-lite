@@ -1,0 +1,25 @@
+// A first look at the wages that ship with Zeff: a summary, a regression and two figures.
+// Press Run to see each result under the line that made it.
+
+let wages = dataset(wages)
+let w2010 = wages.where(year == 2010)
+
+// Describe: hourly wage, schooling, experience and hours, for men and for women.
+w2010.summary([wage, educ, exper, hours], by: female)
+
+// The return to schooling: log wage on schooling, experience, sex and union membership,
+// with standard errors clustered by worker.
+let fit = wages.reg(log(wage) ~ educ + exper + female + union, cluster: worker)
+fit
+
+// Log wage against schooling in 2010, with the fitted line.
+let schooling = w2010.scatter(educ, log(wage), fit: linear)
+schooling
+
+// The shape of log wages in 2010.
+let shape = w2010.plot(x: log(wage)).histogram(bins: 30)
+shape
+(schooling
+).export("zemp-figure-1.svg", size: [150.02, 93.13])
+(shape
+).export("zemp-figure-2.svg", size: [150.02, 93.13])

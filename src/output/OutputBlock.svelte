@@ -3,6 +3,8 @@
   // layout it is a card in the Output panel, under a line saying which line it is and how
   // long it took; in the Inline layout it sits directly under its statement in the script,
   // with the time or the state in the margin.
+  import type { Workspace } from "../app/workspace-state.svelte";
+  import Figure from "../plots/Figure.svelte";
   import { took, type Block, type Said } from "./run";
 
   let {
@@ -10,13 +12,19 @@
     edited,
     inline = false,
     oncancel,
+    workspace = null,
   }: {
     block: Block;
     /** The script has been edited since this ran: the block is not the script's any more. */
     edited: boolean;
     inline?: boolean;
     oncancel?: () => void;
+    /** The window, where the block may show the figure of a statement that ended in a plot. */
+    workspace?: Workspace | null;
   } = $props();
+
+  // The plot this block's statement ended in, where it did.
+  const plot = $derived(workspace?.plots.find((one) => one.line === block.line) ?? null);
 
   const label: Record<Said["kind"], string> = { warning: "warning", note: "note", error: "error" };
 </script>
@@ -54,6 +62,9 @@
   <div class="body">
     {#if block.printed !== ""}
       <pre class="mono printed" data-testid="printed">{block.printed}</pre>
+    {/if}
+    {#if workspace !== null && plot !== null}
+      <Figure {workspace} {plot} />
     {/if}
     {#each block.said as one, index (index)}
       <div class="said {one.kind}" data-testid="said">
