@@ -79,3 +79,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 7 `[function]`: the editor (CodeMirror 6, code coloured in the seven categories, line numbers, the current line marked).
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 7 (the editor)
+
+**Done.** Step 7 `[function]`: the script's tab is a CodeMirror 6 editor with line numbers, the current line marked, the code coloured in the design guide's categories by a small reader of Zeff's words, saving as it is typed, and Run from the keyboard (⌘↵, ⌘⇧↵).
+
+**Green.** `npm run routine`: 69 unit tests, the worker's 15, the measure, and 52 browser tests in the two browsers (2 skipped by design). The run on GitHub for step 6 was green.
+
+**Next.** Step 8 `[function]`: Run and the Output panel (each statement's output under the line that made it, warnings as cards, errors under their line, the running mark).
+
+**For the owner to decide.** Nothing.

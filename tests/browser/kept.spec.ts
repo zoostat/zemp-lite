@@ -1,7 +1,7 @@
 // Projects that are kept: made, closed, and found again. In WebKit these tests have a browser
 // profile on disk, whose private file system is one place shared by every test (see
 // `support.ts`), so they run one after another and nowhere else is that storage used.
-import { expect, test } from "./support";
+import { expect, scriptText, test, write } from "./support";
 
 test.use({ keptProfile: true });
 test.describe.configure({ mode: "serial" });
@@ -24,17 +24,14 @@ test("a project is made, and is still there with its script after the page is re
   await press(page.getByRole("button", { name: "Create" }));
   await expect(page).toHaveURL(/#\/p\/returns-to-schooling$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Returns to schooling");
-  const script = page.getByLabel("The script");
-  await expect(script).toHaveValue("// Returns to schooling\n");
-  await script.fill('// Returns to schooling\nprint("kept")\n');
+  await expect.poll(() => scriptText(page)).toBe("// Returns to schooling\n");
+  await write(page, '// Returns to schooling\nprint("kept")\n');
   await expect(page.getByText("saving")).toHaveCount(0);
 
   // The reload comes back to the same project, its script as it was left.
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Returns to schooling");
-  await expect(page.getByLabel("The script")).toHaveValue(
-    '// Returns to schooling\nprint("kept")\n',
-  );
+  await expect.poll(() => scriptText(page)).toBe('// Returns to schooling\nprint("kept")\n');
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByTestId("output")).toHaveText("kept\n");
@@ -51,21 +48,18 @@ test("a project is made, and is still there with its script after the page is re
     'A project called "returns to schooling" is already here. Choose another name.',
   );
   await press(listed);
-  await expect(page.getByLabel("The script")).toHaveValue(
-    '// Returns to schooling\nprint("kept")\n',
-  );
+  await expect.poll(() => scriptText(page)).toBe('// Returns to schooling\nprint("kept")\n');
 });
 
 test("the Scratch project keeps what the user wrote in it", async ({ page, press }) => {
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
-  const script = page.getByLabel("The script");
-  await expect(script).toHaveValue(/^\/\/ A first look at the wages/);
-  await script.fill("print(1)\n");
+  await expect.poll(() => scriptText(page)).toMatch(/^\/\/ A first look at the wages/);
+  await write(page, "print(1)\n");
   await expect(page.getByText("saving")).toHaveCount(0);
   await press(page.getByRole("button", { name: "Projects" }));
   await press(page.getByRole("button", { name: "Scratch project" }));
-  await expect(page.getByLabel("The script")).toHaveValue("print(1)\n");
+  await expect.poll(() => scriptText(page)).toBe("print(1)\n");
 });
 
 test("the layout of a window is kept with its project and comes back after a reload", async ({

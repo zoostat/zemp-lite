@@ -110,3 +110,18 @@ export const test = base.extend<Each, Shared>({
 });
 
 export { expect };
+
+/** The editor of the script shown. */
+export const editor = (page: Page) => page.getByRole("textbox", { name: "The script" });
+
+/** The text the editor holds. (The editor draws the lines near the window; these scripts are short.) */
+export async function scriptText(page: Page): Promise<string> {
+  return (await editor(page).locator(".cm-line").allTextContents()).join("\n");
+}
+
+/** Replace all the editor holds by `text`, as typing it would. */
+export async function write(page: Page, text: string): Promise<void> {
+  await editor(page).focus();
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.insertText(text);
+}

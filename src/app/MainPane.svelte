@@ -2,6 +2,7 @@
   // The main pane: the editor tabs, a strip saying what is open, and the tab shown. A script's
   // tab holds the editor above and the Output panel below it (open decision #146, item 7),
   // which is resized by dragging its upper edge, folds away, and is emptied with Clear.
+  import Editor from "../editor/Editor.svelte";
   import Splitter from "./Splitter.svelte";
   import { tabPath } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
@@ -51,13 +52,16 @@
   {#if path !== null && buffer !== undefined}
     <div class="script" bind:this={pane}>
       <div class="editor">
-        <textarea
-          class="mono"
-          aria-label="The script"
-          value={buffer.text}
-          oninput={(event) => workspace.edit(path, event.currentTarget.value)}
-          disabled={!buffer.loaded}
-          spellcheck="false"></textarea>
+        {#if buffer.loaded}
+          {#key path}
+            <Editor
+              text={buffer.text}
+              label="The script"
+              onchange={(text) => workspace.edit(path, text)}
+              onrun={() => void workspace.run()}
+            />
+          {/key}
+        {/if}
       </div>
       <div
         class="output"
@@ -185,17 +189,6 @@
     display: flex;
     flex: 1;
     min-height: 0;
-  }
-  textarea {
-    background: var(--window);
-    border: 0;
-    box-sizing: border-box;
-    flex: 1;
-    font-size: var(--code-size, 14px);
-    line-height: 1.75;
-    outline: none;
-    padding: 10px 18px 24px;
-    resize: none;
   }
   .output {
     background: var(--soft);

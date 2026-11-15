@@ -1,7 +1,7 @@
 // The shell of the workspace, in Panes (open decision #146): the top bar, the one left panel
 // with its two tabs, the editor tabs, and the Output panel under the script.
 import type { Page } from "@playwright/test";
-import { expect, test } from "./support";
+import { editor, expect, scriptText, test } from "./support";
 
 const READY = "engine Zeff 0.7.0 ready";
 
@@ -130,7 +130,7 @@ test("the Output panel sits under the script, folds away, is resized and is clea
   press,
 }) => {
   await scratch(page, press);
-  const script = page.getByLabel("The script");
+  const script = page.locator(".cm-editor");
   const output = page.getByTestId("output");
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
@@ -171,10 +171,10 @@ test("a file opens in a tab of its own, and a tab closes to its neighbour", asyn
     "aria-selected",
     "true",
   );
-  await expect(page.getByLabel("The script")).toHaveValue(/^\[project\]\nname = "Scratch"/);
+  await expect.poll(() => scriptText(page)).toMatch(/^\[project\]\nname = "Scratch"/);
   await expect(page.locator("header")).toContainText("/ zeff.toml · saved");
   await press(tabs.getByRole("tab", { name: "main.zeff" }));
-  await expect(page.getByLabel("The script")).toHaveValue(/^\/\/ A first look at the wages/);
+  await expect.poll(() => scriptText(page)).toMatch(/^\/\/ A first look at the wages/);
   await expect(page.getByText("scripts › main.zeff")).toBeVisible();
   await press(page.getByRole("button", { name: "Close main.zeff" }));
   await expect(tabs.getByRole("tab")).toHaveText(["zeff.toml"]);
@@ -202,7 +202,7 @@ test("the code size control changes the code and its output together, and is rem
   await scratch(page, press);
   const size = (target: ReturnType<Page["locator"]>) =>
     target.evaluate((node) => getComputedStyle(node).fontSize);
-  const script = page.getByLabel("The script");
+  const script = editor(page);
   expect(await size(script)).toBe("14px");
   expect(await size(page.getByTestId("output"))).toBe("13px");
   await press(page.getByRole("button", { name: "Larger code text" }));
@@ -214,7 +214,7 @@ test("the code size control changes the code and its output together, and is rem
   // The size is the user's, not the project's: it is there again on a later visit.
   await scratch(page, press);
   await expect(page.getByRole("group", { name: "Code text size" })).toContainText("18");
-  expect(await size(page.getByLabel("The script"))).toBe("18px");
+  expect(await size(editor(page))).toBe("18px");
   for (let press_ = 0; press_ < 8; press_++) {
     const smaller = page.getByRole("button", { name: "Smaller code text" });
     if (await smaller.isDisabled()) break;

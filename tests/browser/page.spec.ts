@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, test } from "./support";
+import { expect, scriptText, test, write } from "./support";
 
 const example = (file: string) =>
   readFileSync(new URL(`../../examples/scratch/${file}`, import.meta.url), "utf8");
@@ -75,7 +75,7 @@ test("the Scratch project holds the example, which prints what `zeff run` 0.7.0 
   await scratch(page, press);
   // For the notes of the release, not a limit: from asking for the page to the engine ready.
   test.info().annotations.push({ type: "engine ready", description: `${Date.now() - before} ms` });
-  await expect(page.getByLabel("The script")).toHaveValue(example("scripts/main.zeff"));
+  await expect.poll(() => scriptText(page)).toBe(example("scripts/main.zeff"));
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
   expect(await page.getByTestId("output").textContent()).toBe(example("expected/stdout.txt"));
@@ -87,7 +87,6 @@ test("a data file chosen from the computer is added under data/, read by a run, 
   press,
 }) => {
   await scratch(page, press);
-  const script = page.getByLabel("The script");
   await page.getByLabel("Data files to add").setInputFiles({
     name: "pay.csv",
     mimeType: "text/csv",
@@ -96,8 +95,8 @@ test("a data file chosen from the computer is added under data/, read by a run, 
   await expect(page.getByRole("listitem").filter({ hasText: "pay.csv" }).last()).toContainText(
     "28 B",
   );
-  await expect(script).toHaveValue(example("scripts/main.zeff"));
-  await script.fill('print(import("data/pay.csv").n_rows())\n');
+  await expect.poll(() => scriptText(page)).toBe(example("scripts/main.zeff"));
+  await write(page, 'print(import("data/pay.csv").n_rows())\n');
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(page.getByTestId("output")).toHaveText("3\n");
@@ -115,8 +114,8 @@ test("a long run is cancelled between two steps and the page stays usable", asyn
   press,
 }) => {
   await scratch(page, press);
-  const script = page.getByLabel("The script");
-  await script.fill(
+  await write(
+    page,
     'print("started")\nfor i in 1..200000 {\n    let rows = dataset(wages).where(year == 2015).n_rows()\n}\nprint("never")\n',
   );
   await press(page.getByRole("button", { name: "Run" }));
@@ -129,7 +128,7 @@ test("a long run is cancelled between two steps and the page stays usable", asyn
     /error\[Z0705\]: the run was cancelled before pass \d+ of this loop/,
   );
   // The project is still open in the worker, and the next run goes to its end.
-  await script.fill("print(6 * 7)\n");
+  await write(page, "print(6 * 7)\n");
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(page.getByTestId("output")).toHaveText("42\n");
