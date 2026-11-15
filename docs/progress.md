@@ -89,3 +89,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 8 `[function]`: Run and the Output panel (each statement's output under the line that made it, warnings as cards, errors under their line, the running mark).
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 8 (Run and the Output panel)
+
+**Done.** Step 8 `[function]`: each statement's output sits under the line that made it, with its time; a warning is a card with its code and sentence, an error sits under its line with the engine's excerpt and advice; the running statement is marked, with Cancel; output of an edited script is marked "edited · not run".
+
+**Green.** `npm run routine`: 80 unit tests, the worker's 15, the measure, and 74 browser tests in the two browsers (2 skipped by design). Four short scripts and the example are shown as the released `zeff run` 0.7.0 prints them, to the byte. The run on GitHub for step 7 was green.
+
+**Next.** Step 9 `[function]`: the Inline layout (one column, each statement's output directly under it), which then becomes the layout a new project opens in.
+
+**For the owner to decide.** Nothing.

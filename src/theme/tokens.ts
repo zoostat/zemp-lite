@@ -29,6 +29,10 @@ export const TOKENS = {
   "warning-soft": { light: "#fbf6e9", dark: "#272215" },
   ok: { light: "#2b7a4b", dark: "#8fdcab" },
   "ok-soft": { light: "#eaf5ee", dark: "#16261c" },
+  // An error of the engine. The design guide names no colour for one; this red is the
+  // interface's own, held to the same contrast.
+  error: { light: "#b3261e", dark: "#f2a39b" },
+  "error-soft": { light: "#fcf0ef", dark: "#2a1715" },
   // The logo and its watermark.
   "logo-stroke": { light: "#5b3a9e", dark: "#9b7fdb" },
   "logo-centre": { light: "#2e1a5e", dark: "#e4dbfa" },
@@ -49,13 +53,14 @@ export type Token = keyof typeof TOKENS;
 
 /** The text colours, each with the grounds it is written on. */
 export const TEXT_ON: Partial<Record<Token, Token[]>> = {
-  ink: ["window", "soft", "page", "accent-soft"],
-  "ink-2": ["window", "soft", "page"],
+  ink: ["window", "soft", "page", "accent-soft", "warning-soft", "error-soft"],
+  "ink-2": ["window", "soft", "page", "warning-soft", "error-soft"],
   "ink-3": ["window", "soft"],
   accent: ["window", "soft", "accent-soft"],
   "button-ink": ["button"],
   warning: ["window", "soft", "warning-soft"],
   ok: ["window", "soft", "ok-soft"],
+  error: ["window", "soft", "error-soft"],
   "code-keyword": ["window", "soft"],
   "code-function": ["window", "soft"],
   "code-option": ["window", "soft"],

@@ -61,9 +61,6 @@
   <button class="chip" disabled title="Check arrives with the language server, in the alpha"
     >Check</button
   >
-  {#if workspace.running}
-    <button class="chip" onclick={() => workspace.cancel()}>Cancel</button>
-  {/if}
   <button
     class="chip run"
     onclick={() => void workspace.run()}

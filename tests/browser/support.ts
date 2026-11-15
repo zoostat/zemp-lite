@@ -125,3 +125,37 @@ export async function write(page: Page, text: string): Promise<void> {
   await page.keyboard.press("ControlOrMeta+a");
   await page.keyboard.insertText(text);
 }
+
+/** What the Output panel shows as printed, the statements' output one after another. */
+export async function printed(page: Page): Promise<string> {
+  return (await page.getByTestId("printed").allTextContents()).join("");
+}
+
+/**
+ * What the Output panel shows as said, each card written back as the engine writes a message:
+ * its kind, its code and its sentence, then the line it speaks of or, for an error, the
+ * excerpt of the script, then its advice.
+ */
+export async function saidAsWritten(page: Page): Promise<string> {
+  return page.getByTestId("block").evaluateAll((blocks) =>
+    blocks
+      .flatMap((block) =>
+        [...block.querySelectorAll('[data-testid="said"]')].map((card) => {
+          const kind = card.querySelector(".kind")?.textContent ?? "";
+          const code = card.querySelector(".code")?.textContent;
+          const sentence = card.querySelector(".sentence")?.textContent ?? "";
+          const detail = card.querySelector(".detail")?.textContent ?? "";
+          const help = [...card.querySelectorAll(".help")].map(
+            (one) => `  = help: ${one.textContent}\n`,
+          );
+          const line = detail === "" ? ` (line ${block.getAttribute("data-line")})` : "";
+          return (
+            `${kind}${code ? `[${code}]` : ""}: ${sentence}${line}\n` +
+            (detail === "" ? "" : `${detail}\n`) +
+            help.join("")
+          );
+        }),
+      )
+      .join(""),
+  );
+}

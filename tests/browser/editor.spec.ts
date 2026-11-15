@@ -1,7 +1,7 @@
 // The editor (release 0.1, step 7): CodeMirror, with line numbers, the current line marked,
 // and the code coloured in the categories of the design guide.
 import type { Page } from "@playwright/test";
-import { editor, expect, scriptText, test, write } from "./support";
+import { editor, expect, printed, scriptText, test, write } from "./support";
 
 const READY = "engine Zeff 0.7.0 ready";
 
@@ -94,12 +94,12 @@ test("the script runs from the keyboard, with ⌘↵ and with ⌘⇧↵", async 
   await write(page, "print(6 * 7)\n");
   await page.keyboard.press("ControlOrMeta+Enter");
   await expect(page.getByRole("status")).toHaveText("done");
-  await expect(page.getByTestId("output")).toHaveText("42\n");
+  await expect.poll(() => printed(page)).toBe("42\n");
   // The key ran the script and wrote nothing into it.
   await expect.poll(() => scriptText(page)).toBe("print(6 * 7)\n");
   await write(page, "print(1 + 1)\n");
   await page.keyboard.press("Shift+ControlOrMeta+Enter");
-  await expect(page.getByTestId("output")).toHaveText("2\n");
+  await expect.poll(() => printed(page)).toBe("2\n");
 });
 
 test("the sample script of the specification reads in the editor, coloured", async ({

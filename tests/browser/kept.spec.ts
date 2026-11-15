@@ -1,7 +1,7 @@
 // Projects that are kept: made, closed, and found again. In WebKit these tests have a browser
 // profile on disk, whose private file system is one place shared by every test (see
 // `support.ts`), so they run one after another and nowhere else is that storage used.
-import { expect, scriptText, test, write } from "./support";
+import { expect, printed, scriptText, test, write } from "./support";
 
 test.use({ keptProfile: true });
 test.describe.configure({ mode: "serial" });
@@ -34,7 +34,7 @@ test("a project is made, and is still there with its script after the page is re
   await expect.poll(() => scriptText(page)).toBe('// Returns to schooling\nprint("kept")\n');
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "Run" }));
-  await expect(page.getByTestId("output")).toHaveText("kept\n");
+  await expect.poll(() => printed(page)).toBe("kept\n");
 
   // Back on the welcome screen it is listed, opened today; and its name is taken.
   await press(page.getByRole("button", { name: "Projects" }));

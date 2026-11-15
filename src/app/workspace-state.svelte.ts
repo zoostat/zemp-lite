@@ -4,6 +4,7 @@
 import type { Engine } from "../engine/engine";
 import type { FrameInfo } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
+import { begin, clockOf, end, hear, type Run } from "../output/run";
 import { Session } from "../project/session";
 import {
   fileTab,
@@ -53,11 +54,8 @@ export class Workspace {
   /** What the engine is doing, in a word or two. */
   status = $state("starting the engine");
   running = $state(false);
-  /** The statement or the pass of a loop the run is at. */
-  step = $state("");
-  /** What the last run printed, and what it said. */
-  output = $state("");
-  messages = $state("");
+  /** The last run, as the Output panel shows it, or `null` before the first and after Clear. */
+  lastRun = $state<Run | null>(null);
   /** The frames the last run left. */
   frames = $state<FrameInfo[]>([]);
   /** Something the user asked for that could not be done, in words. */
@@ -223,7 +221,11 @@ export class Workspace {
       .then(() => {
         this.session.changed(path);
         const now = this.buffers[path];
-        if (now !== undefined && now.text === text) now.saved = true;
+        if (now !== undefined && now.text === text) {
+          now.saved = true;
+          // The tree shows each file's size, which has changed.
+          void this.refresh();
+        }
       });
   }
 
@@ -238,21 +240,15 @@ export class Workspace {
     await this.#load(script);
     const text = this.buffers[script]?.text ?? "";
     this.running = true;
-    this.output = "";
-    this.messages = "";
-    this.step = "";
+    this.lastRun = begin(script, text, performance.now(), clockOf(Date.now()));
+    // The run is read through the state, so that what the panel shows follows each event.
+    const run = this.lastRun;
     try {
       await this.#saving;
-      const outcome = await this.session.run(script, text, (event) => {
-        if (event.type === "output") {
-          this.output += event.stdout;
-          this.messages += event.stderr;
-        } else if (event.type === "started") {
-          this.step = `statement ${event.statement} of ${event.of}, line ${event.line}`;
-        } else if (event.type === "pass") {
-          this.step = `pass ${event.pass}, line ${event.line}`;
-        }
-      });
+      const outcome = await this.session.run(script, text, (event) =>
+        hear(run, event, performance.now()),
+      );
+      end(run, outcome, performance.now());
       this.frames = outcome.frames;
       this.status = outcome.stopped
         ? "stopped"
@@ -273,10 +269,21 @@ export class Workspace {
     }
   }
 
-  /** Empty the Output panel. */
+  /** Empty the Output panel. A run that is going is left to show. */
   clear(): void {
-    this.output = "";
-    this.messages = "";
+    if (!this.running) {
+      this.lastRun = null;
+    }
+  }
+
+  /** Whether the script has been edited since the run the panel shows: its output is then not the script's. */
+  get edited(): boolean {
+    const run = this.lastRun;
+    if (run === null || run.state === "running") {
+      return false;
+    }
+    const buffer = this.buffers[run.script];
+    return buffer !== undefined && buffer.loaded && buffer.text !== run.text;
   }
 
   /** Add data files chosen from the computer; nothing is written into a script. */

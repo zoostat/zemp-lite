@@ -155,7 +155,7 @@ test("the Output panel sits under the script, folds away, is resized and is clea
   await press(page.getByRole("button", { name: "Show the output" }));
   await expect(output).toContainText("summary · by female");
   await press(page.getByRole("button", { name: "Clear" }));
-  await expect(output).toHaveText("");
+  await expect(output).toHaveText("Press Run to see each result under the line that made it.");
 });
 
 test("a file opens in a tab of its own, and a tab closes to its neighbour", async ({
@@ -203,14 +203,17 @@ test("the code size control changes the code and its output together, and is rem
   const size = (target: ReturnType<Page["locator"]>) =>
     target.evaluate((node) => getComputedStyle(node).fontSize);
   const script = editor(page);
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  const output = page.getByTestId("printed").first();
   expect(await size(script)).toBe("14px");
-  expect(await size(page.getByTestId("output"))).toBe("13px");
+  expect(await size(output)).toBe("13px");
   await press(page.getByRole("button", { name: "Larger code text" }));
   await press(page.getByRole("button", { name: "Larger code text" }));
   await press(page.getByRole("button", { name: "Larger code text" }));
   await expect(page.getByRole("group", { name: "Code text size" })).toContainText("18");
   expect(await size(script)).toBe("18px");
-  expect(await size(page.getByTestId("output"))).toBe("17px");
+  expect(await size(output)).toBe("17px");
   // The size is the user's, not the project's: it is there again on a later visit.
   await scratch(page, press);
   await expect(page.getByRole("group", { name: "Code text size" })).toContainText("18");

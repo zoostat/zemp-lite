@@ -10,6 +10,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: true,
   reporter: "list",
+  // A kept text is the same in every browser and on every machine.
+  snapshotPathTemplate: "{testDir}/snapshots/{arg}{ext}",
   use: {
     baseURL: `http://127.0.0.1:${port}`,
   },

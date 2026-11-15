@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, scriptText, test, write } from "./support";
+import { expect, printed, saidAsWritten, scriptText, test, write } from "./support";
 
 const example = (file: string) =>
   readFileSync(new URL(`../../examples/scratch/${file}`, import.meta.url), "utf8");
@@ -78,8 +78,8 @@ test("the Scratch project holds the example, which prints what `zeff run` 0.7.0 
   await expect.poll(() => scriptText(page)).toBe(example("scripts/main.zeff"));
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
-  expect(await page.getByTestId("output").textContent()).toBe(example("expected/stdout.txt"));
-  expect(await page.getByTestId("messages").textContent()).toBe(example("expected/stderr.txt"));
+  expect(await printed(page)).toBe(example("expected/stdout.txt"));
+  expect(await saidAsWritten(page)).toBe(example("expected/stderr.txt"));
 });
 
 test("a data file chosen from the computer is added under data/, read by a run, and no script is changed", async ({
@@ -99,7 +99,7 @@ test("a data file chosen from the computer is added under data/, read by a run, 
   await write(page, 'print(import("data/pay.csv").n_rows())\n');
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await expect(page.getByTestId("output")).toHaveText("3\n");
+  await expect.poll(() => printed(page)).toBe("3\n");
   // The same name a second time is refused, in words.
   await page.getByLabel("Data files to add").setInputFiles({
     name: "pay.csv",
@@ -120,18 +120,19 @@ test("a long run is cancelled between two steps and the page stays usable", asyn
   );
   await press(page.getByRole("button", { name: "Run" }));
   // The loop is under way, and the page still answers: the engine is in its own worker.
-  await expect(page.getByTestId("step")).toContainText("pass");
+  await expect(page.getByTestId("running")).toContainText("pass");
   await press(page.getByRole("button", { name: "Cancel" }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
-  await expect(page.getByTestId("output")).toHaveText("started\n");
-  await expect(page.getByTestId("messages")).toContainText(
-    /error\[Z0705\]: the run was cancelled before pass \d+ of this loop/,
+  await expect.poll(() => printed(page)).toBe("started\n");
+  await expect(page.getByTestId("said")).toContainText("Z0705");
+  await expect(page.getByTestId("said")).toContainText(
+    /the run was cancelled before pass \d+ of this loop/,
   );
   // The project is still open in the worker, and the next run goes to its end.
   await write(page, "print(6 * 7)\n");
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await expect(page.getByTestId("output")).toHaveText("42\n");
+  await expect.poll(() => printed(page)).toBe("42\n");
 });
 
 test("in a private window, where the browser keeps nothing, the screen says so and projects still work", async ({
@@ -147,5 +148,5 @@ test("in a private window, where the browser keeps nothing, the screen says so a
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
-  expect(await page.getByTestId("output").textContent()).toBe(example("expected/stdout.txt"));
+  expect(await printed(page)).toBe(example("expected/stdout.txt"));
 });

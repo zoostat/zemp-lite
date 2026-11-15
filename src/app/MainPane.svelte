@@ -3,6 +3,8 @@
   // tab holds the editor above and the Output panel below it (open decision #146, item 7),
   // which is resized by dragging its upper edge, folds away, and is emptied with Clear.
   import Editor from "../editor/Editor.svelte";
+  import OutputPanel from "../output/OutputPanel.svelte";
+  import { took, type Run } from "../output/run";
   import Splitter from "./Splitter.svelte";
   import { tabPath } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
@@ -17,6 +19,26 @@
 
   function title(tab: string): string {
     return tabPath(tab)?.split("/").at(-1) ?? tab.slice(5);
+  }
+
+  const run = $derived(workspace.lastRun);
+
+  /** A run in a line: when it started, how far it is or how it ended, and how long it took. */
+  function summary(run: Run): string {
+    const statements = (count: number) => `${count} statement${count === 1 ? "" : "s"}`;
+    if (run.state === "running") {
+      const at = run.statements.length;
+      return run.of === null
+        ? `run ${run.clock} · starting`
+        : `run ${run.clock} · statement ${at} of ${run.of}`;
+    }
+    const ended = {
+      done: statements(run.statements.length),
+      failed: "ended with an error",
+      cancelled: "cancelled",
+      stopped: "stopped",
+    }[run.state];
+    return `run ${run.clock} · ${ended}${run.ms === null ? "" : ` · ${took(run.ms)}`}`;
   }
 
   function dragged(_x: number, y: number): void {
@@ -89,14 +111,20 @@
             <span class:turned={!workspace.views.output.shown} aria-hidden="true">⌄</span>
           </button>
           <span class="title">Output</span>
-          {#if workspace.running}<span class="about" data-testid="step">{workspace.step}</span>{/if}
+          {#if run !== null}
+            <span class="about" data-testid="run-summary">{summary(run)}</span>
+          {/if}
           <span class="gap"></span>
-          <button class="word" onclick={() => workspace.clear()}>Clear</button>
+          {#if workspace.running}
+            <button class="word" onclick={() => workspace.cancel()}>Cancel</button>
+          {/if}
+          <button class="word" onclick={() => workspace.clear()} disabled={workspace.running}
+            >Clear</button
+          >
         </div>
         {#if workspace.views.output.shown}
-          <div class="body">
-            <pre class="mono" data-testid="output">{workspace.output}</pre>
-            <pre class="mono said" data-testid="messages">{workspace.messages}</pre>
+          <div class="body" data-testid="output">
+            <OutputPanel {run} edited={workspace.edited} />
           </div>
         {/if}
       </div>
@@ -249,7 +277,10 @@
     color: var(--ink-2);
     padding: 4px 11px;
   }
-  .word:hover {
+  .word:disabled {
+    opacity: 0.5;
+  }
+  .word:hover:not(:disabled) {
     border-color: var(--accent);
     color: var(--accent);
   }
@@ -258,14 +289,6 @@
     min-height: 0;
     overflow: auto;
     padding: 10px 16px 18px;
-  }
-  pre {
-    font-size: calc(var(--code-size, 14px) - 1px);
-    line-height: 1.6;
-    margin: 0;
-  }
-  pre.said {
-    color: var(--ink-2);
   }
   .empty {
     background: var(--window);

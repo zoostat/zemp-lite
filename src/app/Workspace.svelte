@@ -26,7 +26,16 @@
   }
 </script>
 
-<svelte:window bind:innerWidth={width} />
+<!-- Run from the keyboard wherever the focus is: ⌘↵ and ⌘⇧↵ (the editor answers them itself). -->
+<svelte:window
+  bind:innerWidth={width}
+  onkeydown={(event) => {
+    if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && !event.defaultPrevented) {
+      event.preventDefault();
+      void workspace.run();
+    }
+  }}
+/>
 
 <TopBar {workspace} onclose={() => void close()} />
 

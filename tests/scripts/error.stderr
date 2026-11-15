@@ -1,0 +1,9 @@
+warning[W0204]: division by zero gave Inf (line 2)
+  = help: test the divisor first, as in `b != 0 && a / b > 1`; on a frame, `where(b != 0)`
+error[Z0715]: no file `data/none.csv` in the project
+ --> scripts/main.zeff:3:16
+  |
+3 | let w = import("data/none.csv")
+  |                ^^^^^^^^^^^^^^^ the file is not there
+  |
+  = help: put the file in the project and write its path from the project folder, as in `data/none.csv`
