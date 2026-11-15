@@ -32,7 +32,7 @@ export default ts.config(
   },
   {
     // A test names the element it has just counted.
-    files: ["**/*.test.ts"],
+    files: ["**/*.test.ts", "tests/**/*.ts"],
     rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },
   {

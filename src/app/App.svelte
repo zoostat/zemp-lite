@@ -6,8 +6,8 @@
   import { MemoryFolder, OpfsFolder } from "../project/folder";
   import { Projects, type Project } from "../project/projects";
   import { browserStorage } from "../theme/theme.svelte";
-  import ProjectBench from "./ProjectBench.svelte";
   import Welcome from "./Welcome.svelte";
+  import Workspace from "./Workspace.svelte";
 
   // Projects are kept in the browser's private file system; a browser that gives the page
   // none (a private window) keeps them for the life of the tab, and the welcome screen says so.
@@ -57,7 +57,7 @@
   <Welcome {projects} {lasting} onopen={open} />
 {:else}
   {#key project.info.folder}
-    <ProjectBench {project} {engine} onclose={() => (window.location.hash = "")} />
+    <Workspace {project} {engine} onclose={() => (window.location.hash = "")} />
   {/key}
 {/if}
 

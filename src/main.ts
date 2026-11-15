@@ -3,6 +3,7 @@ import { mount } from "svelte";
 import App from "./app/App.svelte";
 import "./theme/fonts.css";
 import "./theme/base.css";
+import { startCodeSize } from "./theme/codesize.svelte";
 import { startTheme } from "./theme/theme.svelte";
 
 const target = document.getElementById("app");
@@ -11,5 +12,6 @@ if (target === null) {
 }
 
 startTheme();
+startCodeSize();
 
 export default mount(App, { target });

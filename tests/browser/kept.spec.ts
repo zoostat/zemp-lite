@@ -67,3 +67,52 @@ test("the Scratch project keeps what the user wrote in it", async ({ page, press
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByLabel("The script")).toHaveValue("print(1)\n");
 });
+
+test("the layout of a window is kept with its project and comes back after a reload", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const left = page.getByRole("complementary");
+  const edge = page.getByRole("separator", { name: "The width of the left panel" });
+  await edge.focus();
+  await page.keyboard.press("ArrowRight");
+  await press(left.getByRole("button", { name: /zeff\.toml/ }));
+  await press(left.getByRole("button", { name: "data", exact: true }));
+  await press(left.getByRole("tab", { name: "Objects" }));
+  const top = page.getByRole("separator", { name: "The height of the Output panel" });
+  await top.focus();
+  await page.keyboard.press("ArrowUp");
+  await press(page.getByRole("button", { name: "Hide the output" }));
+  // The view state is written a moment after the last change.
+  await page.waitForTimeout(500);
+
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(
+    page.getByRole("separator", { name: "The width of the left panel" }),
+  ).toHaveAttribute("aria-valuenow", "284");
+  await expect(left.getByRole("tab", { name: "Objects" })).toHaveAttribute("aria-selected", "true");
+  const tabs = page.getByRole("tablist", { name: "Open files" });
+  await expect(tabs.getByRole("tab")).toHaveText(["main.zeff", "zeff.toml"]);
+  await expect(tabs.getByRole("tab", { name: "zeff.toml" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.getByRole("button", { name: "Show the output" })).toBeVisible();
+  await press(page.getByRole("button", { name: "Show the output" }));
+  await expect(
+    page.getByRole("separator", { name: "The height of the Output panel" }),
+  ).toHaveAttribute("aria-valuenow", "46");
+  await press(left.getByRole("tab", { name: "Project" }));
+  await expect(left.getByRole("button", { name: "data", exact: true })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  // The view state is the interface's own: it is in the project, and the engine is not given it.
+  await press(tabs.getByRole("tab", { name: "main.zeff" }));
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+});

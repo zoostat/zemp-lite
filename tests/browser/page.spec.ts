@@ -88,19 +88,21 @@ test("a data file chosen from the computer is added under data/, read by a run, 
 }) => {
   await scratch(page, press);
   const script = page.getByLabel("The script");
-  await page.getByLabel("Add a data file…").setInputFiles({
+  await page.getByLabel("Data files to add").setInputFiles({
     name: "pay.csv",
     mimeType: "text/csv",
     buffer: Buffer.from("id,wage\n1,23.5\n2,19\n3,31.25\n"),
   });
-  await expect(page.getByRole("listitem").filter({ hasText: "pay.csv" })).toContainText("28 B");
+  await expect(page.getByRole("listitem").filter({ hasText: "pay.csv" }).last()).toContainText(
+    "28 B",
+  );
   await expect(script).toHaveValue(example("scripts/main.zeff"));
   await script.fill('print(import("data/pay.csv").n_rows())\n');
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(page.getByTestId("output")).toHaveText("3\n");
   // The same name a second time is refused, in words.
-  await page.getByLabel("Add a data file…").setInputFiles({
+  await page.getByLabel("Data files to add").setInputFiles({
     name: "pay.csv",
     mimeType: "text/csv",
     buffer: Buffer.from("id\n9\n"),

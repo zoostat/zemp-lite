@@ -69,3 +69,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 6 `[engine]`: the shell of the workspace in Panes (the top bar, the tabbed left panel, the editor tabs, the Output panel under the script, the view state kept for the project).
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 6 (the shell of the workspace)
+
+**Done.** Step 6 `[engine]`: the workspace in Panes as the owner's mockup has it. The top bar, the tabbed left panel (Project, Objects), no right panel, the editor tabs, and the Output panel under the script; panels resized by dragging or by the keyboard and folded away; the layout kept with the project; the code size control; a line for windows narrower than 1,200 pixels. A fault was found and mended: WebKit refused a second project its engine.
+
+**Green.** `npm run routine`: 61 unit tests, the worker's 15, the measure, and 42 browser tests in the two browsers (2 skipped by design: the private-window test in Chromium, the mouse-drag test in WebKit on this Mac). The run on GitHub for step 5 was green.
+
+**Next.** Step 7 `[function]`: the editor (CodeMirror 6, code coloured in the seven categories, line numbers, the current line marked).
+
+**For the owner to decide.** Nothing.
