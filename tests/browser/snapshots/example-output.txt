@@ -1,4 +1,4 @@
-line 8   summary · by female
+line 8    summary · by female
 
   female   variable     N   missing     mean       sd      min      max
   male     wage       274         3   23.616   12.282    6.090   97.980
@@ -11,9 +11,9 @@ line 8   summary · by female
   female   hours      259         1   37.233    8.464    9.000   60.100
  warning W0201 6 rows with NA in wage, 1 with NA in exper and 1 with NA in hours were skipped
 
-line 12    note  33 of the 3,911 clusters hold one observation
+line 12     note  33 of the 3,911 clusters hold one observation
 
-line 13   reg · log(wage) ~ educ + exper + female + union
+line 13    reg · log(wage) ~ educ + exper + female + union
 N = 18,179 (233 rows dropped for NA in model variables)
 standard errors: clustered by worker (3,911 clusters, CR1)
 
@@ -26,9 +26,9 @@ standard errors: clustered by worker (3,911 clusters, CR1)
 
 R² 0.210 · adjusted R² 0.210
 
-line 16    note  6 rows with NA in educ or log(wage) dropped
+line 16     note  6 rows with NA in educ or log(wage) dropped
 
-line 17   plot · w2010 · log(wage) against educ
+line 17    plot · w2010 · log(wage) against educ
 
   axis   title                scale    limits               breaks
   x      Years of schooling   linear   7.4 to 20.6          8, 10, 12, 14, 16, 18, 20
@@ -41,9 +41,9 @@ line 17   plot · w2010 · log(wage) against educ
 
 caption: Band: 95% confidence interval of the fitted line
 
-line 20    note  6 rows with NA in log(wage) dropped
+line 20     note  6 rows with NA in log(wage) dropped
 
-line 21   plot · w2010 · log(wage)
+line 21    plot · w2010 · log(wage)
 
   axis   title       scale    limits               breaks
   x      log(wage)   linear   1.36855 to 4.73792   1.5, 2, 2.5, 3, 3.5, 4, 4.5

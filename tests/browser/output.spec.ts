@@ -12,6 +12,8 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  // These tests are of the Panes layout; a project opens in Inline.
+  await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
 /** The lines the blocks of the panel stand under. */
@@ -139,7 +141,7 @@ test("the statement that is running is marked, with Cancel beside the output's t
   await expect(running).toContainText(/running · pass [\d,]+ of 200,000/);
   await expect(page.getByTestId("run-summary")).toContainText("statement 2 of 2");
   // While a run goes it is not run a second time, and its output is not cleared.
-  await expect(page.locator("header").getByRole("button", { name: "Run" })).toBeDisabled();
+  await expect(page.locator("header.top").getByRole("button", { name: "Run" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Clear" })).toBeDisabled();
   await press(page.getByRole("button", { name: "Cancel" }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");

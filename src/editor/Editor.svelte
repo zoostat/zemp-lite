@@ -15,6 +15,7 @@
     lineNumbers,
   } from "@codemirror/view";
   import { onMount } from "svelte";
+  import { inlineOutput, showOutput, type InlineOutput } from "./inline";
   import { zeffLanguage } from "./language";
 
   let {
@@ -22,6 +23,7 @@
     label,
     onchange,
     onrun,
+    inline = null,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -30,6 +32,11 @@
     onchange: (text: string) => void;
     /** Run was asked for from the keyboard. */
     onrun: () => void;
+    /**
+     * The Inline layout: the editor is as tall as its script, the page scrolling it, and
+     * these blocks of the last run are drawn under their statements.
+     */
+    inline?: InlineOutput | null;
   } = $props();
 
   let host: HTMLDivElement;
@@ -75,6 +82,16 @@
     },
   });
 
+  // In the Inline layout the editor does not scroll: it is as tall as what it holds.
+  const tall = EditorView.theme({
+    "&": { height: "auto" },
+    ".cm-scroller": { overflow: "visible" },
+    ".cm-content": { padding: "18px 0 40px" },
+    // A block of output is not code: its sentences wrap. Its space above and below is
+    // padding, not margin, so that the editor measures it and the line numbers stay in step.
+    ".cm-zemp-output": { padding: "4px 0 14px", whiteSpace: "normal" },
+  });
+
   onMount(() => {
     const run = () => {
       onrun();
@@ -95,6 +112,8 @@
           EditorState.tabSize.of(4),
           zeffLanguage(),
           look,
+          // In the one column of Inline a long line wraps, so that nothing reaches past it.
+          inline === null ? [] : [tall, inlineOutput(), EditorView.lineWrapping],
           // Run from the keyboard: ⌘↵ and ⌘⇧↵ (Ctrl on Windows and Linux). Tab indents;
           // Escape and then Tab moves on to the next control, for those who use the keyboard alone.
           keymap.of([
@@ -127,6 +146,14 @@
     const now = text;
     if (view !== null && view.state.doc.toString() !== now) {
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: now } });
+    }
+  });
+
+  // The blocks of the last run, drawn under their statements each time they change.
+  $effect(() => {
+    const output = inline;
+    if (view !== null && output !== null) {
+      view.dispatch({ effects: showOutput.of(output) });
     }
   });
 </script>

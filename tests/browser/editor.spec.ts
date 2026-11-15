@@ -10,6 +10,8 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  // These tests are of the Panes layout; a project opens in Inline.
+  await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
 /** The colour and style a word of the code is drawn in. */
@@ -72,7 +74,7 @@ test("what is typed is saved as it is typed, undone with the keyboard, and Tab i
   await scratch(page, press);
   await write(page, "let a = 1\n");
   await expect.poll(() => scriptText(page)).toBe("let a = 1\n");
-  await expect(page.locator("header")).toContainText("· saved");
+  await expect(page.locator("header.top")).toContainText("· saved");
   // Typing that follows within half a second is undone together with what came before it.
   await page.waitForTimeout(700);
   await page.keyboard.type("let b = 2");

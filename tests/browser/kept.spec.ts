@@ -69,6 +69,8 @@ test("the layout of a window is kept with its project and comes back after a rel
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  // A project opens in Inline; the layout chosen is kept with the rest.
+  await press(page.getByRole("button", { name: "Panes", exact: true }));
   const left = page.getByRole("complementary");
   const edge = page.getByRole("separator", { name: "The width of the left panel" });
   await edge.focus();
@@ -109,4 +111,28 @@ test("the layout of a window is kept with its project and comes back after a rel
   await press(tabs.getByRole("tab", { name: "main.zeff" }));
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
+});
+
+test("the layout chosen is kept with the project, and a new project opens in Inline", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const inline = page.getByRole("button", { name: "Inline", exact: true });
+  const panes = page.getByRole("button", { name: "Panes", exact: true });
+  await expect(inline).toHaveAttribute("aria-pressed", "true");
+  await press(panes);
+  await page.waitForTimeout(500);
+  await page.reload();
+  await expect(panes).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("complementary")).toBeVisible();
+  // The choice is this project's: another project opens in Inline.
+  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "New project…" }));
+  await page.getByLabel("The name of the new project").fill("Another");
+  await press(page.getByRole("button", { name: "Create" }));
+  await expect(inline).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("complementary")).toHaveCount(0);
 });

@@ -9,6 +9,8 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  // These tests are of the Panes layout; a project opens in Inline.
+  await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
 test("the top bar carries its controls in order, Run the one filled, and what is not built yet is not active", async ({
@@ -16,7 +18,7 @@ test("the top bar carries its controls in order, Run the one filled, and what is
   press,
 }) => {
   await scratch(page, press);
-  const bar = page.locator("header");
+  const bar = page.locator("header.top");
   await expect(bar).toContainText("Projects ▾");
   await expect(bar.getByRole("heading", { level: 1 })).toHaveText("Scratch");
   await expect(bar).toContainText("/ main.zeff · saved");
@@ -172,7 +174,7 @@ test("a file opens in a tab of its own, and a tab closes to its neighbour", asyn
     "true",
   );
   await expect.poll(() => scriptText(page)).toMatch(/^\[project\]\nname = "Scratch"/);
-  await expect(page.locator("header")).toContainText("/ zeff.toml · saved");
+  await expect(page.locator("header.top")).toContainText("/ zeff.toml · saved");
   await press(tabs.getByRole("tab", { name: "main.zeff" }));
   await expect.poll(() => scriptText(page)).toMatch(/^\/\/ A first look at the wages/);
   await expect(page.getByText("scripts › main.zeff")).toBeVisible();

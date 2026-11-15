@@ -3,6 +3,7 @@
   // decision #146: the top bar, one left panel, the main pane, and a line at the foot.
   import type { Engine } from "../engine/engine";
   import type { Project } from "../project/projects";
+  import InlinePane from "./InlinePane.svelte";
   import LeftPanel from "./LeftPanel.svelte";
   import MainPane from "./MainPane.svelte";
   import Splitter from "./Splitter.svelte";
@@ -46,27 +47,31 @@
   </p>
 {/if}
 
-<div class="panes" bind:this={body}>
-  {#if workspace.views.left.shown}
-    <div class="side" style:width="{workspace.views.left.width}px">
-      <LeftPanel {workspace} />
-    </div>
-    <Splitter
-      orientation="vertical"
-      label="The width of the left panel"
-      value={workspace.views.left.width}
-      least={LEFT_WIDTH.least}
-      most={LEFT_WIDTH.most}
-      ondrag={(x) => workspace.setLeftWidth(x - (body?.getBoundingClientRect().left ?? 0))}
-      onstep={(direction) => workspace.setLeftWidth(workspace.views.left.width + direction * 16)}
-    />
-  {:else}
-    <div class="rail">
-      <button onclick={() => workspace.toggleLeft()} aria-label="Show the left panel">›</button>
-    </div>
-  {/if}
-  <MainPane {workspace} />
-</div>
+{#if workspace.views.layout === "inline"}
+  <InlinePane {workspace} />
+{:else}
+  <div class="panes" bind:this={body}>
+    {#if workspace.views.left.shown}
+      <div class="side" style:width="{workspace.views.left.width}px">
+        <LeftPanel {workspace} />
+      </div>
+      <Splitter
+        orientation="vertical"
+        label="The width of the left panel"
+        value={workspace.views.left.width}
+        least={LEFT_WIDTH.least}
+        most={LEFT_WIDTH.most}
+        ondrag={(x) => workspace.setLeftWidth(x - (body?.getBoundingClientRect().left ?? 0))}
+        onstep={(direction) => workspace.setLeftWidth(workspace.views.left.width + direction * 16)}
+      />
+    {:else}
+      <div class="rail">
+        <button onclick={() => workspace.toggleLeft()} aria-label="Show the left panel">›</button>
+      </div>
+    {/if}
+    <MainPane {workspace} />
+  </div>
+{/if}
 
 <footer class="bottom">
   <span role="status">{workspace.status}</span>

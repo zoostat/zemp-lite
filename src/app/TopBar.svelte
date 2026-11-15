@@ -46,8 +46,7 @@
     <button
       class:on={workspace.views.layout === "inline"}
       aria-pressed={workspace.views.layout === "inline"}
-      disabled
-      title="The Inline layout arrives at step 9">Inline</button
+      onclick={() => workspace.setLayout("inline")}>Inline</button
     >
     <button
       class:on={workspace.views.layout === "panes"}

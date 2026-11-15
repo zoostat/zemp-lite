@@ -43,9 +43,8 @@ export const tabPath = (tab: string) => (tab.startsWith("file:") ? tab.slice(5) 
 /** A project opened for the first time: its main script in a tab. */
 export function usual(): ViewState {
   return {
-    // Zemp Lite opens in Inline (section 5); until the Inline layout is built, at step 9 of
-    // release 0.1, a project opens in Panes.
-    layout: "panes",
+    // Zemp Lite opens in Inline (section 5).
+    layout: "inline",
     left: { tab: "project", width: LEFT_WIDTH.usual, shown: true },
     output: { share: OUTPUT_SHARE.usual, shown: true },
     tabs: [fileTab("scripts/main.zeff")],

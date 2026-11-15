@@ -99,3 +99,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 9 `[function]`: the Inline layout (one column, each statement's output directly under it), which then becomes the layout a new project opens in.
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 9 (the Inline layout)
+
+**Done.** Step 9 `[function]`: the Inline layout, which a project now opens in. One centred column, each statement's output directly under it inside the editor (never in the script), its time or state in the right margin; Inline | Panes switches with one click and is kept with the project.
+
+**Green.** `npm run routine`: 88 unit tests, the worker's 15, the measure, and 94 browser tests in the two browsers (2 skipped by design). The run on GitHub for step 8 was green.
+
+**Next.** Step 10 `[function]`: ⌘K and the console line.
+
+**For the owner to decide.** Nothing.
