@@ -129,3 +129,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 12 `[function]`: the plot viewer (gallery strip, compare, pop out, journal sizes, export).
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 12 (the plot viewer)
+
+**Done.** Step 12 `[function]`: the plot viewer. The plot shown is drawn to fit or at a journal's one-column, two-column or slide size; the gallery strip holds every plot of the run as a thumbnail, clicked to show and dragged to reorder; two to four plots are pinned side by side; a plot pops out into its own window, which redraws to fit; a figure is saved as SVG, PDF or PNG by the engine's `export`, with the statement that does the same beside it.
+
+**Green.** `npm run routine`: the worker's 15, the measure, 114 unit tests, and 144 browser tests in the two browsers (2 skipped by design). A figure saved in each of the three formats is the file the released `zeff run` 0.7.0 writes, byte for byte. The run on GitHub for step 11 was green.
+
+**Next.** Step 13 `[function]`: the pre-release routine (the whole suite in both browsers on GitHub, the example and the sample script read by eye against `zeff run`, the measures recorded, the notes drafted). The release is then the owner's to try and to call: "Release 0.1".
+
+**For the owner to decide.** Nothing until the prototype is tried.

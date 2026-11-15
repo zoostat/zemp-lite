@@ -5,6 +5,8 @@
   // pixels wide at the usual code size, and widens with the code.
   import Editor from "../editor/Editor.svelte";
   import { placed } from "../output/place";
+  import PlotViewer from "../plots/PlotViewer.svelte";
+  import { PLOTS, fileTab } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
@@ -28,21 +30,26 @@
   });
 </script>
 
-<section class="inline" aria-label="Script with its output">
-  <div class="sheet">
-    {#if buffer?.loaded}
-      {#key path}
-        <Editor
-          text={buffer.text}
-          label="The script"
-          onchange={(text) => workspace.edit(path, text)}
-          onrun={() => void workspace.run()}
-          inline={output}
-        />
-      {/key}
-    {/if}
-  </div>
-</section>
+{#if workspace.views.active === PLOTS}
+  <!-- The plot viewer, opened from ⌘K, in the script's place; "Script" goes back. -->
+  <PlotViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
+{:else}
+  <section class="inline" aria-label="Script with its output">
+    <div class="sheet">
+      {#if buffer?.loaded}
+        {#key path}
+          <Editor
+            text={buffer.text}
+            label="The script"
+            onchange={(text) => workspace.edit(path, text)}
+            onrun={() => void workspace.run()}
+            inline={output}
+          />
+        {/key}
+      {/if}
+    </div>
+  </section>
+{/if}
 
 <style>
   .inline {

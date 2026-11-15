@@ -136,3 +136,41 @@ test("the layout chosen is kept with the project, and a new project opens in Inl
   await expect(inline).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("complementary")).toHaveCount(0);
 });
+
+test("the order of the strip, the plots pinned and the page chosen are kept with the project", async ({
+  page,
+  press,
+}) => {
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(page.getByRole("button", { name: "Panes", exact: true }));
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("tab", { name: "Plots" }));
+  const plots = page.getByTestId("plots");
+  const strip = plots.getByRole("list", { name: "Plots of the last run" });
+  await strip.getByRole("button", { name: "Show the plot w2010 · log(wage) against educ" }).focus();
+  await page.keyboard.press("Alt+ArrowRight");
+  await press(plots.getByRole("checkbox", { name: "Compare" }).nth(0));
+  await press(plots.getByRole("checkbox", { name: "Compare" }).nth(1));
+  await press(
+    plots.getByRole("group", { name: "Size" }).getByRole("button", { name: "One column" }),
+  );
+  await page.waitForTimeout(500);
+
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  // The Plots tab is the one shown; the run is made again for its plots.
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect
+    .poll(() => strip.locator(".name").allTextContents())
+    .toEqual(["w2010 · log(wage)", "w2010 · log(wage) against educ"]);
+  await expect(plots.getByTestId("comparing")).toHaveText("comparing 2");
+  await expect(plots.getByRole("button", { name: "One column" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});

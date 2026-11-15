@@ -3,6 +3,7 @@
   // decision #146: the top bar, one left panel, the main pane, and a line at the foot.
   import type { Engine } from "../engine/engine";
   import type { Project } from "../project/projects";
+  import { closePopOuts } from "../plots/popout";
   import type { TreeNode } from "../project/projects";
   import { codeLarger, codeSize, codeSmaller, codeUsual } from "../theme/codesize.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
@@ -31,6 +32,7 @@
   let console_ = $state<ReturnType<typeof ConsoleLine> | null>(null);
 
   async function close(): Promise<void> {
+    closePopOuts();
     await workspace.settle();
     onclose();
   }
@@ -60,6 +62,7 @@
     { name: "Code text: default size", hint: "14", run: codeUsual },
     { name: "Console: type a statement", hint: "⌃`", run: () => console_?.focus() },
     { name: "Output: clear", run: () => workspace.clear() },
+    { name: "Open the plot viewer", run: () => workspace.openPlots() },
     ...(workspace.views.layout === "panes"
       ? [
           {

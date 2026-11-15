@@ -20,6 +20,12 @@ describe("the view state of a project", () => {
     state.tabs = [fileTab("scripts/main.zeff"), fileTab("scripts/second.zeff"), "view:plots"];
     state.active = "view:plots";
     state.folded = ["data"];
+    state.plots = {
+      order: ["shape", "schooling"],
+      pinned: ["shape", "schooling"],
+      shown: "shape",
+      page: "slide",
+    };
     expect(readViews(writeViews(state))).toEqual(state);
   });
 
@@ -57,6 +63,20 @@ describe("the view state of a project", () => {
     const read = readViews(JSON.stringify({ left: { width: 5 }, output: { share: 7 } }));
     expect(read.left.width).toBe(180);
     expect(read.output.share).toBe(0.85);
+  });
+
+  it("reads the plot viewer's state, at most four plots pinned, an unknown page passed over", () => {
+    const read = readViews(
+      JSON.stringify({
+        plots: { order: ["a", "b"], pinned: ["a", "b", "c", "d", "e"], shown: 3, page: "poster" },
+      }),
+    );
+    expect(read.plots).toEqual({
+      order: ["a", "b"],
+      pinned: ["a", "b", "c", "d"],
+      shown: null,
+      page: "fit",
+    });
   });
 
   it("drops a tab written twice and one of no known kind, and shows a tab that is open", () => {

@@ -39,16 +39,34 @@ export function plotsOf(run: Run): PlotStatement[] {
     });
 }
 
-/** A figure asked for: which plot, by the line its statement begins on, and how large. */
-export interface Wanted {
-  line: number;
-  /** In pixels of the screen, whole numbers. */
-  width: number;
-  height: number;
-}
+/** A page of a journal or a slide, by the word `export` knows it by (Language Reference, section 7.6). */
+export type Page = "one_column" | "two_column" | "slide";
+
+/** The pages, with their sizes in millimetres as `export` has them. */
+export const PAGES: Record<Page, { name: string; width: number; height: number }> = {
+  one_column: { name: "One column", width: 89, height: 66 },
+  two_column: { name: "Two columns", width: 183, height: 110 },
+  slide: { name: "Slide", width: 254, height: 143 },
+};
+
+/**
+ * A figure asked for: which plot, by the line its statement begins on, and how large: the
+ * size of a place on the screen, in whole pixels, or a named page.
+ */
+export type Wanted =
+  { line: number; width: number; height: number; page?: undefined } | { line: number; page: Page };
 
 /** The name a figure asked for is kept under. */
-export const keyOf = (wanted: Wanted) => `${wanted.line}@${wanted.width}x${wanted.height}`;
+export const keyOf = (wanted: Wanted) =>
+  wanted.page === undefined
+    ? `${wanted.line}@${wanted.width}x${wanted.height}`
+    : `${wanted.line}@${wanted.page}`;
+
+/** The size of a figure as `export` is given it: a named page, or millimetres. */
+export const sizeArgument = (wanted: Wanted) =>
+  wanted.page === undefined
+    ? `[${millimetres(wanted.width)}, ${millimetres(wanted.height)}]`
+    : wanted.page;
 
 /** A length of the screen in millimetres, to a hundredth: a pixel is 1/96 of an inch. */
 export function millimetres(pixels: number): number {
@@ -89,9 +107,7 @@ export function withExports(text: string, plots: PlotStatement[], wanted: Wanted
       return;
     }
     const file = fileOf(index);
-    const statement =
-      `(${plot.source}\n` +
-      `).export("${file}", size: [${millimetres(one.width)}, ${millimetres(one.height)}])`;
+    const statement = `(${plot.source}\n).export("${file}", size: ${sizeArgument(one)})`;
     figures.push({ key: keyOf(one), file: `output/${file}`, line });
     added.push(statement);
     line += statement.split("\n").length;
@@ -114,4 +130,42 @@ export function sizeOf(svg: string): { width: number; height: number } | null {
   return found === null
     ? null
     : { width: (Number(found[1]) * 96) / 72, height: (Number(found[2]) * 96) / 72 };
+}
+
+/** The formats `export` writes a plot in. */
+export type Format = "svg" | "pdf" | "png";
+
+/**
+ * The script with one `export` added, of a plot to a file of the format and size chosen: what
+ * the interface runs to save a figure. Gives the file to read back.
+ */
+export function withExport(
+  text: string,
+  plot: PlotStatement,
+  format: Format,
+  size: string,
+): { text: string; file: string } {
+  const script = text.replace(/\n+$/, "");
+  const file = `zemp-export.${format}`;
+  return {
+    text: `${script === "" ? "" : `${script}\n`}(${plot.source}\n).export("${file}", size: ${size})\n`,
+    file: `output/${file}`,
+  };
+}
+
+/** A name for a plot's file: the name it is bound to, where its statement is a name alone. */
+export function nameOf(plot: PlotStatement): string {
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(plot.source.trim())
+    ? plot.source.trim()
+    : `figure-line-${plot.line}`;
+}
+
+/**
+ * The Zeff statement that writes this plot to a file, for the user to copy into a script:
+ * what the viewer's Export does, written as code (Zemp Specification, section 7, "Export").
+ */
+export function exportStatement(plot: PlotStatement, format: Format, size: string): string {
+  const source = plot.source.trim();
+  const named = /^[A-Za-z_][A-Za-z0-9_]*$/.test(source);
+  return `${named ? source : `(${plot.source}\n)`}.export("output/${nameOf(plot)}.${format}", size: ${size})`;
 }

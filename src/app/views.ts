@@ -28,6 +28,17 @@ export interface ViewState {
   active: string | null;
   /** The folders folded away in the project tree, by path. */
   folded: string[];
+  /** The plot viewer: each plot is named by the text of its statement. */
+  plots: {
+    /** The order of the gallery strip. */
+    order: string[];
+    /** The plots pinned side by side, two to four of them. */
+    pinned: string[];
+    /** The plot shown, or `null` for the first of the strip. */
+    shown: string | null;
+    /** The size plots are drawn at: to fit the pane, or a page of a journal or a slide. */
+    page: "fit" | "one_column" | "two_column" | "slide";
+  };
 }
 
 /** The narrowest and the widest the left panel goes. */
@@ -53,6 +64,7 @@ export function usual(): ViewState {
     tabs: [fileTab("scripts/main.zeff")],
     active: fileTab("scripts/main.zeff"),
     folded: [],
+    plots: { order: [], pinned: [], shown: null, page: "fit" },
   };
 }
 
@@ -109,6 +121,16 @@ export function readViews(text: string | null): ViewState {
       typeof active === "string" && state.tabs.includes(active) ? active : (state.tabs[0] ?? null);
   }
   state.folded = texts(from["folded"]) ?? [];
+  const plots = from["plots"] as Record<string, unknown> | undefined;
+  if (typeof plots === "object" && plots !== null) {
+    state.plots.order = texts(plots["order"]) ?? [];
+    state.plots.pinned = (texts(plots["pinned"]) ?? []).slice(0, 4);
+    if (typeof plots["shown"] === "string") state.plots.shown = plots["shown"];
+    const page = plots["page"];
+    if (page === "fit" || page === "one_column" || page === "two_column" || page === "slide") {
+      state.plots.page = page;
+    }
+  }
   return state;
 }
 

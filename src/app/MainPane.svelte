@@ -5,7 +5,7 @@
   import Editor from "../editor/Editor.svelte";
   import OutputPanel from "../output/OutputPanel.svelte";
   import { took, type Run } from "../output/run";
-  import PlotsPane from "../plots/PlotsPane.svelte";
+  import PlotViewer from "../plots/PlotViewer.svelte";
   import Splitter from "./Splitter.svelte";
   import { PLOTS, tabPath } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
@@ -68,7 +68,7 @@
     {#if path !== null}
       <span>{path.split("/").join(" › ")}</span>
     {:else if workspace.views.active === PLOTS}
-      <span>The plots of the last run, each drawn to fit this pane</span>
+      <span>The plot viewer: the plots of the last run</span>
     {:else}
       <span>No file is open. Choose one in the Project tab.</span>
     {/if}
@@ -133,7 +133,7 @@
       </div>
     </div>
   {:else if workspace.views.active === PLOTS}
-    <PlotsPane {workspace} />
+    <PlotViewer {workspace} />
   {:else}
     <div class="empty"></div>
   {/if}

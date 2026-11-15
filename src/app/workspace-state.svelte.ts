@@ -5,7 +5,16 @@ import type { Engine } from "../engine/engine";
 import type { FrameInfo } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { begin, blocks, clockOf, end, hear, type Run } from "../output/run";
-import { keyOf, plotsOf, withExports, type PlotStatement, type Wanted } from "../plots/figures";
+import {
+  keyOf,
+  plotsOf,
+  withExport,
+  withExports,
+  type Format,
+  type PlotStatement,
+  type Wanted,
+} from "../plots/figures";
+import { compared, moved, ordered, toggled } from "../plots/viewer";
 import { Session } from "../project/session";
 import { History, composed, consoleRun, outcomeOf, type Entry } from "./console";
 import {
@@ -313,12 +322,16 @@ export class Workspace {
   }
 
   /**
-   * A figure is wanted: the plot whose statement begins on `line`, at this size on the
-   * screen. It is drawn a moment after the last thing asked for, so that a pane being
-   * resized is drawn once, when the resizing has stopped. Gives the name it is kept under.
+   * A figure is wanted: a plot, by the line its statement begins on, at the size of a place on
+   * the screen or at a named page. It is drawn a moment after the last thing asked for, so
+   * that a pane being resized is drawn once, when the resizing has stopped. Gives the name it
+   * is kept under.
    */
-  want(line: number, width: number, height: number): string {
-    const wanted = { line, width: Math.round(width), height: Math.round(height) };
+  want(asked: Wanted): string {
+    const wanted: Wanted =
+      asked.page === undefined
+        ? { line: asked.line, width: Math.round(asked.width), height: Math.round(asked.height) }
+        : asked;
     const key = keyOf(wanted);
     if (!this.#wanted.has(key)) {
       this.#wanted.set(key, wanted);
@@ -387,6 +400,97 @@ export class Workspace {
     })();
     this.#busy = work;
     await work;
+  }
+
+  /**
+   * Save a plot of the last run as a file the engine writes: the script is run with one
+   * `export` of the format and size chosen, and the bytes of the file are given back for the
+   * browser to save. The engine's words are given where it could not.
+   */
+  async exported(plot: PlotStatement, format: Format, size: string): Promise<Uint8Array | string> {
+    const before = this.#busy;
+    let result: Uint8Array | string = "No run to save a plot of.";
+    const work = (async () => {
+      await before;
+      const run = this.lastRun;
+      if (run === null || run.state === "running") {
+        return;
+      }
+      const sent = withExport(run.text, plot, format, size);
+      const told = consoleRun(run.script, sent.text);
+      try {
+        const outcome = await this.session.run(run.script, sent.text, told.hear);
+        told.end(outcome);
+        const bytes = outcome.stopped ? null : await this.engine.read(sent.file);
+        result =
+          bytes ??
+          (blocks(told.run)
+            .flatMap((block) => block.said)
+            .filter((one) => one.kind === "error")
+            .map((one) => one.sentence)
+            .join(" ") ||
+            "The engine wrote no file.");
+      } catch (error) {
+        result = (error as Error).message;
+      }
+    })();
+    this.#busy = work;
+    await work;
+    return result;
+  }
+
+  // The plot viewer: what it shows is view state, kept with the project.
+
+  /** The plots of the last run in the order of the gallery strip. */
+  get strip(): PlotStatement[] {
+    return ordered(this.plots, this.views.plots.order);
+  }
+
+  /** The plot the viewer shows: the one chosen, or the first of the strip. */
+  get shownPlot(): PlotStatement | null {
+    const strip = this.strip;
+    return strip.find((plot) => plot.source === this.views.plots.shown) ?? strip[0] ?? null;
+  }
+
+  /** The plots pinned side by side; none where fewer than two are pinned. */
+  get comparedPlots(): PlotStatement[] {
+    return compared(this.strip, this.views.plots.pinned);
+  }
+
+  showPlot(plot: PlotStatement): void {
+    this.views.plots.shown = plot.source;
+    this.#keep();
+  }
+
+  /** Move the plot at `from` in the strip to stand at `to`. */
+  movePlot(from: number, to: number): void {
+    this.views.plots.order = moved(
+      this.strip.map((plot) => plot.source),
+      from,
+      to,
+    );
+    this.#keep();
+  }
+
+  pinPlot(plot: PlotStatement): void {
+    this.views.plots.pinned = toggled(this.views.plots.pinned, plot.source);
+    this.#keep();
+  }
+
+  unpinAll(): void {
+    this.views.plots.pinned = [];
+    this.#keep();
+  }
+
+  setPage(page: ViewState["plots"]["page"]): void {
+    this.views.plots.page = page;
+    this.#keep();
+  }
+
+  /** Open the plot viewer: its tab is added where it is not there, and shown. */
+  openPlots(): void {
+    Object.assign(this.views, withTab(this.views, PLOTS));
+    this.#keep();
   }
 
   /** How the output stands to the script: not run yet, running, in sync, or edited since. */

@@ -104,11 +104,10 @@ test("in Panes a plot is under its statement in the Output panel and in the Plot
 
   await press(tabs.getByRole("tab", { name: "Plots" }));
   const plots = page.getByTestId("plots");
-  await expect(plots.getByRole("heading", { level: 2 })).toHaveText([
+  await expect(plots.getByRole("heading", { level: 2 })).toHaveText(
     /line 17\s+w2010 · log\(wage\) against educ/,
-    /line 21\s+w2010 · log\(wage\)/,
-  ]);
-  const inTab = await figure(page, 17, plots);
+  );
+  const inTab = await figure(page, 17, plots.locator(".stage"));
   expect(inTab.shown).toEqual(inTab.place);
   expect(Math.abs(inTab.own![0]! - inTab.shown[0]!)).toBeLessThan(1);
   // Larger than in the panel, and a different drawing: laid out for this place.
@@ -132,16 +131,17 @@ test("when its pane is made narrower a plot is laid out afresh, never stretched,
   await expect(page.getByRole("status")).toHaveText("done");
   await press(page.getByRole("tab", { name: "Plots" }));
   const plots = page.getByTestId("plots");
-  const wide = await figure(page, 17, plots);
+  const stage = plots.locator(".stage");
+  const wide = await figure(page, 17, stage);
 
   // The left panel is widened with the keyboard, which makes the plots' pane narrower.
   const edge = page.getByRole("separator", { name: "The width of the left panel" });
   await edge.focus();
   for (let step = 0; step < 12; step++) await page.keyboard.press("ArrowRight");
   await expect
-    .poll(async () => (await figure(page, 17, plots)).shown[0], { timeout: 10_000 })
+    .poll(async () => (await figure(page, 17, stage)).shown[0], { timeout: 10_000 })
     .toBeLessThan(wide.shown[0]! - 100);
-  const narrow = await figure(page, 17, plots);
+  const narrow = await figure(page, 17, stage);
   // A new figure of new proportions for the new place, at its own size.
   expect(narrow.shown).toEqual(narrow.place);
   expect(Math.abs(narrow.own![0]! - narrow.shown[0]!)).toBeLessThan(1);

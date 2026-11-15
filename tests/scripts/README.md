@@ -10,3 +10,7 @@ refuses before it starts.
 adds to draw its two plots at 567 by 352 pixels (150.02 by 93.13 mm); the two SVG files beside it are
 what the released command line wrote for that text. A unit test holds the text the interface composes
 to this file, and the engine's worker build to these bytes.
+
+`figures/schooling-one-column.svg`, `.pdf` and `.png` are what the released command line wrote for the
+example with `(schooling).export("zemp-export.<format>", size: one_column)` added: the file the plot
+viewer's **Save…** must give for the same plot, format and page, byte for byte.

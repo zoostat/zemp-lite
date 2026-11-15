@@ -5,7 +5,7 @@
   // before it stays, at its own size. A figure is drawn in the engine's light print theme, on
   // a light ground in both themes of the interface.
   import type { Workspace } from "../app/workspace-state.svelte";
-  import { imageOf, type PlotStatement } from "./figures";
+  import { PAGES, imageOf, pixels, type Page, type PlotStatement } from "./figures";
 
   let {
     workspace,
@@ -13,6 +13,7 @@
     ratio = 0.62,
     height = null,
     most = 760,
+    page = null,
   }: {
     workspace: Workspace;
     plot: PlotStatement;
@@ -22,6 +23,8 @@
     height?: number | null;
     /** The widest the figure is drawn, in pixels. */
     most?: number;
+    /** A page of a journal or a slide to draw the figure at, in place of the size of its place. */
+    page?: Page | null;
   } = $props();
 
   let place = $state<HTMLElement | null>(null);
@@ -29,7 +32,9 @@
 
   $effect(() => {
     if (place === null) return;
-    const watch = new ResizeObserver((entries) => {
+    // The watcher is the window's that the place is in: a plot popped out is in another.
+    const Watcher = place.ownerDocument.defaultView?.ResizeObserver ?? ResizeObserver;
+    const watch = new Watcher((entries) => {
       const box = entries[0]?.contentRect;
       if (box !== undefined) width = Math.floor(Math.min(box.width, most));
     });
@@ -37,15 +42,27 @@
     return () => watch.disconnect();
   });
 
-  const tall = $derived(Math.round(height ?? width * ratio));
+  // A named page has its own size on the screen: its millimetres, at 96 pixels to the inch.
+  const paged = $derived(
+    page === null
+      ? null
+      : {
+          width: Math.round(pixels(PAGES[page].width)),
+          height: Math.round(pixels(PAGES[page].height)),
+        },
+  );
+  const wide = $derived(paged?.width ?? width);
+  const tall = $derived(paged?.height ?? Math.round(height ?? width * ratio));
   // What is asked of the engine, kept under a name; a place of no size asks for nothing.
   let key = $state<string | null>(null);
   $effect(() => {
-    if (width < 120 || tall < 80) {
+    if (page === null && (width < 120 || tall < 80)) {
       key = null;
       return;
     }
-    const mine = workspace.want(plot.line, width, tall);
+    const mine = workspace.want(
+      page === null ? { line: plot.line, width, height: tall } : { line: plot.line, page },
+    );
     key = mine;
     return () => workspace.unwant(mine);
   });
@@ -55,12 +72,12 @@
   let shown = $state<{ svg: string; width: number; height: number } | null>(null);
   $effect(() => {
     const svg = figure?.svg;
-    if (typeof svg === "string") shown = { svg, width, height: tall };
+    if (typeof svg === "string") shown = { svg, width: wide, height: tall };
   });
 </script>
 
 <div class="figure" bind:this={place} data-testid="figure" data-line={plot.line}>
-  <div class="frame" style:height="{tall}px" style:width="{width}px">
+  <div class="frame" class:page={page !== null} style:height="{tall}px" style:width="{wide}px">
     {#if shown !== null}
       <img
         src={imageOf(shown.svg)}
@@ -90,6 +107,11 @@
     border-radius: 8px;
     overflow: hidden;
     position: relative;
+  }
+  /* A page of a journal is shown as a sheet of paper. */
+  .frame.page {
+    border-radius: 2px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
   }
   img {
     display: block;
