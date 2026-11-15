@@ -59,3 +59,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 5 `[function]`: projects in the browser (the private file system, the welcome screen, the Scratch project with the example).
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 5 (projects in the browser)
+
+**Done.** Step 5 `[function]`: projects kept in the browser's private file system, the welcome screen of the design guide (New project, Scratch project, recent projects, the light and dark button, the watermark), a data file added from the computer, and the Scratch project with the example. The colours of both themes, the three font families (shipped, with their licences) and the kept theme were brought forward from step 6. An open project shows an interim page (files, the script in a box, Run, Cancel, output) until the workspace of step 6.
+
+**Green.** `npm run routine`: 49 unit tests, the worker's 15, the measure, and 19 browser tests (10 in Chromium, 9 of 10 in WebKit plus its private-window test). The runs on GitHub for steps 3 and 4 were green.
+
+**Next.** Step 6 `[engine]`: the shell of the workspace in Panes (the top bar, the tabbed left panel, the editor tabs, the Output panel under the script, the view state kept for the project).
+
+**For the owner to decide.** Nothing.

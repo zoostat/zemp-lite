@@ -1,51 +1,119 @@
 import { readFileSync } from "node:fs";
+import type { Page } from "@playwright/test";
 import { expect, test } from "./support";
 
 const example = (file: string) =>
   readFileSync(new URL(`../../examples/scratch/${file}`, import.meta.url), "utf8");
 
-test("the page opens, names the release, and starts the released engine", async ({ page }) => {
+const READY = "engine Zeff 0.7.0 ready";
+
+/** Open the Scratch project from the welcome screen and wait for the engine. */
+async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page).toHaveURL(/#\/p\/scratch$/);
+  await expect(page.getByRole("status")).toHaveText(READY);
+}
+
+test("the welcome screen opens, names the release and says where projects are kept", async ({
+  page,
+  browserName,
+}) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  const before = Date.now();
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Zemp Lite 0.1");
   // The page is cross-origin isolated, so the cancel flag can be shared with the worker.
   expect(await page.evaluate(() => crossOriginIsolated)).toBe(true);
-  await expect(page.getByRole("status")).toHaveText("engine Zeff 0.7.0 ready");
-  // For the notes of the release, not a limit: from asking for the page to the engine ready.
-  test.info().annotations.push({ type: "engine ready", description: `${Date.now() - before} ms` });
+  await expect(page.getByRole("button", { name: "New project…" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Open folder…" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Scratch project" })).toBeEnabled();
+  // WebKit's test profile behaves as a private window does, which keeps nothing; that
+  // projects are kept, in both browsers, is tested in `kept.spec.ts`.
+  await expect(
+    page.getByText(browserName === "webkit" ? "Not kept." : "Kept on this computer."),
+  ).toBeVisible();
+  await expect(page.getByText("No project yet.")).toBeVisible();
+  await expect(page.getByText("engine Zeff 0.7.0 · in this browser")).toBeVisible();
+  // The shipped fonts are the ones drawn: no outside server is asked for one.
+  await page.evaluate(() => document.fonts.ready);
+  expect(await page.evaluate(() => document.fonts.check('16px "Atkinson Hyperlegible Next"'))).toBe(
+    true,
+  );
+  expect(await page.evaluate(() => document.fonts.check('34px "Newsreader"'))).toBe(true);
   expect(errors).toEqual([]);
 });
 
-test("a script runs in the worker and what it prints is shown", async ({ page, press }) => {
-  await page.goto("/");
-  await expect(page.getByRole("status")).toHaveText("engine Zeff 0.7.0 ready");
-  await press(page.getByRole("button", { name: "Run" }));
-  await expect(page.getByRole("status")).toHaveText("done");
-  await expect(page.getByTestId("output")).toHaveText("Hello from Zeff\n2\n");
-});
-
-test("the example prints in the browser what `zeff run` 0.7.0 prints, byte for byte", async ({
+test("the light and dark button switches the theme, and the choice is remembered", async ({
   page,
   press,
 }) => {
+  await page.emulateMedia({ colorScheme: "light" });
   await page.goto("/");
-  await expect(page.getByRole("status")).toHaveText("engine Zeff 0.7.0 ready");
-  await page.getByLabel("A Zeff script").fill(example("scripts/main.zeff"));
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  const ground = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(await ground()).toBe("rgb(255, 255, 255)");
+  await press(page.getByRole("button", { name: "Switch to the dark theme" }));
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  expect(await ground()).toBe("rgb(22, 23, 27)");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByRole("button", { name: "Switch to the light theme" })).toBeVisible();
+});
+
+test("with no choice made, the theme is the system's", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+});
+
+test("the Scratch project holds the example, which prints what `zeff run` 0.7.0 prints, byte for byte", async ({
+  page,
+  press,
+}) => {
+  const before = Date.now();
+  await scratch(page, press);
+  // For the notes of the release, not a limit: from asking for the page to the engine ready.
+  test.info().annotations.push({ type: "engine ready", description: `${Date.now() - before} ms` });
+  await expect(page.getByLabel("The script")).toHaveValue(example("scripts/main.zeff"));
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
   expect(await page.getByTestId("output").textContent()).toBe(example("expected/stdout.txt"));
   expect(await page.getByTestId("messages").textContent()).toBe(example("expected/stderr.txt"));
 });
 
+test("a data file chosen from the computer is added under data/, read by a run, and no script is changed", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  const script = page.getByLabel("The script");
+  await page.getByLabel("Add a data file…").setInputFiles({
+    name: "pay.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("id,wage\n1,23.5\n2,19\n3,31.25\n"),
+  });
+  await expect(page.getByRole("listitem").filter({ hasText: "pay.csv" })).toContainText("28 B");
+  await expect(script).toHaveValue(example("scripts/main.zeff"));
+  await script.fill('print(import("data/pay.csv").n_rows())\n');
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("output")).toHaveText("3\n");
+  // The same name a second time is refused, in words.
+  await page.getByLabel("Add a data file…").setInputFiles({
+    name: "pay.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from("id\n9\n"),
+  });
+  await expect(page.getByRole("alert")).toContainText("`data/pay.csv` is already in this project");
+});
+
 test("a long run is cancelled between two steps and the page stays usable", async ({
   page,
   press,
 }) => {
-  await page.goto("/");
-  await expect(page.getByRole("status")).toHaveText("engine Zeff 0.7.0 ready");
-  const script = page.getByLabel("A Zeff script");
+  await scratch(page, press);
+  const script = page.getByLabel("The script");
   await script.fill(
     'print("started")\nfor i in 1..200000 {\n    let rows = dataset(wages).where(year == 2015).n_rows()\n}\nprint("never")\n',
   );
@@ -63,4 +131,20 @@ test("a long run is cancelled between two steps and the page stays usable", asyn
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(page.getByTestId("output")).toHaveText("42\n");
+});
+
+test("in a private window, where the browser keeps nothing, the screen says so and projects still work", async ({
+  page,
+  press,
+  browserName,
+}) => {
+  // Only WebKit refuses a private window its storage; the others keep it for the session.
+  test.skip(browserName !== "webkit", "this browser gives a private window storage");
+  await page.goto("/");
+  await expect(page.getByText("Not kept.")).toBeVisible();
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  expect(await page.getByTestId("output").textContent()).toBe(example("expected/stdout.txt"));
 });

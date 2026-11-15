@@ -1,0 +1,42 @@
+/* What every screen shares. App screens are set at 13.5 px and never below 12.5 (the design
+   guide, section 4); the welcome screen is set at reading size by its own rules. */
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--window);
+  color: var(--ink);
+  font:
+    13.5px/1.5 "Atkinson Hyperlegible Next",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+button,
+input,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+.mono {
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
