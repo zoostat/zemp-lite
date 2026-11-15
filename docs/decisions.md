@@ -298,3 +298,11 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **The owner's second question, how a dataset is looked at.** The data and variables viewers belong to the 0.2 alpha (open decisions #75 and #146, item 8), and 0.1 has none. In 0.1 a frame is listed in the Objects tab of Panes with its rows and variables, and is looked at with Zeff: `wages.head(10)` prints its first rows and `wages.describe()` its variables, in the script or in the console line. Whether the viewer is brought forward is the owner's to say; it is put to him.
 
 **Reason.** The owner's trial of 15 November 2026.
+
+## 15 November 2026: the data viewer stays with the 0.2 alpha
+
+**The owner's word.** "Keep it for 0.2", to the question whether the data and variables viewers should be brought forward into 0.1.
+
+**Choice.** Release 0.1 has no data viewer. It is built at the 0.2 alpha, with Zeff 0.8.0, to the owner's mockup (open decisions #75 and #146, item 8), as section 15 of the Zemp Specification places it. In 0.1 a frame is listed in the Objects tab and looked at with `head` and `describe`.
+
+**Reason.** The release plan, and the standing rule that work is not pulled forward from a later release.

@@ -158,4 +158,4 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Next.** The owner's further trial; then "Release 0.1", or his changes.
 
-**For the owner to decide.** Whether the data viewer stays with the 0.2 alpha or is brought forward into 0.1.
+**For the owner to decide.** Nothing: he ruled the same day that the data viewer stays with the 0.2 alpha.
