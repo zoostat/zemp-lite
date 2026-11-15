@@ -1,0 +1,41 @@
+{
+  "name": "zemp-lite",
+  "version": "0.1.0-dev",
+  "description": "Zemp Lite, the code-first workspace for the Zeff statistics language",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "prettier --write .",
+    "check:format": "prettier --check .",
+    "check:lint": "eslint .",
+    "check:types": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && tsc --noEmit -p tsconfig.node.json",
+    "test:unit": "vitest run",
+    "browsers": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium webkit",
+    "test:browser": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
+    "routine": "npm run check:format && npm run check:lint && npm run check:types && npm run test:unit && npm run test:browser"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.1",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.15.0",
+    "eslint-plugin-svelte": "3.24.1",
+    "globals": "17.14.0",
+    "prettier": "3.10.1",
+    "prettier-plugin-svelte": "4.1.1",
+    "svelte": "5.57.3",
+    "svelte-check": "4.7.8",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}

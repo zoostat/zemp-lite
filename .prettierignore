@@ -1,0 +1,11 @@
+# The documents are prose and the specification is a copy: neither is laid out by a tool.
+docs/
+*.md
+LICENSE
+NOTICE
+dist/
+target/
+node_modules/
+test-results/
+playwright-report/
+package-lock.json
