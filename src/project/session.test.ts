@@ -45,7 +45,7 @@ describe("a session", () => {
     expect(runs.asked).toEqual([
       "open demo",
       "put scripts/main.zeff (8)",
-      "put zeff.toml (59)",
+      "put zeff.toml (177)",
       "run scripts/main.zeff: print(1)",
     ]);
   });

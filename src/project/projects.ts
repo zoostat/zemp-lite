@@ -48,9 +48,22 @@ export function folderOf(name: string): string {
   return folder === "" ? "project" : folder;
 }
 
-/** The `zeff.toml` of a new project: its name, the engine it is pinned to, and the edition. */
+/**
+ * The `zeff.toml` of a new project: its name, the engine it is pinned to, and the edition,
+ * each with the short comment the `zeff` command writes beside it. The file is the one
+ * `zeff new` of the same engine writes, to the character, so that a project looks the same
+ * whichever of the two made it (Zemp Specification, section 2, "Same projects").
+ */
 export function manifest(name: string): string {
-  return `[project]\nname = ${JSON.stringify(name)}\nzeff = "${ENGINE}"\nedition = "preview"\n`;
+  // A setting is set in 26 columns, as the command sets it, and its comment follows.
+  const line = (setting: string, comment: string) =>
+    `${setting}${" ".repeat(Math.max(0, 26 - [...setting].length))}# ${comment}\n`;
+  return (
+    "[project]\n" +
+    line(`name = ${JSON.stringify(name)}`, "the project's name") +
+    line(`zeff = "${ENGINE}"`, "the engine this project runs on, exactly") +
+    line('edition = "preview"', '"2027" from Zeff 1.0.0')
+  );
 }
 
 /** The name a `zeff.toml` gives its project, or `null` where it gives none that can be read. */

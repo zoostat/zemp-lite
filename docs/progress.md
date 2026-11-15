@@ -159,3 +159,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** The owner's further trial; then "Release 0.1", or his changes.
 
 **For the owner to decide.** Nothing: he ruled the same day that the data viewer stays with the 0.2 alpha.
+
+## 15 November 2026, release 0.1, the owner's trial continued
+
+**Done.** The owner asked what Check does and what `zeff.toml` is (answered), ruled that the data viewer stays with the 0.2 alpha, and chose that `zeff.toml` carry the comments the `zeff` command writes: a new project's file is now the command's, to the character.
+
+**Green.** `npm run routine`, whole.
+
+**Next.** The owner's further trial; then "Release 0.1", or his changes.
+
+**For the owner to decide.** Nothing.

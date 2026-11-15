@@ -80,10 +80,19 @@ describe("the projects of a browser", () => {
     expect(folderOf("***")).toBe("project");
   });
 
-  it("writes a manifest the engine reads, and reads the name back", () => {
+  it("writes the manifest `zeff new` of the same engine writes, to the character, and reads the name back", () => {
+    // What the released command line of Zeff 0.7.0 writes for `zeff new demo`.
     expect(manifest("demo")).toBe(
-      '[project]\nname = "demo"\nzeff = "0.7.0"\nedition = "preview"\n',
+      "[project]\n" +
+        'name = "demo"             # the project\'s name\n' +
+        'zeff = "0.7.0"            # the engine this project runs on, exactly\n' +
+        'edition = "preview"       # "2027" from Zeff 1.0.0\n',
     );
+    expect(nameIn(manifest("demo"))).toBe("demo");
+    // A name too long for the 26 columns pushes its comment along; the name is still read back.
+    const long = "Returns to schooling, a second look";
+    expect(manifest(long)).toContain(`name = "${long}"# the project's name\n`);
+    expect(nameIn(manifest(long))).toBe(long);
     expect(nameIn(manifest('A "quoted" name'))).toBe('A "quoted" name');
     expect(nameIn('[project]\n  name = "x"  # the name\n')).toBe("x");
     expect(nameIn('[project]\nzeff = "0.7.0"\n')).toBeNull();
@@ -185,7 +194,7 @@ describe("an open project", () => {
           { name: "main.zeff", kind: "file", size: 8, path: "scripts/main.zeff", children: [] },
         ],
       },
-      { name: "zeff.toml", kind: "file", size: 59, path: "zeff.toml", children: [] },
+      { name: "zeff.toml", kind: "file", size: 177, path: "zeff.toml", children: [] },
     ]);
     expect((await project.files()).map((file) => file.path)).toEqual([
       "scripts/extra.zeff",

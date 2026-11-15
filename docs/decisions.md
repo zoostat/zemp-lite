@@ -306,3 +306,17 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Choice.** Release 0.1 has no data viewer. It is built at the 0.2 alpha, with Zeff 0.8.0, to the owner's mockup (open decisions #75 and #146, item 8), as section 15 of the Zemp Specification places it. In 0.1 a frame is listed in the Objects tab and looked at with `head` and `describe`.
 
 **Reason.** The release plan, and the standing rule that work is not pulled forward from a later release.
+
+## 15 November 2026: `zeff.toml` as the `zeff` command writes it
+
+**The owner's question and word.** Since the engine's version in `zeff.toml` is not to be changed lightly, should the file say so in comments? Shown two wordings, he chose "Version A": the comments the `zeff` command already writes.
+
+**Choice.** A project made in Zemp Lite now has the `zeff.toml` that `zeff new` of the same engine writes, to the character: each of its three settings set in 26 columns with its short comment ("the project's name"; "the engine this project runs on, exactly"; "\"2027\" from Zeff 1.0.0"). Until now Zemp Lite wrote the three settings bare, which was an oversight: a project should look the same whichever tool made it (Zemp Specification, section 2, "Same projects"). A name with a quote in it is written with its escapes, which the command, taking a folder's name, never meets.
+
+**Not chosen.** A longer caveat of Zemp Lite's own at the top of the file: the two tools would differ again. If a stronger caveat is wanted, it belongs in `zeff new`, in the Zeff repository, and is then taken from there.
+
+**Existing projects** keep the file they have; the change is for projects made from now on.
+
+**Held by.** A unit test holding the file for `demo` to what the released command line of 0.7.0 writes for `zeff new demo`, and reading the name back from it, from a name too long for the 26 columns and from one with quotes; the released engine was run on a file with such a long name.
+
+**Reason.** The owner's ruling of 15 November 2026.
