@@ -14,3 +14,8 @@ to this file, and the engine's worker build to these bytes.
 `figures/schooling-one-column.svg`, `.pdf` and `.png` are what the released command line wrote for the
 example with `(schooling).export("zemp-export.<format>", size: one_column)` added: the file the plot
 viewer's **Save…** must give for the same plot, format and page, byte for byte.
+
+`specification-sample.stderr` is what the released command line says of the specification's sample
+script (`docs/spec/zeff_samples.zeff`) run as a project's `scripts/main.zeff`. That script is written
+for Zeff 1.0 and uses a module of a project of its own, so the engine of 0.7.0 refuses it before it
+runs; the prototype must show the refusal as the command line words it.

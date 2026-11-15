@@ -139,3 +139,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 13 `[function]`: the pre-release routine (the whole suite in both browsers on GitHub, the example and the sample script read by eye against `zeff run`, the measures recorded, the notes drafted). The release is then the owner's to try and to call: "Release 0.1".
 
 **For the owner to decide.** Nothing until the prototype is tried.
+
+## 15 November 2026, release 0.1, step 13 (the pre-release routine, up to the owner's trial)
+
+**Done.** Steps 2 to 12 were built this day, each at a green commit, under the owner's instruction to work on through them. Step 13 `[function]` is done up to its last line: the whole routine is green; the eight sample projects of Zeff 0.7.0 print through this build what Zeff expects, byte for byte, and that check is in the routine; the measures are recorded; the notes are drafted in `docs/releases/0.1-notes.md`.
+
+**Green.** `npm run routine`: format, lint, type check; the worker's 7 native and 8 message tests; the measure (2,549.7 kB compressed, cold start 53.5 ms); the eight sample projects; 114 unit tests; 152 browser tests in Chromium and WebKit (2 skipped by design).
+
+**Next.** The owner tries the prototype (`npm run build`, then `npm run preview`, in `~/dev/zemp-lite`; the Scratch project, Run). When he says "Release 0.1": the closing routine of the standing instructions (the version set to 0.1.0, the notes made final, the tag and the GitHub release). After it, "Start release 0.2" once Zeff 0.8.0 is released.
+
+**For the owner to decide.** Whether the prototype is what he wants of 0.1, after trying it. For the Zeff sessions (a note is in the shared folder): the hand-over of plots to an interface, which the alpha needs of Zeff 0.8.0 and no step there names yet; and the amendment of section 5's paragraph "The look" with #146.

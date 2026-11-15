@@ -1,0 +1,7 @@
+error[Z0103]: no module is called `robustness`: there is no `functions/robustness.zeff`
+ --> scripts/main.zeff:17:1
+   |
+17 | use functions::robustness                             // functions/robustness.zeff, shown in section 6; use comes first
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^ not a module of the project
+   |
+   = help: the project has no `functions/` folder yet; a module is one file in it

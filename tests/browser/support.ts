@@ -146,8 +146,11 @@ export async function saidAsWritten(page: Page): Promise<string> {
           const code = card.querySelector(".code")?.textContent;
           const sentence = card.querySelector(".sentence")?.textContent ?? "";
           const detail = card.querySelector(".detail")?.textContent ?? "";
+          // The engine sets its advice under the rule of the excerpt, which stands further in
+          // where the line's number has more digits.
+          const rule = /^( +)\|$/m.exec(detail)?.[1] ?? "  ";
           const help = [...card.querySelectorAll(".help")].map(
-            (one) => `  = help: ${one.textContent}\n`,
+            (one) => `${rule}= help: ${one.textContent}\n`,
           );
           const line = detail === "" ? ` (line ${block.getAttribute("data-line")})` : "";
           return (

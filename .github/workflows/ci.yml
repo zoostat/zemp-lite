@@ -122,6 +122,9 @@ jobs:
       - name: Measure the worker's compressed size and cold start (risk R4)
         run: npm run measure:worker
 
+      - name: The engine's own sample projects, through this worker, against their expected output
+        run: npm run check:samples
+
       # After the worker is built: one unit test runs the engine itself, to hold the figures
       # the interface asks for to the bytes the released command line writes.
       - name: Unit tests
