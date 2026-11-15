@@ -4,8 +4,9 @@
 import type { Engine } from "../engine/engine";
 import type { FrameInfo } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
-import { begin, clockOf, end, hear, type Run } from "../output/run";
+import { begin, blocks, clockOf, end, hear, type Run } from "../output/run";
 import { Session } from "../project/session";
+import { History, composed, consoleRun, outcomeOf, type Entry } from "./console";
 import {
   fileTab,
   leftWidth,
@@ -61,6 +62,16 @@ export class Workspace {
   /** Something the user asked for that could not be done, in words. */
   problem = $state("");
 
+  /** The console: what was typed there in this window, with what came of each line. */
+  entries = $state<Entry[]>([]);
+  /** Whether the console's drawer is open. */
+  consoleOpen = $state(false);
+  readonly history = new History();
+  /** The statements the console has kept: each runs again before the next one typed. */
+  #kept: string[] = [];
+
+  /** The run or the console statement that is going, which the next console statement waits for. */
+  #busy: Promise<void> = Promise.resolve();
   #saving: Promise<void> = Promise.resolve();
   #keeping: ReturnType<typeof setTimeout> | null = null;
 
@@ -236,6 +247,12 @@ export class Workspace {
     if (this.running) {
       return;
     }
+    const work = this.#run();
+    this.#busy = work;
+    await work;
+  }
+
+  async #run(): Promise<void> {
     const script = this.scriptPath;
     await this.#load(script);
     const text = this.buffers[script]?.text ?? "";
@@ -260,6 +277,80 @@ export class Workspace {
     } finally {
       this.running = false;
     }
+  }
+
+  /** How the output stands to the script: not run yet, running, in sync, or edited since. */
+  get sync(): string {
+    if (this.running) return "running";
+    if (this.lastRun === null) return "not run yet";
+    return this.edited ? "edited · not run" : "in sync";
+  }
+
+  /** How many warnings the last run gave. */
+  get warnings(): number {
+    return this.lastRun === null
+      ? 0
+      : blocks(this.lastRun).reduce(
+          (count, block) => count + block.said.filter((one) => one.kind === "warning").length,
+          0,
+        );
+  }
+
+  /**
+   * A line was entered in the console. A statement runs after the script and the statements
+   * the console has kept, and is not added to the script; a line that begins with a colon is
+   * a word to the console itself.
+   */
+  async enter(line: string): Promise<void> {
+    const statement = line.trim();
+    if (statement === "") {
+      return;
+    }
+    this.history.add(line);
+    this.consoleOpen = true;
+    if (statement.startsWith(":")) {
+      if (statement === ":clear") {
+        this.entries = [];
+        this.#kept = [];
+      } else {
+        this.entries.push({
+          statement,
+          state: "done",
+          printed: "",
+          said: [],
+          told: `\`${statement.split(/\s/)[0]}\` comes with the alpha; \`:clear\` empties the console.`,
+        });
+      }
+      return;
+    }
+    this.entries.push({ statement, state: "running", printed: "", said: [], told: "" });
+    const entry = this.entries[this.entries.length - 1] as Entry;
+    // A statement entered while something runs waits its turn: none is dropped.
+    const before = this.#busy;
+    const work = (async () => {
+      await before;
+      const script = this.scriptPath;
+      await this.#load(script);
+      const { text, from } = composed(this.buffers[script]?.text ?? "", this.#kept, statement);
+      const told = consoleRun(script, text);
+      this.running = true;
+      try {
+        await this.#saving;
+        const outcome = await this.session.run(script, text, told.hear);
+        told.end(outcome);
+        Object.assign(entry, outcomeOf(told.run, from));
+        // A statement that ran is kept, so that the next one typed sees what it made.
+        if (entry.state === "done") this.#kept.push(statement);
+        this.frames = outcome.frames;
+      } catch (error) {
+        entry.state = "failed";
+        entry.told = (error as Error).message;
+      } finally {
+        this.running = false;
+      }
+    })();
+    this.#busy = work;
+    await work;
   }
 
   /** End the run: before its next step where that can be asked, at once where it cannot. */

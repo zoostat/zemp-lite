@@ -9,8 +9,8 @@
 
   let { workspace }: { workspace: Workspace } = $props();
 
-  // Inline shows a script: the one in the tab shown where that is a script, or the one Run runs.
-  const path = $derived(workspace.scriptPath);
+  // Inline shows the file of the tab shown, or the script Run runs where no tab is open.
+  const path = $derived(workspace.activePath ?? workspace.scriptPath);
   const buffer = $derived(workspace.buffers[path]);
   const run = $derived(workspace.lastRun);
   // The blocks of the last run belong under this script only where it is the one that ran.

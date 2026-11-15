@@ -11,16 +11,20 @@
   let {
     projects,
     lasting,
+    naming: asked = false,
     onopen,
   }: {
     projects: Projects;
+    /** Whether the screen opens asking for a new project's name. */
+    naming?: boolean;
     /** Whether the browser keeps the projects after the tab is closed. */
     lasting: boolean;
     onopen: (folder: string) => void;
   } = $props();
 
   let recent = $state<ProjectInfo[]>([]);
-  let naming = $state(false);
+  // svelte-ignore state_referenced_locally
+  let naming = $state(asked);
   let name = $state("");
   let problem = $state("");
   const now = Date.now();

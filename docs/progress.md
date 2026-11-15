@@ -109,3 +109,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 10 `[function]`: ⌘K and the console line.
 
 **For the owner to decide.** Nothing.
+
+## 15 November 2026, release 0.1, step 10 (⌘K and the console line)
+
+**Done.** Step 10 `[function]`: the command palette (⌘K) with the commands that exist, and the console line at the foot of both layouts, which runs a statement after the script without adding it to the script, with its history, its drawer and the status.
+
+**Green.** `npm run routine`: 96 unit tests, the worker's 15, the measure, and 108 browser tests in the two browsers (2 skipped by design). The run on GitHub for step 9 was green.
+
+**Next.** Step 11 `[engine]`: a plot from the engine, at the size of its pane.
+
+**For the owner to decide.** Nothing.

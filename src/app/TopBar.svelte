@@ -8,7 +8,14 @@
   import { switchTheme, theme } from "../theme/theme.svelte";
   import type { Workspace } from "./workspace-state.svelte";
 
-  let { workspace, onclose }: { workspace: Workspace; onclose: () => void } = $props();
+  let {
+    workspace,
+    onclose,
+    onpalette,
+  }: { workspace: Workspace; onclose: () => void; onpalette: () => void } = $props();
+
+  // The key of the command palette as this computer writes it.
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform);
 
   const path = $derived(workspace.activePath);
   const buffer = $derived(path === null ? undefined : workspace.buffers[path]);
@@ -32,7 +39,12 @@
     {/if}
   </span>
   <span class="gap"></span>
-  <span class="palette mono" title="The command palette arrives at step 10">⌘K</span>
+  <button
+    class="palette mono"
+    onclick={onpalette}
+    aria-label="Commands"
+    title="Every command of the window">{mac ? "⌘K" : "Ctrl K"}</button
+  >
   <span class="sizes" role="group" aria-label="Code text size">
     <button onclick={codeSmaller} disabled={codeSize.px === smallest} aria-label="Smaller code text"
       >A−</button
@@ -112,8 +124,14 @@
     flex: 1;
   }
   .palette {
+    background: none;
+    border: 0;
     color: var(--ink-3);
     font-size: 12.5px;
+    padding: 0;
+  }
+  .palette:hover {
+    color: var(--accent);
   }
   .sizes,
   .layouts {

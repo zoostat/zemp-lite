@@ -112,7 +112,8 @@ export const test = base.extend<Each, Shared>({
 export { expect };
 
 /** The editor of the script shown. */
-export const editor = (page: Page) => page.getByRole("textbox", { name: "The script" });
+export const editor = (page: Page) =>
+  page.getByRole("textbox", { name: "The script", exact: true });
 
 /** The text the editor holds. (The editor draws the lines near the window; these scripts are short.) */
 export async function scriptText(page: Page): Promise<string> {

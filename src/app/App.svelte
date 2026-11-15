@@ -23,6 +23,8 @@
 
   let project = $state<Project | null>(null);
   let ready = $state(false);
+  /** The welcome screen is to open with the new project's name asked for (`#/new`). */
+  let naming = $state(false);
 
   async function follow(): Promise<void> {
     if (projects === null) {
@@ -30,6 +32,7 @@
       lasting = kept !== null;
       projects = new Projects(kept ?? new MemoryFolder(), browserStorage());
     }
+    naming = window.location.hash === "#/new";
     const folder = named();
     if (project !== null && project.info.folder !== folder) {
       // The project closes: its worker is ended, which returns its memory to the browser.
@@ -54,7 +57,9 @@
 {#if !ready || projects === null}
   <p class="waiting" role="status">Opening…</p>
 {:else if project === null}
-  <Welcome {projects} {lasting} onopen={open} />
+  {#key naming}
+    <Welcome {projects} {lasting} {naming} onopen={open} />
+  {/key}
 {:else}
   {#key project.info.folder}
     <Workspace {project} {engine} onclose={() => (window.location.hash = "")} />

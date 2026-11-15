@@ -3,13 +3,19 @@
   // decision #146: the top bar, one left panel, the main pane, and a line at the foot.
   import type { Engine } from "../engine/engine";
   import type { Project } from "../project/projects";
+  import type { TreeNode } from "../project/projects";
+  import { codeLarger, codeSize, codeSmaller, codeUsual } from "../theme/codesize.svelte";
+  import { switchTheme, theme } from "../theme/theme.svelte";
+  import type { Command } from "./commands";
+  import ConsoleLine from "./ConsoleLine.svelte";
   import InlinePane from "./InlinePane.svelte";
   import LeftPanel from "./LeftPanel.svelte";
   import MainPane from "./MainPane.svelte";
+  import Palette from "./Palette.svelte";
   import Splitter from "./Splitter.svelte";
   import TopBar from "./TopBar.svelte";
   import { LEFT_WIDTH } from "./views";
-  import { Workspace } from "./workspace-state.svelte";
+  import { Workspace, editable } from "./workspace-state.svelte";
 
   let { project, engine, onclose }: { project: Project; engine: Engine; onclose: () => void } =
     $props();
@@ -21,24 +27,78 @@
   let width = $state(window.innerWidth);
   let body = $state<HTMLElement | null>(null);
 
+  let palette = $state(false);
+  let console_ = $state<ReturnType<typeof ConsoleLine> | null>(null);
+
   async function close(): Promise<void> {
     await workspace.settle();
     onclose();
   }
-</script>
 
-<!-- Run from the keyboard wherever the focus is: ⌘↵ and ⌘⇧↵ (the editor answers them itself). -->
-<svelte:window
-  bind:innerWidth={width}
-  onkeydown={(event) => {
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && !event.defaultPrevented) {
+  /** The files the editor opens, each by its path. */
+  function files(nodes: TreeNode[]): string[] {
+    return nodes.flatMap((node) =>
+      node.kind === "folder" ? files(node.children) : editable(node.path) ? [node.path] : [],
+    );
+  }
+
+  // The commands of ⌘K: every control of the window, and what has no button of its own.
+  const commands = $derived<Command[]>([
+    { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
+    {
+      name: workspace.views.layout === "inline" ? "Layout: Panes" : "Layout: Inline",
+      hint: `now ${workspace.views.layout === "inline" ? "Inline" : "Panes"}`,
+      run: () => workspace.setLayout(workspace.views.layout === "inline" ? "panes" : "inline"),
+    },
+    {
+      name: theme.name === "dark" ? "Theme: light" : "Theme: dark",
+      hint: `now ${theme.name}`,
+      run: switchTheme,
+    },
+    { name: "Code text: larger", hint: `now ${codeSize.px}`, run: codeLarger },
+    { name: "Code text: smaller", hint: `now ${codeSize.px}`, run: codeSmaller },
+    { name: "Code text: default size", hint: "14", run: codeUsual },
+    { name: "Console: type a statement", hint: "⌃`", run: () => console_?.focus() },
+    { name: "Output: clear", run: () => workspace.clear() },
+    ...(workspace.views.layout === "panes"
+      ? [
+          {
+            name: workspace.views.output.shown ? "Output: hide" : "Output: show",
+            run: () => workspace.toggleOutput(),
+          },
+          {
+            name: workspace.views.left.shown ? "Left panel: hide" : "Left panel: show",
+            run: () => workspace.toggleLeft(),
+          },
+        ]
+      : []),
+    ...files(workspace.tree).map((path) => ({
+      name: `Open file: ${path}`,
+      run: () => void workspace.open(path),
+    })),
+    { name: "New project…", run: () => void close().then(() => (window.location.hash = "#/new")) },
+    { name: "Projects: back to the projects of this browser", run: () => void close() },
+  ]);
+
+  function keys(event: KeyboardEvent): void {
+    const command = event.metaKey || event.ctrlKey;
+    if (command && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      palette = !palette;
+    } else if (event.ctrlKey && event.key === "`") {
+      event.preventDefault();
+      console_?.focus();
+    } else if (event.key === "Enter" && command && !event.defaultPrevented) {
+      // Run from the keyboard wherever the focus is (the editor answers these keys itself).
       event.preventDefault();
       void workspace.run();
     }
-  }}
-/>
+  }
+</script>
 
-<TopBar {workspace} onclose={() => void close()} />
+<svelte:window bind:innerWidth={width} onkeydown={keys} />
+
+<TopBar {workspace} onclose={() => void close()} onpalette={() => (palette = true)} />
 
 {#if width < 1200}
   <p class="narrow" role="note">
@@ -73,10 +133,11 @@
   </div>
 {/if}
 
-<footer class="bottom">
-  <span role="status">{workspace.status}</span>
-  <span class="engine">engine Zeff {workspace.engineVersion ?? "…"} · in this browser</span>
-</footer>
+<ConsoleLine {workspace} bind:this={console_} />
+
+{#if palette}
+  <Palette {commands} onclose={() => (palette = false)} />
+{/if}
 
 <style>
   .panes {
@@ -126,20 +187,5 @@
     flex: none;
     margin: 0;
     padding: 6px 18px;
-  }
-  .bottom {
-    align-items: center;
-    background: var(--window);
-    border-top: 1px solid var(--line);
-    color: var(--ink-3);
-    display: flex;
-    flex: none;
-    gap: 12px;
-    height: 36px;
-    justify-content: space-between;
-    padding: 0 18px;
-  }
-  .engine {
-    color: var(--ink-2);
   }
 </style>
