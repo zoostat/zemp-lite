@@ -19,10 +19,22 @@
   const run = $derived(workspace.lastRun);
   // The blocks of the last run belong under this script only where it is the one that ran.
   const blocks = $derived(run !== null && run.script === path ? placed(run) : []);
+  // What the check found when it refused the script, shown above the results kept.
+  const refusal = $derived(workspace.refusal);
+  const refused = $derived(
+    refusal !== null && refusal.script === path
+      ? {
+          basis: String(refusal.startedAt),
+          placed: placed(refusal),
+          edited: workspace.refusalEdited,
+        }
+      : null,
+  );
   const output = $derived({
     basis: run === null ? "" : `${run.startedAt}:${blocks.length}`,
     placed: blocks,
     edited: workspace.edited,
+    refused,
     oncancel: () => workspace.cancel(),
     workspace,
   });

@@ -159,7 +159,13 @@
         </div>
         {#if workspace.views.output.shown}
           <div class="body" data-testid="output" bind:this={body}>
-            <OutputPanel {run} edited={workspace.edited} {workspace} />
+            <OutputPanel
+              {run}
+              edited={workspace.edited}
+              refusal={workspace.refusal}
+              refusalEdited={workspace.refusalEdited}
+              {workspace}
+            />
           </div>
         {/if}
       </div>

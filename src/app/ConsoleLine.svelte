@@ -80,7 +80,9 @@
       spellcheck="false"
     />
     <span class="sync" data-testid="sync"
-      >{workspace.sync}{workspace.lastRun !== null && !workspace.running
+      >{workspace.sync}{workspace.lastRun !== null &&
+      !workspace.running &&
+      workspace.refusedErrors === 0
         ? ` · ${workspace.warnings} warning${workspace.warnings === 1 ? "" : "s"}`
         : ""}</span
     >

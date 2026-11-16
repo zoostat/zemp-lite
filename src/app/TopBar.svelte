@@ -75,6 +75,8 @@
   <button
     class="chip run"
     onclick={() => void workspace.run()}
+    title="Run the script · ⌘↵ or ⌘⇧↵ (Ctrl in place of ⌘ on Windows and Linux)"
+    aria-keyshortcuts="Meta+Enter Control+Enter"
     disabled={workspace.running || !workspace.ready}>Run</button
   >
 </header>

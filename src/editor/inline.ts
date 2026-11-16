@@ -2,7 +2,7 @@
 // that made it (Zemp Specification, section 5). The blocks are widgets of the editor, never
 // text of the script: the script stays a plain `.zeff` file, and inline output is never
 // written into it.
-import { StateEffect, StateField, type Extension } from "@codemirror/state";
+import { StateEffect, StateField, type EditorState, type Extension } from "@codemirror/state";
 import { Decoration, EditorView, WidgetType, type DecorationSet } from "@codemirror/view";
 import { mount, unmount } from "svelte";
 import type { Workspace } from "../app/workspace-state.svelte";
@@ -19,6 +19,11 @@ export interface InlineOutput {
   placed: Placed[];
   /** The script has been edited since the run. */
   edited: boolean;
+  /**
+   * What the engine's check found when it refused the script, where the results of the run
+   * before were kept: each finding under the line it names, above what is kept there.
+   */
+  refused: { basis: string; placed: Placed[]; edited: boolean } | null;
   oncancel: () => void;
   /** The window, which a block asks for the figure of a statement that ended in a plot. */
   workspace: Workspace;
@@ -55,9 +60,9 @@ class BlockWidget extends WidgetType {
   readonly #sized: string;
   #component: Record<string, unknown> | null = null;
 
-  constructor(placed: Placed, output: InlineOutput) {
+  constructor(placed: Placed, output: InlineOutput, edited: boolean) {
     super();
-    const { edited, oncancel, workspace } = output;
+    const { oncancel, workspace } = output;
     this.#placed = placed;
     this.#edited = edited;
     this.#oncancel = oncancel;
@@ -124,40 +129,86 @@ class BlockWidget extends WidgetType {
 interface Shown {
   basis: string;
   blocks: DecorationSet;
+  /** The findings of a check that refused the script, under their lines. */
+  refusedBasis: string;
+  refused: DecorationSet;
+}
+
+/**
+ * Blocks under their lines. While `basis` is the one they were placed from, they keep the
+ * places they have in the editor, which follow the script as it is edited; otherwise they
+ * are placed afresh, each under the line it names. A finding of the check stands nearer its
+ * line than a result kept from the run before.
+ */
+function set(
+  doc: EditorState["doc"],
+  placed: Placed[],
+  widget: (one: Placed) => WidgetType,
+  side: number,
+  was: DecorationSet | null,
+): DecorationSet {
+  const kept: number[] = [];
+  if (was !== null) {
+    for (const at = was.iter(); at.value !== null; at.next()) kept.push(at.from);
+  }
+  return Decoration.set(
+    placed.map((one, index) =>
+      Decoration.widget({ widget: widget(one), block: true, side }).range(
+        kept.length === placed.length
+          ? (kept[index] as number)
+          : doc.line(Math.min(Math.max(one.after, 1), doc.lines)).to,
+      ),
+    ),
+    true,
+  );
 }
 
 const field = StateField.define<Shown>({
-  create: () => ({ basis: "", blocks: Decoration.none }),
+  create: () => ({
+    basis: "",
+    blocks: Decoration.none,
+    refusedBasis: "",
+    refused: Decoration.none,
+  }),
   update(shown, transaction) {
-    let now: Shown = { basis: shown.basis, blocks: shown.blocks.map(transaction.changes) };
+    let now: Shown = {
+      ...shown,
+      blocks: shown.blocks.map(transaction.changes),
+      refused: shown.refused.map(transaction.changes),
+    };
     for (const effect of transaction.effects) {
       if (!effect.is(showOutput)) continue;
       const doc = transaction.state.doc;
-      const { basis, placed } = effect.value;
-      const widget = (one: Placed) =>
-        Decoration.widget({ widget: new BlockWidget(one, effect.value), block: true, side: 1 });
-      // The places the blocks have now, in order, where they are to be kept.
-      const kept: number[] = [];
-      if (basis === now.basis) {
-        for (const at = now.blocks.iter(); at.value !== null; at.next()) kept.push(at.from);
-      }
+      const output = effect.value;
+      const refused = output.refused;
       now = {
-        basis,
-        blocks: Decoration.set(
-          placed.map((one, index) =>
-            widget(one).range(
-              kept.length === placed.length
-                ? (kept[index] as number)
-                : doc.line(Math.min(Math.max(one.after, 1), doc.lines)).to,
-            ),
-          ),
-          true,
+        basis: output.basis,
+        blocks: set(
+          doc,
+          output.placed,
+          (one) => new BlockWidget(one, output, output.edited),
+          2,
+          output.basis === now.basis ? now.blocks : null,
         ),
+        refusedBasis: refused?.basis ?? "",
+        refused:
+          refused === null
+            ? Decoration.none
+            : set(
+                doc,
+                refused.placed,
+                (one) => new BlockWidget(one, output, refused.edited),
+                1,
+                refused.basis === now.refusedBasis ? now.refused : null,
+              ),
       };
     }
     return now;
   },
-  provide: (self) => EditorView.decorations.from(self, (shown) => shown.blocks),
+  provide: (self) => [
+    EditorView.decorations.from(self, (shown) => shown.blocks),
+    EditorView.decorations.from(self, (shown) => shown.refused),
+  ],
 });
 
 /** The editor's part of the Inline layout. */

@@ -145,9 +145,15 @@ test("an error and a refused script are shown under their lines in Inline too", 
   press,
 }) => {
   await scratch(page, press);
+  // A script the check refuses, in a project with no results yet: only what the check found.
+  await write(page, file("tests/scripts/refused.zeff"));
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect.poll(() => under(page)).toEqual(["let z = nosuch(3)"]);
+  expect(await saidAsWritten(page)).toBe(file("tests/scripts/refused.stderr"));
+
   await write(page, file("tests/scripts/error.zeff"));
   await press(page.getByRole("button", { name: "Run" }));
-  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  await expect(page.locator('[data-testid="block"][data-line="3"]')).toContainText("failed");
   expect(await under(page)).toEqual([
     'print("a")',
     "print(1 / 0)",
@@ -155,12 +161,53 @@ test("an error and a refused script are shown under their lines in Inline too", 
   ]);
   expect(await printed(page)).toBe(file("tests/scripts/error.stdout"));
   expect(await saidAsWritten(page)).toBe(file("tests/scripts/error.stderr"));
-  await expect(page.locator('[data-testid="block"][data-line="3"]')).toContainText("failed");
+});
 
-  await write(page, file("tests/scripts/refused.zeff"));
+test("when the check refuses a script, the results of the run before stay on the page", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
   await press(page.getByRole("button", { name: "Run" }));
-  await expect.poll(() => under(page)).toEqual(["let z = nosuch(3)"]);
-  expect(await saidAsWritten(page)).toBe(file("tests/scripts/refused.stderr"));
+  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.locator('[data-testid="figure"] img')).toHaveCount(2);
+  const before = await printed(page);
+  const blocks = await page.getByTestId("block").count();
+  expect(blocks).toBeGreaterThan(4);
+
+  // A slip in a new last line: a function Zeff does not have. The check refuses the whole
+  // script, so nothing runs.
+  await editor(page).focus();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.insertText("let z = nosuch(3)\n");
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByTestId("sync")).toHaveText("not run · 1 error found by the check");
+  // The error stands under the line it names, as the engine writes it.
+  const error = page.getByTestId("block").filter({ hasText: "no function is called `nosuch`" });
+  await expect(error).toHaveCount(1);
+  expect((await under(page)).at(-1)).toBe("let z = nosuch(3)");
+  await expect(error).not.toContainText("edited · not run");
+  // The results of the run before are all still there, figures too, each marked as not
+  // being of the script as it now stands.
+  expect(await printed(page)).toBe(before);
+  await expect(page.locator('[data-testid="figure"] img')).toHaveCount(2);
+  await expect(page.getByTestId("block")).toHaveCount(blocks + 1);
+  await expect(page.getByTestId("block").filter({ hasText: "edited · not run" })).toHaveCount(
+    blocks,
+  );
+
+  // The script edited again: what the check said is not of the script as it stands either.
+  await page.keyboard.insertText("// a note\n");
+  await expect(page.getByTestId("sync")).toHaveText("edited · not run · 1 warning");
+  await expect(error).toContainText("edited · not run");
+
+  // The slip mended: the script runs, and the page is the run's own again.
+  await write(page, file("examples/scratch/scripts/main.zeff"));
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(error).toHaveCount(0);
+  expect(await printed(page)).toBe(before);
+  await expect(page.getByTestId("block")).toHaveCount(blocks);
 });
 
 test("the running statement is marked in the margin, with Cancel", async ({ page, press }) => {

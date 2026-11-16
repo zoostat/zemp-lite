@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Outcome, RunEvent } from "../engine/messages";
-import { begin, blocks, clockOf, end, hear, said, took, type Run } from "./run";
+import { begin, blocks, clockOf, end, hear, refused, said, took, type Run } from "./run";
 
 const done = (exitCode: number, stderr = ""): Outcome => ({
   exitCode,
@@ -207,6 +207,36 @@ describe("a run, as the Output panel shows it", () => {
     end(run, { exitCode: null, stdout: "", stderr: "", frames: [], stopped: true }, 905);
     expect(run.state).toBe("stopped");
     expect(blocks(run)).toMatchObject([{ line: 1, state: "failed", ms: 900 }]);
+  });
+});
+
+describe("a script the engine's check refused", () => {
+  const error =
+    "error[Z0103]: no function is called `nosuch`\n --> scripts/main.zeff:2:9\n  |\n2 | let z = nosuch(3)\n  |         ^^^^^^ not a function of Zeff\n";
+
+  it("is one of which no statement started, the engine having named an error first", () => {
+    const run = told([{ type: "output", stdout: "", stderr: error }], done(1, error));
+    expect(run.statements).toEqual([]);
+    expect(refused(run)).toBe(true);
+  });
+
+  it("is not a script that stopped on an error at one of its statements", () => {
+    const run = told(
+      [
+        { type: "started", statement: 1, of: 2, line: 1 },
+        { type: "output", stdout: "", stderr: error },
+        { type: "finished", statement: 1, of: 2, line: 1, failed: true },
+      ],
+      done(1, error),
+    );
+    expect(refused(run)).toBe(false);
+  });
+
+  it("is not a script that ran and had no statement, nor one still running", () => {
+    expect(refused(told([], done(0)))).toBe(false);
+    const going = begin("scripts/main.zeff", "the text\n", 0, "15:42");
+    hear(going, { type: "output", stdout: "", stderr: error }, 10);
+    expect(refused(going)).toBe(false);
   });
 });
 

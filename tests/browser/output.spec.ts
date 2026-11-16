@@ -122,6 +122,35 @@ test("what the engine's check refuses is shown under the line it names, and noth
   await expect(page.getByTestId("said")).toContainText("no function is called `nosuch`");
 });
 
+test("in Panes too, a refused script leaves the results of the run before in the panel", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  const before = await printed(page);
+  const summary = await page.getByTestId("run-summary").textContent();
+  const blocks = await page.getByTestId("block").count();
+
+  await write(page, file("examples/scratch/scripts/main.zeff") + "let z = nosuch(3)\n");
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByTestId("sync")).toHaveText("not run · 1 error found by the check");
+  await expect(page.getByTestId("refused")).toContainText("did not start: the check found 1 error");
+  // What the check found comes first, and is not faded as the results kept are.
+  const first = page.getByTestId("block").first();
+  await expect(first).toContainText("no function is called `nosuch`");
+  await expect(first).toHaveCSS("opacity", "1");
+  await expect(page.getByTestId("block").nth(1)).toHaveCSS("opacity", "0.6");
+  // The results, and the line that says which run they are of, are those of the run before.
+  expect(await printed(page)).toBe(before);
+  await expect(page.getByTestId("block")).toHaveCount(blocks + 1);
+  await expect(page.getByTestId("run-summary")).toHaveText(summary ?? "");
+  // The Objects of the run before are kept with its results.
+  await press(page.getByRole("tab", { name: "Objects" }));
+  await expect(page.getByRole("tabpanel")).toContainText("w2010");
+});
+
 test("the statement that is running is marked, with Cancel beside the output's title", async ({
   page,
   press,

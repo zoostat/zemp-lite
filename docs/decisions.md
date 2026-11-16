@@ -349,3 +349,30 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Also seen, once, and not explained.** In one run on GitHub, WebKit did not load the page at the start of one test within its thirty seconds. It was not seen again in several hundred runs on this computer. It is noted in the release notes and watched; no test was changed for it.
 
 **Reason.** A fix the owner asked for has to hold in every browser the prototype is tested in, and a test that fails some of the time hides the next real failure.
+
+## 16 November 2026: a script the check refuses leaves the last results on the page
+
+**What the owner found.** "A single error in the scripts halts outputs of previous lines": with a misspelt function on one line, Run showed the error and nothing else.
+
+**Why.** Zeff checks a whole script before it runs any of it (Language Reference, section 1, "Typing", and section 11, "Checking before running"), so that a mistake late in a long script stops the run at once. That is the engine's behaviour and is right. What was the interface's own doing: on every press of Run it cleared the page first, so the results of the run before were lost to a typing slip, although nothing had been run in their place.
+
+**The owner's choice,** from three put to him: keep the last results (taken, as recommended); run the lines above the mistake, as R and Stata do (not taken: it departs from checking first, and would have needed an entry in the register); leave it as it was.
+
+**How it is built.** The results on the page are left there until the first statement of the new run starts. If the check refuses the script, no statement starts: the results of the run before stay, with their figures and the Objects of that run, marked "edited · not run" as any results of an edited script are, and what the check found is shown as the engine writes it, under the line it names in Inline and at the head of the Output panel in Panes, with a sentence saying that the run did not start and which run the results are of. The status line reads "not run · 1 error found by the check". Editing the script again marks the finding too; the next run that starts replaces everything. In a project with no results yet, a refused script shows what it showed before. A script that stops at one of its statements is unchanged: the statements before it ran, and their results are shown.
+
+**Held by.** Unit tests of what a refused script is; a browser test in each layout, in each browser: the example run, a mistaken line added, Run, and every result, both figures and the frames of the run before still there, the finding under its line and not faded, the status line; then, in Inline, a further edit, and the slip mended and run.
+
+**Reason.** The owner's ruling of 16 November 2026.
+
+## 16 November 2026: the key for one statement stays with the 0.2 alpha
+
+**The owner's request.** Keys to run a line and to run the whole script.
+
+**As it stands.** ⌘↵ and ⌘⇧↵ (Ctrl on Windows and Linux) both run the script in 0.1, from the editor or from anywhere in the window. The specification gives ⌘↵ to the statement at the cursor (Zemp Specification, section 5); that waits for Zeff 0.8.0, which tells the interface where each statement ends and keeps results between two runs, and is in the plan of the 0.2 alpha.
+
+**The owner's choice,** from two put to him: wait for 0.2 (taken, as recommended); a provisional key in 0.1 that would run the lines above again each time and be rebuilt at 0.2 (not taken: work pulled forward and thrown away).
+
+**Done in 0.1.** The Run button names its keys when the pointer rests on it, and carries them for a screen reader.
+
+**Reason.** The owner's ruling of 16 November 2026, and the rule that no work is pulled forward from a later release.
+

@@ -4,7 +4,7 @@
 import type { Engine } from "../engine/engine";
 import type { FrameInfo } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
-import { begin, blocks, clockOf, end, hear, type Run } from "../output/run";
+import { begin, blocks, clockOf, end, hear, refused, said, type Run } from "../output/run";
 import {
   keyOf,
   plotsOf,
@@ -68,6 +68,11 @@ export class Workspace {
   running = $state(false);
   /** The last run, as the Output panel shows it, or `null` before the first and after Clear. */
   lastRun = $state<Run | null>(null);
+  /**
+   * The last press of Run, where the engine's check refused the script and the results of
+   * the run before it were kept on the page: nothing ran, so those are still the latest.
+   */
+  refusal = $state<Run | null>(null);
   #beforeRun: (() => void)[] = [];
   /** The frames the last run left. */
   frames = $state<FrameInfo[]>([]);
@@ -296,25 +301,47 @@ export class Workspace {
     await this.#load(script);
     const text = this.buffers[script]?.text ?? "";
     this.running = true;
-    // A pane that keeps its reader's place notes it now, while the results of the run before
-    // are still on the page.
-    for (const tell of this.#beforeRun) tell();
-    // The figures of the run before are not this run's.
-    this.figures = {};
-    this.#wanted.clear();
-    this.drawMs = null;
-    this.lastRun = begin(script, text, performance.now(), clockOf(Date.now()));
-    // The run is read through the state, so that what the panel shows follows each event.
-    const run = this.lastRun;
+    const fresh = begin(script, text, performance.now(), clockOf(Date.now()));
+    // What the events of the run are heard into: the run as it is shown, once it is shown.
+    let run = fresh;
+    let shown = false;
+    const show = () => {
+      if (shown) return;
+      shown = true;
+      // A pane that keeps its reader's place notes it now, while the results of the run
+      // before are still on the page.
+      for (const tell of this.#beforeRun) tell();
+      // The figures of the run before are not this run's.
+      this.figures = {};
+      this.#wanted.clear();
+      this.drawMs = null;
+      this.refusal = null;
+      this.lastRun = fresh;
+      // The run is read through the state, so that what the panel shows follows each event.
+      run = this.lastRun;
+    };
+    // The engine checks a whole script before it runs any of it. Where there are results on
+    // the page, they are left there until a statement of this run starts: if the check
+    // refuses the script, nothing has run, and they are still the latest there are.
+    const earlier = this.lastRun;
+    if (earlier === null || earlier.script !== script || earlier.statements.length === 0) show();
     try {
       await this.#saving;
-      const outcome = await this.session.run(script, text, (event) =>
-        hear(run, event, performance.now()),
-      );
-      end(run, outcome, performance.now());
-      this.frames = outcome.frames;
+      const outcome = await this.session.run(script, text, (event) => {
+        if (event.type === "started") show();
+        hear(run, event, performance.now());
+      });
+      if (!shown) {
+        end(fresh, outcome, performance.now());
+        if (refused(fresh)) this.refusal = fresh;
+        else show();
+      } else {
+        end(run, outcome, performance.now());
+      }
+      // A script that was refused made no frames: those of the results kept are kept too.
+      if (shown) this.frames = outcome.frames;
       // A run that drew a plot puts the Plots tab beside the script's, without leaving the script.
-      if (plotsOf(run).length > 0 && !this.views.tabs.includes(PLOTS)) {
+      if (shown && plotsOf(run).length > 0 && !this.views.tabs.includes(PLOTS)) {
         this.views.tabs = [...this.views.tabs, PLOTS];
         this.#keep();
       }
@@ -512,7 +539,25 @@ export class Workspace {
   get sync(): string {
     if (this.running) return "running";
     if (this.lastRun === null) return "not run yet";
+    const errors = this.refusedErrors;
+    if (errors > 0) return `not run · ${errors} error${errors === 1 ? "" : "s"} found by the check`;
     return this.edited ? "edited · not run" : "in sync";
+  }
+
+  /** Whether the script has been edited since the check refused it. */
+  get refusalEdited(): boolean {
+    const run = this.refusal;
+    if (run === null) return false;
+    const buffer = this.buffers[run.script];
+    return buffer !== undefined && buffer.loaded && buffer.text !== run.text;
+  }
+
+  /** How many errors the check found in the script as it stands; none once it is edited. */
+  get refusedErrors(): number {
+    const run = this.refusal;
+    return run === null || this.running || this.refusalEdited
+      ? 0
+      : said(run.beforeRaw).filter((one) => one.kind === "error").length;
   }
 
   /** How many warnings the last run gave. */
@@ -593,6 +638,7 @@ export class Workspace {
   clear(): void {
     if (!this.running) {
       this.lastRun = null;
+      this.refusal = null;
       this.figures = {};
       this.#wanted.clear();
     }

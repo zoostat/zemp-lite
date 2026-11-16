@@ -197,6 +197,18 @@ export function end(run: Run, outcome: Outcome, now: number): void {
   }
 }
 
+/**
+ * Whether the engine's check refused the script: the run is over, no statement of it started,
+ * and the engine named an error before the first. Nothing of the script was run.
+ */
+export function refused(run: Run): boolean {
+  return (
+    run.state === "failed" &&
+    run.statements.length === 0 &&
+    said(run.beforeRaw).some((one) => one.kind === "error")
+  );
+}
+
 /** A block of the Output panel: what there is to show for one line of the script. */
 export interface Block {
   /** The line of the script it stands under; `null` for what belongs to no line. */
