@@ -3,7 +3,7 @@
 // marked, and the output marked when the script has been edited since.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { blocksAsText, expect, printed, saidAsWritten, test, write } from "./support";
+import { blocksAsText, expect, printed, saidAsWritten, test, wheelTo, write } from "./support";
 
 const READY = "engine Zeff 0.7.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -189,7 +189,7 @@ test("in Panes a run leaves the Output panel where the reader was in it", async 
   await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
   const body = page.getByTestId("output");
   const top = () => body.evaluate((node) => Math.round(node.scrollTop));
-  await body.evaluate((node) => (node.scrollTop = 900));
+  await wheelTo(body, 900);
   await expect.poll(top).toBe(900);
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");

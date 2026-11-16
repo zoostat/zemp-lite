@@ -68,6 +68,7 @@ export class Workspace {
   running = $state(false);
   /** The last run, as the Output panel shows it, or `null` before the first and after Clear. */
   lastRun = $state<Run | null>(null);
+  #beforeRun: (() => void)[] = [];
   /** The frames the last run left. */
   frames = $state<FrameInfo[]>([]);
   /** Something the user asked for that could not be done, in words. */
@@ -266,6 +267,17 @@ export class Workspace {
 
   // Runs.
 
+  /**
+   * Have `tell` called just before each run takes the results of the run before it off the
+   * page. Gives back what ends that.
+   */
+  beforeRun(tell: () => void): () => void {
+    this.#beforeRun.push(tell);
+    return () => {
+      this.#beforeRun = this.#beforeRun.filter((other) => other !== tell);
+    };
+  }
+
   /** Run the script, as the editor holds it. */
   async run(): Promise<void> {
     if (this.running) {
@@ -284,6 +296,9 @@ export class Workspace {
     await this.#load(script);
     const text = this.buffers[script]?.text ?? "";
     this.running = true;
+    // A pane that keeps its reader's place notes it now, while the results of the run before
+    // are still on the page.
+    for (const tell of this.#beforeRun) tell();
     // The figures of the run before are not this run's.
     this.figures = {};
     this.#wanted.clear();

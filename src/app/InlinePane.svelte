@@ -34,18 +34,18 @@
   // The page stays where the reader is while a run replaces its output (see `steady.ts`).
   let pane = $state<HTMLElement | null>(null);
   let sheet = $state<HTMLElement | null>(null);
+  let editor = $state<ReturnType<typeof Editor> | null>(null);
   let release: (() => void) | null = null;
-  // Before the page is changed for a run that has just started: hold its height.
-  $effect.pre(() => {
-    if (run?.state === "running" && release === null && pane !== null && sheet !== null) {
-      // A reader's place in the script is the line at the top of their view, by its number.
-      const lines = sheet;
-      release = held(sheet, pane, () =>
-        [...lines.querySelectorAll(".cm-lineNumbers .cm-gutterElement")].map(
-          (number): [string, Element] => [number.textContent ?? "", number],
-        ),
-      );
-    }
+  // Just before a run takes the old results off the page: hold its height, and note the
+  // reader's place in the script, which is the statement, with its output, at the top of
+  // their view. The editor says which, and where it stands when the results are new.
+  $effect(() => {
+    const hold = () => {
+      if (release === null && pane !== null && sheet !== null && editor !== null) {
+        release = held(sheet, pane, editor.place());
+      }
+    };
+    return workspace.beforeRun(hold);
   });
   // After the results of a run that has ended are drawn: give the reader's place back.
   $effect(() => {
@@ -66,6 +66,7 @@
       {#if buffer?.loaded}
         {#key path}
           <Editor
+            bind:this={editor}
             text={buffer.text}
             label="The script"
             onchange={(text) => workspace.edit(path, text)}

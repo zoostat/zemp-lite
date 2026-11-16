@@ -330,3 +330,22 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Where they are.** The register is edited in the Zeff repository, never from here, so the eight entries were left, written in the register's form, as a note for a session opened there; this repository's copy of the register gains them when `docs/spec/` is next refreshed.
 
 **Reason.** The specification freeze (open decision #40): a design question is recorded in the register with a deadline, never settled by building it. None of the eight belongs to release 0.1.
+
+## 16 November 2026: the reader's place is asked of the editor, not of what is drawn
+
+**What was found.** Two of the five runs on GitHub since the fix of 15 November failed in WebKit, the engine of Safari, on the test of that fix: after a run the page stood some 330 pixels from where the reader had been. On this computer the same test failed about one time in five when six were run at once.
+
+**Why.** The reader's place was noted by a mark on the page, the line number at the top of their view. The editor draws only the lines and results near the window. When the top of the view was inside a block of results, there was no line number there to note, and the reader was put back against another mark; and where a result above the view had not been drawn again after the run, the page was a different length. Which of these happened depended on the order in which the browser did its work, hence a failure some of the time.
+
+**Choice.** Four changes, in `src/app/steady.ts`, `src/editor/Editor.svelte` and `src/editor/inline.ts`.
+
+1. The reader's place in Inline is asked of the editor, which knows where every statement and its output stand whether or not they are drawn: the statement that holds the top of the view, by its line, and how far its top is above it. After the run the reader is put back so that the same statement stands as far above the view as before. The Output panel of Panes, where every block is on the page, keeps its marks.
+2. The page is held, and the place noted, the instant before a run takes anything off the page (the window tells the panes), no longer when the panes notice that a run has begun: by then the figures of the run before could already be gone, and the height held was too small.
+3. Each block of results is reckoned, while it is not drawn, at the height a block of the same results was last seen at. A run that gives the same results therefore leaves the page exactly as long as it was, and nothing shifts when the reader scrolls back up, in a browser that does not steady a page by itself (Safari).
+4. A reader who scrolls during a run, or in the moment its results settle, is left where they went. They are known by what they do (the wheel, a touch, a key, a press), never by the page having moved, since the editor moves its page too.
+
+**Held by.** In each browser: the test of 15 November, now comparing every line of the script in the window and how far down it stands, before and after, to within 3 pixels, and the page's position to within 3 pixels (it allowed 30); a new test that a reader who scrolls as a run ends, or while it goes, is left where they went; the Output panel's test as before. The three were run thirty times each in each browser, six at a time, with no failure, where the old test failed one time in five.
+
+**Also seen, once, and not explained.** In one run on GitHub, WebKit did not load the page at the start of one test within its thirty seconds. It was not seen again in several hundred runs on this computer. It is noted in the release notes and watched; no test was changed for it.
+
+**Reason.** A fix the owner asked for has to hold in every browser the prototype is tested in, and a test that fails some of the time hides the next real failure.

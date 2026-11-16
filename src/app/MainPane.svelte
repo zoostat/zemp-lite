@@ -8,7 +8,7 @@
   import { took, type Run } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
   import Splitter from "./Splitter.svelte";
-  import { held } from "./steady";
+  import { held, marked } from "./steady";
   import { PLOTS, tabPath } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
@@ -47,22 +47,24 @@
   // The Output panel stays where the reader is while a run replaces its results (see `steady.ts`).
   let body = $state<HTMLElement | null>(null);
   let release: (() => void) | null = null;
-  $effect.pre(() => {
-    const results = body?.firstElementChild;
-    if (
-      run?.state === "running" &&
-      release === null &&
-      body !== null &&
-      results instanceof HTMLElement
-    ) {
-      // A reader's place in the panel is the block at the top of their view, by its line.
-      release = held(results, body, () =>
-        [...results.querySelectorAll('[data-testid="block"]')].map((block): [string, Element] => [
-          block.getAttribute("data-line") ?? "",
-          block,
-        ]),
+  // Just before a run takes the old results off the panel: hold its height, and note the
+  // reader's place, which is the block at the top of their view, by its line.
+  $effect(() => {
+    const hold = () => {
+      const results = body?.firstElementChild;
+      if (release !== null || body === null || !(results instanceof HTMLElement)) return;
+      release = held(
+        results,
+        body,
+        marked(() =>
+          [...results.querySelectorAll('[data-testid="block"]')].map((block): [string, Element] => [
+            block.getAttribute("data-line") ?? "",
+            block,
+          ]),
+        ),
       );
-    }
+    };
+    return workspace.beforeRun(hold);
   });
   $effect(() => {
     if (run?.state !== "running" && release !== null) {

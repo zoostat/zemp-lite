@@ -11,6 +11,7 @@ import {
   saidAsWritten,
   scriptText,
   test,
+  wheelTo,
   write,
 } from "./support";
 
@@ -224,19 +225,23 @@ test("a run leaves the reader where they were in the script, not at the top of t
   const pane = page.getByRole("region", { name: "Script with its output" });
   const top = () => pane.evaluate((node) => Math.round(node.scrollTop));
   // Down to the plots, which the editor draws as they come near the window.
-  await pane.evaluate((node) => (node.scrollTop = 1000));
+  await wheelTo(pane, 1000);
   await expect.poll(top).toBe(1000);
   await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
-  // Where the reader is, by what they see: the line of code at the top of the window.
+  // Where the reader is, by what they see: each line of the script that is in the window,
+  // and how far down the window it stands.
   const seen = () =>
     pane.evaluate((node) => {
-      const at = node.getBoundingClientRect().top;
-      const line = [...node.querySelectorAll(".cm-line")].find(
-        (one) => one.getBoundingClientRect().bottom > at + 4,
-      );
-      return line?.textContent ?? "";
+      const window = node.getBoundingClientRect();
+      return [...node.querySelectorAll(".cm-lineNumbers .cm-gutterElement")]
+        .map((number): [string, number] => [
+          number.textContent ?? "",
+          Math.round(number.getBoundingClientRect().top - window.top),
+        ])
+        .filter(([line, down]) => line !== "" && down >= 0 && down < window.height);
     });
   const before = await seen();
+  expect(before.length).toBeGreaterThan(2);
 
   // Run from the keyboard, with the keyboard in the script, and then from the button.
   for (const how of ["key", "button"]) {
@@ -249,7 +254,31 @@ test("a run leaves the reader where they were in the script, not at the top of t
     await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
     await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
     await page.waitForTimeout(600);
-    expect(Math.abs((await top()) - 1000)).toBeLessThan(30);
-    expect(await seen()).toBe(before);
+    const after = await seen();
+    expect(after.map(([line]) => line)).toEqual(before.map(([line]) => line));
+    for (const [index, [line, down]] of after.entries()) {
+      expect(Math.abs(down - (before[index]?.[1] ?? NaN)), `line ${line}`).toBeLessThan(3);
+    }
+    // And the page is as long above them as it was: nothing will shift as they scroll up.
+    expect(Math.abs((await top()) - 1000)).toBeLessThan(3);
   }
+});
+
+test("a reader who scrolls as a run ends is left where they went", async ({ page, press }) => {
+  await page.setViewportSize({ width: 1280, height: 700 });
+  await scratch(page, press);
+  const pane = page.getByRole("region", { name: "Script with its output" });
+  const top = () => pane.evaluate((node) => Math.round(node.scrollTop));
+  // From the top of the script, and off down the page the moment the results are in.
+  await press(page.getByRole("button", { name: "Run" }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await wheelTo(pane, 1000);
+  await page.waitForTimeout(600);
+  expect(await top()).toBe(1000);
+  // From down the page, and off again while the run goes: not brought back when it ends.
+  await press(page.getByRole("button", { name: "Run" }));
+  await wheelTo(pane, 400);
+  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await page.waitForTimeout(600);
+  expect(await top()).toBe(400);
 });

@@ -179,3 +179,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** The owner's further trial; then "Release 0.1", or his changes.
 
 **For the owner to decide.** The eight proposals, once they stand in the register with their numbers; none is due at 0.1.
+
+## 16 November 2026, release 0.1, the reader's place made sure in Safari's engine
+
+**Done.** Two of five runs on GitHub had failed in WebKit on the test of 15 November's fix (a run moving the page). The cause was found and mended: the reader's place is now asked of the editor, which knows where every statement and its output stand whether or not they are drawn; the page is held the instant before a run clears anything; a result not drawn is reckoned at the height it last had; and a reader who scrolls is left where they went (`docs/decisions.md`, 16 November). The test now compares what the reader sees, line by line, and a second test was added.
+
+**Green.** `npm run routine`, whole: 114 unit tests, the worker's 7 and 8, the eight sample projects identical, 159 browser tests passed and 1 skipped by design. The three scrolling tests thirty times each in each browser, six at a time, without a failure.
+
+**Next.** The owner's further trial; then "Release 0.1", or his changes.
+
+**For the owner to decide.** Nothing new. Seen once on GitHub and not explained: WebKit not loading the page at the start of one test; it is a known issue in the notes.

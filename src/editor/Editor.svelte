@@ -15,6 +15,7 @@
     lineNumbers,
   } from "@codemirror/view";
   import { onMount } from "svelte";
+  import type { Place } from "../app/steady";
   import { inlineOutput, showOutput, type InlineOutput } from "./inline";
   import { zeffLanguage } from "./language";
 
@@ -41,6 +42,30 @@
 
   let host: HTMLDivElement;
   let view: EditorView | null = null;
+
+  /**
+   * A reader's place in the script, for a page that scrolls the editor: the statement, with
+   * the output under it, that holds a height of the window, by the number of its line. The
+   * editor draws only what is near the window, so the place is asked of what it knows of the
+   * whole script, never of what happens to be drawn.
+   */
+  export function place(): Place {
+    return {
+      at(edge) {
+        if (view === null) return null;
+        const height = edge - view.documentTop;
+        const block = view.lineBlockAtHeight(height);
+        const line = view.state.doc.lineAt(block.from).number;
+        return { name: String(line), offset: block.top - height };
+      },
+      from(name, edge) {
+        const line = Number(name);
+        if (view === null || !(line >= 1 && line <= view.state.doc.lines)) return null;
+        const block = view.lineBlockAt(view.state.doc.line(line).from);
+        return view.documentTop + block.top - edge;
+      },
+    };
+  }
 
   const look = EditorView.theme({
     "&": {

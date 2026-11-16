@@ -188,3 +188,15 @@ export async function blocksAsText(page: Page): Promise<string[]> {
     }),
   );
 }
+
+/**
+ * Scroll a pane as a reader's wheel does: the sign of the wheel, which tells the page that
+ * its reader has moved, and then the move. (The mouse itself cannot be used in every
+ * browser these tests run in.)
+ */
+export async function wheelTo(pane: Locator, top: number): Promise<void> {
+  await pane.evaluate((node, to) => {
+    node.dispatchEvent(new WheelEvent("wheel", { bubbles: true, deltaY: to - node.scrollTop }));
+    node.scrollTop = to;
+  }, top);
+}

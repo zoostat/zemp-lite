@@ -27,6 +27,22 @@ export interface InlineOutput {
 /** Show these blocks under their statements, in place of those shown. */
 export const showOutput = StateEffect.define<InlineOutput>();
 
+// The height each block was last seen at, by what it shows, for each window. The editor draws
+// only the blocks near the window and reckons the rest; told the height a block of the same
+// results had before, it reckons a script's results at the height they had, so that a run
+// which gives the same results leaves the page as long as it was, and nothing shifts as it is
+// scrolled. A height is only ever a reckoning: a block that is drawn is measured.
+const seen = new WeakMap<Workspace, Map<string, number>>();
+const KEPT = 400;
+function heights(workspace: Workspace): Map<string, number> {
+  let mine = seen.get(workspace);
+  if (mine === undefined) {
+    mine = new Map();
+    seen.set(workspace, mine);
+  }
+  return mine;
+}
+
 class BlockWidget extends WidgetType {
   readonly #placed: Placed;
   readonly #edited: boolean;
@@ -35,6 +51,8 @@ class BlockWidget extends WidgetType {
   #watch: ResizeObserver | null = null;
   /** What the widget shows, as text: two widgets that show the same are the same widget. */
   readonly #shows: string;
+  /** What gives the block its height: where it stands and what it holds, not how long it took. */
+  readonly #sized: string;
   #component: Record<string, unknown> | null = null;
 
   constructor(placed: Placed, output: InlineOutput) {
@@ -45,6 +63,8 @@ class BlockWidget extends WidgetType {
     this.#oncancel = oncancel;
     this.#workspace = workspace;
     this.#shows = JSON.stringify([placed.block, edited]);
+    const { state, printed, said } = placed.block;
+    this.#sized = JSON.stringify([placed.after, state, printed, said, edited]);
   }
 
   override eq(other: BlockWidget): boolean {
@@ -66,9 +86,24 @@ class BlockWidget extends WidgetType {
     });
     // A block grows when its figure arrives: the editor is told, so that the line numbers
     // stay in step with the lines.
-    this.#watch = new ResizeObserver(() => view.requestMeasure());
+    this.#watch = new ResizeObserver(() => {
+      if (dom.offsetHeight > 0) {
+        const known = heights(this.#workspace);
+        // The newest are kept: the oldest goes when there are too many.
+        known.delete(this.#sized);
+        known.set(this.#sized, dom.offsetHeight);
+        if (known.size > KEPT) known.delete(known.keys().next().value as string);
+      }
+      view.requestMeasure();
+    });
     this.#watch.observe(dom);
     return dom;
+  }
+
+  // Until it is drawn, a block is reckoned at the height a block of the same results was
+  // last seen at.
+  override get estimatedHeight(): number {
+    return heights(this.#workspace).get(this.#sized) ?? -1;
   }
 
   override destroy(): void {
