@@ -320,3 +320,13 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Held by.** A unit test holding the file for `demo` to what the released command line of 0.7.0 writes for `zeff new demo`, and reading the name back from it, from a name too long for the 26 columns and from one with quotes; the released engine was run on a file with such a long name.
 
 **Reason.** The owner's ruling of 15 November 2026.
+
+## 16 November 2026: notebook features, sorted and passed to the register
+
+**The owner's question and word.** He gave a list of 26 features of notebook applications (cells run one at a time, a kernel whose variables persist, output under each cell, rich output, a semicolon that hides output) and asked which Zemp Lite must, should or may adopt. Shown the answer in groups, he said: "Yes, record them."
+
+**Choice.** Nothing is built or changed in this repository. The answer was: the statement is the cell, and the script stays one plain text file run from top to bottom. What the specification already promises (running the statement at the cursor, stale output, **Run to here**, the **Outputs** switch, folding) needs no new entry. Eight proposals go to the open-decisions register, each still the owner's to decide: that Zemp Lite is not a notebook, with the reasons for the features not adopted; sections in a script, from a comment written as a heading; the last run's output shown when a project is opened; **Run from a fresh session**; **Run from here**; copying a result and saving a figure from its place in the Inline layout; from an entry of the Objects panel to the line that made it; and a group of five small conveniences for after 1.0.
+
+**Where they are.** The register is edited in the Zeff repository, never from here, so the eight entries were left, written in the register's form, as a note for a session opened there; this repository's copy of the register gains them when `docs/spec/` is next refreshed.
+
+**Reason.** The specification freeze (open decision #40): a design question is recorded in the register with a deadline, never settled by building it. None of the eight belongs to release 0.1.

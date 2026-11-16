@@ -169,3 +169,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** The owner's further trial; then "Release 0.1", or his changes.
 
 **For the owner to decide.** Nothing.
+
+## 16 November 2026, release 0.1, the owner's review of notebook features
+
+**Done.** The owner asked which of 26 notebook features Zemp Lite should adopt; they were sorted into what the prototype already does, what the specification already promises, six new suggestions, five small ones and those not adopted. On his word the eight resulting proposals were left for a Zeff session to enter in the open-decisions register (`docs/decisions.md`, 16 November). No code changed.
+
+**Green.** Nothing to run: documents only.
+
+**Next.** The owner's further trial; then "Release 0.1", or his changes.
+
+**For the owner to decide.** The eight proposals, once they stand in the register with their numbers; none is due at 0.1.
