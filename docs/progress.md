@@ -136,5 +136,4 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Next.** The owner's ruling on the editor, which is a design question for the open-decisions register and for the plan of the 0.2 alpha, not for 0.1; then "Release 0.1", or his changes.
 
-**For the owner to decide.** Whether the margin editor, as revised or otherwise, replaces the Inline layout.
-
+**For the owner to decide.** Whether the margin editor, as revised or otherwise, replaces the Inline layout. On his word of the same day the proposal was left for a Zeff session to enter in the open-decisions register (`docs/decisions.md`, 17 November).

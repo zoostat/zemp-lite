@@ -376,3 +376,17 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 
 **Reason.** The owner's ruling of 16 November 2026, and the rule that no work is pulled forward from a later release.
 
+
+## 17 November 2026: the margin editor, reviewed and passed to the register
+
+**The owner's question and word.** He gave a plan of his own, "Zemp Lite: the Margin IDE" (a proposal of 17 November 2026, kept outside the repository), which would replace the Inline layout by a column of one-line notes beside the code, with six places, seven viewers and writing; and asked for its advantages and disadvantages against the present editor, a rating of both, a choice, the changes wanted, and a mockup. Given them, he said: "Yes, record it."
+
+**The assessment, in brief.** The plan's central idea is right and worth taking: running never moves the code, every statement (a `let` too) has a result beside it, and what an edit puts out of date is marked in place. Taken whole, the plan loses what Inline gives (a full result readable where it is, in the engine's own print, several at once), cannot hold a printed regression table in its 424-pixel card, asks the engine for a headline for every function, multiplies the work before 1.0, and meets decisions already taken on the look (#146) and on reports (#73, #124, #141). Rated out of ten, as a judgement and not a measurement: the present editor 6.5, the plan as written 6, the plan revised 8.5.
+
+**What is proposed.** One editor: a note beside every statement, the full result opened under its statement when the reader asks, a switch **Notes · As written · All open** in place of two layouts, three places (Script, Data, Plots), no lens, shelf or thread rail, the look of the design guide, and keys a browser allows. It is one proposal for the open-decisions register, with three options (this, the plan as written, the Inline layout as planned), what it asks of the engine, where the plan meets earlier decisions, and five statistical cautions on the plan's viewers.
+
+**Where it is.** The register is edited in the Zeff repository, never from here, so the entry was left, in the register's form, as a note for a session opened there, beside the note of 16 November. The mockup is `~/dev/handbook/zemp-lite-margin-editor/zemp-lite-margin-editor-mockup.html`, outside the repository as the other mockups are.
+
+**Not done, on purpose.** Nothing of it is built, and the specification is unchanged: it is a question for the plan of the 0.2 alpha, and release 0.1 is the Inline prototype as it stands.
+
+**Reason.** A change of layout is the owner's to decide and belongs in the register with a deadline, not in the code of a release that is waiting to be closed.
