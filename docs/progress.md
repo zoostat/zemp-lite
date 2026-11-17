@@ -137,3 +137,14 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** The owner's ruling on the editor, which is a design question for the open-decisions register and for the plan of the 0.2 alpha, not for 0.1; then "Release 0.1", or his changes.
 
 **For the owner to decide.** Whether the margin editor, as revised or otherwise, replaces the Inline layout. On his word of the same day the proposal was left for a Zeff session to enter in the open-decisions register (`docs/decisions.md`, 17 November).
+
+## 17 November 2026, release 0.1, the margin editor's second mockup
+
+**Done.** The owner gave his own clickable mockup of the Margin IDE (fifteen screens) and asked that the revised mockup be refined from it, to the specification, and taken further. It was studied screen by screen. The second mockup takes from it the notes for each step of a chain, the comparison with an earlier run, the rows followed to the estimation sample, the models side by side and the variables as cards; fits them to the specification (the thread for the one name clicked, differences stated and no cause written, the engine's own print and figures); and adds an outline of sections, "the same rows?", the run record, the list of what the run said, a warning explained in place and help on a function's name. Every number, table and figure in it is the released engine's for a script on the shipped `wages` data. It is in `~/dev/handbook/zemp-lite-margin-editor/`, with its screenshots and sources; the note for the register carries an addendum. Nothing in the repository's code or specification was changed.
+
+**Green.** Nothing to run: documents only.
+
+**Next.** The owner's ruling on the editor, for the plan of the 0.2 alpha; then "Release 0.1", or his changes.
+
+**For the owner to decide.** As on the same day: whether the margin editor, in this form or another, replaces the Inline layout.
+
