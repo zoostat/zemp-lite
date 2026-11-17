@@ -158,3 +158,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **For the owner to decide.** The ten decisions of the document's section 20.2, of which R1 is the editor itself.
 
+## 18 November 2026, release 0.1, a quieter look for the proposed editor
+
+**Done.** The owner asked for a fresh, modern, minimal design. A second variant of the mockup was drawn, `zemp-lite-margin-editor-mockup-minimal.html` in `~/dev/handbook/zemp-lite-margin-editor/`, with its screenshots: the same editor and the same engine output, on one surface with hairlines in place of boxes, words in place of bordered controls, tags as words with a dot, one line at the foot for the state, the console and the keys. What the owner has ruled is kept: the logo, the violet, the three fonts, light and dark, no text under 12.5 pixels, the code size control and the Dark switch in the top bar. Nothing in the repository's code or specification was changed.
+
+**Green.** Nothing to run: documents only.
+
+**Next.** The owner's ruling on the editor and on which look; then "Release 0.1", or his changes.
+
+**For the owner to decide.** Which of the two looks the margin editor takes, if it is adopted; the quiet one would need the design guide's section on Zemp Lite brought into line.
+
