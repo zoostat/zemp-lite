@@ -148,3 +148,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **For the owner to decide.** As on the same day: whether the margin editor, in this form or another, replaces the Inline layout.
 
+## 18 November 2026, release 0.1, the proposed editor's document revised after a review
+
+**Done.** The owner gave a review of the document of the proposed margin editor. Its points were checked against the specification, and the document is now version 0.2, in `~/dev/handbook/zemp-lite-margin-editor/` with version 0.1 kept beside it. Taken: the print defined at a width the engine lays out; staleness defined as "the engine would not reuse it", with its cases; six rules for a run of less than the script; Models made to say first whether fits can be compared; Data split into what is always shown and what is fetched when asked; the switch keeping its position; a grammar for section comments; a section on the edges (a refusal, a run going, large scripts, versions, undo, language, privacy) and one on testing; acceptance tests that can fail; and the engine's part written as a contract of sixteen items. Answered differently or declined, with reasons, in its Appendix C. Two decisions were added for the owner (R9, R10). The mockup's switch was changed to match. Nothing in the repository's code or specification was changed.
+
+**Green.** Nothing to run: documents only.
+
+**Next.** The owner's ruling on the editor, for the plan of the 0.2 alpha; then "Release 0.1", or his changes.
+
+**For the owner to decide.** The ten decisions of the document's section 20.2, of which R1 is the editor itself.
+
