@@ -127,3 +127,14 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** The owner's further trial; then "Release 0.1", or his changes.
 
 **For the owner to decide.** Nothing.
+
+## 17 November 2026, release 0.1, the owner's plan for a margin editor reviewed
+
+**Done.** The owner gave a plan, "Zemp Lite: the Margin IDE" (a proposal of 17 November, kept outside the repository), which would replace the Inline layout by a column of one-line notes beside the code, with six places, seven viewers and writing. It was read whole and set against the specification, the function catalogue, the design guide and the prototype. The assessment given to him: take the plan's central idea (running never moves the code; a note beside every statement; out-of-date results marked in place) into the one editor, with the full result opened under its statement at the reader's asking, and leave the rest of the plan to the decisions already taken on reports (#73, #124, #141) and on the look (#146). A mockup of that revised editor, on the shipped example with the engine's own numbers, is in `~/dev/handbook/zemp-lite-margin-editor/`. Nothing in the repository's code or specification was changed.
+
+**Green.** Nothing to run: documents only.
+
+**Next.** The owner's ruling on the editor, which is a design question for the open-decisions register and for the plan of the 0.2 alpha, not for 0.1; then "Release 0.1", or his changes.
+
+**For the owner to decide.** Whether the margin editor, as revised or otherwise, replaces the Inline layout.
+
