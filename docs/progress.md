@@ -176,5 +176,5 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Next.** The owner's ruling on the editor itself and on its look; then "Release 0.1", or his changes.
 
-**For the owner to decide.** Two readings to confirm: "Notes" as showing or hiding the margin, and the notes column staying at the right of the code.
+**For the owner to decide.** Nothing new: he confirmed the same day that **Notes** shows or hides the notes column, and that the column stays at the right of the code. Still his: whether the margin editor replaces the Inline layout, and in which look.
 
