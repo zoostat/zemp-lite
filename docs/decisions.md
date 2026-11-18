@@ -430,3 +430,15 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Where.** The register is edited in the Zeff repository, never from here, so the five were left, in the register's form, as `zeff-diagrams-refinements-for-the-register.md` in the shared notes folder, for a session opened there.
 
 **Reason.** The owner's word of 18 November 2026. None changes a decision taken; each is his to decide when it stands in the register.
+
+## 18 November 2026: the diagrams shown in a mockup
+
+**The owner's request.** "How can we visualise them in Zeff? Show in mockup", of the causal graphs, SEM path diagrams and flowcharts of Zeff's diagram plan.
+
+**What was made.** A mockup in the quiet look, `zemp-lite-diagrams-mockup.html` in `~/dev/handbook/zemp-lite-margin-editor/`, with 15 screenshots and its sources. A script makes a sample flow (`m.sample_flow()`), a causal graph (`dag { }`, its adjustment sets, its implied independencies tested on the 2019 rows, the check of a fit against it, `g.plot()`), a research model (`diagram { }` with a moderation arrow onto an arrow) and Bollen's Political Democracy SEM (`model { }`, `m.plot()`, `fit.path_plot()`). Each diagram unfolds under its statement; in Plots each has its own panel: the paths between exposure and outcome traced one at a time, the identification in a sentence, the tests with their intervals, the warnings W0510 and W0511 as the Language Reference words them; for the SEM, standardised and raw estimates, the indirect effect traced and decomposed, R², and the fit.
+
+**What is real, and what is not.** The sample flow's counts are the released engine's; the tests were computed with R on the shipped data; the SEM is lavaan 0.6.21's fit, the reference Zeff's `sem` is held to. Every diagram is drawn by the mockup in the layout decision #121 plans, since the engine draws none before 0.10.0 (causal graphs), 1.2 (flowcharts) and 1.12 (SEM); each note in the script carries its release.
+
+**Two findings,** passed with the mockup to the note for the register: the graph is contradicted by two tests on `wages`, and the mockup draws no arrow for it; and three implications cannot be tested on `wages`, since `exper` is `max(0, age − educ − 6)` in every row, which #158's print should say rather than print a number.
+
+**Reason.** The owner's request of 18 November 2026. Nothing in this repository's code or specification was changed.
