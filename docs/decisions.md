@@ -420,3 +420,13 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Still open.** Whether the margin editor replaces the Inline layout (R1). If it does, the design guide's section 9 on Zemp Lite is brought into line with the quiet look, by the owner's word since the guide is his. Nothing in this repository's code or specification was changed.
 
 **Reason.** The owner's rulings of 18 November 2026.
+
+## 18 November 2026: five refinements of Zeff's diagram plan, passed to the register
+
+**The owner's question and word.** What plan would be best for Zeff for SEM path diagrams, causal diagrams and flowcharts. He was told the plan he decided on 11 November is the right one (#121, with #118, #119 and #122, from his proposal `docs/proposals/zeff_diagrams.md` in the Zeff repository): one deterministic layout engine of Zeff's own for causal graphs (`g.plot()`, 0.10.0), the script's pipeline (`zeff graph`, 1.1), flowcharts and sample flows (`diagram { }`, `sample_flow`, 1.2) and SEM path diagrams (`m.plot()`, `fit.path_plot()`, 1.12), with positions in the script for export. Five refinements were suggested; he said: "Yes, write them up."
+
+**The five.** (A) The layout engine built in stages, each with the release that first needs it: layered layout and curved edges at 0.10.0, cycles, orthogonal routing and groups at 1.2, the SEM templates at 1.12. (B) One graph form (nodes, edges, groups, ports, with stable names) under every diagram, kept in the plot's scene, so the viewer, the table view, the text forms and the Mermaid and DOT exports are written once. (C) Layouts tested against known figures (dagitty's examples, the Holzinger–Swineford CFA, Bollen's Political Democracy model, a CONSORT trial, a sample flow of `wages`) for crossings, overlaps and the smallest text, with Graphviz run in the tests only as a yardstick, or fixed targets if the owner wants nothing EPL even in tooling. (D) Zemp Lite's Copy as Zeff (#114) extended to dragged positions, as a `layout:` grid on the clipboard, since Lite has no Add to script. (E) Statistical guard rails written into the diagram rules: no edge ever drawn because the data suggest it; stars only beside an estimate in `path_plot`; with #158, `mi:` off by default and non-significant paths shown kept where they are.
+
+**Where.** The register is edited in the Zeff repository, never from here, so the five were left, in the register's form, as `zeff-diagrams-refinements-for-the-register.md` in the shared notes folder, for a session opened there.
+
+**Reason.** The owner's word of 18 November 2026. None changes a decision taken; each is his to decide when it stands in the register.

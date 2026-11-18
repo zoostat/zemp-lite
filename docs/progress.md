@@ -128,63 +128,18 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **For the owner to decide.** Nothing.
 
-## 17 November 2026, release 0.1, the owner's plan for a margin editor reviewed
+## 17 and 18 November 2026, release 0.1, the proposed margin editor (folded)
 
-**Done.** The owner gave a plan, "Zemp Lite: the Margin IDE" (a proposal of 17 November, kept outside the repository), which would replace the Inline layout by a column of one-line notes beside the code, with six places, seven viewers and writing. It was read whole and set against the specification, the function catalogue, the design guide and the prototype. The assessment given to him: take the plan's central idea (running never moves the code; a note beside every statement; out-of-date results marked in place) into the one editor, with the full result opened under its statement at the reader's asking, and leave the rest of the plan to the decisions already taken on reports (#73, #124, #141) and on the look (#146). A mockup of that revised editor, on the shipped example with the engine's own numbers, is in `~/dev/handbook/zemp-lite-margin-editor/`. Nothing in the repository's code or specification was changed.
+**Done.** The owner's plan "Zemp Lite: the Margin IDE" was reviewed and a revised margin editor proposed: one note beside each statement, the whole output unfolded under it at the reader's asking. It was drawn as a clickable mockup on the engine's real output and written out as `zemp_lite_margin_editor_specification.md` (now version 0.4, after a review and the owner's rulings), with a review page, all in `~/dev/handbook/zemp-lite-margin-editor/`, and passed to the register as a proposal. The owner ruled on 18 November: no rows strip in an unfolded output; a script opens folded; Notes · Fold all · Unfold all; a narrower notes column of type and dimensions, at the right of the code; the quiet look; variables shown and hidden in Data; a hideable list of plots in Plots (`docs/decisions.md`, 17 and 18 November). Nothing in the repository's code or specification was changed.
 
-**Green.** Nothing to run: documents only.
+**Next.** The owner's ruling on whether the margin editor replaces the Inline layout (R1).
 
-**Next.** The owner's ruling on the editor, which is a design question for the open-decisions register and for the plan of the 0.2 alpha, not for 0.1; then "Release 0.1", or his changes.
+## 18 November 2026, release 0.1, the diagram plan of Zeff
 
-**For the owner to decide.** Whether the margin editor, as revised or otherwise, replaces the Inline layout. On his word of the same day the proposal was left for a Zeff session to enter in the open-decisions register (`docs/decisions.md`, 17 November).
-
-## 17 November 2026, release 0.1, the margin editor's second mockup
-
-**Done.** The owner gave his own clickable mockup of the Margin IDE (fifteen screens) and asked that the revised mockup be refined from it, to the specification, and taken further. It was studied screen by screen. The second mockup takes from it the notes for each step of a chain, the comparison with an earlier run, the rows followed to the estimation sample, the models side by side and the variables as cards; fits them to the specification (the thread for the one name clicked, differences stated and no cause written, the engine's own print and figures); and adds an outline of sections, "the same rows?", the run record, the list of what the run said, a warning explained in place and help on a function's name. Every number, table and figure in it is the released engine's for a script on the shipped `wages` data. It is in `~/dev/handbook/zemp-lite-margin-editor/`, with its screenshots and sources; the note for the register carries an addendum. On the owner's asking, the review itself (for and against, the ratings, what the mockup takes, fits and adds, fifteen of its screens, what it asks of the engine, the statistical cautions) was also written as one page, `zemp-lite-margin-editor-review.html`, in the same folder. The details of the proposed IDE were then written out in full as `zemp_lite_margin_editor_specification.md` there (a proposal: 22 sections, each feature marked built, planned or proposed, with eight decisions for the owner), and the mockup's journal sizes were corrected to those the prototype uses (89 × 66, 183 × 110 and 254 × 143 mm). Nothing in the repository's code or specification was changed.
+**Done.** The owner asked what plan is best for SEM path diagrams, causal diagrams and flowcharts. The plan he decided on 11 November (#121, with #118, #119 and #122) was found right; on his word five refinements were written up for a Zeff session to enter in the register: the layout engine built in stages; one graph form under every diagram; layouts tested against known figures; Copy as Zeff for dragged positions in Zemp Lite; statistical guard rails (`docs/decisions.md`, 18 November). Nothing in the repository's code or specification was changed.
 
 **Green.** Nothing to run: documents only.
 
-**Next.** The owner's ruling on the editor, for the plan of the 0.2 alpha; then "Release 0.1", or his changes.
+**Next.** The owner's ruling on the margin editor; then "Release 0.1", or his changes.
 
-**For the owner to decide.** As on the same day: whether the margin editor, in this form or another, replaces the Inline layout.
-
-## 18 November 2026, release 0.1, the proposed editor's document revised after a review
-
-**Done.** The owner gave a review of the document of the proposed margin editor. Its points were checked against the specification, and the document is now version 0.2, in `~/dev/handbook/zemp-lite-margin-editor/` with version 0.1 kept beside it. Taken: the print defined at a width the engine lays out; staleness defined as "the engine would not reuse it", with its cases; six rules for a run of less than the script; Models made to say first whether fits can be compared; Data split into what is always shown and what is fetched when asked; the switch keeping its position; a grammar for section comments; a section on the edges (a refusal, a run going, large scripts, versions, undo, language, privacy) and one on testing; acceptance tests that can fail; and the engine's part written as a contract of sixteen items. Answered differently or declined, with reasons, in its Appendix C. Two decisions were added for the owner (R9, R10). The mockup's switch was changed to match. Nothing in the repository's code or specification was changed.
-
-**Green.** Nothing to run: documents only.
-
-**Next.** The owner's ruling on the editor, for the plan of the 0.2 alpha; then "Release 0.1", or his changes.
-
-**For the owner to decide.** The ten decisions of the document's section 20.2, of which R1 is the editor itself.
-
-## 18 November 2026, release 0.1, a quieter look for the proposed editor
-
-**Done.** The owner asked for a fresh, modern, minimal design. A second variant of the mockup was drawn, `zemp-lite-margin-editor-mockup-minimal.html` in `~/dev/handbook/zemp-lite-margin-editor/`, with its screenshots: the same editor and the same engine output, on one surface with hairlines in place of boxes, words in place of bordered controls, tags as words with a dot, one line at the foot for the state, the console and the keys. What the owner has ruled is kept: the logo, the violet, the three fonts, light and dark, no text under 12.5 pixels, the code size control and the Dark switch in the top bar. Nothing in the repository's code or specification was changed.
-
-**Green.** Nothing to run: documents only.
-
-**Next.** The owner's ruling on the editor and on which look; then "Release 0.1", or his changes.
-
-**For the owner to decide.** Which of the two looks the margin editor takes, if it is adopted; the quiet one would need the design guide's section on Zemp Lite brought into line.
-
-## 18 November 2026, release 0.1, the owner's four rulings on the proposed editor
-
-**Done.** The owner ruled on the mockup: no strip of rows in an unfolded output; a script opens with every output folded; *Notes · Fold all · Unfold all* in place of the earlier switch; a narrower notes column holding type and dimensions only (`docs/decisions.md`, 18 November). Both looks of the mockup, their screenshots, the document (now version 0.3) and the review page were brought into line, in `~/dev/handbook/zemp-lite-margin-editor/`. Nothing in the repository's code or specification was changed.
-
-**Green.** Nothing to run: documents only.
-
-**Next.** The owner's ruling on the editor itself and on its look; then "Release 0.1", or his changes.
-
-**For the owner to decide.** Nothing new: he confirmed the same day that **Notes** shows or hides the notes column, and that the column stays at the right of the code. Still his: whether the margin editor replaces the Inline layout, and in which look.
-
-## 18 November 2026, release 0.1, the quiet look adopted; Data and Plots lists
-
-**Done.** The owner adopted the quiet look for the proposed margin editor, and asked for variables to be shown and hidden in Data and for a hideable list of plots at the left of Plots (`docs/decisions.md`, 18 November). The mockup is now drawn in the quiet look alone, with both features, tested in the test browser; the earlier look is kept beside it. The document is at version 0.4 and the review page is renewed. Nothing in the repository's code or specification was changed.
-
-**Green.** Nothing to run: documents only. In the mockup, every text colour pair at 4.5 to 1 or more in both themes.
-
-**Next.** The owner's ruling on whether the margin editor replaces the Inline layout; then "Release 0.1", or his changes.
-
-**For the owner to decide.** R1, the editor itself. One reading to confirm if he wishes: "frames variables" read as the variables of a frame.
-
+**For the owner to decide.** The five refinements, once they stand in the register; and in the third, whether Graphviz may be used in the tests as a yardstick.
