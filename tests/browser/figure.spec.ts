@@ -138,9 +138,21 @@ test("when its pane is made narrower a plot is laid out afresh, never stretched,
   const edge = page.getByRole("separator", { name: "The width of the left panel" });
   await edge.focus();
   for (let step = 0; step < 12; step++) await page.keyboard.press("ArrowRight");
+  // Wait for the pane to settle and its last redraw to arrive: each key press narrows the
+  // pane and asks for a figure, so one of the earlier figures can be on the page for a
+  // moment after the pane has reached its final width.
   await expect
-    .poll(async () => (await figure(page, 17, stage)).shown[0], { timeout: 10_000 })
-    .toBeLessThan(wide.shown[0]! - 100);
+    .poll(
+      async () => {
+        const now = await figure(page, 17, stage);
+        return (
+          now.shown[0]! < wide.shown[0]! - 100 &&
+          JSON.stringify(now.shown) === JSON.stringify(now.place)
+        );
+      },
+      { timeout: 10_000 },
+    )
+    .toBe(true);
   const narrow = await figure(page, 17, stage);
   // A new figure of new proportions for the new place, at its own size.
   expect(narrow.shown).toEqual(narrow.place);

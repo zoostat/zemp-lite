@@ -480,3 +480,13 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **How it becomes normative.** A session in the Zeff repository enters the ruling in the register (`docs/spec/zeff_open_decisions.md`) as decided, from the note left for it; the Zemp Specification's sections 2, 5, 7, 8 and 15 are amended when the 0.2 alpha is planned, each change logged in `docs/spec_changes.md` then; and `docs/spec/` here is refreshed from the Zeff repository at the start of the 0.2 alpha, as step 1 of a release does.
 
 **Reason.** The owner's ruling of 18 November 2026. Nothing in this repository's code or specification was changed.
+
+## 18 November 2026: closing release 0.1
+
+**The test of a plot in a narrowed pane waits for the last redraw.** Twice on GitHub, in WebKit, on 17 November and with no change to the code between, `tests/browser/figure.spec.ts` ("when its pane is made narrower a plot is laid out afresh…") found the figure shown at a size other than its place's. The test narrows the pane by twelve key presses, each of which asks for a figure, and it measured as soon as the figure was narrower by 100 pixels, which an earlier figure can be for a moment before the last one arrives. **Choice:** it now waits until the figure is both narrower and at the size of its place, then makes the same checks as before. Nothing is weakened: the checks are unchanged, and a figure that never reached its place would still fail. Run five times over in both browsers here (60 of 60), then in the whole routine.
+
+**The version and the tag.** The version is 0.1.0 in `package.json`, `package-lock.json`, `worker/Cargo.toml` and `worker/Cargo.lock`, and the tag is `v0.1.0`, in the form of Zeff's tags (`v0.7.0`), since npm and cargo both need three numbers; the release is named "Zemp Lite 0.1 — The prototype", as the Zemp Specification's row names it. **The GitHub release is marked a pre-release:** the prototype is not meant for others, as its notes say, and the alpha is the first release that is.
+
+**The reviews of the release.** No open decision was due at Zemp 0.1. Of the risk register, R4 (the limits of the browser build) was measured: 2,549.7 kB compressed of 5 MB, a cold start of 54.4 ms of 1,000 ms; its early warning was not seen. The intermittent page loads of WebKit on GitHub's machines are noted for the Zeff sessions, who keep the register, in the shared notes folder.
+
+**Reason.** The testing handbook, section 2.4, and the closing of a release in the standing instructions.
