@@ -442,3 +442,13 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Two findings,** passed with the mockup to the note for the register: the graph is contradicted by two tests on `wages`, and the mockup draws no arrow for it; and three implications cannot be tested on `wages`, since `exper` is `max(0, age − educ − 6)` in every row, which #158's print should say rather than print a number.
 
 **Reason.** The owner's request of 18 November 2026. Nothing in this repository's code or specification was changed.
+
+## 18 November 2026: the diagrams joined into the margin editor mockup
+
+**The owner's request.** "Add the diagrams to the margin editor mockup."
+
+**How.** The project in the mockup now has two scripts: `main.zeff`, as before, and `diagrams.zeff`, the script of the diagrams mockup (a sample flow, a causal graph, a research model, an SEM). The script's name in the top bar is a menu of the project's scripts, and the mockup's strip has a switch for them. Each diagram unfolds under its statement like any output, and Plots lists the plots of both scripts, each under its script's name, with each diagram opening its own panel: paths traced, tests, the check, the effect decomposition, the view-state switches and the edge list. The numbers stay real: the engine's counts, R's tests, lavaan's SEM. A second script was chosen over adding the diagrams to `main.zeff` because the check of a fit against the graph needs a fit whose terms are all in the graph, and the fits of `main.zeff` hold `exper2`, which a causal graph does not name.
+
+**Where.** `~/dev/handbook/zemp-lite-margin-editor/`: the mockup and its 37 screenshots, version 0.5 of the document (section 10.1 and Appendix B; 0.4 kept beside it) and the review page. The diagrams mockup on its own is kept.
+
+**Reason.** The owner's request of 18 November 2026. Nothing in this repository's code or specification was changed.
