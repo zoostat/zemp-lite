@@ -452,3 +452,13 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Where.** `~/dev/handbook/zemp-lite-margin-editor/`: the mockup and its 37 screenshots, version 0.5 of the document (section 10.1 and Appendix B; 0.4 kept beside it) and the review page. The diagrams mockup on its own is kept.
 
 **Reason.** The owner's request of 18 November 2026. Nothing in this repository's code or specification was changed.
+
+## 18 November 2026: Paper, the place for writing, in the proposed editor
+
+**The owner's question and word.** How a Typst editor and live viewer could be added, named "Paper". He was reminded of his ruling of 13 November (decision #141: papers are written in Markdown, `.zmd`, with Typst underneath for the PDF) and offered two readings: (A) Paper edits `.zmd` by default and also opens and edits `.typ` files (templates, raw Typst blocks, or a paper written in Typst by hand), the page always set by Typst; (B) Typst as the writing format, which would reverse #141. He chose: "Yes, as recommended", option A, and that Paper be added to the mockup.
+
+**What Paper is, as proposed.** A fifth place in the top bar (Script · Data · Models · Plots · Paper): an outline and the paper's files at the left, which can be hidden; the source in the middle; the page at the right, as Typst sets it, redrawn as it is typed; clicking the page finds the source, and the cursor's place is lit on the page; checks as you type (a name not in the run, a citation not in the `.bib`, a broken cross-reference, a stale value, a number typed by hand that matches a result). Numbers come from the engine's chunks and their cache, never from Paper. Lite has all of it; Studio adds the Document settings dialog of #124.
+
+**When.** The live preview of `.typ` files once the Typst library passes the measurement of Zeff 0.8.0, step 21b (licences, identical PDF bytes, size against the browser bundle's limit); the `.zmd` paper with its chunks after 1.0, as #141 places it.
+
+**Reason.** The owner's ruling of 18 November 2026. Nothing in this repository's code or specification was changed.
