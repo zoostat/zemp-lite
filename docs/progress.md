@@ -168,3 +168,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **For the owner to decide.** Which of the two looks the margin editor takes, if it is adopted; the quiet one would need the design guide's section on Zemp Lite brought into line.
 
+## 18 November 2026, release 0.1, the owner's four rulings on the proposed editor
+
+**Done.** The owner ruled on the mockup: no strip of rows in an unfolded output; a script opens with every output folded; *Notes · Fold all · Unfold all* in place of the earlier switch; a narrower notes column holding type and dimensions only (`docs/decisions.md`, 18 November). Both looks of the mockup, their screenshots, the document (now version 0.3) and the review page were brought into line, in `~/dev/handbook/zemp-lite-margin-editor/`. Nothing in the repository's code or specification was changed.
+
+**Green.** Nothing to run: documents only.
+
+**Next.** The owner's ruling on the editor itself and on its look; then "Release 0.1", or his changes.
+
+**For the owner to decide.** Two readings to confirm: "Notes" as showing or hiding the margin, and the notes column staying at the right of the code.
+

@@ -390,3 +390,19 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Not done, on purpose.** Nothing of it is built, and the specification is unchanged: it is a question for the plan of the 0.2 alpha, and release 0.1 is the Inline prototype as it stands.
 
 **Reason.** A change of layout is the owner's to decide and belongs in the register with a deadline, not in the code of a release that is waiting to be closed.
+
+## 18 November 2026: the owner's four rulings on the proposed margin editor
+
+**What he saw.** The mockup of the proposed editor, in its quieter look.
+
+**His rulings.** (1) The strip of rows shown when an output is unfolded ("18,412 rows in dataset(wages), −2,841 where …") is not wanted. (2) A script opens whole, with no output unfolded. (3) The controls *Notes · As written · All open* are replaced by *Notes · Fold all · Unfold all*. (4) The notes pane is to be narrower and to say less: no distribution, no R² and the like; dimensions and type are right.
+
+**How they were taken.** An unfolded output holds what the engine said and printed for its statement and nothing the interface adds; the rows stay in the Models place. Every output is folded when a project is first opened. **Notes** shows or hides the margin; **Fold all** and **Unfold all** act on every output. The margin is 300 pixels, from 500, and a note holds a name, a type and dimensions, with a warning's code. Two readings were taken and are put to him: "Notes" as showing or hiding the margin, and "the left pane (note)" as the notes margin, which stands at the right of the code.
+
+**Where.** Both looks of the mockup, their screenshots, version 0.3 of `zemp_lite_margin_editor_specification.md` (Appendix D; 0.2 kept beside it) and the review page, all in `~/dev/handbook/zemp-lite-margin-editor/`. The note for the register carries them.
+
+**What they make simpler.** The engine need not write a one-line headline for every function, and no term has to head a fit: a result's type and dimensions are enough, and it has them.
+
+**Still open.** Whether the margin editor replaces the Inline layout at all. These are rulings on a proposal, and nothing in this repository's code or specification was changed.
+
+**Reason.** The owner's rulings of 18 November 2026.
