@@ -406,3 +406,17 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Still open.** Whether the margin editor replaces the Inline layout at all. These are rulings on a proposal, and nothing in this repository's code or specification was changed.
 
 **Reason.** The owner's rulings of 18 November 2026.
+
+## 18 November 2026: the quiet look adopted for the proposed editor; variables shown and hidden in Data; a list of plots in Plots
+
+**The owner's rulings.** "Adopt the quiet look for the margin editor. Add hide/show capabilities of frames variables in data page. Plot page should contain something like list of plots at the left pane which can be hide."
+
+**How they were taken.** The quiet look is the look of the proposed margin editor (decision R11 of its document). The mockup is now drawn in it alone, as `zemp-lite-margin-editor-mockup.html`; the earlier look is kept unchanged as `zemp-lite-margin-editor-mockup-earlier-look.html`, and the screenshots of each are in `screenshots/` and `screenshots-earlier-look/`. In Data, each variable of a frame has a box in the left pane that shows it in the grid or hides it, with Show all, Hide all and a field to find a variable; a column's header and the inspector can hide it too; hiding is view state, kept for each frame, and a hidden variable stays in every result and export. In Plots, the plots of the run are listed at the left with a small picture, a name, a line and a kind, the console line's plots apart as not in the script; choosing one shows it alone with what the engine drew. In both places the list folds away with "‹ Hide". One reading was taken: "frames variables" as the variables of a frame; the Data list can also be hidden in case the list of frames was meant.
+
+**Checked.** In the test browser: a variable hidden and shown by its box, by the keyboard (the focus staying on the box), from its header and with Show all and Hide all; hiding kept apart for each frame; both lists hidden and brought back; no page wider than its window. Every pair of a text colour and its ground in the quiet look reaches 4.5 to 1 in both themes; the one pair that did not (the operator colour on an edited line, 4.40) was mended by giving edited lines the design guide's lighter tint (now 4.64).
+
+**Where.** `~/dev/handbook/zemp-lite-margin-editor/`: the mockup, 27 screenshots, version 0.4 of `zemp_lite_margin_editor_specification.md` (sections 8.2, 10 and 14; Appendix D; 0.3 kept beside it) and the review page. The note for the register carries them.
+
+**Still open.** Whether the margin editor replaces the Inline layout (R1). If it does, the design guide's section 9 on Zemp Lite is brought into line with the quiet look, by the owner's word since the guide is his. Nothing in this repository's code or specification was changed.
+
+**Reason.** The owner's rulings of 18 November 2026.

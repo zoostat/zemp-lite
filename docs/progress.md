@@ -178,3 +178,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **For the owner to decide.** Nothing new: he confirmed the same day that **Notes** shows or hides the notes column, and that the column stays at the right of the code. Still his: whether the margin editor replaces the Inline layout, and in which look.
 
+## 18 November 2026, release 0.1, the quiet look adopted; Data and Plots lists
+
+**Done.** The owner adopted the quiet look for the proposed margin editor, and asked for variables to be shown and hidden in Data and for a hideable list of plots at the left of Plots (`docs/decisions.md`, 18 November). The mockup is now drawn in the quiet look alone, with both features, tested in the test browser; the earlier look is kept beside it. The document is at version 0.4 and the review page is renewed. Nothing in the repository's code or specification was changed.
+
+**Green.** Nothing to run: documents only. In the mockup, every text colour pair at 4.5 to 1 or more in both themes.
+
+**Next.** The owner's ruling on whether the margin editor replaces the Inline layout; then "Release 0.1", or his changes.
+
+**For the owner to decide.** R1, the editor itself. One reading to confirm if he wishes: "frames variables" read as the variables of a frame.
+
