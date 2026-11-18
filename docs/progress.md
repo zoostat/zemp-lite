@@ -155,3 +155,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Zemp 0.2 alpha, with the margin editor as its editor, once Zeff 0.8.0 is released ("Start release 0.2"). Before it, a Zeff session enters the Zemp Lite notes of the shared folder in the register, so that the alpha is planned on the decided design. Advised to the owner: the planning session and the [engine] steps on the most capable model, the [function] steps on the next.
 
 **For the owner to decide.** At the 0.2 alpha: #27 (paid sync, server compute, self-hosting) and #37 (the trademarks, before the public alpha); R2, R4, R8 and R9 of the margin editor. Later: R12 and R13 (Paper); the two proposals on comparing fits and the five refinements of the diagram plan, once they stand in the register.
+
+## 18 November 2026, after release 0.1: finding a fault
+
+**Done.** The owner asked how Zemp Lite's debugger compares with RStudio, Jupyter and VS Code, and what the margin editor should add; given a comparison and six proposals, he said "Yes, write them up". They are section 7.16 of the margin editor document, now version 0.9: the error's trail; Run to here in the gutter; the passes of a block searched and drawn; a pass or a call opened by replay; the console line inside it; and where the time went. A third script of the mockup shows them on the engine's real output (screens 48 to 57). They are left for a Zeff session to enter in the register (`docs/decisions.md`, 18 November). Version 0.9 also puts back into the 0.2 alpha the loop inspector that #76 places there. Nothing in the repository's code or specification was changed.
+
+**Green.** Nothing to run: documents only. The mockup's 57 screens were taken afresh, with no error in the page.
+
+**Next.** Zemp 0.2 alpha, once Zeff 0.8.0 is released ("Start release 0.2"); before it, a Zeff session enters the shared notes in the register.
+
+**For the owner to decide.** Once they stand in the register: the six proposals (R14 to R19 of the document), besides the questions of the entry above.

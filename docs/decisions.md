@@ -490,3 +490,17 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **The reviews of the release.** No open decision was due at Zemp 0.1. Of the risk register, R4 (the limits of the browser build) was measured: 2,549.7 kB compressed of 5 MB, a cold start of 54.4 ms of 1,000 ms; its early warning was not seen. The intermittent page loads of WebKit on GitHub's machines are noted for the Zeff sessions, who keep the register, in the shared notes folder.
 
 **Reason.** The testing handbook, section 2.4, and the closing of a release in the standing instructions.
+
+## 18 November 2026: finding a fault, compared and written up for the register
+
+**The owner's question and word.** How Zemp Lite's debugger compares with RStudio, Jupyter and VS Code, and what the margin editor should add. Given the comparison and six proposals, he said: "Yes, write them up."
+
+**The comparison, in brief.** Zemp Lite 0.1 has no debugger. #76 (decided 6 November 2026) gives the traceback through functions (in Zeff 0.7.0), and Run to here and the loop inspector (at the 0.2 alpha); it rejects breakpoints and stepping. Because a binding never changes and every result is kept, the margin editor shows after a run what a debugger shows by stopping at a line, for every line at once. It is ahead of the three on staleness, on the rows lost at each step, on comparison with an earlier run and on determinism. It is behind on looking inside a function call, stopping a loop at the pass that goes wrong, and evaluating an expression where a failure happened. Rated out of ten, as a judgement and not a measurement: RStudio 7, VS Code 7.5 (for Python; less for R), Jupyter 5, Zemp Lite 0.1 3, as planned 7.5, with the proposals 9.
+
+**The six proposals.** (A) The error's trail, shown in the margin of every file it passes through. (B) Run to here in the gutter as well as in ⌘K, as #76 decided. (C) The passes of a block searched (the first pass that failed, warned or kept no rows), and a field of `iterate`'s state drawn across them. (D) A pass or a call opened by replay, with a note on every line: possible because a Zeff function is pure, does not recurse and draws random numbers by its place. (E) The console line inside an opened pass or call. (F) Where the time and memory went, in the run record. Not taken: breakpoints, stepping, changing a value while stopped, and watch expressions.
+
+**Where they are.** Section 7.16 of the margin editor document, now version 0.9, with the engine items C22 to C27 and the decisions R14 to R19, in `~/dev/handbook/zemp-lite-margin-editor/`. The mockup has a third script, `by_year.zeff` with two functions, shown on the released engine's output in screens 48 to 57; nine of them are on the review page. The register is edited in the Zeff repository, never from here, so the six entries were left, in the register's form, as `zemp-lite-finding-faults-for-the-register.md` in the shared notes folder.
+
+**A correction found on the way.** Section 22 of the document, version 0.8, had left the loop inspector out of the 0.2 alpha's step 2, although #76 places it at the 0.2 alpha; version 0.9 puts it back.
+
+**Reason.** The owner's word of 18 November 2026. Nothing in this repository's code or specification was changed; none of the six belongs to release 0.1, and each is the owner's to decide when it stands in the register.
