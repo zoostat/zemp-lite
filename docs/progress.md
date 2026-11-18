@@ -142,6 +142,6 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Next.** The owner's ruling on the margin editor; then "Release 0.1", or his changes.
 
-**Then.** On his asking, the diagrams were drawn in a mockup in the quiet look, `zemp-lite-diagrams-mockup.html`, on real numbers (the engine's sample flow, R's tests on `wages`, lavaan's SEM), with two findings for the register (`docs/decisions.md`, 18 November). They were then joined into the margin editor mockup as a second script, `diagrams.zeff`, with each diagram in Plots under its script (document version 0.5).
+**Then.** On his asking, the diagrams were drawn in a mockup in the quiet look, `zemp-lite-diagrams-mockup.html`, on real numbers (the engine's sample flow, R's tests on `wages`, lavaan's SEM), with two findings for the register (`docs/decisions.md`, 18 November). They were then joined into the margin editor mockup as a second script, `diagrams.zeff`, with each diagram in Plots under its script (document version 0.5). Last, on the owner's ruling (`docs/decisions.md`, 18 November, Paper), the mockup gained a fifth place, Paper: a `.zmd` paper beside its page, every number from the run, with checks as one types, and `.typ` files too (document version 0.6, section 25, screens 38 to 47).
 
-**For the owner to decide.** The five refinements, once they stand in the register; and in the third, whether Graphviz may be used in the tests as a yardstick.
+**For the owner to decide.** R12 and R13 of the document, on Paper; the five refinements, once they stand in the register; and in the third, whether Graphviz may be used in the tests as a yardstick.
