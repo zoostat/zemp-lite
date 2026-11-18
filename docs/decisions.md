@@ -462,3 +462,11 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **When.** The live preview of `.typ` files once the Typst library passes the measurement of Zeff 0.8.0, step 21b (licences, identical PDF bytes, size against the browser bundle's limit); the `.zmd` paper with its chunks after 1.0, as #141 places it.
 
 **Reason.** The owner's ruling of 18 November 2026. Nothing in this repository's code or specification was changed.
+
+## 18 November 2026: Models withdrawn from the proposed editor
+
+**The owner's question and word.** Whether the proposed margin editor needs its Models place (decision R5 of the proposal, which had recommended keeping it in two steps). He was advised to drop it: it repeats what `report()` already prints, unfolded in the script and in a paper's Table 1; what a viewer shows never reaches an export; it needed engine work for one screen; and it invites causal readings of coefficients that change across columns. He answered: "Yes, as recommended".
+
+**What follows, as proposed.** The places are Script, Data, Plots and Paper. What Models offered goes where it reaches the script, the exports and the paper: fits side by side stay with `report([...])`; whether columns can be compared (a different outcome, estimator or sample) becomes a note printed by `report()` itself, in its table's footer; one coefficient across fits on one scale becomes a coefficient plot of several fits, `coef_plot([m1, m2, m3])`, beside the existing `fit.coef_plot()`; the rows from the data to the estimation sample stay with `fit.sample_flow()` (#121, at 1.2). The two new pieces are written up as proposals for a Zeff session to enter in the register, each the owner's to decide, with 0.10.0 recommended, the release at which #141 moves `report()` into `publish`.
+
+**Reason.** The owner's ruling of 18 November 2026. Nothing in this repository's code or specification was changed.
