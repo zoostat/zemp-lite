@@ -25,8 +25,17 @@ export interface ViewState {
     /** For each script, by its path, the lines of the statements whose output is unfolded. */
     unfolded: Record<string, number[]>;
   };
-  /** The data viewer: the frame shown, by the name of its binding, and the list shown or hidden. */
-  data: { frame: string | null; list: boolean };
+  /**
+   * The data viewer: the frame shown, by the name of its binding; the list shown or hidden; the
+   * variable chosen for the inspector; and, for each frame, the variables hidden from the grid.
+   * Hiding is the view's alone: a hidden variable is still in every result and export.
+   */
+  data: {
+    frame: string | null;
+    list: boolean;
+    variable: string | null;
+    hidden: Record<string, string[]>;
+  };
   /** The parts of the file this build does not know, kept as they were (a later build's). */
   others: Record<string, unknown>;
   left: {
@@ -82,7 +91,7 @@ export function usual(): ViewState {
     // Zemp Lite opens in the margin editor, every output folded (#174).
     layout: "margin",
     script: { notes: true, unfolded: {} },
-    data: { frame: null, list: true },
+    data: { frame: null, list: true, variable: null, hidden: {} },
     others: {},
     left: { tab: "project", width: LEFT_WIDTH.usual, shown: true },
     output: { share: OUTPUT_SHARE.usual, shown: true },
@@ -141,6 +150,16 @@ export function readViews(text: string | null): ViewState {
   if (typeof data === "object" && data !== null) {
     if (typeof data["frame"] === "string") state.data.frame = data["frame"];
     if (typeof data["list"] === "boolean") state.data.list = data["list"];
+    if (typeof data["variable"] === "string") state.data.variable = data["variable"];
+    const hidden = data["hidden"];
+    if (typeof hidden === "object" && hidden !== null && !Array.isArray(hidden)) {
+      for (const [frame, names] of Object.entries(hidden as Record<string, unknown>)) {
+        if (Array.isArray(names)) {
+          const kept = [...new Set(names.filter((one): one is string => typeof one === "string"))];
+          if (kept.length > 0) state.data.hidden[frame] = kept;
+        }
+      }
+    }
   }
   const known = new Set(["version", ...Object.keys(state)]);
   for (const [key, value] of Object.entries(from)) {

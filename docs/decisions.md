@@ -794,3 +794,17 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Reason.** The checklist's step 13; open decision #75; the margin editor's design, sections 8 and 8.1 (what is always shown).
 
 **A test given more time.** The run on GitHub of step 11 (6e89886) failed in WebKit on "the layout chosen is kept with the project": the test reloaded the page half a second after choosing Panes, and the view state, written a fifth of a second after a change and behind any file still being saved, had not yet reached the browser's storage on that slower runner. The tests that reload the page after a change now wait a second and a half; their checks are unchanged. A reload within half a second of a change can lose that change: a known issue of the notes.
+
+## 21 November 2026: Data, the variables shown and hidden, and the inspector (release 0.2, step 14a)
+
+**Split.** Step 14 was split: 14a, the variables shown and hidden and the inspector; 14b, sorting, search, a row count, copying a range, Copy as Zeff and each column's small distribution.
+
+**Choice** (the owner's ruling of 18 November 2026; the margin editor's design, 8.2): under the frames, the list of the frame's variables, each with a box that shows it in the grid or hides it, with **Show all**, **Hide all**, *Find a variable*, and how many are shown (`10 of 11 shown`); a column's header hides its variable with ×; the facts line says how many are hidden, with *show all*. Hiding is view state, kept for each frame (`data.hidden`); a hidden variable is still listed, still chosen for the inspector, and in every result and export, and nothing is written into the script.
+
+**Each column's header** gives its name, its type and its count of missing values (amber where above nought), as the engine reports them.
+
+**The inspector:** choosing a variable (its header or its name in the list) shows its type, label and missing count, and the engine's own summary of it, as the engine prints `frame.summary([variable])` run after the script, the way the console line runs a statement, so that every number is the engine's; with **Hide from the grid** or **Show in the grid**.
+
+**Not here.** A small distribution in each header, which the engine would draw, comes with 14b, beside sorting and search.
+
+**Reason.** The checklist's step 14a; open decision #75; the owner's ruling of 18 November 2026.

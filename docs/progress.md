@@ -151,3 +151,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 153 unit tests; 242 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 14 `[function]`: Data, the variables.
+
+## 21 November 2026, release 0.2, step 14a (Data: the variables, and the inspector)
+
+**Done.** Step 14 split into 14a and 14b. Step 14a `[function]`: the variables of a frame shown and hidden by their box, the keyboard or a header's ×, with Show all, Hide all and Find, kept for each frame; each column's header with its type and missing count; the inspector with the engine's own summary of the variable chosen. Steps 10b to 12 are green on GitHub.
+
+**Green.** `npm run routine`: 153 unit tests; 248 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 14b `[function]`: sorting, search, copying, Copy as Zeff.

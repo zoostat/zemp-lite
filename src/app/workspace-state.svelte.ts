@@ -1133,6 +1133,48 @@ export class Workspace {
     this.#keep();
   }
 
+  /** Hide variables of a frame from the grid, or show them again; nothing else changes. */
+  setHidden(frame: string, hidden: string[]): void {
+    const others = Object.entries(this.views.data.hidden).filter(([one]) => one !== frame);
+    const kept = hidden.filter((one, at) => hidden.indexOf(one) === at);
+    this.views.data.hidden = Object.fromEntries(
+      kept.length === 0 ? others : [...others, [frame, kept]],
+    );
+    this.#keep();
+  }
+
+  /** Choose a variable for the data viewer's inspector. */
+  chooseVariable(variable: string | null): void {
+    this.views.data.variable = variable;
+    this.#keep();
+  }
+
+  /**
+   * The engine's summary of one variable of a frame, as it prints it: the statement
+   * `frame.summary([variable])` run after the script, as the console line runs one, so that
+   * every number is the engine's. The script is not changed.
+   */
+  async summaryOf(frame: string, variable: string): Promise<string> {
+    const script = this.scriptPath;
+    await this.#load(script);
+    const statement = `${frame}.summary([\`${variable.replaceAll("`", "")}\`])`;
+    const { text, from } = composed(this.buffers[script]?.text ?? "", [], statement);
+    const before = this.#busy;
+    let printed = "";
+    const work = (async () => {
+      await before;
+      await this.#saving;
+      const told = consoleRun(script, text);
+      const outcome = await this.session.run(script, text, told.hear, 0);
+      told.end(outcome);
+      const result = outcomeOf(told.run, from);
+      printed = result.printed !== "" ? result.printed : result.said.map((one) => one.raw).join("");
+    })();
+    this.#busy = work;
+    await work;
+    return printed;
+  }
+
   /** Show or hide the data viewer's list of frames and variables. */
   setDataList(shown: boolean): void {
     this.views.data.list = shown;
