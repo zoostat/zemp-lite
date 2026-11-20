@@ -112,6 +112,10 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 
 **Status (20 November 2026, the notes of Zemp Lite entered).** On the owner's word ("Yes, set it up", to the question whether the register should be brought up to date before Zeff 0.9.0 and Zemp Lite 0.2 are started), the notes the Zemp Lite sessions wrote between 15 and 20 November 2026 are entered as #174 to #197, in a new group "Raised from Zemp Lite". One records a ruling he has made: #174, the margin editor adopted on 18 November 2026 as the editor of Zemp Lite from the 0.2 alpha ("Yes, adopt it"), with what was ruled the same day. The others are proposals, each his to decide, with the deadline its note proposed: what the editor asks of the engine (#175) and leaves open (#176); the proposals from his review of notebook features (#177 to #182); finding a fault (#183 to #187); comparing fits in the engine (#188, #189); five refinements of the diagram plan of #121 (#190 to #194); `margins` through a transformed term and two messages an R user meets (#195, #196); and the plots of a run handed to an interface (#197). Four entries gain a paragraph: #76 (how **Run to here** is read in the margin editor), #146 (the amendment covers the paragraph "The look" of section 5), #158 (two findings from the shipped data) and #164 (the names of a `poly` term's columns, and the rows and weights its basis is orthogonal on). Due at the opening of Zeff 0.9.0 among them: #175 in part, #178, #180, #184, #185, #186, #195, #196 and #197; due at the Zemp 0.2 alpha: #176 in part, #177, #181, #183 and #187. Nothing is settled here that the owner must decide, and no normative text is changed.
 
+**Status (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its seven answers, so each recommendation is taken under his standing instruction of 12 November 2026 (asked again as question 1 and carried over), his to overturn. Decided: #85, #149, #153, #161, #165 (the name `n_chars`), #166, #167 (the name `row_number`), #168, #169, #170 and #171 (each layout as recommended), each option A or as its table recommends, built at steps 29 to 37; from Zemp Lite, #175 (C5, C6 and C22 built here, C16 with #197, C23 to C27 placed at 0.11.0), #178 (with the comment `// # Title`), #180, #181, #184, #185, #186, #195 and #196, each option A, and #197, option A, the owner's priority; the three definitions of `margins` left by #88 for this opening, written into #88. #112, decided on 11 November 2026, is applied to the volumes at step 2. Not due here: #151 and the organisation of #31 (0.11.0, moved by the owner on 20 November 2026); the launcher trusts only addresses under `zeff-lang.dev`, so the organisation does not matter to it (`docs/decisions.md`, 20 November 2026). Also taken on the recommendation: `marginaleffects`, `rstatix` and `pROC` for the R reference library, which a session cannot install (the references are written in base R until the owner installs them); nothing hosted on `zeff-lang.dev` before 1.0, engines installed at 0.9.x from a downloaded archive or a mirror. No normative text is changed at the opening.
+
+**Status (21 November 2026, the owner's answers from Zemp Lite 0.2).** At step 1 of Zemp Lite's release 0.2 the owner answered the seventeen questions of its checklist, "Go, as recommended"; the Zemp Lite session, which may not edit this repository, wrote them up in the shared notes, and they are entered here from the Zeff session: #27 (its server part closed until the paid tiers), #37 (open until the trademark applications are filed), #74 and #75 (option A, in the margin editor's form), #76 (the reading of 20 November confirmed), #164 (the addendum's two points), #176 (R2, R8, R9), #177, #178 (the form of the comment), #181, #183, #184 to #186 (option A each, placed at 0.11.0 by the opening of Zeff 0.9.0), #187, #195 and #196 (confirmed). Each entry carries a dated paragraph. Also recorded from the same answer: the reader test is one test for Zemp 0.2 and Zeff 0.9.0, run on the hosted alpha with five to eight readers the owner chooses (step 45 of Zeff 0.9.0); and the alpha's example is the margin editor's `wages` script with Zeff's sample `instruments` on `staff`. The amendments of the Zemp Specification that follow from #146, #174 and these answers (sections 2, 5, 7, 8, 15 and 17) and of section 12 of the Engine Specification (R9) are made with them and logged in `docs/spec_changes.md`.
+
 ## Summary
 
 | # | Decision | Recommendation | Decide by |
@@ -142,7 +146,7 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 24 | Zemp interface framework | Svelte 5, after a two-week spike against Solid at 0.6.0 | decided 11 November 2026 (Svelte 5, without the spike) |
 | 25 | Zemp licence | Apache 2.0, as Zeff; a commercial path through services, not the licence. The business model assumes open core instead: decide the two together | settled by #125 (12 November 2026), and again by #148 (15 November 2026), which replaces it: Lite public under Apache 2.0, Studio private and proprietary |
 | 26 | Start Zemp at 0.7.0 | Keep; the framework spike starts at 0.6.0 | decided 1 November 2026 |
-| 27 | Hosting Zemp web; sync; a Zemp server | Hosting ruled 13 November 2026: Cloudflare Pages for Zemp web at `lite.zeff-lang.dev`, the website on GitHub Pages at `zeff-lang.dev`. Sync through the user's own folder sync, no server. The business model's paid sync, server compute and self-hosting need a server and a change to Zemp section 13: decide the two together | Zemp 0.2 alpha (sync and server) |
+| 27 | Hosting Zemp web; sync; a Zemp server | Hosting ruled 13 November 2026: Cloudflare Pages for Zemp web at `lite.zeff-lang.dev`, the website on GitHub Pages at `zeff-lang.dev`. Sync through the user's own folder sync, no server. The business model's paid sync, server compute and self-hosting need a server and a change to Zemp section 13: decide the two together | the server part decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session): no Zemp server before 1.0; returns with the paid tiers (#35, #36) |
 | 28 | AI assistance model | User's own key to a remote model, a local model as the private option, both off by default; whether Zemp also sells metered access of its own (the business model's Pro tier) is part of the same decision | Zemp 1.11 |
 | 29 | Zemp version coupling | Follow Zeff's minors until 1.11 | 1.0 |
 | 30 | Performance targets | Put the two stress cases in the benchmark suite now; set targets at first measurement, tighten each release | decided 23 October 2026 |
@@ -152,7 +156,7 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 34 | Long-term-support releases for institutions | None: exact pins and engines downloadable for ever already keep results stable; sell support, not a release line | Zemp Institution tier |
 | 35 | Pricing levels and AI usage quotas | Set from the first year of running costs, not before Pro exists | Zemp Pro |
 | 36 | Student verification for free Pro | Institutional email, with a manual route for institutions without one | Zemp Pro |
-| 37 | Trademark filing for Zeff and Zemp | File in the home jurisdiction before the public alpha; Apache 2.0 gives others no right to the names | Zemp 0.2 alpha |
+| 37 | Trademark filing for Zeff and Zemp | File in the home jurisdiction before the public alpha; Apache 2.0 gives others no right to the names | decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session): the alpha built and hosted, its address announced once applications for "Zeff" and "Zemp" are filed in the owner's home jurisdiction; open until he says they are filed |
 | 38 | Setup files for Zeff, Zemp Lite and Zemp Studio | None until #23 is decided: `zeff app install` and the package managers cover the desktop apps; plan setup files with #23 | 0.11.0 |
 | 39 | Zemp Lite: paid features and AI in Lite; the web address; a desktop preview before 0.5 | Free-tier only through 1.0, revisited with #27 and #28; Lite web at a path on Zemp Studio web's origin; no earlier desktop preview | decided 11 November 2026 (as recommended) |
 | 40 | A specification freeze while 0.1.0 to 0.3.0 are built | Freeze the normative text except for bugs found while coding; record further design work here with a deadline release (risk register, R12) | decided 18 October 2026; ended 22 October 2026 |
@@ -189,9 +193,9 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 71 | The fitted design through the result interface | A `design()` method giving the kept design as a frame of the rows used, so that `vif` and later diagnostics can be written in Zeff | decided 6 November 2026 |
 | 72 | A table constructor for Zeff-written functions | `table(title, columns = [...])` in `core`, with `format` for numbers, so that `summary` can be rewritten in Zeff as section 14 planned | decided 1 November 2026; `summary` kept in Rust at 0.7.0, step 4.5 |
 | 73 | Typst: the typesetting engine of exports and of the report document, with a live preview | Adopt, after the licence, identity and bundle checks: a spike at 0.7.0 beside the plot renderer; `.typ` exports and Lite's export of script with output as PDF at 0.8.0; the report document a typst document with executed Zeff chunks | decided 15 November 2026 (option A in steps, on the recommendation); `.typ` written by `export` since 0.8.0 (step 21a); the library measured at steps 21b and 21c and, on 19 November 2026, **not linked into the engine**: the bytes agree on every target, but 14 of its 48 sets of hyphenation patterns are not under a permissive licence and cannot be left out, and it adds 26 MB to the engine and 7.2 MB compressed to the browser, where the bundle's limit is 5 MB; what follows for Zemp is #172 |
-| 74 | A Help pane in the Viewer | A fourth tab beside Data, Results and Plots that follows the cursor to the function's page and opens a code's explained page from the Log; in both editions | 0.8.0 |
-| 75 | The data viewer and the environment browser, made excellent | Frozen columns, a statistics header per column, search, a live row count under a filter; Objects as a tree with memory per object; Lite's viewer read-only | 0.8.0 |
-| 76 | Traceback, run to here and the loop inspector | The full call chain of an error through module functions; run to a line; one row per loop pass and per `iterate` state from the run record; no breakpoints or stepping | decided 6 November 2026 |
+| 74 | A Help pane in the Viewer | A fourth tab beside Data, Results and Plots that follows the cursor to the function's page and opens a code's explained page from the Log; in both editions | decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session) (option A, in the margin editor's form); at the Zemp 0.2 alpha |
+| 75 | The data viewer and the environment browser, made excellent | Frozen columns, a statistics header per column, search, a live row count under a filter; Objects as a tree with memory per object; Lite's viewer read-only | decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session) (option A, in the Data place); at the Zemp 0.2 alpha |
+| 76 | Traceback, run to here and the loop inspector | The full call chain of an error through module functions; run to a line; one row per loop pass and per `iterate` state from the run record; no breakpoints or stepping | decided 6 November 2026; its reading in the margin editor confirmed 21 November 2026 (R15) |
 | 77 | Schema-aware completion and extract function | Completion from the schema pass (the columns of the frame at that point in the chain) at 0.7.0; extract function with inferred parameters, a page skeleton and the same-bytes check at 1.1 | decided 6 November 2026 |
 | 79 | Arithmetic over lists, or a map, in a Zeff-written built-in | A `map(list, f)` over a function value, or `+`, `-`, `*` and `/` lifted over a list as they are over a column, so that `quantile_group` can build its probabilities i/n exactly and be rewritten in Zeff | decided 6 November 2026; applied 7 November 2026 (0.7.0, steps 3b and 4.4) |
 | 78 | Git history, the diff of a script and a diff of results | History and script diffs in the Git panel, and a table of every output of two commits' run records, identical to the bit or traced to the statement that changed; merges and pull requests left to the system terminal | 1.1 |
@@ -200,12 +204,12 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 82 | What `size:` means for a table in `export` | Refuse `size:` on a table with a named diagnostic at 1.0; table sizes with an exact splitting rule follow as an addition, written with the typesetting engine of #73 | 0.11.0 |
 | 83 | The sentence of section 3.7 on bare words, beside the option records of section 3.1 | Amend section 3.7 to say what the engine has done since 0.5.0: in a record literal, a bare name that a parameter accepts as a word is that word | decided 6 November 2026 |
 | 84 | Reserving `each` and `peek` before `core` freezes | At 0.11.0, add whichever word has not shipped as a `core` function to the words reserved for later use (section 3.6); `peek` only if the owner wants `.peek()` | 0.11.0 |
-| 85 | The Games–Howell comparison in `posthoc` | Add `games_howell` to `method:` in the first release after 0.7.0 with room; until then Tukey's HSD after Welch's ANOVA prints a note | 0.9.0 |
+| 85 | The Games–Howell comparison in `posthoc` | Add `games_howell` to `method:` in the first release after 0.7.0 with room; until then Tukey's HSD after Welch's ANOVA prints a note | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 29 |
 | 86 | Folding, snippets and the statement ranges behind **Run** in the language server | At 0.8.0, with Zemp's alpha; formatting through the server is built at 0.7.0 | decided 15 November 2026 (option A); built at 0.8.0, step 8b |
 | 87 | A variable name in an option record | Accept a `Vars` of exactly one variable where a parameter takes a `Var`, so that `{ se: robust, cluster: vars(firm) }` can be named once and spread | decided 15 November 2026 (option A); built at 0.8.0, step 4 |
-| 197 | The plots of a run handed to an interface | Recommended A: an engine step at 0.9.0 by which the browser build keeps the plots of a run, lays one out at a size and theme without a new run, and hands over the scene (C16 of #175) | open; the owner's priority; deadline 0.9.0 |
-| 196 | Two messages R users meet: `I()` and `poly` in a formula, and a function of a later release | Recommended A: inside a formula, the help of Z0103 for `I(...)` shows the term without it and for `poly(x, k)` writes the powers out; a catalogued name of a later release says its release | open; deadline 0.9.0 |
-| 195 | Slopes and turning points: `margins` through a transformed term | Recommended A: `margins` differentiates through every term that is a function of the variable asked for (`exper` and `exper^2` today; `poly` and `spline` when they arrive) | open; deadline 0.9.0 |
+| 197 | The plots of a run handed to an interface | Recommended A: an engine step at 0.9.0 by which the browser build keeps the plots of a run, lays one out at a size and theme without a new run, and hands over the scene (C16 of #175) | decided 21 November 2026 (option A, the owner's priority as recommended); built at 0.9.0, step 25 |
+| 196 | Two messages R users meet: `I()` and `poly` in a formula, and a function of a later release | Recommended A: inside a formula, the help of Z0103 for `I(...)` shows the term without it and for `poly(x, k)` writes the powers out; a catalogued name of a later release says its release | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 35 |
+| 195 | Slopes and turning points: `margins` through a transformed term | Recommended A: `margins` differentiates through every term that is a function of the variable asked for (`exper` and `exper^2` today; `poly` and `spline` when they arrive) | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, steps 10 to 12 |
 | 194 | Statistical guard rails, written into the diagram rules | Adopt rule 1 (no edge suggested by the data, on a causal graph or an SEM diagram) and rule 5 (stars only beside an estimate in `path_plot`); rules 2 to 4 stay where they are | open; deadline 0.10.0 for rule 1, 1.12 for rule 5 |
 | 193 | Dragged positions in Zemp Lite: Copy as Zeff | Recommended A: **Copy as Zeff** (#114) extends to dragged positions in every diagram viewer, as `layout:` or `at:` on the clipboard | open; deadline: Zemp 0.4, with Zeff 0.10.0 |
 | 192 | Testing layouts against known figures | Recommended A, or B if nothing EPL is wanted even in tooling: a suite of reference figures measured on every change, Graphviz's `dot` a yardstick in the tests alone; the licence question is the owner's | open; the owner's word on Graphviz; deadline 0.10.0 |
@@ -213,33 +217,33 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 190 | Building the layout engine in stages | Recommended A: the layout engine of #121 in three stages, each with the release that first needs it (0.10.0 for causal graphs, 1.2 for flowcharts, 1.12 for SEM) | open; deadline 0.10.0 |
 | 189 | A coefficient plot of several fits | Recommended A: `coef_plot([fits])` in `plot`, one row per term with each fit's estimate and interval; fits of different outcomes or estimators refused; the name before 1.0 | open; deadline 0.10.0 |
 | 188 | `report()` says when its columns cannot be compared | Recommended A: a note in the table's footer for each column that differs from the one before it in outcome, estimator or rows; nothing when the columns agree | open; deadline 0.10.0 |
-| 187 | Where the time and memory of a run went | Recommended A: two lists in the run record, the statements by their time and the bindings by their memory, read from the engine (C26) | open; deadline: the Zemp 0.2 alpha |
-| 186 | The console line inside a pass or a call | Recommended A, with #185: while a pass or a call is open, the console line runs in its names and can change nothing; needs C25 | open; deadline as #185 |
-| 185 | Opening a pass or a call, by replay | Recommended A: the engine runs one call or one pass again from the arguments the run gave it, bit for bit, and shows each `let` of the body for that call; no breakpoints (#76); needs C24 | open; deadline 0.9.0, for placing C24 |
-| 184 | Searching the passes of a block, and drawing a field across them | Recommended A: find the first pass that failed, warned or kept no rows; for `iterate`, each field's change and one field drawn against the pass; needs C23 and C27 of #175 | open; deadline 0.9.0 |
-| 183 | The error's trail in the margin | Recommended A: the failing statement's output lists each link of the chain as a link, each file opening with a note on the lines the chain names; nothing run again | open; deadline: the Zemp 0.2 alpha |
+| 187 | Where the time and memory of a run went | Recommended A: two lists in the run record, the statements by their time and the bindings by their memory, read from the engine (C26) | decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session) (option A, R19); at the Zemp 0.2 alpha, the interface's own timing until the engine reports each statement's |
+| 186 | The console line inside a pass or a call | Recommended A, with #185: while a pass or a call is open, the console line runs in its names and can change nothing; needs C25 | decided 21 November 2026 (option A); C25 placed at 0.11.0 |
+| 185 | Opening a pass or a call, by replay | Recommended A: the engine runs one call or one pass again from the arguments the run gave it, bit for bit, and shows each `let` of the body for that call; no breakpoints (#76); needs C24 | decided 21 November 2026 (option A); C24 placed at 0.11.0 |
+| 184 | Searching the passes of a block, and drawing a field across them | Recommended A: find the first pass that failed, warned or kept no rows; for `iterate`, each field's change and one field drawn against the pass; needs C23 and C27 of #175 | decided 21 November 2026 (option A); C23 and C27 placed at 0.11.0 |
+| 183 | The error's trail in the margin | Recommended A: the failing statement's output lists each link of the chain as a link, each file opening with a note on the lines the chain names; nothing run again | decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session) (option A, R14); at the Zemp 0.2 alpha, the pass added with C22 at 0.9.0 |
 | 182 | Small conveniences, none before 1.0 | Keep as roadmap, each weighed after Zemp Lite 1.0: moving a statement, hiding one output, a heading as formatted text, a point's values on hover, the time a statement last ran | open; deadline 1.1 |
-| 181 | Run from here to the end | Recommended A, as an amendment of #76: **Run from here** as a command and a gutter action beside **Run to here** | open; deadline: the Zemp 0.2 alpha, otherwise 0.9.0 |
-| 180 | Run from a fresh session | Recommended A: a ⌘K command that drops the console's statements and runs the script from its first line, the cache serving unchanged statements | open; deadline 0.9.0 |
+| 181 | Run from here to the end | Recommended A, as an amendment of #76: **Run from here** as a command and a gutter action beside **Run to here** | decided 21 November 2026 (option A, as an amendment of #76); a command of Zemp, at the Zemp 0.2 alpha |
+| 180 | Run from a fresh session | Recommended A: a ⌘K command that drops the console's statements and runs the script from its first line, the cache serving unchanged statements | decided 21 November 2026 (option A); a command of Zemp, no engine step |
 | 179 | The last run's output shown when a project is opened | Recommended A: on opening, the last run's output from the run record and the cache, each block labelled with when it ran, the stale rules applying at once | open; deadline 0.11.0 |
-| 178 | Sections in a script | Recommended A: a comment written as a heading (`// # Data`) starts a section, reported by the language server as outline and folding, with **Run section**; the form of the comment is the owner's choice | open; deadline 0.9.0; the comment's form at the Zemp 0.2 alpha |
-| 177 | Zemp Lite is not a notebook: the statement is the cell | Recommended A: no cells; the script stays one plain text file and the statement is the unit that is run, shown, folded and marked stale | open; deadline: the Zemp 0.2 alpha |
-| 176 | Six questions the margin editor leaves open | Recommended per item: Panes kept one release (R2); the keys as the document has them (R8); ⌘↵ runs the statement with the stale statements it reads (R9); tables as cells when the engine can (R10); the HTML article until the PDF (R12); a paper's chunks in its own session (R13) | open; R2, R8 and R9 at the Zemp 0.2 alpha; R10 with C7; R12 and R13 with the documents of #141 |
-| 175 | What the margin editor asks of the engine: the contract, C1 to C27 | Recommended A: each of the 27 items placed at an engine release as a step with its tests; C5 and C6 (a result's type and dimensions, its print at a width) first, for the 0.2 alpha | open; deadline 0.9.0 for C5, C6 and C22 to C27, the rest at their releases |
+| 178 | Sections in a script | Recommended A: a comment written as a heading (`// # Data`) starts a section, reported by the language server as outline and folding, with **Run section**; the form of the comment is the owner's choice | decided 21 November 2026 (option A, the comment `// # Title`, on the recommendation); built at 0.9.0, step 28 |
+| 177 | Zemp Lite is not a notebook: the statement is the cell | Recommended A: no cells; the script stays one plain text file and the statement is the unit that is run, shown, folded and marked stale | decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session) (option A) |
+| 176 | Six questions the margin editor leaves open | Recommended per item: Panes kept one release (R2); the keys as the document has them (R8); ⌘↵ runs the statement with the stale statements it reads (R9); tables as cells when the engine can (R10); the HTML article until the PDF (R12); a paper's chunks in its own session (R13) | R2, R8 and R9 decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session); R10 with C7; R12 and R13 with the documents of #141 |
+| 175 | What the margin editor asks of the engine: the contract, C1 to C27 | Recommended A: each of the 27 items placed at an engine release as a step with its tests; C5 and C6 (a result's type and dimensions, its print at a width) first, for the 0.2 alpha | decided 21 November 2026 (option A): C5, C6 and C22 built at 0.9.0 (steps 26 and 27), C16 with #197 (step 25), C23 to C27 placed at 0.11.0, the rest at the releases they rest on |
 | 174 | The editor of Zemp Lite: the margin editor | The margin editor replaces the Inline layout of section 5 as the editor of Zemp Lite, from the 0.2 alpha: a note beside every statement, the full result unfolded under it at the reader's asking; places Script, Data, Plots and Paper; the quiet look | decided 18 November 2026 (option A; the owner's ruling, recorded from the Zemp Lite repository); built from the Zemp 0.2 alpha |
 | 173 | Probabilities below the smallest double: a log scale for the tails | Recommended A now and C after 1.0: the limit is stated on the page of `dist.truncated` and in the known issues; `log: true` on `pdf` and `cdf`, used inside a truncation, is an addition placed in the plan of releases after 1.0 | decided 20 November 2026 (A, on the recommendation under the standing instruction); C open, deadline: the plan of releases after 1.0 |
 | 172 | Typst inside Zemp, for the PDF of a script with its output | Recommended A: a module of its own, fetched the first time a PDF is asked for, built with the hyphenation patterns under permissive licences only; until then the `.typ` export and the Typst the user has installed | open; deadline: the Zemp release that builds **Export script with output** |
-| 171 | Six printed layouts the review found | Recommended A for each: small coefficients in `report` by significant digits, sign kept; `labels:` applied to the parts of an interaction; thousands separators in every df column; facet titles "kids = 0"; long group names wrapped in the proportion test's hypotheses; the standard error of a t-test's difference in its estimates | open; deadline 0.9.0 |
-| 170 | Six smaller refusals with workarounds | Recommended per item: `equal` on columns; `category` on a list; a count from `duplicates`; `attempt` of a call to `error`; `map` over a list holding a failed value; `chi2_test(x, p:, levels:)` naming categories never observed | open; deadline 0.9.0 |
-| 169 | Widening a guessed Int to Float on import | Recommended A: a later value with a decimal widens the column to Float with a note; only text in a numeric column stops the import | open; deadline 0.9.0 |
-| 168 | One value out of a column | Recommended A: `first`, `last` and `x[i]` take a column, and `to(column, List)` gives a List | open; deadline 0.9.0 |
-| 167 | A row number | Recommended A: `row_number()` in `data`, within `by:` groups in `add`, as Stata's `_n` | open; deadline 0.9.0 |
-| 166 | A row-wise count of missing values | Recommended A: `row(vars, stat: n_missing)`, an option of `row` | open; deadline 0.9.0 |
-| 165 | The length of each text value in a column | Recommended A: a text function giving each value's length in code points, `n_chars(s)`, with a note when `len` of a column is spread over the rows of `add` | open; deadline 0.9.0 |
-| 164 | Orthogonal polynomials of a continuous variable in a formula | Recommended A: a formula term `poly(x, degree: Int, raw: Bool = false)` in `regress` at 1.2, orthogonal by default as R's `poly`, predictions on the fit's own basis; B: at 0.9.0; C: raw powers only | open; deadline 1.1 |
+| 171 | Six printed layouts the review found | Recommended A for each: small coefficients in `report` by significant digits, sign kept; `labels:` applied to the parts of an interaction; thousands separators in every df column; facet titles "kids = 0"; long group names wrapped in the proportion test's hypotheses; the standard error of a t-test's difference in its estimates | decided 21 November 2026 (each layout as recommended); built at 0.9.0, step 34 |
+| 170 | Six smaller refusals with workarounds | Recommended per item: `equal` on columns; `category` on a list; a count from `duplicates`; `attempt` of a call to `error`; `map` over a list holding a failed value; `chi2_test(x, p:, levels:)` naming categories never observed | decided 21 November 2026 (each item as recommended); built at 0.9.0, step 33 |
+| 169 | Widening a guessed Int to Float on import | Recommended A: a later value with a decimal widens the column to Float with a note; only text in a numeric column stops the import | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 32 |
+| 168 | One value out of a column | Recommended A: `first`, `last` and `x[i]` take a column, and `to(column, List)` gives a List | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 32 |
+| 167 | A row number | Recommended A: `row_number()` in `data`, within `by:` groups in `add`, as Stata's `_n` | decided 21 November 2026 (option A, the name `row_number`, on the recommendation); built at 0.9.0, step 31 |
+| 166 | A row-wise count of missing values | Recommended A: `row(vars, stat: n_missing)`, an option of `row` | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 31 |
+| 165 | The length of each text value in a column | Recommended A: a text function giving each value's length in code points, `n_chars(s)`, with a note when `len` of a column is spread over the rows of `add` | decided 21 November 2026 (option A, the name `n_chars`, on the recommendation); built at 0.9.0, step 31 |
+| 164 | Orthogonal polynomials of a continuous variable in a formula | Recommended A: a formula term `poly(x, degree: Int, raw: Bool = false)` in `regress` at 1.2, orthogonal by default as R's `poly`, predictions on the fit's own basis; B: at 0.9.0; C: raw powers only | open; deadline 1.1; the addendum's points decided 21 November 2026 (point 1, option C; point 2, the rows the fit uses, unweighted) |
 | 163 | Poisson regression with fixed effects, the wild cluster bootstrap and difference-in-differences before the plan of #113 places them | Recommended A: Poisson with fixed effects and the wild cluster bootstrap at 1.2, two-period and staggered difference-in-differences at 1.3, the releases of #113 from 1.2 on moved two places later; B: Poisson and the two-period design only; C: #113 stands | open; the owner's word; deadline 1.1 |
 | 162 | A release 0.12.0 for the bridges to R and Python, before the names freeze | Recommended A: 0.12.0 "Bridges" with the R package, the Python wheel, the browser playground and the translation page (moved from 1.0.0 by #152 and #161); B: all of it in 1.0.0 | open; the owner's word; deadline 0.10.0 |
-| 161 | Aids for the article's referees: a playground, a translation page, an archive and a citation file | Recommended A: a citation file and an archived copy of each release with its own identifier from 0.9.0; the playground with the article's examples and the R and Stata translation page, generated from the help pages, on the website at 1.0.0 | open; deadline 0.9.0 |
+| 161 | Aids for the article's referees: a playground, a translation page, an archive and a citation file | Recommended A: a citation file and an archived copy of each release with its own identifier from 0.9.0; the playground with the article's examples and the R and Stata translation page, generated from the help pages, on the website at 1.0.0 | decided 21 November 2026 (option A, on the recommendation); the citation file at 0.9.0, step 37; the archive linked by the owner |
 | 160 | `sample_flow` before 1.0 | Recommended B: the printed table of `data.sample_flow()` and `fit.sample_flow()` at 0.11.0, the drawing at 1.2 as planned | open; deadline 0.10.0 |
 | 159 | Candidate instruments from a causal graph | Recommended A: `g.instruments(exposure:, outcome:)` at 0.10.0, the instruments and conditional instruments with their conditioning sets, held to dagitty | open; deadline 0.10.0 |
 | 158 | Testing a causal graph's implied independencies against the data | Recommended A: an option `data:` on `g.implied_independencies()` at 0.10.0 that tests each one, held to dagitty's local tests | open; deadline 0.10.0 |
@@ -247,11 +251,11 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 156 | When the article is submitted | Recommended A: a preprint at 1.0.0 and the submission at 1.1; B: submit at 1.0.0; C: wait for a wider range of methods | open; the owner's word; deadline 1.0.0 |
 | 155 | The article's case study and its replication project | Recommended A: one published study with openly licensed data replicated end to end, and the article itself a project that `zeff verify` re-runs within an hour; the study is the owner's choice | open; the study is the owner's word; deadline 0.11.0 |
 | 154 | Independent checking of the numerical core | Recommended A: the owner reads the reference scripts of the estimators and runs the Stata references himself by 0.10.0; an outside audit of the kernels and the variance layer, published, before submission | open; deadline 1.0.0 |
-| 153 | The NIST Statistical Reference Datasets in the validation suite | Recommended A: the linear-regression, univariate and analysis-of-variance problems at 0.9.0, accuracy as the log relative error, with R's and Stata's beside it | open; deadline 0.9.0 |
+| 153 | The NIST Statistical Reference Datasets in the validation suite | Recommended A: the linear-regression, univariate and analysis-of-variance problems at 0.9.0, accuracy as the log relative error, with R's and Stata's beside it | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 36 |
 | 152 | A home in a standard repository: an R package on CRAN and a Python wheel on PyPI | Recommended A: both at 1.0.0, the R package running a script or project and returning frames and results | open; deadline 0.10.0 |
 | 151 | The licence and the journal's rule of GPL compatibility | Recommended A: dual licence, MIT or Apache 2.0 at the user's choice, from 0.9.0, after a word with the editors | open; the owner's word; deadline 0.11.0 (moved from 0.9.0 by the owner on 20 November 2026) |
 | 150 | The small-sample form of the two-stage standard errors, and Stata's large-sample default | Recommended A: one form at 1.0, the N − k of `reg` with the t table (R's `ivreg`, fixest, Stata's `ivregress 2sls, small`), the page saying how Stata's default differs; the large-sample form an option after 1.0. B: an option on `ivreg` now | decided 16 November 2026 (option A, on the recommendation under the owner's standing instruction); built at step 13 of 0.8.0 |
-| 149 | A warning repeated word for word in the passes of a loop | Recommended A: said once with the count of passes, as a note is from step 8o of 0.8.0; B: every pass, as now | open; deadline 0.9.0 |
+| 149 | A warning repeated word for word in the passes of a loop | Recommended A: said once with the count of passes, as a note is from step 8o of 0.8.0; B: every pass, as now | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 30 |
 | 148 | Zemp Lite in a public repository under Apache 2.0; Zemp Studio in a private one | The owner's ruling: Zemp Lite is developed in the public repository `zemp-lite` under Apache 2.0, as Zeff; Zemp Studio, when its work starts, gets a separate private repository and a proprietary licence and builds on Lite; Lite never depends on Studio's modules | decided 15 November 2026 (owner's ruling); the Zemp Specification amended the same day; replaces the repository and licence parts of #125, and with them #25 |
 | 147 | Inside a function's body, a parameter where a term of a fit is expected | A: inside a function's body a bound name that holds a `Var` or a `Str` is the term it names, one rule with #140; the help line of Z0414 names `name_of` until it is built | decided 15 November 2026 (option A); built at 0.8.0, step 5 |
 | 146 | The look of the website and of Zemp Lite web | The owner's rulings of 13 and 14 November 2026: logo D4, the tagline, Atkinson Hyperlegible Next with JetBrains Mono and Newsreader, one type scale, a light/dark button and the D4 watermark on every page, violet buttons, realistic pages; Zemp Lite's Panes with a tabbed left panel, data tabbed with the script, output under the script, a modern data and variables viewer, and a code text size control | decided 14 November 2026 (owner's rulings); Zemp section 5 amended at Zemp 0.2 alpha |
@@ -584,6 +588,8 @@ The plan requires these to be adopted or dropped by 0.7.0; deciding now removes 
 
 **The address (13 November 2026).** Told that a path such as `zeff-lang.dev/lite` cannot be served by a second host while the name `zeff-lang.dev` points at GitHub Pages, since a name in the DNS points at one host for all its paths, the owner ruled "lite.zeff-lang.dev is fine, record it": Zemp Lite web is served at `lite.zeff-lang.dev`, a name of its own pointed at Cloudflare Pages, and the website links to it. The owner adds the DNS record when the preview is prepared for 0.8.0.
 
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." The server part: no Zemp server before 1.0, so no paid sync, server compute or self-hosted server; the web editions send nothing to any server but the host's cookie-free count of visits (#116), and section 13 of the Zemp Specification stands as written. With hosting (13 November) and folder sync already ruled, the entry is closed until the paid tiers (#35, #36) bring the question back.
+
 ### 28. AI assistance model
 
 *Recommendation.* Both, off by default: a remote model with the user's own key for quality, a local model as the private option for restricted data; only code, variable names and summaries are sent, never rows, as section 12 of the Zemp Specification already says. A third option, metered access to a model Zemp pays for, is what the business model's Pro tier sells; it can sit beside the two above (own key and local model free, metered access paid) and is decided with #35. Decide by Zemp 1.11, when AI assistance arrives.
@@ -672,6 +678,8 @@ Apache 2.0 gives others no right to the names Zeff and Zemp, but only a register
 ## Installation, Zemp Lite and the build
 
 Added 17 October 2026 by the third audit, from the Zemp Specification's section 17 and the risk register (zeff_risk_register.md).
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." The alpha is built and hosted; its address is announced only once applications for "Zeff" and "Zemp" are filed in the owner's home jurisdiction, which is his to do. The entry stays open until he says they are filed.
 
 ### 38. Setup files for Zeff, Zemp Lite and Zemp Studio
 
@@ -1203,6 +1211,8 @@ Raised on 1 November 2026 from the owner's requests for the Zemp interface. Sect
 
 *Recommendation.* A, at the 0.2 alpha (Zeff 0.8.0), when the language server exists to say what is under the cursor. Deadline: 0.8.0.
 
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A in the margin editor's form: a Help panel at the side of the Script place, hidden until asked for (F1, ⌘K, **Explain** on a warning), following the function under the cursor unless switched off, showing a code's explained page; in Panes, a Help tab. At the Zemp 0.2 alpha.
+
 ### 75. The data viewer and the environment browser, made excellent
 
 Raised on 1 November 2026. Section 5 gives the Data viewer sorting and filtering as view state, **Add to script**, and the variable view, and the Objects panel every binding with type, size, memory and stale marks; the owner asked for a strong live view of objects and an excellent data viewer. What is missing is the detail that makes a grid usable on 18,000 rows and a panel usable on a long session.
@@ -1213,6 +1223,8 @@ Raised on 1 November 2026. Section 5 gives the Data viewer sorting and filtering
 | B. The viewer and panel as written | Nothing to build | A grid without frozen keys or column statistics sends users back to Stata's browser |
 
 *Recommendation.* A; the grid is the subject of #24's trial at 0.6.0 and ships at the 0.2 alpha. Deadline: 0.8.0.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A in the Data place of the margin editor: the grid drawn as scrolled, the first column frozen, a statistics header per column asked of the engine, search with matches marked, a live row count under a filter, copying a range, variables shown and hidden; read-only with **Copy as Zeff** (#114). The Objects tree is replaced by Data's list of frames, each by the statement that made it. At the Zemp 0.2 alpha.
 
 ### 76. Traceback, run to here and the loop inspector
 
@@ -1229,6 +1241,8 @@ Raised on 1 November 2026 from the owner's request for tracebacks and step debug
 *Decided 6 November 2026, as recommended (option A).* The traceback through module functions is built with the engine worker at step 33; **Run to here** and the loop inspector belong to Zemp's 0.2 alpha.
 
 *A reading of this decision for the margin editor (entered 20 November 2026; R15 of the editor's document, #174).* The decision makes **Run to here** "a command and a gutter action". In the margin editor the gutter action is the words *Run to here* shown on resting over a statement's line number, beside the command in ⌘K: a word and not an icon, in keeping with the quiet look. This is how the decision is read, not a new choice; the owner may prefer ⌘K alone. **Run from here**, its partner, is proposed as #181, and what builds on the traceback and the inspector as #183 to #187. Nothing here changes what was decided: no breakpoints and no stepping.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." The reading of 20 November 2026 is confirmed (R15 of the margin editor's document): *Run to here* is shown on resting over a statement's line number, beside the command in ⌘K.
 
 ### 77. Schema-aware completion and extract function
 
@@ -1387,6 +1401,8 @@ Raised on 6 November 2026. Catalogue row 195 gives `fit.posthoc(method: tukey | 
 
 *Recommendation.* A, in the first release after 0.7.0 with room. Deadline: 0.9.0, so that the word is settled well before the names freeze.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: `games_howell` joins `method:` of `posthoc`, the default staying `tukey`; built at step 29.
+
 ### 86. Folding, snippets and the statement ranges behind **Run** in the language server
 
 Raised on 6 November 2026. Section 12 of the Engine and Project Specification says 1.0 ships completion, signature help, hover, live diagnostics, formatting, highlighting, running and folding, with snippets in its table; the row of 0.7.0 in section 14 names completion, signature help, hover and live diagnostics, and no later row names the rest. Formatting through the server is `zeff fmt` and is built at 0.7.0 by the owner's word of 6 November. Folding, snippets and the ranges of the current statement or chain, which **Run** needs, have no release.
@@ -1445,6 +1461,8 @@ Raised on 7 November 2026. The owner asked for 135 R packages, from `data.table`
 *Decided 7 November 2026.* Option B: all nine items. The catalogue, sections 8.1 (rule 5), 8.2, 9.2, 14 and 15 of the Engine and Project Specification and section 11 of the Zemp Specification record it; 1.0 is 267 functions, with 266 on the roadmap and 533 in all. No release before 0.8.0 changes.
 
 *Left for the releases that build them.* For `margins`, when 0.9.0 opens: the effect of a category and of a 0/1 regressor (a difference between predictions, as Stata, or a derivative), whether the standard errors treat the sample's regressors as fixed (Stata's default) or as sampled, and what `at:` holds the other regressors at. For `ar_test`, when 0.8.0 opens: the form of the test under robust and clustered errors and with more than one instrumented regressor. For the three distributions the argument names follow R's meaning, `dist.weibull(shape, scale)`, `dist.logistic(location, scale)` and `dist.hypergeometric(successes, failures, draws)`, a ruling the owner may overturn before 0.10.0.
+
+*The definitions of `margins`, decided 21 November 2026 at the opening of release 0.9.0* (question 2 of `docs/releases/0.9.0.md`, taken on the recommendation under the owner's standing instruction when he said "go"). (a) The effect of a Bool or 0/1 regressor, and of each level of a category against its base, is the difference between the predictions at the two values, as Stata's `margins` and R's `marginaleffects` give it, not a derivative. (b) The standard errors are by the delta method with the sample's regressors held fixed, as both give them by default. (c) `type: ame`, the default, averages the effect over the rows as they are; `type: mem` takes it at the means of the regressors; a variable named in `at:` is set to the values given and every other keeps its observed values (ame) or its mean (mem). (d) The derivative is taken through every term that is a function of the variable (#195, option A). `logistic` and `probit` are `glm` since #112.
 
 *Offered the same day and declined.* Odds ratios as an option on the results of `logistic`; two-way clustering, `cluster:` taking two variables, before 1.0 (the Language Reference, section 6, keeps it for after 1.0); and `kappa` at 0.10.0. Each stays where the specification had it. The Games–Howell comparison is #85, still due at 0.9.0.
 
@@ -3122,6 +3140,8 @@ Raised on 16 November 2026 at step 8o of release 0.8.0. That step makes a note t
 
 **Recommended: A**, with the count always printed, and never across statements: two statements that warn alike keep a warning each. Deadline 0.9.0, so that it is settled before the simulations of the first manual are written.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: a warning raised word for word in several passes of one loop, or for several items of `map`, `filter` or `reduce`, is said once with the count of passes, never across statements; built at step 30, listed in the notes as a change of printed output.
+
 ### 150. The small-sample form of the two-stage standard errors, and Stata's large-sample default
 
 Raised on 16 November 2026 at step 10 of release 0.8.0. The ruling of the release gives two-stage least squares the standard errors of the variance layer unchanged, with the degrees of freedom of `reg`: the classical variance divides the residual sum of squares by N − k, the robust one carries N/(N − k), the clustered one G/(G − 1) · (N − 1)/(N − k), and the table is a t table. R's `ivreg` and fixest do the same, and so does Stata's `ivregress 2sls` with its option `small`. Stata's default, without `small`, divides by N, carries no small-sample factor in the robust form, and prints z statistics: its standard errors are those of Zeff times the square root of (N − k)/N under classical and robust errors, a difference of about one part in a thousand on Card's data (N = 3,010, k = 7) and a visible one in a small sample. The owner's rule of decisions 98 and 99 is that every method R or Stata offers for a procedure is an option in Zeff; his instruction of 11 November 2026 is that nothing is added before 1.0 unless it is necessary, and his decision on question 3 of #99 placed the other alternatives for instrumental variables (LIML, GMM, the conditional likelihood ratio test) after 1.0.
@@ -3175,6 +3195,8 @@ The draft article promises the accuracy of Zeff on the Statistical Reference Dat
 | C. Not at all, and the claim taken out of the article | No work | The article loses its most independent evidence |
 
 **Recommended: A.**
+
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: the eleven linear-regression, nine univariate and eleven analysis-of-variance problems as conformance cases giving the log relative error of every certified value; the testing handbook gains the kind of test, logged; built at step 36.
 
 ### 154. Independent checking of the numerical core
 
@@ -3270,6 +3292,8 @@ The journal warns that software in a less common language is slow to review. The
 
 **Recommended: A.**
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: a citation file in the repository from 0.9.0 (step 37); the archived copy of each release with its own identifier needs the owner to link the archive to the repository once; the playground and the translation page at 1.0.0 (or with #162 if it is taken).
+
 ### 162. A release 0.12.0 for the bridges to R and Python, before the names freeze
 
 Raised on 16 November 2026, when the owner asked which changes to the release plan follow from #151 to #161. #152 places an R package on CRAN and a Python wheel on PyPI at 1.0.0, and #161 places the browser playground and the R and Stata translation page there too. Release 1.0.0 already carries the freeze of names, the edition of 2027, the installers, signed archives, the container image, reproducible official builds and the public benchmark suite (section 14 of the Engine Specification). The bridges are also the first use of Zeff's functions and results from outside the language: a name or a result layout that reads badly from R or Python can still be changed before the freeze, and not after it.
@@ -3326,6 +3350,8 @@ Two points of design go with any option that adds the term. Predictions and `des
 
 ## Raised by the review against R
 
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Point 1 of the addendum: option C, the columns named `poly(exper)=linear`, `=quadratic`, `=cubic`. Point 2: the basis is orthogonal on the rows the fit uses, unweighted. The rest of the entry stays open, deadline 1.1.
+
 ### 165. The length of each text value in a column
 
 Raised on 19 November 2026 by the review against R. Inside `add`, `len(job)` gives the number of rows (41,188 on every row of the bank-marketing file), as its page says a column's length is its row count; there is then no way to get the length of each value, which R gives by `nchar` and Stata by `strlen`. The result looks plausible and nothing warns.
@@ -3338,6 +3364,8 @@ Raised on 19 November 2026 by the review against R. Inside `add`, `len(job)` giv
 
 **Recommended: A.** Deadline 0.9.0. The name is the owner's to choose.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A with the name `n_chars(s)` in `text`, the length of each value in code points, `NA` for `NA`, and a note when `len` of a column is spread over the rows of `add`; built at step 31 with its catalogue row.
+
 ### 166. A row-wise count of missing values
 
 Raised on 19 November 2026 by the review against R. `n_missing([x1, x2, x3])` inside `add` counts the three columns as the items of a list and gives 0 on every row. The count of missing values across variables in each row, R's `rowSums(is.na(...))` and Stata's `egen rowmiss()`, cannot be written; step 20j makes a list of columns an error.
@@ -3348,6 +3376,8 @@ Raised on 19 November 2026 by the review against R. `n_missing([x1, x2, x3])` in
 | B. `n_missing` of a list of columns counts across each row | No new option | `n_missing` of a list means two things |
 
 **Recommended: A.** Deadline 0.9.0.
+
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: `row(vars, stat: n_missing)`; built at step 31.
 
 ### 167. A row number
 
@@ -3360,6 +3390,8 @@ Raised on 19 November 2026 by the review against R. `add(id = seq(1, n()))` is r
 
 **Recommended: A.** Deadline 0.9.0. The name is the owner's to choose.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A with the name `row_number()` in `data`, within each group under `by:`; built at step 31 with its catalogue row.
+
 ### 168. One value out of a column
 
 Raised on 19 November 2026 by the review against R. `first(col)`, `last(col)` and `col[1]` are refused for a column, and `to(col, List)` converts each value and gives a Column<List>. One prediction had to be read as `frame(p = m.predict(newdata: b.head(1))).mean(p)`.
@@ -3371,6 +3403,8 @@ Raised on 19 November 2026 by the review against R. `first(col)`, `last(col)` an
 
 **Recommended: A.** Deadline 0.9.0.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: `first`, `last` and `x[i]` take a column, and `to(column, List)` gives the List of its values; built at step 32.
+
 ### 169. Widening a guessed Int to Float on import
 
 Raised on 19 November 2026 by the review against R. `import` guesses each type from the first 1,000 rows and stops when a later value does not fit (Z0606): the bank-marketing file stops at row 7,765, where `nr.employed` holds 5228.1. The message names the fix, but widening Int to Float loses nothing, and R's `read.csv` reads the file as it is.
@@ -3381,6 +3415,8 @@ Raised on 19 November 2026 by the review against R. `import` guesses each type f
 | B. As now | Nothing to build | A whole-number column with a late decimal always needs `types:` |
 
 **Recommended: A.** Deadline 0.9.0.
+
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: a later value with a decimal widens a guessed Int column to Float with a note naming the row; section 6.1's rule is amended at step 32 and logged.
 
 ### 170. Six smaller refusals with workarounds
 
@@ -3397,6 +3433,8 @@ Raised on 19 November 2026 by the review against R. Each has a workaround; toget
 
 Deadline 0.9.0.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Each item as the table recommends; built at step 33.
+
 ### 171. Six printed layouts the review found
 
 Raised on 19 November 2026 by the review against R. Each is a printed layout and so the owner's to decide.
@@ -3411,6 +3449,8 @@ Raised on 19 November 2026 by the review against R. Each is a printed layout and
 | The estimates of a t-test | `std_error` is `NA` | the standard error of the difference |
 
 Deadline 0.9.0.
+
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Each layout as the table recommends; built at step 34.
 
 ### 172. Typst inside Zemp, for the PDF of a script with its output
 
@@ -3508,6 +3548,8 @@ Three things are worth weighing before any is built. Staleness is defined as the
 
 *Recommendation.* A. Whether the public crates of Zeff 0.8.0 already let the Zemp worker read C5 and C6 for each statement is to be found when the 0.2 alpha is planned; if not, a note falls back to the first line the engine printed for the statement, so that every character stays the engine's, and C5 and C6 are put to the checklist of Zeff 0.9.0. Deadline: the opening of Zeff 0.9.0 for C5, C6 and the items of #183 to #187; each other item at the release it rests on.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A, with each item placed: C1, C8 and C12 are built; C5 and C6 (a result's type and dimensions, its print at a width) are built at 0.9.0, step 26, for the Zemp 0.2 alpha; C22 (an error's chain as fields, with the pass) at step 27, for #183; C16 (a plot as a scene) with #197 at step 25; C23 to C27 (the passes, replay, the console inside a pass or call, a field drawn across passes; #184 to #186) are placed at 0.11.0, beside the versioned run-record schema of that release; C7 with R10 of #176, C17 to C21 with the documents of #141, C2 to C4 and C9 to C15 at the releases they rest on, each placed when that release is planned.
+
 ### 176. Six questions the margin editor leaves open
 
 Raised on 18 November 2026 with #174; entered on 20 November 2026. Each is the owner's to decide; the letters are those of the design document's section 20.2. (R4, the comment that begins a section, is with #178; R14 to R19 are #183 to #187, with a line under #76.)
@@ -3521,6 +3563,8 @@ Raised on 18 November 2026 with #174; entered on 20 November 2026. Each is the o
 | R12 | What Paper shows for a `.zmd` paper before the PDF of #141 is built, since #141 builds HTML first | The HTML article in the page's place until the PDF comes | The release after 1.0 that builds the documents of #141 |
 | R13 | Where a paper's chunks run: in the paper's own session, or reading the results of the project's scripts | In the paper's own session, as #141 and Quarto have it, the cache making a repeated chunk cost nothing | The same |
 
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." R2: Panes kept beside the margin editor for the 0.2 alpha, reviewed at Zemp 0.3. R8: the keys of the editor's document, section 15 (⌘↵ the statement, ⌘⇧↵ the script, ⌘K everything, ⌥↵ open or fold, F1 help, ⌃` the console; every action in ⌘K). R9: ⌘↵ runs the statement with every statement it reads that is out of date or not yet run; the paragraph "Running code interactively" of section 12 of the Engine Specification is amended to match, logged. R10, R12 and R13 stay open at their deadlines.
+
 ### 177. Zemp Lite is not a notebook: the statement is the cell
 
 Raised on 16 November 2026 from the owner's review of notebook features. A notebook keeps code in cells inside a file of its own format, runs them in any order against a state that changes, and numbers each run so that the reader can reconstruct the order. The Inline layout already gives a notebook's main convenience, the result under the code that made it.
@@ -3531,6 +3575,8 @@ Raised on 16 November 2026 from the owner's review of notebook features. A noteb
 | B. A cell mode beside Inline, saved in a notebook file | Familiar to notebook users | A second project format, against "Same projects" (Zemp Specification, section 2); results that depend on the order of running |
 
 *Recommendation.* A. Deadline: the Zemp 0.2 alpha, since the public preview will be asked the question. The margin editor adopted on 18 November 2026 (#174) is built on this principle; the owner has not yet ruled on it in these words.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A: no cells; the statement is the cell.
 
 ### 178. Sections in a script
 
@@ -3545,6 +3591,10 @@ Raised on 16 November 2026. A long script has no visible structure: nothing to o
 *Recommendation.* A, built before Zemp Lite 1.0. Deadline: Zeff 0.9.0.
 
 *The form of the comment (R4 of the margin editor's document).* The editor's design asks for one canonical comment that begins a section: `// ── Title ──`, `// # Title`, or none. It is the owner's choice, and the rules of the document's section 7.6 hold for either; it is due at the Zemp 0.2 alpha, where the outline of a script is first shown.
+
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A, with the comment `// # Title` (and `// ## Title` a level below) as recommended; the language server reports sections as outline and folding at step 28, and the formatter keeps them. The form is due at the Zemp 0.2 alpha and is decided here because the outline is built now; the owner may still change it before the alpha.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." The form of the comment (R4): `// # Title`, with `// ## Title` a level below, as the opening of Zeff 0.9.0 had taken it on the recommendation.
 
 ### 179. The last run's output shown when a project is opened
 
@@ -3570,6 +3620,8 @@ Raised on 16 November 2026, from a notebook's "restart and run all". After conso
 
 *Recommendation.* A, with B as a second command only if users ask. Deadline: Zeff 0.9.0.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: **Run from a fresh session** is a command of Zemp; the engine needs no step of its own for it.
+
 ### 181. Run from here to the end
 
 Raised on 16 November 2026, as the partner of **Run to here** (#76). After editing a statement in the middle of a script, the user wants it and everything below it run, without the lines above.
@@ -3580,6 +3632,10 @@ Raised on 16 November 2026, as the partner of **Run to here** (#76). After editi
 | B. Nothing; re-running the stale lines covers the common case | Nothing to build | Lines below that are not stale cannot be run again in one action |
 
 *Recommendation.* A, as an amendment of #76, with **Run to here**. Deadline: the planning of the Zemp 0.2 alpha if it is to come with it, otherwise Zeff 0.9.0.
+
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A, as an amendment of #76: **Run from here** beside **Run to here**, a command of Zemp with no engine step.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A, as an amendment of #76: **Run from here** in ⌘K beside **Run to here**, at the Zemp 0.2 alpha.
 
 ### 182. Small conveniences, none before 1.0
 
@@ -3604,6 +3660,8 @@ Raised on 18 November 2026. Since Zeff 0.7.0 an error raised inside a function n
 
 *Recommendation.* A, at Zemp's 0.2 alpha, beside the list of what the run said. Until the engine gives the pass, the trail shows the chain without it. Deadline: Zemp 0.2 alpha. (R14 of the margin editor's document.)
 
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A (R14), at the Zemp 0.2 alpha; the pass is added to the trail when the engine gives it (C22, placed at Zeff 0.9.0, step 27).
+
 ### 184. Searching the passes of a block, and drawing a field across them
 
 Raised on 18 November 2026. #76's inspector gives one row per pass: for `for`, the loop variable, the rows after a `where`, the result and the time; for `iterate`, the state and what `done` compared. A debugger's conditional breakpoint answers "which pass went wrong?" without reading every row. A sampler's trace plot answers "is it still moving?" for `iterate`.
@@ -3614,6 +3672,10 @@ Raised on 18 November 2026. #76's inspector gives one row per pass: for `for`, t
 | B. The inspector as #76 has it | Nothing more | A loop of 10,000 passes is read row by row |
 
 *Recommendation.* A, before Zemp 1.0. The inspector itself stays at the 0.2 alpha, as #76 decided. Deadline: Zeff 0.9.0, so that C23 and C27 can be placed in an engine release before 1.0.0. (R16 of the margin editor's document.)
+
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A, before Zemp 1.0; the engine items it needs, C23 and C27 of #175, are placed at 0.11.0.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A (R16), before 1.0, at the Zeff release that gives C23 and C27: placed at 0.11.0 by the opening of Zeff 0.9.0.
 
 ### 185. Opening a pass or a call, by replay
 
@@ -3627,6 +3689,10 @@ Raised on 18 November 2026. #76 rejects a breakpoint-and-step debugger. What is 
 
 *Recommendation.* A, before Zemp 1.0, at the Zeff release that gives C24. Deadline: Zeff 0.9.0, for placing C24. (R17 of the margin editor's document.)
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A, before Zemp 1.0; C24 of #175 is placed at 0.11.0.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A (R17), before 1.0, at the Zeff release that gives C24: placed at 0.11.0 by the opening of Zeff 0.9.0.
+
 ### 186. The console line inside a pass or a call
 
 Raised on 18 November 2026. R's `recover()` and `browser()`, Jupyter's `%debug` and VS Code's debug console let an expression be typed where a failure happened. In a Zeff project the console line runs after the script only.
@@ -3638,6 +3704,10 @@ Raised on 18 November 2026. R's `recover()` and `browser()`, Jupyter's `%debug` 
 
 *Recommendation.* A, with #185. Deadline: as #185. (R18 of the margin editor's document.)
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A, with #185; C25 of #175 is placed at 0.11.0.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A (R18), before 1.0, at the Zeff release that gives C25: placed at 0.11.0 by the opening of Zeff 0.9.0.
+
 ### 187. Where the time and memory of a run went
 
 Raised on 18 November 2026. The run record shows the time of the whole run and the memory `zeff run -v` writes. RStudio has profvis, and Jupyter and VS Code have profilers.
@@ -3648,6 +3718,8 @@ Raised on 18 November 2026. The run record shows the time of the whole run and t
 | B. The time of the whole run, as now | Nothing to build | The slow statement is found by hand |
 
 *Recommendation.* A. Whether it comes with the run record at the 0.2 alpha or at 1.0 is the owner's choice. Deadline: Zemp 0.2 alpha. (R19 of the margin editor's document.)
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A (R19), at the Zemp 0.2 alpha, with the run's facts: until the engine reports each statement's time (C26), the interface's own measure between the engine's two messages, said to be so.
 
 ### 188. `report()` says when its columns cannot be compared
 
@@ -3746,6 +3818,10 @@ Under the orthogonal form the coefficients are not the polynomial's coefficients
 
 *Recommendation.* A, settled when 0.9.0 opens with the other questions on `margins`. Deadline: 0.9.0. When #164 is built, `poly`'s page gives the slope at a value from `margins`. It gives the turning point from the raw form (`raw: true`, the same fit) through `derive`, or from `margins` by the value where the slope is nought.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: `margins` differentiates through every term that is a function of the variable asked for (`exper` and `exper^2` today; `poly` and `spline` when they arrive); a power computed beforehand into its own column stays a separate regressor, and the page says so. Built at 0.9.0, steps 10 to 12, with the three definitions left by #88 for this opening (see #88).
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A, confirmed in the same answer.
+
 ### 196. Two messages R users meet: `I()` and `poly` in a formula, and a function of a later release
 
 Raised on 20 November 2026 from the owner's questions on polynomial regression. No new function is proposed.
@@ -3774,6 +3850,10 @@ The first is the commonest line an R user types for a quadratic, and the suggest
 
 *Seen on the way.* `w.logistic(union ~ educ)` gives the same generic help ("`zeff help` lists the functions of this release"). Yet `zeff help logistic` already answers "`logistic` arrives with release 0.9.0, in the `glm` package". Z0103 inside a script could give the same answer for any catalogued name of a later release. It is listed here because the alpha's users, who come from R and Stata, will meet it first.
 
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: inside a formula, Z0103's help for `I(...)` and `poly(...)`, a catalogued name of a later release named with its release, and no "did you mean" offered for a name of one letter; built at step 35.
+
+**The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A, confirmed in the same answer.
+
 ### 197. The plots of a run handed to an interface
 
 Raised on 15 November 2026 by the Zemp Lite session at the start of its release 0.1, and entered on 20 November 2026. The browser build of the engine (`zeff-web`) returns what a run printed and said and the frames it kept; it keeps no plot, and nothing draws one at a size. This was so at 0.7.0 and is still so at 0.8.0. Zemp 0.1 works round it: it adds an `export` of each plot to the text it sends and reads the file back from its own file system, so that a redraw at another size is a new run of the script. No step of the checklist of 0.8.0 named the proper hand-over, and no row of section 14 names it.
@@ -3787,3 +3867,6 @@ What an interface needs: the browser build keeping the plots of a run as it keep
 | C. The work-round stays | No engine work | Every redraw and every resize is a run; no inspecting of a mark |
 
 *Recommendation.* A, since the alpha is the first thing outside readers see and its Plots place is part of the adopted editor (#174). The placing is a priority and the owner's. Deadline: the opening of Zeff 0.9.0.
+
+**The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: an engine step at 0.9.0 (step 25) by which the browser build keeps the plots of a run, lays one out at a size and theme without a new run, and hands over the scene (C16 of #175); the owner's priority, as recommended.
+

@@ -736,3 +736,11 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Dependencies.** `zeff-lsp`, a crate of the released engine; `serde_json` 1.0.154, which it brings, now linked (MIT or Apache-2.0). In the app, `@codemirror/lint` 6.9.8 and `@codemirror/autocomplete` 6.20.4 (for step 10b), both MIT, everything they need already installed. The worker is 2,901.9 kB compressed (2,792.2 kB before), its cold start 53.9 ms (risk R4: 5 MB and a second).
 
 **Reason.** The checklist's step 10a; Zemp Specification, section 5 ("Completion, signature help, hover, live diagnostics and formatting from the Zeff language server"); Engine Specification, section 12.
+
+## 21 November 2026: the specification brought to Zeff c6d55e7, where the owner's answers stand
+
+**Done.** The Zeff 0.9.0 session entered the note of step 1 (`zemp-lite-0.2-amendments-and-answers-for-zeff.md`) in Zeff's commit c6d55e7: the owner's seventeen answers in the register, the Zemp Specification's sections 2, 5, 7, 8, 15 and 17 as written there (the margin editor, the look, Help and the data viewer, the plot list, Paper, the 0.2 row, hosting and no server), and the Engine Specification's paragraph "Running code interactively" (R9). It also places C5, C6, C16 (#197) and C22 at Zeff 0.9.0 and C23 to C27 at 0.11.0, adds to its step 26 the dependency graph's flags asked for at step 7a (whether a statement reads a file, writes one, or draws random numbers), and makes the reader test one test for both releases (its step 45). `docs/spec/` is brought to that commit, each file taken from the commit and compared with it byte for byte; seven files changed.
+
+**What else the copy now carries.** The commit stands on the first steps of Zeff 0.9.0 (among them `glm` and `curve` in the place of `logistic`, `probit` and `roc` in the catalogue and the sample script). They are plans of the engine's next release; this alpha runs the released 0.8.0, which still refuses the specification's sample script with the same words (`tests/scripts/specification-sample.stderr`, re-made by the released command line and unchanged), and the colouring test of that script holds.
+
+**Reason.** Step 1 of the checklist: the copy is refreshed again once the amendments stand in Zeff's copy, which is the normative one.
