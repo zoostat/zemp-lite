@@ -1,0 +1,136 @@
+// The check made after each deployment (release 0.2, step 17): that the address serves Zemp
+// Lite as the headers file says it must. The page, every file it names, the engine's worker
+// and its WebAssembly are fetched; each answer must carry the isolation headers of
+// `public/_headers` (a page without them is not given the shared memory a run is cancelled
+// through), a built file must be kept as never changing, and the page asked for again with
+// what the host said of it must be answered "not modified" with the same headers, since a
+// browser that has the page asks for it that way. What it finds is said in plain words.
+//
+// Usage: node tools/check-host.mjs <address>      (as https://lite.zeff-lang.dev)
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const address = process.argv[2];
+if (address === undefined) {
+  console.error("usage: node tools/check-host.mjs <address>");
+  process.exit(1);
+}
+const base = new URL(address.endsWith("/") ? address : `${address}/`);
+
+/** The headers of the block for every path in the headers file: what every answer must carry. */
+function wanted() {
+  const text = fs.readFileSync(path.join(root, "public", "_headers"), "utf8");
+  const headers = {};
+  let inBlock = false;
+  for (const line of text.split("\n")) {
+    if (line.trim() === "" || line.trimStart().startsWith("#")) continue;
+    if (!/^\s/.test(line)) {
+      inBlock = line.trim() === "/*";
+      continue;
+    }
+    const at = line.indexOf(":");
+    if (inBlock && at > 0)
+      headers[line.slice(0, at).trim().toLowerCase()] = line.slice(at + 1).trim();
+  }
+  return headers;
+}
+
+const every = wanted();
+const problems = [];
+let checked = 0;
+
+function holds(what, answer) {
+  checked += 1;
+  for (const [name, value] of Object.entries(every)) {
+    const given = answer.headers.get(name);
+    if (given !== value) {
+      problems.push(
+        `${what}: \`${name}\` is ${given === null ? "missing" : `\`${given}\``}, not \`${value}\``,
+      );
+    }
+  }
+}
+
+async function fetched(url, init) {
+  const answer = await fetch(url, { redirect: "follow", ...init });
+  return answer;
+}
+
+const page = await fetched(base);
+if (page.status !== 200) {
+  console.error(`The page at ${base} answered ${page.status}, not 200.`);
+  process.exit(1);
+}
+holds("the page", page);
+const html = await page.text();
+
+// Every file the page names, and the files they name in turn: the worker and its WebAssembly.
+const named = new Set([...html.matchAll(/(?:src|href)="\/?(assets\/[^"]+)"/g)].map((m) => m[1]));
+const fromPage = new Set(named);
+const seen = new Set();
+while (named.size > 0) {
+  const [file] = named;
+  named.delete(file);
+  if (seen.has(file)) continue;
+  seen.add(file);
+  const answer = await fetched(new URL(file, base));
+  // A name in a script that is no file of the site: the host answers it with the page.
+  if (!fromPage.has(file) && (answer.headers.get("content-type") ?? "").startsWith("text/html")) {
+    seen.delete(file);
+    await answer.arrayBuffer();
+    continue;
+  }
+  if (answer.status !== 200) {
+    problems.push(`${file}: answered ${answer.status}, not 200`);
+    continue;
+  }
+  holds(file, answer);
+  const kept = answer.headers.get("cache-control") ?? "";
+  if (!kept.includes("immutable")) {
+    problems.push(`${file}: is not kept as never changing (\`cache-control\` is \`${kept}\`)`);
+  }
+  if (file.endsWith(".js")) {
+    const text = await answer.text();
+    for (const m of text.matchAll(
+      /["'`/](?:\.\/)?((?:assets\/)?[A-Za-z0-9_.-]+\.(?:js|wasm))["'`]/g,
+    )) {
+      const found = m[1].startsWith("assets/") ? m[1] : `assets/${m[1]}`;
+      if (!seen.has(found)) named.add(found);
+    }
+  } else {
+    await answer.arrayBuffer();
+  }
+}
+const wasm = [...seen].filter((file) => file.endsWith(".wasm"));
+if (wasm.length === 0) problems.push("no WebAssembly file of the engine was found from the page");
+const worker = [...seen].filter((file) => /worker/.test(file) && file.endsWith(".js"));
+if (worker.length === 0) problems.push("no worker script was found from the page");
+
+// The page asked for again as a browser that has it asks: answered "not modified", with the headers.
+const tag = page.headers.get("etag");
+const modified = page.headers.get("last-modified");
+if (tag === null && modified === null) {
+  problems.push(
+    "the page carries neither `etag` nor `last-modified`: a browser cannot ask whether it changed",
+  );
+} else {
+  const again = await fetched(base, {
+    headers: tag !== null ? { "if-none-match": tag } : { "if-modified-since": modified },
+  });
+  if (again.status !== 304) {
+    problems.push(`the page asked for again answered ${again.status}, not 304 ("not modified")`);
+  } else {
+    holds('the page answered "not modified"', again);
+  }
+}
+
+if (problems.length > 0) {
+  console.error(`The host at ${base} does not serve Zemp Lite as it must (${problems.length}):`);
+  for (const problem of problems) console.error(`- ${problem}`);
+  process.exit(1);
+}
+console.log(
+  `The host at ${base} serves Zemp Lite as it must: ${checked} answers, the page, ${seen.size} files (the worker and the engine's WebAssembly among them) and a "not modified", each with the isolation headers.`,
+);

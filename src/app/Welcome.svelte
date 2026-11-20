@@ -133,6 +133,7 @@
 
 <footer class="bottom">
   <span class="state">No project open</span>
+  <a class="counted" href="./counted.html">What is counted</a>
   <span class="engine">engine Zeff {ENGINE} · in this browser</span>
 </footer>
 
@@ -305,6 +306,10 @@
   }
   .bottom .engine {
     color: var(--ink-2);
+  }
+  .bottom .counted {
+    color: var(--ink-3);
+    margin-left: auto;
   }
   @media (max-width: 900px) {
     .welcome {

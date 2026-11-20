@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>What is counted · Zemp Lite</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --ink: #1c1d22;
+        --ink-2: #4a4c55;
+        --ground: #ffffff;
+        --line: #e6e6e2;
+        --accent: #5b3a9e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #ececef;
+          --ink-2: #b4b5bd;
+          --ground: #111216;
+          --line: #2a2b31;
+          --accent: #b9a4f0;
+        }
+      }
+      body {
+        background: var(--ground);
+        color: var(--ink);
+        font:
+          16px/1.6 "Atkinson Hyperlegible Next",
+          system-ui,
+          sans-serif;
+        margin: 0;
+        padding: 40px 18px 64px;
+      }
+      main {
+        margin: 0 auto;
+        max-width: 640px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 0 0 12px;
+      }
+      h2 {
+        border-top: 1px solid var(--line);
+        font-size: 18px;
+        margin: 28px 0 8px;
+        padding-top: 18px;
+      }
+      p,
+      li {
+        color: var(--ink-2);
+      }
+      a {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>What is counted</h1>
+      <p>
+        Zemp Lite runs in your browser. Your projects, scripts and data are kept in this browser's
+        private storage on your computer, and the engine that runs them runs here too: nothing of
+        them is sent anywhere.
+      </p>
+
+      <h2>Counted</h2>
+      <p>
+        The host of this page, Cloudflare Pages, counts visits with its own cookie-free web
+        analytics: how many visits there are, from which countries, with which browsers and on which
+        kinds of device. These are counts of all visitors together. No cookie is set, nothing is
+        kept in your browser for the count, and no visitor is told apart from another.
+      </p>
+
+      <h2>Never collected</h2>
+      <ul>
+        <li>your scripts, your data, your results or your plots;</li>
+        <li>your name, your email address, or an account: there is none to make;</li>
+        <li>a cookie, or anything else kept in your browser to know you again;</li>
+        <li>what you type or what you click.</li>
+      </ul>
+      <p>
+        <strong>Report a problem</strong> builds a bug report in your browser, which you read and
+        save as a file of your own; it is never sent. You choose whether to attach it to an issue.
+      </p>
+
+      <p><a href="./">Back to Zemp Lite</a></p>
+    </main>
+  </body>
+</html>

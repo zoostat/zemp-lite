@@ -140,3 +140,14 @@ jobs:
 
       - name: Browser tests, in Chromium and WebKit
         run: npm run test:browser
+
+      # The build the browser tests ran on, kept for the deployment (deploy.yml), which sends
+      # these very files to the host after a green run of the main branch.
+      - name: Keep the tested build for the deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: site
+          path: dist
+          if-no-files-found: error
+          retention-days: 30

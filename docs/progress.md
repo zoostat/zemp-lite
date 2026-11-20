@@ -183,3 +183,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 164 unit tests; 274 browser tests passed and 2 skipped by design; 26 native tests; the edition check and its four tests; the nine samples identical.
 
 **Next.** Step 17 `[engine]`: the host (Cloudflare Pages at `lite.zeff-lang.dev`), which needs the owner's account, the DNS record and a token in the repository's secrets.
+
+## 21 November 2026, release 0.2, step 17a (the host, made ready)
+
+**Done.** Step 17 split into 17a and 17b. Step 17a `[engine]`: the host's headers file, read by the preview server too; the deployment job, which sends the build a green run tested to Cloudflare Pages with the owner's token, then checks every answer's headers ("not modified" included) and the engine's start in both browsers, measuring the first start; the page on what is counted and never collected, linked from the welcome screen. Without the token nothing is deployed. Steps 14b and 15 are green on GitHub.
+
+**Green.** `npm run routine`: 164 unit tests; 274 browser tests passed and 2 skipped by design; the after-deployment browser check passed on the local build (first start 352 and 422 ms).
+
+**Next.** Step 17b `[engine]` waits for the owner (a Cloudflare account; the token and account ID in the repository's secrets; the address `lite.zeff-lang.dev` and the visit count switched on in the Pages project). Meanwhile step 18 `[function]`: the first visit.

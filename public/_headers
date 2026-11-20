@@ -1,0 +1,15 @@
+# The headers the host sends with every answer (Cloudflare Pages reads this file; release 0.2,
+# step 17). The page is cross-origin isolated, as the Zemp Specification, section 10, asks:
+# only such a page is given the shared memory through which a run is cancelled. The preview
+# server of the build reads its headers from this same file, so the tests run under the
+# host's own.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+
+# The built files are named by what they hold, so they never change under their name.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -8,10 +8,28 @@ const manifest = JSON.parse(readFileSync(new URL("./package.json", import.meta.u
 
 // The page is cross-origin isolated, here as wherever it is hosted (Zemp Specification,
 // section 10): only such a page is given the shared memory through which a run is cancelled.
-const isolation = {
-  "Cross-Origin-Opener-Policy": "same-origin",
-  "Cross-Origin-Embedder-Policy": "require-corp",
-};
+// The headers are those the host sends with every answer, read from its headers file
+// (`public/_headers`, the block of `/*`), so that the page is served here as it is there.
+const isolation = hostHeaders(readFileSync(new URL("./public/_headers", import.meta.url), "utf8"));
+
+/** The headers of the block for every path, `/*`, of a headers file of the host. */
+function hostHeaders(text: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  let inBlock = false;
+  for (const line of text.split("\n")) {
+    if (line.trim() === "" || line.trimStart().startsWith("#")) continue;
+    if (!/^\s/.test(line)) {
+      inBlock = line.trim() === "/*";
+      continue;
+    }
+    const at = line.indexOf(":");
+    if (inBlock && at > 0) headers[line.slice(0, at).trim()] = line.slice(at + 1).trim();
+  }
+  if (headers["Cross-Origin-Embedder-Policy"] !== "require-corp") {
+    throw new Error("public/_headers does not make the page cross-origin isolated");
+  }
+  return headers;
+}
 
 export default defineConfig({
   plugins: [svelte()],
