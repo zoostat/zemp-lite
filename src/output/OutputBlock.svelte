@@ -1,8 +1,10 @@
 <script lang="ts">
   // One block of a run: what a statement printed and what the engine said of it. In the Panes
   // layout it is a card in the Output panel, under a line saying which line it is and how
-  // long it took; in the Inline layout it sits directly under its statement in the script,
-  // with the time or the state in the margin.
+  // long it took. In the margin editor it is a statement's output unfolded under it (#174; the
+  // design, 7.4): a header of its lines, its time or state, and its actions (Copy as text,
+  // Open in Plots, Fold); then what the engine said, each warning and error with Explain,
+  // which opens the engine's explained page in place; then what it printed, or its figure.
   import type { Workspace } from "../app/workspace-state.svelte";
   import Figure from "../plots/Figure.svelte";
   import { took, type Block, type Said } from "./run";
@@ -13,6 +15,8 @@
     inline = false,
     oncancel,
     workspace = null,
+    last = null,
+    onfold,
   }: {
     block: Block;
     /** The script has been edited since this ran: the block is not the script's any more. */
@@ -21,7 +25,37 @@
     oncancel?: () => void;
     /** The window, where the block may show the figure of a statement that ended in a plot. */
     workspace?: Workspace | null;
+    /** In the margin editor: the last line of the statement, which the block stands under. */
+    last?: number | null;
+    /** In the margin editor: fold this output away. */
+    onfold?: () => void;
   } = $props();
+
+  // The explained pages opened, by code, while they are being fetched `null`.
+  let explained = $state<Record<string, string | null>>({});
+  async function explain(code: string): Promise<void> {
+    if (workspace === null) return;
+    if (code in explained) {
+      explained = Object.fromEntries(Object.entries(explained).filter(([one]) => one !== code));
+      return;
+    }
+    explained = { ...explained, [code]: null };
+    try {
+      const page = await workspace.explain(code);
+      explained = { ...explained, [code]: page };
+    } catch (error) {
+      explained = { ...explained, [code]: (error as Error).message };
+    }
+  }
+
+  /** The lines the block stands under, in words. */
+  const lines = $derived(
+    block.line === null
+      ? "after the script"
+      : last !== null && last > block.line
+        ? `lines ${block.line}–${last}`
+        : `line ${block.line}`,
+  );
 
   // The plot this block's statement ended in, where it did.
   const plot = $derived(workspace?.plots.find((one) => one.line === block.line) ?? null);
@@ -37,6 +71,9 @@
   data-line={block.line ?? ""}
 >
   <header>
+    {#if inline}
+      <span class="line mono">{lines}</span>
+    {/if}
     {#if !inline}
       <span class="line mono"
         >{block.line === null ? "after the script" : `line ${block.line}`}</span
@@ -58,14 +95,32 @@
       {#if inline && block.state === "failed"}<span class="state bad">failed</span>{/if}
       {#if block.ms !== null}<span class="time" data-testid="time">{took(block.ms)}</span>{/if}
     {/if}
+    {#if inline && workspace !== null && block.line !== null && block.state !== "running"}
+      <span class="gap"></span>
+      {#if block.printed !== ""}
+        <button class="act" onclick={() => void workspace.copyText(block.line as number)}
+          >Copy as text</button
+        >
+      {/if}
+      {#if plot !== null}
+        <button class="act" onclick={() => workspace.openPlots()}>Open in Plots ↗</button>
+      {/if}
+      {#if onfold && block.state !== "failed"}
+        <button class="act" onclick={onfold}>Fold</button>
+      {/if}
+    {/if}
   </header>
   <div class="body">
-    {#if block.printed !== ""}
-      <pre class="mono printed" data-testid="printed">{block.printed}</pre>
-    {/if}
-    {#if workspace !== null && plot !== null}
-      <Figure {workspace} {plot} />
-    {/if}
+    {#snippet print()}
+      {#if block.printed !== ""}
+        <pre class="mono printed" data-testid="printed">{block.printed}</pre>
+      {/if}
+      {#if workspace !== null && plot !== null}
+        <Figure {workspace} {plot} />
+      {/if}
+    {/snippet}
+    <!-- In the margin editor what the engine said comes first, then the print (the design, 7.4). -->
+    {#if !inline}{@render print()}{/if}
     {#each block.said as one, index (index)}
       <div class="said {one.kind}" data-testid="said">
         <p class="first">
@@ -77,8 +132,20 @@
         {#each one.help as help (help)}
           <p class="help">{help}</p>
         {/each}
+        {#if inline && workspace !== null && one.code !== null}
+          {@const code = one.code}
+          <button
+            class="act explain"
+            aria-expanded={code in explained}
+            onclick={() => void explain(code)}>Explain</button
+          >
+          {#if code in explained}
+            <pre class="mono explained" data-testid="explained">{explained[code] ?? "…"}</pre>
+          {/if}
+        {/if}
       </div>
     {/each}
+    {#if inline}{@render print()}{/if}
   </div>
 </section>
 
@@ -100,39 +167,30 @@
   .block.edited .body {
     opacity: 0.55;
   }
-  /* Inline: the output in a soft box under its statement, the time or state in a margin of
-     120 pixels at the right (Zemp Specification, section 5, "The look"). */
+  /* The margin editor: the output unfolded under its statement, across the code's column and
+     the notes' (the design, 7.4), on the softer ground with a hairline, a header of words. */
   .block.inline {
-    background: none;
-    border: 0;
-    border-radius: 0;
-    display: grid;
+    background: var(--softer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: block;
     font-family: "Atkinson Hyperlegible Next", sans-serif;
-    gap: 0 12px;
-    grid-template-columns: minmax(0, 1fr) 120px;
     line-height: 1.5;
-    margin: 0;
-    padding: 0 0 0 16px;
+    margin: 0 calc(-1 * var(--zemp-margin, 0px)) 0 16px;
+    padding: 0;
   }
   .block.inline header {
-    align-items: flex-end;
-    flex-direction: column;
-    gap: 4px;
-    grid-column: 2;
-    grid-row: 1;
-    padding-top: 10px;
-    text-align: right;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 12px;
+    padding: 4px 10px 4px 16px;
   }
   .block.inline .body {
-    background: var(--soft);
-    border: 1px solid transparent;
-    border-radius: 10px;
-    grid-column: 1;
-    grid-row: 1;
     min-width: 0;
     padding: 6px 16px 12px;
   }
-  .block.inline.failed .body {
+  .block.inline.failed {
     border-color: color-mix(in srgb, var(--error) 45%, var(--line));
   }
   .block.inline.edited .body {
@@ -246,5 +304,37 @@
   .help::before {
     content: "help: ";
     font-weight: 500;
+  }
+  .gap {
+    flex: 1;
+  }
+  .act {
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    color: var(--ink-2);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12.5px;
+    padding: 1px 6px;
+  }
+  .act:hover {
+    background: var(--soft);
+    color: var(--accent);
+  }
+  .act:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+  .explain {
+    margin-top: 2px;
+  }
+  .explained {
+    background: var(--window);
+    border-left: 2px solid var(--line-strong);
+    font-size: 12.5px;
+    margin: 6px 0 0;
+    overflow-x: auto;
+    padding: 6px 10px;
+    white-space: pre;
   }
 </style>

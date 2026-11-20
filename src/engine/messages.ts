@@ -65,6 +65,15 @@ export interface Needs {
   needs: number[];
 }
 
+/** A code's explained page, as `zeff explain <code> --format json` gives it. */
+export interface ExplainedPage {
+  code: string;
+  kind: string;
+  title: string;
+  /** The page as `zeff explain <code>` prints it. */
+  text: string;
+}
+
 /** What the worker tells while a run goes. */
 export type RunEvent =
   /** First, before any statement: the statements of the text, as the engine reads them. */
@@ -88,6 +97,7 @@ export type Request =
    */
   | { type: "run"; script: string; text: string; width?: number; only?: number[] }
   | { type: "check"; script: string; text: string }
+  | { type: "explain"; code: string }
   | { type: "dependencies"; script: string; text: string }
   /** The statements of a text as the engine reads them, without running it. */
   | { type: "statements"; script: string; text: string }
@@ -117,6 +127,7 @@ export type Reply =
       ranges: Ranged[];
     }
   | { type: "dependencies"; statements: Needs[] }
+  | { type: "explained"; page: ExplainedPage }
   | { type: "frame"; name: string; bytes: Uint8Array }
   | { type: "read"; path: string; bytes: Uint8Array | null }
   | { type: "error"; message: string };

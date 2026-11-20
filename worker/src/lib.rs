@@ -100,6 +100,18 @@ pub fn statements(script: &str, text: &str) -> Vec<Ranged> {
         .collect()
 }
 
+/// The explained page of a code (`W0201`, or a diagnostic's `zeff://explain/W0201` link), as
+/// `zeff explain <code> --format json` gives it, as a line of JSON of type `explained`; or of
+/// type `error` for a code no page explains. It needs no project.
+pub fn explain(code: &str) -> String {
+    zeff_web::explain(code)
+}
+
+/// Every code with an explained page, by family, as a line of JSON of type `codes`.
+pub fn explained_codes() -> String {
+    zeff_web::explained_codes()
+}
+
 /// The statements of a text as a JSON array of `{line, end, kind}`.
 fn ranges_json(script: &str, text: &str) -> String {
     let listed: Vec<String> = statements(script, text)

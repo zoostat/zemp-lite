@@ -356,3 +356,19 @@ describe("Check and the dependencies", () => {
     await whole;
   });
 });
+
+describe("a code's explained page", () => {
+  it("is asked for by its code, and given as the engine words it", async () => {
+    const { engine: made, worker } = await opened();
+    const asked = made.explain("W0201");
+    await settle();
+    expect(worker.last).toMatchObject({ type: "explain", code: "W0201" });
+    const page = { code: "W0201", kind: "warning", title: "missing values", text: "W0201 — …\n" };
+    worker.answer({ type: "explained", page });
+    expect(await asked).toEqual(page);
+    const none = made.explain("Q9999");
+    await settle();
+    worker.answer({ type: "error", message: "no code `Q9999` has an explained page" });
+    await expect(none).rejects.toThrow("no code `Q9999` has an explained page");
+  });
+});

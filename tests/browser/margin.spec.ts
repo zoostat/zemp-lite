@@ -109,19 +109,36 @@ test("each statement's output is directly under it, and the script itself is not
   await expect(page.locator("header.top")).toContainText("· saved");
 });
 
-test("the time of each statement is in a margin of 120 pixels at the right", async ({
+test("an unfolded output's header gives its lines, its time and its actions", async ({
   page,
   press,
 }) => {
   await scratch(page, press);
   await runUnfolded(page, press);
   const block = page.locator('[data-testid="block"][data-line="8"]');
-  const time = block.getByTestId("time");
-  await expect(time).toHaveText(/^\d+ ms$|^\d+\.\d\d s$/);
-  const margin = (await block.locator("header").boundingBox())!;
-  const output = (await block.getByTestId("printed").boundingBox())!;
-  expect(Math.round(margin.width)).toBe(120);
-  expect(margin.x).toBeGreaterThan(output.x + output.width);
+  const header = block.locator("header");
+  await expect(header).toContainText("line 8");
+  await expect(block.getByTestId("time")).toHaveText(/^\d+ ms$|^\d+\.\d\d s$/);
+  await expect(header.getByRole("button", { name: "Copy as text" })).toBeVisible();
+  await expect(header.getByRole("button", { name: "Fold" })).toBeVisible();
+  // The output stands across the code's column and the notes'.
+  const output = (await block.boundingBox())!;
+  const note = (await page.locator('[data-testid="note"][data-line="8"]').boundingBox())!;
+  expect(output.x + output.width).toBeGreaterThan(note.x + note.width - 2);
+  // Fold folds it, and its note says so.
+  await press(header.getByRole("button", { name: "Fold" }));
+  await expect(block).toHaveCount(0);
+  await expect(page.locator('[data-testid="note"][data-line="8"]')).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  // A plot's output opens the plot viewer.
+  await press(
+    page
+      .locator('[data-testid="block"][data-line="17"]')
+      .getByRole("button", { name: "Open in Plots ↗" }),
+  );
+  await expect(page.getByRole("button", { name: "‹ Script" })).toBeVisible();
 });
 
 test("the same run reads the same unfolded in the margin editor and in Panes, and one click switches", async ({
@@ -506,4 +523,91 @@ test("Notes hides and shows the notes, and changes nothing else", async ({ page,
   await expect(page.locator(".cm-zemp-output")).toHaveCount(7);
   await press(notesButton);
   await expect(page.getByTestId("note")).toHaveCount(9);
+});
+
+test("the engine prints at the width of the place, and again at a new width when it changes", async ({
+  page,
+  press,
+}) => {
+  await page.setViewportSize({ width: 1000, height: 3200 });
+  await scratch(page, press);
+  await runUnfolded(page, press);
+  const width = async () => Number(await page.locator(".sheet").getAttribute("data-width"));
+  const wide = await width();
+  expect(wide).toBeGreaterThanOrEqual(40);
+  expect(wide).toBeLessThan(118);
+  const longest = async () =>
+    Math.max(...(await printed(page)).split("\n").map((line) => [...line].length));
+  // Every line the engine printed fits the place: it laid its tables out at that width.
+  await expect.poll(longest).toBeLessThanOrEqual(wide);
+  const before = await printed(page);
+  // A narrower window: the prints are laid out afresh, the run keeping its number.
+  await page.setViewportSize({ width: 760, height: 3200 });
+  await expect.poll(width).toBeLessThan(wide);
+  const narrow = await width();
+  await expect.poll(longest).toBeLessThanOrEqual(narrow);
+  expect(await printed(page)).not.toBe(before);
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
+});
+
+test("Copy as text gives what `zeff run` prints, at the engine's own width", async ({
+  page,
+  press,
+  browserName,
+  context,
+}) => {
+  await page.setViewportSize({ width: 1000, height: 3200 });
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  await scratch(page, press);
+  await runUnfolded(page, press);
+  const fit = page.locator('[data-testid="block"][data-line="13"]');
+  await press(fit.getByRole("button", { name: "Copy as text" }));
+  await expect(page.getByTestId("copied")).toHaveText(/^copied line 13 as text: \d+ lines$/);
+  if (browserName === "chromium") {
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copied.startsWith("reg · log(wage) ~ educ + exper + female + union")).toBe(true);
+    // The window is narrower than 118 characters, yet the copy is the print at 118.
+    expect(file("examples/scratch/expected/stdout.txt")).toContain(copied);
+  }
+});
+
+test("Explain opens the engine's page for a code in place, and closes it", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await runUnfolded(page, press);
+  const summary = page.locator('[data-testid="block"][data-line="8"]');
+  const explain = summary.getByRole("button", { name: "Explain" });
+  await press(explain);
+  await expect(summary.getByTestId("explained")).toHaveText(
+    file("tests/scripts/explain-W0201.txt").trimEnd(),
+  );
+  await expect(explain).toHaveAttribute("aria-expanded", "true");
+  await press(explain);
+  await expect(summary.getByTestId("explained")).toHaveCount(0);
+});
+
+test("⌥↵ unfolds and folds the output of the statement at the cursor", async ({ page, press }) => {
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await editor(page).focus();
+  await page.keyboard.press("ControlOrMeta+Home");
+  // Down to line 8, the summary.
+  for (let line = 1; line < 8; line++) await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Alt+Enter");
+  await expect(page.locator('[data-testid="note"][data-line="8"]')).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await page.keyboard.press("Alt+Enter");
+  await expect(page.locator('[data-testid="note"][data-line="8"]')).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  // The script is as it was: the key wrote nothing into it.
+  expect(await scriptText(page)).toBe(file("examples/scratch/scripts/main.zeff"));
 });

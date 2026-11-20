@@ -94,6 +94,19 @@ pub fn statements(script: &str, text: &str) -> String {
     crate::statements_json(script, text)
 }
 
+/// The explained page of a code, as a line of JSON. Named apart from `zeff-web`'s own
+/// `explain`, which the engine's browser crate exports into the same module.
+#[wasm_bindgen(js_name = explainPage)]
+pub fn explain_page(code: &str) -> String {
+    crate::explain(code)
+}
+
+/// Every code with an explained page, by family, as a line of JSON.
+#[wasm_bindgen(js_name = codesExplained)]
+pub fn codes_explained() -> String {
+    crate::explained_codes()
+}
+
 /// The version of the Zeff engine in the worker.
 #[wasm_bindgen(js_name = engineVersion)]
 pub fn engine_version() -> String {

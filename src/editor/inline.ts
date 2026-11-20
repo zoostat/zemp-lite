@@ -1,5 +1,5 @@
-// The Inline layout in the editor: each block of a run drawn directly under the statement
-// that made it (Zemp Specification, section 5). The blocks are widgets of the editor, never
+// The outputs of the margin editor (#174), as of the Inline layout before it: each block of a
+// run drawn directly under the statement that made it (Zemp Specification, section 5). The blocks are widgets of the editor, never
 // text of the script: the script stays a plain `.zeff` file, and inline output is never
 // written into it.
 import { StateEffect, StateField, type EditorState, type Extension } from "@codemirror/state";
@@ -25,6 +25,8 @@ export interface InlineOutput {
    */
   refused: { basis: string; placed: Placed[]; edited: boolean } | null;
   oncancel: () => void;
+  /** Fold the output of the statement on `line` away. */
+  onfold?: (line: number) => void;
   /** The window, which a block asks for the figure of a statement that ended in a plot. */
   workspace: Workspace;
 }
@@ -52,6 +54,7 @@ class BlockWidget extends WidgetType {
   readonly #placed: Placed;
   readonly #edited: boolean;
   readonly #oncancel: () => void;
+  readonly #onfold: ((line: number) => void) | undefined;
   readonly #workspace: Workspace;
   #watch: ResizeObserver | null = null;
   /** What the widget shows, as text: two widgets that show the same are the same widget. */
@@ -62,10 +65,11 @@ class BlockWidget extends WidgetType {
 
   constructor(placed: Placed, output: InlineOutput, edited: boolean) {
     super();
-    const { oncancel, workspace } = output;
+    const { oncancel, onfold, workspace } = output;
     this.#placed = placed;
     this.#edited = edited;
     this.#oncancel = oncancel;
+    this.#onfold = onfold;
     this.#workspace = workspace;
     this.#shows = JSON.stringify([placed.block, edited]);
     const { state, printed, said } = placed.block;
@@ -87,6 +91,10 @@ class BlockWidget extends WidgetType {
         inline: true,
         oncancel: this.#oncancel,
         workspace: this.#workspace,
+        last: this.#placed.after,
+        ...(this.#onfold === undefined || this.#placed.block.line === null
+          ? {}
+          : { onfold: () => this.#onfold?.(this.#placed.block.line as number) }),
       },
     });
     // A block grows when its figure arrives: the editor is told, so that the line numbers

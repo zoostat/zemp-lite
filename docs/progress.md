@@ -71,3 +71,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 137 unit tests; 185 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 6 `[function]`: opening a result.
+
+## 21 November 2026, release 0.2, step 6 (opening a result)
+
+**Done.** Step 6 `[function]`: an unfolded output is printed by the engine at the width of its place, and laid out afresh when the place changes; its header gives its lines, its time, **Copy as text** (the print at 118, as `zeff run` writes it), **Open in Plots ↗** and **Fold**; what the engine said comes first, each warning and error with **Explain**, the engine's page in place; ⌥↵ unfolds the statement at the cursor. Steps 4, 5a and 5b are green on GitHub (5a's run had failed on one WebKit test, mended in 5b).
+
+**Green.** `npm run routine`: 16 native and 13 message tests of the worker; the nine samples identical; 2,792.2 kB; 138 unit tests; 193 browser tests passed and 1 skipped by design.
+
+**Next.** Step 7 `[engine]`: running less than the script, and staleness.

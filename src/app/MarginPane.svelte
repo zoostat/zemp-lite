@@ -83,12 +83,45 @@
     edited: workspace.edited,
     refused,
     oncancel: () => workspace.cancel(),
+    onfold: (line: number) => workspace.toggleUnfolded(path, line),
     workspace,
   });
 
   $effect(() => {
     if (workspace.ready && buffer === undefined) void workspace.open(path);
   });
+
+  // The width of the place an output unfolds in, in characters of the print's own font: the
+  // engine prints its tables at that width (the design, 7.4). A hidden run of a hundred
+  // characters in that font gives a character's width; the output spans the code's column and
+  // the notes', less its edge, its padding and its hairlines.
+  let probe = $state<HTMLElement | null>(null);
+  $effect(() => {
+    const at = sheet;
+    const ruler = probe;
+    if (at === null || ruler === null) return;
+    const measure = () => {
+      const content = at.querySelector<HTMLElement>(".cm-content");
+      const char = ruler.getBoundingClientRect().width / 100;
+      if (content === null || !(char > 0)) return;
+      workspace.setPrintWidth((content.clientWidth - 16 - 32 - 2) / char);
+    };
+    const watch = new ResizeObserver(measure);
+    watch.observe(at);
+    watch.observe(ruler);
+    measure();
+    return () => watch.disconnect();
+  });
+
+  /** ⌥↵: unfold or fold the output of the statement at the cursor. */
+  function unfoldAt(line: number): void {
+    const range = ours?.ranges?.find(
+      (one) => one.kind === "statement" && one.line <= line && line <= one.end,
+    );
+    if (range !== undefined && notes.some((note) => note.line === range.line && note.opens)) {
+      workspace.toggleUnfolded(path, range.line);
+    }
+  }
 
   // The page stays where the reader is while a run replaces its output (see `steady.ts`).
   let pane = $state<HTMLElement | null>(null);
@@ -121,9 +154,16 @@
   <PlotViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
 {:else}
   <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
-    <div class="sheet" bind:this={sheet} style:--zemp-margin={notesShown ? "300px" : "0px"}>
+    <div
+      class="sheet"
+      bind:this={sheet}
+      style:--zemp-margin={notesShown ? "300px" : "0px"}
+      data-width={workspace.printWidth}
+    >
+      <span class="probe mono" aria-hidden="true" bind:this={probe}>{"0".repeat(100)}</span>
       <div class="results" role="toolbar" aria-label="The run, and what is shown of its results">
         <span class="facts" data-testid="run-facts">{facts}</span>
+        <span class="copied" aria-live="polite" data-testid="copied">{workspace.copied}</span>
         <span class="gap"></span>
         <button
           class="view"
@@ -153,6 +193,7 @@
             onrun={() => void workspace.run()}
             inline={output}
             notes={margin}
+            onunfold={unfoldAt}
           />
         {/key}
       {/if}
@@ -167,7 +208,14 @@
     min-height: 0;
     overflow: auto;
   }
+  .probe {
+    font-size: calc(var(--code-size, 14px) - 1px);
+    position: absolute;
+    visibility: hidden;
+    white-space: pre;
+  }
   .sheet {
+    position: relative;
     margin: 0 auto;
     max-width: calc(760px * var(--code-scale, 1) + var(--zemp-margin, 0px));
     padding: 0 18px;
@@ -188,6 +236,10 @@
   }
   .gap {
     flex: 1;
+  }
+  .copied {
+    color: var(--ok);
+    font-size: 13px;
   }
   .view {
     background: none;

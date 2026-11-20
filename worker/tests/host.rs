@@ -5,7 +5,9 @@
 
 use serde_json::Value;
 use std::cell::RefCell;
-use zemp_worker::{Asked, Host, engine_version, only, statements, statements_json};
+use zemp_worker::{
+    Asked, Host, engine_version, explain, explained_codes, only, statements, statements_json,
+};
 
 fn never() -> bool {
     false
@@ -484,4 +486,29 @@ fn a_run_of_chosen_statements_runs_them_alone_and_prints_what_the_whole_run_prin
     assert!(blanked.lines().nth(11).unwrap().trim().is_empty());
     assert_eq!(blanked.lines().nth(7), text.lines().nth(7));
     assert_eq!(blanked.lines().next(), text.lines().next());
+}
+
+#[test]
+fn a_codes_explained_page_is_what_zeff_explain_prints() {
+    let page: Value = serde_json::from_str(&explain("W0201")).unwrap();
+    assert_eq!(page["type"], "explained");
+    assert_eq!(
+        page["page"]["text"].as_str().unwrap(),
+        read("tests/scripts/explain-W0201.txt")
+    );
+    // The link a diagnostic carries, in either case, finds the same page.
+    let linked: Value = serde_json::from_str(&explain("zeff://explain/w0201")).unwrap();
+    assert_eq!(linked["page"]["code"], "W0201");
+    let none: Value = serde_json::from_str(&explain("Q9999")).unwrap();
+    assert_eq!(none["type"], "error");
+    let codes: Value = serde_json::from_str(&explained_codes()).unwrap();
+    assert_eq!(codes["type"], "codes");
+    assert!(
+        codes["families"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .flat_map(|family| family["codes"].as_array().unwrap())
+            .any(|code| code["code"] == "W0201")
+    );
 }

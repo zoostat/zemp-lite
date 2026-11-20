@@ -16,6 +16,8 @@
 //   { type: "statements", script, text } the statements of a text, without running it
 //   { type: "check", script, text }     the engine's check of a text, as `zeff check` makes it
 //   { type: "dependencies", script, text }  what each statement of a text needs
+//   { type: "explain", code }           the explained page of a code (needs no project)
+//   { type: "codes" }                   every code with an explained page (needs no project)
 //   { type: "frame", name }             a frame of the last run, by the name of its binding
 //   { type: "read", path }              a file of the project: one put in, or one a run wrote
 // Messages out:
@@ -29,6 +31,9 @@
 //                                       the frames its bindings hold: [{ name, rows, variables }]
 //   { type: "statements", statements }  the answer to `statements`: [{ line, end, kind }]
 //   { type: "checked", exit_code, said, found, summary, findings }   the answer to `check`
+//   { type: "explained", page }         the answer to `explain`: the page, as `zeff explain
+//                                       --format json` gives it, its `text` what it prints
+//   { type: "codes", families }         the answer to `codes`
 //   { type: "dependencies", statements } the answer to `dependencies`:
 //                                       [{ line, makes, reads, seeds, needs }]
 //   { type: "frame", name, bytes }      the frame as an Arrow stream, in a Uint8Array whose
@@ -64,6 +69,14 @@ export function serve(engine, port, deviceBytes) {
       project = new engine.Project(said.name);
       flag = said.cancel ? new Int32Array(said.cancel) : null;
       answer({ type: "opened", name: said.name });
+      return;
+    }
+    if (said.type === "explain") {
+      answer(JSON.parse(engine.explainPage(String(said.code))));
+      return;
+    }
+    if (said.type === "codes") {
+      answer(JSON.parse(engine.codesExplained()));
       return;
     }
     if (said.type === "statements") {

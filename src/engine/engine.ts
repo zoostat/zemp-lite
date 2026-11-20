@@ -5,6 +5,7 @@
 // Project Specification, section 8.3, point 7), and the next project starts a new one.
 import type {
   Checked,
+  ExplainedPage,
   FromWorker,
   Needs,
   Outcome,
@@ -246,6 +247,11 @@ export class Engine {
       findings: checked.findings,
       ranges: checked.ranges,
     };
+  }
+
+  /** A code's explained page, as `zeff explain` gives it. It needs no project. */
+  async explain(code: string): Promise<ExplainedPage> {
+    return expect(await this.#ask({ type: "explain", code }), "explained").page;
   }
 
   /** What each statement of a text of the project needs, from the engine's dependency graph. */

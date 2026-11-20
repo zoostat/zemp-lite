@@ -80,6 +80,15 @@ export class Workspace {
   #beforeRun: (() => void)[] = [];
   /** How many runs of a script this window has made: each is numbered (the design, 7.8). */
   #runs = 0;
+  /**
+   * The width in characters of the place an output is unfolded in, which the engine prints
+   * its tables at (the margin editor's design, 7.4); 0 where none is known, for the engine's
+   * own 118.
+   */
+  printWidth = $state(0);
+  #relaying: ReturnType<typeof setTimeout> | null = null;
+  /** What was last copied, in words, for the reader and for a screen reader. */
+  copied = $state("");
   /** The frames the last run left. */
   frames = $state<FrameInfo[]>([]);
   /** Something the user asked for that could not be done, in words. */
@@ -368,10 +377,16 @@ export class Workspace {
     if (earlier === null || earlier.script !== script || earlier.statements.length === 0) show();
     try {
       await this.#saving;
-      const outcome = await this.session.run(script, text, (event) => {
-        if (event.type === "started") show();
-        hear(run, event, performance.now());
-      });
+      fresh.width = this.printWidth;
+      const outcome = await this.session.run(
+        script,
+        text,
+        (event) => {
+          if (event.type === "started") show();
+          hear(run, event, performance.now());
+        },
+        this.printWidth,
+      );
       if (!shown) {
         end(fresh, outcome, performance.now());
         if (refused(fresh)) this.refusal = fresh;
@@ -458,6 +473,87 @@ export class Workspace {
     } finally {
       this.running = false;
     }
+  }
+
+  /**
+   * The place an output is unfolded in is `columns` characters wide. The engine never prints
+   * under 40 (Language Reference, section 3.8). A change of width lays the last run's prints
+   * out afresh, a quarter of a second after the last change, as a figure is redrawn.
+   */
+  setPrintWidth(columns: number): void {
+    const width = Math.max(40, Math.floor(columns));
+    if (width === this.printWidth) return;
+    this.printWidth = width;
+    if (this.#relaying !== null) clearTimeout(this.#relaying);
+    this.#relaying = setTimeout(() => {
+      this.#relaying = null;
+      void this.relayout();
+    }, 250);
+  }
+
+  /**
+   * Print the last run's results again at the width of their place: the same text run again,
+   * which by the determinism of the engine gives the same results, laid out at the new width.
+   * The run keeps its number, its time and what it said; only what it printed changes.
+   */
+  async relayout(): Promise<void> {
+    const run = this.lastRun;
+    if (run === null || run.checkOnly || run.state === "running" || this.running) return;
+    if (run.width === this.printWidth) return;
+    const width = this.printWidth;
+    const before = this.#busy;
+    const work = (async () => {
+      await before;
+      if (this.lastRun !== run || this.running) return;
+      try {
+        await this.#saving;
+        const outcome = await this.session.run(run.script, run.text, undefined, width);
+        if (this.lastRun !== run) return;
+        for (const statement of run.statements) {
+          const info = outcome.statements.find((one) => one.line === statement.line);
+          if (info !== undefined) statement.printed = info.stdout;
+        }
+        run.info = outcome.statements;
+        run.width = width;
+      } catch (error) {
+        this.status = (error as Error).message;
+      }
+    })();
+    this.#busy = work;
+    await work;
+  }
+
+  /**
+   * Copy what the statement on `line` printed, as `zeff run` prints it: at the engine's own
+   * width, 118, whatever the width of the window (the design, 7.4). Where the run was printed
+   * at another width, the text that ran is run again at 118 for it.
+   */
+  async copyText(line: number): Promise<void> {
+    const run = this.lastRun;
+    if (run === null) return;
+    let text = run.info.find((one) => one.line === line)?.stdout ?? "";
+    if (run.width !== 0 && run.width !== 118) {
+      const before = this.#busy;
+      const work = (async () => {
+        await before;
+        const outcome = await this.session.run(run.script, run.text, undefined, 0);
+        text = outcome.statements.find((one) => one.line === line)?.stdout ?? "";
+      })();
+      this.#busy = work;
+      await work;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      const lines = text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
+      this.copied = `copied line ${line} as text: ${lines} line${lines === 1 ? "" : "s"}`;
+    } catch {
+      this.copied = "the browser did not let the text be copied";
+    }
+  }
+
+  /** A code's explained page, as `zeff explain` prints it. */
+  async explain(code: string): Promise<string> {
+    return (await this.engine.explain(code)).text;
   }
 
   /** The statements of the last run that ended in a plot, once the run is over. */

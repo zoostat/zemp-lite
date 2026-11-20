@@ -209,6 +209,21 @@ test("what each statement needs, and a run of the statements one needs alone", a
   );
 });
 
+test("a code's explained page is given without a project, as `zeff explain` prints it", async (t) => {
+  const root = path.resolve(here, "..", "..");
+  const { worker, next } = started(t, 0);
+  await next("ready");
+  worker.postMessage({ type: "explain", id: 4, code: "W0201" });
+  const explained = await next("explained");
+  assert.equal(explained.id, 4);
+  assert.equal(
+    explained.page.text,
+    fs.readFileSync(path.join(root, "tests/scripts/explain-W0201.txt"), "utf8"),
+  );
+  worker.postMessage({ type: "explain", id: 5, code: "Q9999" });
+  assert.match((await next("error")).message, /no code `Q9999` has an explained page/);
+});
+
 test("a file a run wrote is given back, and passed to the interface, not copied", async (t) => {
   const { worker, said, next } = await opened(t, 0);
   const script =

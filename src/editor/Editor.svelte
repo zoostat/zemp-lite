@@ -27,6 +27,7 @@
     onrun,
     inline = null,
     notes = null,
+    onunfold,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -42,6 +43,8 @@
     inline?: InlineOutput | null;
     /** The margin editor's notes, beside their statements; `null` where none are shown. */
     notes?: MarginNotes | null;
+    /** ⌥↵ (Alt ↵): unfold or fold the output of the statement on this line. */
+    onunfold?: (line: number) => void;
   } = $props();
 
   let host: HTMLDivElement;
@@ -147,6 +150,14 @@
           // Escape and then Tab moves on to the next control, for those who use the keyboard alone.
           keymap.of([
             { key: "Mod-Enter", run },
+            {
+              key: "Alt-Enter",
+              run: (target) => {
+                if (onunfold === undefined) return false;
+                onunfold(target.state.doc.lineAt(target.state.selection.main.head).number);
+                return true;
+              },
+            },
             { key: "Shift-Mod-Enter", run },
             ...defaultKeymap,
             ...historyKeymap,

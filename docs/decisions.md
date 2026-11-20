@@ -657,3 +657,19 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Reason.** The checklist's step 5b; open decisions #146 and #174 (R11).
 
 **A test mended with it.** The run on GitHub of step 5a (6e1f266) failed in WebKit on one test, "in a private window, where the browser keeps nothing…": it read the example's results in the margin editor in a window of ordinary height, where the editor draws only what is near the window, so the outputs far down the script were not on the page. The test is of a private window, not of the editor, so it now reads the results in Panes, where every output is on the page; its checks are unchanged. The margin tests' helper that runs and unfolds now waits until every output is drawn before the page is read.
+
+## 21 November 2026: opening a result (release 0.2, step 6)
+
+**The print at the width of its place.** The engine prints its tables at a width in characters (`--width`, never under 40). The margin editor measures how many characters of the print's own font fit across an unfolded output (a hidden run of a hundred characters in JetBrains Mono at the print's size, against the width of the code's column and the notes' less the output's edge and padding), and runs the script at that width. When the width changes (the window resized, the code size changed, the notes shown or hidden), the last run's prints are laid out afresh a quarter of a second after the last change, as a figure is redrawn: the text that ran is run again at the new width, and only what each statement printed is replaced, the run keeping its number, its time and what it said; by the engine's determinism the results are the same. A print still wider than its place scrolls sideways inside it. Panes prints at the engine's own 118, as before. Every character shown is the engine's: the browser tests hold every printed line within the width asked, and the worker's tests hold the prints at 40 and 80 to the released `zeff run --width`, byte for byte.
+
+**The header of an output.** In the margin editor an unfolded output stands across the code's column and the notes', on the `softer` ground with a hairline, and has a header: its lines (`line 8`, `lines 12–13`), its time or state, and its actions in words, **Copy as text**, **Open in Plots ↗** for a plot, and **Fold**. What the engine said comes first, then the print or the figure (the design, 7.4); Panes keeps its order.
+
+**Copy as text** puts on the clipboard what `zeff run` prints for the statement, at the engine's own width of 118, whatever the window: where the run was printed at another width, the text that ran is run again at 118 for it. The results bar says what was copied. LaTeX and Word, which the design offers "only where the result has them", wait for the engine's exports of a single result.
+
+**Explain** on each warning and error opens the engine's explained page of its code in place, as `zeff explain` prints it (`zeff_web::explain`, which needs no project; held byte for byte to the released command's page of W0201), and closes it again.
+
+**⌥↵** (Alt ↵ on Windows and Linux) unfolds or folds the output of the statement at the cursor, as the design's keys have it (R8).
+
+**Not done here.** An opened result keeping its height while its statement runs again rests on the reckoned heights of 0.1 and the page held during a run; the print's tables as cells for a screen reader wait for the engine (C7, R10).
+
+**Reason.** The checklist's step 6; the margin editor's design, sections 7.4, 7.13 and 15; open decision #175 (C6), worked round at 0.8.0 by a run at the width.
