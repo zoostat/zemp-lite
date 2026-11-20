@@ -1,0 +1,14 @@
+/// The return to schooling in a frame's rows.
+fn returns(data: Frame) -> Float {
+    let fit = data.reg(log(wage) ~ educ)
+    fit.coef(educ)
+}
+
+/// The return to schooling in one year.
+fn in_year(data: Frame, y: Int) -> Float {
+    returns(data.where(year == y))
+}
+
+let wages = dataset(wages)
+print(in_year(wages, 2010))
+print(in_year(wages, 1900))

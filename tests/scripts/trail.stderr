@@ -1,0 +1,10 @@
+note: no row kept: the result is empty (line 14)
+error[Z0801]: no row remains to fit the model: the frame has no rows
+ --> scripts/main.zeff:3:20
+  |
+3 |     let fit = data.reg(log(wage) ~ educ)
+  |                    ^^^ nothing to estimate
+  |
+  = in: `returns(data: a frame of 0 rows × 11 variables)`, called at scripts/main.zeff:9:5
+  = in: `in_year(data: a frame of 18,412 rows × 11 variables, y: 1900)`, called at scripts/main.zeff:14:7
+  = help: a model needs rows; the frame's own steps left none

@@ -10,6 +10,9 @@
   import Editor from "../editor/Editor.svelte";
   import { counted, notesOf } from "../margin/notes";
   import { marks } from "../margin/stale";
+  import { trailOf } from "../margin/trail";
+  import type { Note } from "../margin/notes";
+  import { said } from "../output/run";
   import { placed } from "../output/place";
   import { took } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
@@ -37,7 +40,37 @@
     }
     return marks(ours, now.text, now.ranges);
   });
-  const notes = $derived(ours === null ? [] : notesOf(ours, marked));
+  // The lines an error's trail names in this file, each with a note of what the call there
+  // was given, or of the error raised there (the design, 7.16.1); nothing is run again.
+  const trailNotes = $derived.by((): Note[] => {
+    const last = workspace.lastRun;
+    if (last === null) return [];
+    const found: Note[] = [];
+    for (const statement of last.statements) {
+      if (statement.state !== "failed") continue;
+      for (const one of said(statement.saidRaw)) {
+        if (one.kind !== "error") continue;
+        for (const link of trailOf(one.raw, one.sentence)) {
+          if (link.file !== path || found.some((note) => note.line === link.line)) continue;
+          found.push({
+            line: link.line,
+            main: link.raised ? "error" : (link.text.split("(")[0] ?? ""),
+            sub: link.text,
+            tags: link.raised && one.code !== null ? [{ text: one.code, kind: "error" }] : [],
+            state: link.raised ? "failed" : "fresh",
+            opens: false,
+            place: null,
+          });
+        }
+      }
+    }
+    return found;
+  });
+  const notes = $derived.by(() => {
+    const own = ours === null ? [] : notesOf(ours, marked);
+    const extra = trailNotes.filter((note) => !own.some((one) => one.line === note.line));
+    return [...own, ...extra].sort((a, b) => a.line - b.line);
+  });
   const unfolded = $derived(workspace.views.script.unfolded[path] ?? []);
   const notesShown = $derived(workspace.views.script.notes);
   // An output is shown under its statement where the reader unfolded it; what failed, and
@@ -70,7 +103,10 @@
   const margin = $derived(
     notesShown
       ? {
-          basis: ours === null ? "" : String(ours.startedAt),
+          basis:
+            ours === null
+              ? `trail:${workspace.lastRun?.startedAt ?? ""}`
+              : `${ours.startedAt}:${trailNotes.length}`,
           notes,
           unfolded,
           onnote: (line: number) => workspace.toggleUnfolded(path, line),
@@ -199,7 +235,15 @@
     >
       <span class="probe mono" aria-hidden="true" bind:this={probe}>{"0".repeat(100)}</span>
       <div class="results" role="toolbar" aria-label="The run, and what is shown of its results">
-        <span class="facts" data-testid="run-facts">{facts}</span>
+        <button
+          class="facts"
+          data-testid="run-facts"
+          disabled={ours === null}
+          aria-haspopup="dialog"
+          title="The run's facts: the engine, the seed, where the time and the memory went"
+          onclick={() => (workspace.panel = workspace.panel === "facts" ? null : "facts")}
+          >{facts}</button
+        >
         <span class="copied" aria-live="polite" data-testid="copied">{workspace.copied}</span>
         <span class="gap"></span>
         <button
@@ -234,6 +278,7 @@
             onstatement={(line) => void workspace.runPart("statement", line)}
             {runto}
             oncursor={(line) => (workspace.cursor = { path, line })}
+            reveal={workspace.reveal?.path === path ? workspace.reveal : null}
           />
         {/key}
       {/if}
@@ -270,9 +315,22 @@
     min-height: 36px;
   }
   .facts {
+    background: none;
+    border: 0;
+    border-radius: 6px;
     color: var(--ink-3);
+    cursor: pointer;
+    font: inherit;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
+    padding: 2px 6px;
+  }
+  .facts:hover:not(:disabled) {
+    background: var(--soft);
+    color: var(--ink-2);
+  }
+  .facts:disabled {
+    cursor: default;
   }
   .gap {
     flex: 1;

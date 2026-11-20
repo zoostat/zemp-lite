@@ -95,6 +95,10 @@ export class Workspace {
    * each edit: what marks the results on the page against the script (`src/margin/stale.ts`).
    */
   now = $state<{ path: string; text: string; ranges: Ranged[] } | null>(null);
+  /** What floats over the window about the last run: its facts, or what it said. */
+  panel = $state<"facts" | "said" | null>(null);
+  /** A line to be brought into view, with the cursor on it (`goTo`). */
+  reveal = $state<{ path: string; line: number; count: number } | null>(null);
   /** The line of the cursor in the margin editor, for the commands that run from it. */
   cursor = $state<{ path: string; line: number } | null>(null);
   #reading: ReturnType<typeof setTimeout> | null = null;
@@ -262,6 +266,15 @@ export class Workspace {
     Object.assign(this.views, withTab(this.views, fileTab(path)));
     this.#keep();
     await this.#load(path);
+  }
+
+  /**
+   * Go to a line of a file of the project: its tab opened and shown, and the editor asked to
+   * put the cursor on the line and bring it into view. Each asking is told apart by its count.
+   */
+  async goTo(path: string, line: number): Promise<void> {
+    await this.open(path);
+    this.reveal = { path, line, count: (this.reveal?.count ?? 0) + 1 };
   }
 
   show(tab: string): void {

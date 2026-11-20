@@ -10,6 +10,7 @@
   import type { Command } from "./commands";
   import ConsoleLine from "./ConsoleLine.svelte";
   import MarginPane from "./MarginPane.svelte";
+  import RunPanel from "../margin/RunPanel.svelte";
   import LeftPanel from "./LeftPanel.svelte";
   import MainPane from "./MainPane.svelte";
   import Palette from "./Palette.svelte";
@@ -157,6 +158,11 @@
 {/if}
 
 <ConsoleLine {workspace} bind:this={console_} />
+{#if workspace.panel !== null}
+  {#key workspace.panel}
+    <RunPanel {workspace} kind={workspace.panel} onclose={() => (workspace.panel = null)} />
+  {/key}
+{/if}
 
 {#if palette}
   <Palette {commands} onclose={() => (palette = false)} />

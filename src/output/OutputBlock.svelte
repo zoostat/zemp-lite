@@ -6,6 +6,7 @@
   // Open in Plots, Fold); then what the engine said, each warning and error with Explain,
   // which opens the engine's explained page in place; then what it printed, or its figure.
   import type { Workspace } from "../app/workspace-state.svelte";
+  import { trailOf } from "../margin/trail";
   import Figure from "../plots/Figure.svelte";
   import { took, type Block, type Said } from "./run";
 
@@ -135,6 +136,25 @@
         {#each one.help as help (help)}
           <p class="help">{help}</p>
         {/each}
+        {#if inline && workspace !== null && one.kind === "error"}
+          {@const trail = trailOf(one.raw, one.sentence)}
+          {#if trail.length > 0}
+            <!-- The error's trail (#183): the chain the engine named, each link a way to its line. -->
+            <div class="trail" data-testid="trail">
+              <p class="trail-head">The trail</p>
+              <ol>
+                {#each trail as link, at (at)}
+                  <li class:raised={link.raised}>
+                    <button class="act" onclick={() => void workspace.goTo(link.file, link.line)}
+                      >{link.file}:{link.line}</button
+                    >
+                    <span class={link.raised ? "sentence" : "mono given"}>{link.text}</span>
+                  </li>
+                {/each}
+              </ol>
+            </div>
+          {/if}
+        {/if}
         {#if inline && workspace !== null && one.code !== null}
           {@const code = one.code}
           <button
@@ -330,6 +350,23 @@
   }
   .explain {
     margin-top: 2px;
+  }
+  .trail {
+    margin-top: 6px;
+  }
+  .trail-head {
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .trail ol {
+    margin: 2px 0 0;
+    padding-left: 20px;
+  }
+  .trail li {
+    margin: 2px 0;
+  }
+  .trail .given {
+    font-size: 12.5px;
   }
   .explained {
     background: var(--window);

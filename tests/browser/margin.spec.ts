@@ -742,3 +742,76 @@ test("where what a statement needs fails, the statement asked for says so", asyn
     "not run · line 2 failed",
   );
 });
+
+test("the run's facts give the engine, the seed, and where the time and the memory went", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByTestId("run-facts"));
+  const record = page.getByTestId("run-record");
+  await expect(record).toBeVisible();
+  await expect(record).toContainText(/engine Zeff 0\.8\.0 · run 1 · \d+:\d\d/);
+  await expect(record.getByTestId("seeds")).toHaveText("No statement sets the seed.");
+  // Every statement of the run by its time, and the two frames by the bytes the engine counts.
+  await expect(record.getByTestId("times").locator("li")).toHaveCount(9);
+  await expect(record.getByTestId("memory").locator("li")).toHaveCount(2);
+  await expect(record.getByTestId("memory")).toContainText("wages");
+  await expect(record).toContainText("come with Zeff 0.11.0");
+  await page.keyboard.press("Escape");
+  await expect(record).toHaveCount(0);
+});
+
+test("what the run said lists every message with its code, sentence and line, as the margin has them", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.locator("footer.bottom button.state"));
+  const list = page.getByTestId("run-said");
+  await expect(list).toBeVisible();
+  const warning = list.locator("li.warning");
+  await expect(warning).toHaveCount(1);
+  await expect(warning).toContainText("W0201");
+  await expect(warning).toContainText("6 rows with NA in wage");
+  await expect(warning).toContainText("line 8");
+  // The same code is the tag of the note of line 8.
+  await expect(page.locator('[data-testid="note"][data-line="8"]')).toContainText("W0201");
+  await expect(list.locator("li.note")).toHaveCount(3);
+  // A line of the list takes the cursor to its line.
+  await press(warning.getByRole("button", { name: "line 8" }));
+  await expect(list).toHaveCount(0);
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("8");
+});
+
+test("an error raised inside a function has its trail, each link a way to its line", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await write(page, file("tests/scripts/trail.zeff"));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  const trail = page.getByTestId("trail");
+  await expect(trail.locator("li")).toHaveCount(3);
+  await expect(trail.locator("li").nth(0)).toContainText(
+    "scripts/main.zeff:14 in_year(data: a frame of 18,412 rows × 11 variables, y: 1900)",
+  );
+  await expect(trail.locator("li").nth(2)).toContainText(
+    "scripts/main.zeff:3 no row remains to fit the model",
+  );
+  // The lines the trail names have notes of what the call there was given, or of the error.
+  await expect(page.locator('[data-testid="note"][data-line="9"]')).toContainText(
+    "returns(data: a frame of 0 rows × 11 variables)",
+  );
+  await expect(page.locator('[data-testid="note"][data-line="3"]')).toContainText("Z0801");
+  // Following a link puts the cursor on its line.
+  await press(trail.getByRole("button", { name: "scripts/main.zeff:3" }));
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("3");
+  // Nothing was run again: the run is still the first.
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
+});

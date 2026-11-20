@@ -95,3 +95,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 145 unit tests; 203 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 8 `[function]`: the run's facts and what the run said.
+
+## 21 November 2026, release 0.2, step 8 (the run's facts, what it said, the error's trail)
+
+**Done.** Step 8 `[function]`: the run's facts from the results bar (the engine, the seed, where the time and the memory went); what the run said from the foot (every message with its code, sentence and line, statistical warnings apart); the error's trail under an error raised inside a function, each link a way to its line, with notes on the lines it names.
+
+**Green.** `npm run routine`: 147 unit tests; 209 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 9 `[function]`: the loop inspector.

@@ -31,6 +31,7 @@
     onstatement,
     runto = null,
     oncursor,
+    reveal = null,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -54,6 +55,8 @@
     runto?: RunTo | null;
     /** The cursor moved to this line. */
     oncursor?: (line: number) => void;
+    /** A line to bring into view with the cursor on it; a new `count` asks again. */
+    reveal?: { line: number; count: number } | null;
   } = $props();
 
   let host: HTMLDivElement;
@@ -214,6 +217,20 @@
     if (view !== null && inline !== null) {
       view.dispatch({ effects: showNotes.of(shown) });
     }
+  });
+
+  // A line asked for (the error's trail): the cursor put on it, and it brought into view.
+  let revealed = 0;
+  $effect(() => {
+    const asked = reveal;
+    if (view === null || asked === null || asked.count === revealed) return;
+    revealed = asked.count;
+    const line = view.state.doc.line(Math.min(Math.max(asked.line, 1), view.state.doc.lines));
+    view.dispatch({
+      selection: { anchor: line.from },
+      effects: EditorView.scrollIntoView(line.from, { y: "center" }),
+    });
+    view.focus();
   });
 
   // Run to here on the statements' line numbers, each time they change.

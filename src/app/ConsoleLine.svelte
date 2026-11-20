@@ -78,7 +78,11 @@
     </div>
   {/if}
   <div class="line">
-    <span class="state {tone}"
+    <button
+      class="state {tone}"
+      aria-haspopup="dialog"
+      title="What the run said: every warning, note and error, with its line"
+      onclick={() => (workspace.panel = workspace.panel === "said" ? null : "said")}
       ><i aria-hidden="true"></i>
       <span class="sync" data-testid="sync"
         >{workspace.sync}{workspace.lastRun !== null &&
@@ -88,7 +92,7 @@
         workspace.sync !== workspace.checked?.summary
           ? ` · ${workspace.warnings} warning${workspace.warnings === 1 ? "" : "s"}`
           : ""}</span
-      ></span
+      ></button
     >
     <span class="prompt mono" aria-hidden="true">›</span>
     <input
@@ -145,6 +149,13 @@
   }
   .state {
     align-items: center;
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    padding: 2px 6px;
     display: inline-flex;
     flex: none;
     gap: 7px;
