@@ -16,7 +16,7 @@
   import Palette from "./Palette.svelte";
   import Splitter from "./Splitter.svelte";
   import TopBar from "./TopBar.svelte";
-  import { LEFT_WIDTH } from "./views";
+  import { LEFT_WIDTH, fileTab } from "./views";
   import { Workspace, editable } from "./workspace-state.svelte";
 
   let {
@@ -53,6 +53,17 @@
   const commands = $derived<Command[]>([
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
     { name: "Check the script", hint: "nothing is run", run: () => void workspace.check() },
+    {
+      name: "Place: Script",
+      hint: "the script with its notes",
+      run: () => workspace.show(fileTab(workspace.scriptPath)),
+    },
+    { name: "Place: Plots", hint: "the plots of the run", run: () => workspace.openPlots() },
+    {
+      name: workspace.views.plots.list ? "Plots: hide the list" : "Plots: show the list",
+      hint: "the list of plots at the left",
+      run: () => workspace.setPlotList(!workspace.views.plots.list),
+    },
     {
       name: workspace.help.shown ? "Help: hide" : "Help: show",
       hint: "F1 in the script opens the page of the name at the cursor",

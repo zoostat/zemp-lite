@@ -54,6 +54,8 @@ export interface ViewState {
     shown: string | null;
     /** The size plots are drawn at: to fit the pane, or a page of a journal or a slide. */
     page: "fit" | "one_column" | "two_column" | "slide";
+    /** Whether the list of plots at the left is shown. */
+    list: boolean;
   };
 }
 
@@ -82,7 +84,7 @@ export function usual(): ViewState {
     tabs: [fileTab("scripts/main.zeff")],
     active: fileTab("scripts/main.zeff"),
     folded: [],
-    plots: { order: [], pinned: [], shown: null, page: "fit" },
+    plots: { order: [], pinned: [], shown: null, page: "fit", list: true },
   };
 }
 
@@ -170,6 +172,7 @@ export function readViews(text: string | null): ViewState {
     if (page === "fit" || page === "one_column" || page === "two_column" || page === "slide") {
       state.plots.page = page;
     }
+    if (typeof plots["list"] === "boolean") state.plots.list = plots["list"];
   }
   return state;
 }

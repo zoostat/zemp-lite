@@ -13,6 +13,7 @@ import { compared, moved, ordered, toggled } from "./viewer";
 const plot = (line: number, source: string): PlotStatement => ({
   line,
   last: line,
+  kind: "",
   source,
   title: source,
 });

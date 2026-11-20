@@ -135,3 +135,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 151 unit tests; 234 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 12 `[function]`: the places, and Plots with its list.
+
+## 21 November 2026, release 0.2, step 12 (the places, and Plots with its list)
+
+**Done.** Step 12 `[function]`: **Script · Plots** in the top bar, the current one underlined; Plots keeps 0.1's viewer with its strip replaced by a list at the left (each plot's picture, name, line and kind), which hides. 10b's run on GitHub had failed on the completion test, Enter falling between two lists of offers on a slow machine; the test now presses the offer.
+
+**Green.** `npm run routine`: 152 unit tests; 236 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 13 `[engine]`: Data, the grid.

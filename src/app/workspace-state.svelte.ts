@@ -1119,6 +1119,12 @@ export class Workspace {
     this.#keep();
   }
 
+  /** Show or hide the list of plots at the left of the plot viewer. */
+  setPlotList(shown: boolean): void {
+    this.views.plots.list = shown;
+    this.#keep();
+  }
+
   /** Open the plot viewer: its tab is added where it is not there, and shown. */
   openPlots(): void {
     Object.assign(this.views, withTab(this.views, PLOTS));

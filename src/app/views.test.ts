@@ -27,6 +27,7 @@ describe("the view state of a project", () => {
       pinned: ["shape", "schooling"],
       shown: "shape",
       page: "slide",
+      list: false,
     };
     expect(readViews(writeViews(state))).toEqual(state);
   });
@@ -120,6 +121,7 @@ describe("the view state of a project", () => {
       pinned: ["a", "b", "c", "d"],
       shown: null,
       page: "fit",
+      list: true,
     });
   });
 

@@ -768,3 +768,15 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **`:help name`** in the console line prints the function's page into the console's drawer, as `zeff repl` does, or the engine's sentence where it has none. `:vars` and `:save` are step 15's.
 
 **Reason.** The checklist's step 11; open decision #74; Zemp Specification, section 5 (the Help row of the table of panels).
+
+## 21 November 2026: the places, and Plots with its list (release 0.2, step 12)
+
+**The places.** The top bar carries the places of the margin editor (its design, section 6), **Script** and **Plots**, the current one underlined in violet and marked as the current page; each is in ⌘K too (*Place: Script*, *Place: Plots*). **Data** joins them at step 13, with its viewer, so that no place is shown before it exists; **Paper** comes with the documents of #141.
+
+**Plots with its list.** The plot viewer of 0.1 is kept (fit or a page's size, compare two to four, pop out, save as SVG, PDF or PNG with the statement that does the same), with the gallery strip replaced by a list at the left: each plot of the run with its small picture, its name, its line and its kind, which is the marks of its layers as the engine's table of what it drew names them (`fit band, points, fit line`; `histogram`); reordering by dragging or with Alt and an arrow, and Compare, as before. **‹ Hide** folds the list away, giving its width to the plot, and *Show the list of plots ›* brings it back; whether it is shown is view state (`plots.list`). Two browser tests of sizes now hide the list before they measure.
+
+**Not built here.** Plots typed in the console line are not yet collected into the list, which the design lists apart; the console's statements are run with the script and their plots are not kept. Resting on a mark to read its row, and hiding a layer, wait for the engine's scene (C16, Zeff 0.9.0).
+
+**Reason.** The checklist's step 12; the margin editor's design, sections 6 and 10; the owner's ruling of 18 November 2026 on a hideable list of plots.
+
+**A test mended with it.** The run on GitHub of step 10b (fae1247) failed on the completion test: Enter was pressed in the moment between one list of offers and the next, as a later answer of the server replaced the list on GitHub's slower machines, and typed a new line. The list was watched here for a second and a quarter and never closed. The test now takes the offer by pressing it, which waits for the offer itself; its checks are unchanged.

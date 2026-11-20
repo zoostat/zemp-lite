@@ -63,7 +63,7 @@ test("the language server answers while a long run goes", async ({ page, press }
   await press(page.locator("header.top").getByRole("button", { name: "Stop", exact: true }));
 });
 
-test("completion after a dot offers the methods of a frame, and Enter takes one", async ({
+test("completion after a dot offers the methods of a frame, and one is taken", async ({
   page,
   press,
 }) => {
@@ -72,9 +72,9 @@ test("completion after a dot offers the methods of a frame, and Enter takes one"
   const list = page.locator(".cm-tooltip-autocomplete");
   await expect(list).toBeVisible();
   await expect(list).toContainText("summary");
-  // Enter takes the offer chosen, once the list has settled on it.
-  await expect(list.locator('[aria-selected="true"]')).toContainText("summary");
-  await page.keyboard.press("Enter");
+  // A press on the offer takes it: it waits for the offer itself, where a key pressed while
+  // a later answer replaces the list could fall between the two lists (seen on GitHub).
+  await press(list.getByRole("option", { name: /^summary/ }).first());
   await expect.poll(() => editor(page).locator(".cm-line").nth(1).textContent()).toBe("w.summary");
 });
 

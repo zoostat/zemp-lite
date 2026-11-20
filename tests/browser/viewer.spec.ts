@@ -121,6 +121,8 @@ test("a plot is previewed at the sizes of a journal column, a page's width and a
   press,
 }) => {
   const plots = await viewer(page, press);
+  // The list of plots hidden, so that a slide has room at its true size.
+  await press(plots.getByRole("button", { name: "‹ Hide" }));
   const image = plots.locator(".stage img");
   const group = plots.getByRole("group", { name: "Size" });
   for (const [name, mm, px, pt] of [
@@ -250,4 +252,38 @@ test("the viewer says so where the last run drew no plot", async ({ page, press 
   await page.getByRole("combobox", { name: "Type a command" }).fill("plot viewer");
   await page.keyboard.press("Enter");
   await expect(page.getByTestId("plots")).toContainText("Run the script to see its plots here.");
+});
+
+test("the places: Script and Plots in the top bar, and the list of plots at the left, which hides", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  const places = page.getByRole("navigation", { name: "Places" });
+  await expect(places.getByRole("button", { name: "Script" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await press(places.getByRole("button", { name: "Plots" }));
+  await expect(places.getByRole("button", { name: "Plots" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  const list = page.getByRole("complementary", { name: "The list of plots" });
+  await expect(list).toBeVisible();
+  // Each plot by its name, its line and its kind, as the engine's table of what it drew names it.
+  await expect(list).toContainText("w2010 · log(wage) against educ");
+  await expect(list).toContainText("line 17 · fit band, points, fit line");
+  await expect(list).toContainText("line 21 · histogram");
+  await press(list.getByRole("button", { name: "‹ Hide" }));
+  await expect(list).toHaveCount(0);
+  await press(page.getByRole("button", { name: "Show the list of plots ›" }));
+  await expect(page.getByRole("complementary", { name: "The list of plots" })).toBeVisible();
+  // Back to the script, where it was.
+  await press(places.getByRole("button", { name: "Script" }));
+  await expect(page.getByTestId("note").first()).toBeVisible();
 });

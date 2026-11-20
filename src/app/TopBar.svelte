@@ -8,6 +8,7 @@
   import { CODE_SIZES } from "../theme/codesize";
   import Logo from "../theme/Logo.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
+  import { PLOTS, fileTab } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
   let {
@@ -21,6 +22,8 @@
 
   const path = $derived(workspace.activePath);
   const buffer = $derived(path === null ? undefined : workspace.buffers[path]);
+  // The places (the margin editor's design, section 6): the script, and the plots of the run.
+  const place = $derived(workspace.views.active === PLOTS ? "plots" : "script");
   const smallest = CODE_SIZES[0];
   const largest = CODE_SIZES[CODE_SIZES.length - 1];
 </script>
@@ -40,6 +43,18 @@
       >
     {/if}
   </span>
+  <nav class="places" aria-label="Places">
+    <button
+      class:on={place === "script"}
+      aria-current={place === "script" ? "page" : undefined}
+      onclick={() => workspace.show(fileTab(workspace.scriptPath))}>Script</button
+    >
+    <button
+      class:on={place === "plots"}
+      aria-current={place === "plots" ? "page" : undefined}
+      onclick={() => workspace.openPlots()}>Plots</button
+    >
+  </nav>
   <span class="gap"></span>
   <button
     class="search"
@@ -197,6 +212,25 @@
   .layouts button {
     font-size: 12.5px;
     padding: 3px 11px;
+  }
+  .places {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .places button {
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    color: var(--ink-2);
+    padding: 3px 8px;
+  }
+  .places button:hover {
+    background: var(--soft);
+  }
+  .places button.on {
+    color: var(--accent);
+    text-decoration: underline 2px var(--accent);
+    text-underline-offset: 6px;
   }
   /* The layout shown is underlined in violet, as the current place is (the design, 14). */
   .layouts button.on {

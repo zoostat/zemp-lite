@@ -4,6 +4,7 @@ import composedExample from "../../tests/scripts/figures/example-with-exports.ze
 import type { RunEvent } from "../engine/messages";
 import { begin, end, hear } from "../output/run";
 import {
+  kindOf,
   fileOf,
   imageOf,
   keyOf,
@@ -55,8 +56,14 @@ const exampleRun = () =>
 describe("the plots of a run", () => {
   it("are the statements for which the engine printed a plot's summary", () => {
     expect(plotsOf(exampleRun())).toEqual([
-      { line: 17, last: 17, source: "schooling", title: "w2010 · log(wage) against educ" },
-      { line: 21, last: 21, source: "shape", title: "w2010 · log(wage)" },
+      {
+        line: 17,
+        last: 17,
+        source: "schooling",
+        title: "w2010 · log(wage) against educ",
+        kind: "",
+      },
+      { line: 21, last: 21, source: "shape", title: "w2010 · log(wage)", kind: "" },
     ]);
   });
 
@@ -74,6 +81,7 @@ describe("the plots of a run", () => {
         last: 3,
         source: "w.plot(x: log(wage))\n    .histogram(bins: 30) // the shape",
         title: "w · log(wage)",
+        kind: "",
       },
     ]);
   });
@@ -134,7 +142,7 @@ describe("the text sent for the figures of a run", () => {
   it("asks for one plot at two sizes with two exports, and passes over a plot that is not there", () => {
     const sent = withExports(
       "p\n",
-      [{ line: 1, last: 1, source: "p", title: "t" }],
+      [{ line: 1, last: 1, source: "p", title: "t", kind: "" }],
       [
         { line: 1, width: 400, height: 300 },
         { line: 9, width: 400, height: 300 },
@@ -153,6 +161,7 @@ describe("the text sent for the figures of a run", () => {
       last: 2,
       source: "w.plot(x: a)\n    .points() // the cloud",
       title: "t",
+      kind: "",
     };
     expect(
       withExports(
@@ -172,5 +181,24 @@ describe("the text sent for the figures of a run", () => {
     expect(imageOf('<svg width="1pt"/>')).toBe(
       "data:image/svg+xml;charset=utf-8,%3Csvg%20width%3D%221pt%22%2F%3E",
     );
+  });
+});
+
+describe("a plot's kind", () => {
+  it("is the marks of its layers, as the engine's table of what it drew names them", () => {
+    const printed = [
+      "plot · w2010 · log(wage) against educ",
+      "",
+      "  axis   title                scale    limits               breaks",
+      "  x      Years of schooling   linear   7.4 to 20.6          8, 10, 12",
+      "",
+      "  layer   mark       data    marks   settings",
+      "      1   fit band   w2010      80   95% confidence band, alpha 0.2, 1 band",
+      "      2   points     w2010     531   size 4.5, alpha 1",
+      "      3   fit line   w2010      80   least squares of log(wage) on educ, width 1, 1 line",
+      "",
+    ].join("\n");
+    expect(kindOf(printed)).toBe("fit band, points, fit line");
+    expect(kindOf("plot · x\n")).toBe("");
   });
 });

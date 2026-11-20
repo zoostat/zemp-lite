@@ -1,6 +1,7 @@
 <script lang="ts">
   // The plot viewer (Zemp Specification, section 7), with what the released engine allows:
-  // the plot shown redrawn to fit, or at a page of a journal or a slide; the gallery strip,
+  // the plot shown redrawn to fit, or at a page of a journal or a slide; the list of plots at
+  // the left (the margin editor's design, section 10), which hides, in place of 0.1's strip,
   // every plot of the last run as a thumbnail, clicked to show and dragged to reorder; two to
   // four plots pinned side by side; a plot popped out into a window of its own; and a figure
   // saved as SVG, PDF or PNG, written by the engine's `export`, with the Zeff statement that
@@ -123,129 +124,152 @@
         : "The last run drew no plot. A plot is drawn when a statement ends in one."}
     </p>
   {:else}
-    <div class="bar">
-      {#if onback}<button class="word" onclick={onback}>‹ Script</button>{/if}
-      <span class="group" role="group" aria-label="Size">
-        {#each ["fit", "one_column", "two_column", "slide"] as const as one (one)}
-          <button
-            class:on={page === one}
-            aria-pressed={page === one}
-            onclick={() => workspace.setPage(one)}>{one === "fit" ? "Fit" : PAGES[one].name}</button
-          >
-        {/each}
-      </span>
-      {#if paged !== null}
-        <span class="about">{PAGES[paged].width} × {PAGES[paged].height} mm</span>
-      {/if}
-      {#if pinned.length > 0}
-        <span class="about" data-testid="comparing">comparing {pinned.length}</span>
-        <button class="word" onclick={() => workspace.unpinAll()}>Unpin all</button>
-      {/if}
-      <span class="gap"></span>
-      {#if shown !== null && pinned.length === 0}
-        <button class="word" onclick={() => popOut(workspace, shown)}>Pop out</button>
-        <label class="about" for="plot-format">Save as</label>
-        <select id="plot-format" bind:value={format}>
-          <option value="svg">SVG</option>
-          <option value="pdf">PDF</option>
-          <option value="png">PNG</option>
-        </select>
-        <button class="word filled" onclick={() => void save(shown)} disabled={saving}>Save…</button
-        >
-      {/if}
-    </div>
-
-    <div class="stage" class:paged={paged !== null} bind:this={stage}>
-      {#if pinned.length > 0}
-        <div
-          class="compare"
-          style:grid-template-columns="repeat({pinned.length > 2 ? 2 : pinned.length}, minmax(0,
-          1fr))"
-        >
-          {#each pinned as plot (plot.source)}
-            <div class="cell">
-              <h2><span class="mono">line {plot.line}</span> {plot.title}</h2>
-              <Figure
-                {workspace}
-                {plot}
-                page={paged}
-                most={1100}
-                height={paged === null ? Math.max(Math.floor(room.height / rows) - 40, 120) : null}
-              />
-            </div>
-          {/each}
+    {#if workspace.views.plots.list}
+      <aside class="side" aria-label="The list of plots">
+        <div class="side-head">
+          <span>Plots of the run</span>
+          <button class="word" onclick={() => workspace.setPlotList(false)}>‹ Hide</button>
         </div>
-      {:else if shown !== null}
-        <h2><span class="mono">line {shown.line}</span> {shown.title}</h2>
-        {#key shown.source}
-          <Figure
-            {workspace}
-            plot={shown}
-            page={paged}
-            most={1100}
-            height={paged === null ? Math.max(room.height - 40, 160) : null}
-          />
-        {/key}
-      {/if}
-    </div>
-
-    {#if shown !== null && pinned.length === 0}
-      <div class="statement">
-        <span class="about">The statement that saves this figure:</span>
-        <code class="mono" data-testid="export-statement">{statement}</code>
-        <button class="word" onclick={() => void copy()}
-          >{copied ? "Copied" : "Copy as Zeff"}</button
-        >
-        {#if workspace.drawMs !== null}
-          <span class="about time" data-testid="draw-time"
-            >drawn by a run of the script in {took(workspace.drawMs)}</span
+        <ul class="strip" aria-label="Plots of the last run" bind:this={list}>
+          {#each strip as plot, at (plot.source)}
+            <li
+              class:on={pinned.length === 0 && shown?.source === plot.source}
+              class:over={dragged !== null && dragged !== at}
+              draggable="true"
+              ondragstart={(event) => {
+                dragged = at;
+                event.dataTransfer?.setData("text/plain", String(at));
+              }}
+              ondragover={(event) => event.preventDefault()}
+              ondrop={(event) => {
+                event.preventDefault();
+                if (dragged !== null) workspace.movePlot(dragged, at);
+                dragged = null;
+              }}
+              ondragend={() => (dragged = null)}
+            >
+              <button
+                class="thumb"
+                onclick={() => workspace.showPlot(plot)}
+                onkeydown={(event) => void key(event, at)}
+                aria-label="Show the plot {plot.title}"
+                aria-current={shown?.source === plot.source}
+              >
+                <span class="small"><Figure {workspace} {plot} most={440} /></span>
+                <span class="name">{plot.title}</span>
+                <span class="about-plot"
+                  ><span class="mono">line {plot.line}</span>{plot.kind === ""
+                    ? ""
+                    : ` · ${plot.kind}`}</span
+                >
+              </button>
+              <label class="pin">
+                <input
+                  type="checkbox"
+                  checked={workspace.views.plots.pinned.includes(plot.source)}
+                  disabled={!workspace.views.plots.pinned.includes(plot.source) &&
+                    workspace.views.plots.pinned.length >= MOST_PINNED}
+                  onchange={() => workspace.pinPlot(plot)}
+                />
+                Compare
+              </label>
+            </li>
+          {/each}
+        </ul>
+      </aside>
+    {/if}
+    <div class="main">
+      <div class="bar">
+        {#if onback}<button class="word" onclick={onback}>‹ Script</button>{/if}
+        {#if !workspace.views.plots.list}
+          <button class="word" onclick={() => workspace.setPlotList(true)}
+            >Show the list of plots ›</button
+          >
+        {/if}
+        <span class="group" role="group" aria-label="Size">
+          {#each ["fit", "one_column", "two_column", "slide"] as const as one (one)}
+            <button
+              class:on={page === one}
+              aria-pressed={page === one}
+              onclick={() => workspace.setPage(one)}
+              >{one === "fit" ? "Fit" : PAGES[one].name}</button
+            >
+          {/each}
+        </span>
+        {#if paged !== null}
+          <span class="about">{PAGES[paged].width} × {PAGES[paged].height} mm</span>
+        {/if}
+        {#if pinned.length > 0}
+          <span class="about" data-testid="comparing">comparing {pinned.length}</span>
+          <button class="word" onclick={() => workspace.unpinAll()}>Unpin all</button>
+        {/if}
+        <span class="gap"></span>
+        {#if shown !== null && pinned.length === 0}
+          <button class="word" onclick={() => popOut(workspace, shown)}>Pop out</button>
+          <label class="about" for="plot-format">Save as</label>
+          <select id="plot-format" bind:value={format}>
+            <option value="svg">SVG</option>
+            <option value="pdf">PDF</option>
+            <option value="png">PNG</option>
+          </select>
+          <button class="word filled" onclick={() => void save(shown)} disabled={saving}
+            >Save…</button
           >
         {/if}
       </div>
-    {/if}
-    {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
 
-    <ul class="strip" aria-label="Plots of the last run" bind:this={list}>
-      {#each strip as plot, at (plot.source)}
-        <li
-          class:on={pinned.length === 0 && shown?.source === plot.source}
-          class:over={dragged !== null && dragged !== at}
-          draggable="true"
-          ondragstart={(event) => {
-            dragged = at;
-            event.dataTransfer?.setData("text/plain", String(at));
-          }}
-          ondragover={(event) => event.preventDefault()}
-          ondrop={(event) => {
-            event.preventDefault();
-            if (dragged !== null) workspace.movePlot(dragged, at);
-            dragged = null;
-          }}
-          ondragend={() => (dragged = null)}
-        >
-          <button
-            class="thumb"
-            onclick={() => workspace.showPlot(plot)}
-            onkeydown={(event) => void key(event, at)}
-            aria-label="Show the plot {plot.title}"
-            aria-current={shown?.source === plot.source}
+      <div class="stage" class:paged={paged !== null} bind:this={stage}>
+        {#if pinned.length > 0}
+          <div
+            class="compare"
+            style:grid-template-columns="repeat({pinned.length > 2 ? 2 : pinned.length}, minmax(0,
+            1fr))"
           >
-            <span class="small"><Figure {workspace} {plot} most={440} /></span>
-            <span class="name">{plot.title}</span>
-          </button>
-          <label class="pin">
-            <input
-              type="checkbox"
-              checked={workspace.views.plots.pinned.includes(plot.source)}
-              disabled={!workspace.views.plots.pinned.includes(plot.source) &&
-                workspace.views.plots.pinned.length >= MOST_PINNED}
-              onchange={() => workspace.pinPlot(plot)}
+            {#each pinned as plot (plot.source)}
+              <div class="cell">
+                <h2><span class="mono">line {plot.line}</span> {plot.title}</h2>
+                <Figure
+                  {workspace}
+                  {plot}
+                  page={paged}
+                  most={1100}
+                  height={paged === null
+                    ? Math.max(Math.floor(room.height / rows) - 40, 120)
+                    : null}
+                />
+              </div>
+            {/each}
+          </div>
+        {:else if shown !== null}
+          <h2><span class="mono">line {shown.line}</span> {shown.title}</h2>
+          {#key shown.source}
+            <Figure
+              {workspace}
+              plot={shown}
+              page={paged}
+              most={1100}
+              height={paged === null ? Math.max(room.height - 40, 160) : null}
             />
-            Compare
-          </label>
-        </li>
-      {/each}
-    </ul>
+          {/key}
+        {/if}
+      </div>
+
+      {#if shown !== null && pinned.length === 0}
+        <div class="statement">
+          <span class="about">The statement that saves this figure:</span>
+          <code class="mono" data-testid="export-statement">{statement}</code>
+          <button class="word" onclick={() => void copy()}
+            >{copied ? "Copied" : "Copy as Zeff"}</button
+          >
+          {#if workspace.drawMs !== null}
+            <span class="about time" data-testid="draw-time"
+              >drawn by a run of the script in {took(workspace.drawMs)}</span
+            >
+          {/if}
+        </div>
+      {/if}
+      {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
+    </div>
   {/if}
 </div>
 
@@ -254,9 +278,41 @@
     background: var(--window);
     display: flex;
     flex: 1;
+    flex-direction: row;
+    min-height: 0;
+    min-width: 0;
+  }
+  .main {
+    display: flex;
+    flex: 1;
     flex-direction: column;
     min-height: 0;
     min-width: 0;
+  }
+  /* The list of plots at the left (the margin editor's design, section 10), which hides. */
+  .side {
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    min-height: 0;
+    width: 230px;
+  }
+  .side-head {
+    align-items: center;
+    color: var(--ink-2);
+    display: flex;
+    font-size: 13px;
+    justify-content: space-between;
+    padding: 8px 10px 4px 14px;
+  }
+  .about-plot {
+    color: var(--ink-3);
+    display: block;
+    font-size: 12.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .none {
     color: var(--ink-3);
@@ -379,15 +435,15 @@
     padding: 0 18px 8px;
   }
   .strip {
-    background: var(--soft);
-    border-top: 1px solid var(--line);
     display: flex;
-    flex: none;
-    gap: 10px;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
     list-style: none;
     margin: 0;
-    overflow-x: auto;
-    padding: 10px 18px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 10px 12px;
   }
   .strip li {
     border: 1px solid var(--line);
@@ -395,7 +451,6 @@
     background: var(--window);
     flex: none;
     padding: 6px;
-    width: 172px;
   }
   .strip li.on {
     border-color: var(--accent);

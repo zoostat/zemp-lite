@@ -111,6 +111,8 @@ test("in Panes a plot is under its statement in the Output panel and in the Plot
   await expect(plots.getByRole("heading", { level: 2 })).toHaveText(
     /line 17\s+w2010 · log\(wage\) against educ/,
   );
+  // The list of plots hidden, so that the plot has the tab's width.
+  await press(plots.getByRole("button", { name: "‹ Hide" }));
   const inTab = await figure(page, 17, plots.locator(".stage"));
   expect(inTab.shown).toEqual(inTab.place);
   expect(Math.abs(inTab.own![0]! - inTab.shown[0]!)).toBeLessThan(1);

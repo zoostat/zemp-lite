@@ -18,6 +18,30 @@ export interface PlotStatement {
   source: string;
   /** What the plot is, as the engine's summary heads it: "w2010 · log(wage) against educ". */
   title: string;
+  /** Its kind: the marks of its layers, as the engine's table of what it drew names them. */
+  kind: string;
+}
+
+/**
+ * The marks of a plot's layers, from the engine's table of what it drew ("layer   mark …"):
+ * `points`, `fit band, points, fit line`. Empty where the engine printed no such table.
+ */
+export function kindOf(printed: string): string {
+  const lines = printed.split("\n");
+  const head = lines.findIndex((line) => /^\s*layer\s+mark\b/.test(line));
+  if (head < 0) return "";
+  const at = (lines[head] as string).indexOf("mark");
+  const marks: string[] = [];
+  for (const line of lines.slice(head + 1)) {
+    if (line.trim() === "") break;
+    const mark =
+      line
+        .slice(at)
+        .split(/\s{2,}/)[0]
+        ?.trim() ?? "";
+    if (mark !== "" && !marks.includes(mark)) marks.push(mark);
+  }
+  return marks.join(", ");
 }
 
 /** The first words of what the engine prints for a statement that ends in a plot. */
@@ -35,6 +59,7 @@ export function plotsOf(run: Run): PlotStatement[] {
         last,
         source: lines.slice(statement.line - 1, last).join("\n"),
         title: (statement.printed.split("\n")[0] ?? "").slice(HEAD.length),
+        kind: kindOf(statement.printed),
       };
     });
 }
