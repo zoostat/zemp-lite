@@ -261,3 +261,24 @@ describe("a time", () => {
     expect(took(125_400)).toBe("2 min 05 s");
   });
 });
+
+describe("the passes of a loop", () => {
+  it("are kept as the engine reports them, each with its time and what was printed in it", () => {
+    const run = begin("s.zeff", "for i in 1..3 {\n  print(i)\n}\n", 0, "9:42");
+    hear(run, { type: "started", statement: 1, of: 1, line: 1 }, 0);
+    hear(run, { type: "pass", pass: 1, of: 3, line: 1 }, 10);
+    hear(run, { type: "output", stdout: "1\n", stderr: "" }, 12);
+    hear(run, { type: "pass", pass: 2, of: 3, line: 1 }, 25);
+    hear(run, { type: "output", stdout: "2\n", stderr: "warning[W0201]: …\n" }, 27);
+    hear(run, { type: "pass", pass: 3, of: 3, line: 1 }, 40);
+    hear(run, { type: "finished", statement: 1, of: 1, line: 1, failed: false }, 46);
+    const passes = run.statements[0]!.passes;
+    expect(passes.map((one) => [one.pass, one.of, one.ms, one.printed])).toEqual([
+      [1, 3, 15, "1\n"],
+      [2, 3, 15, "2\n"],
+      [3, 3, 6, ""],
+    ]);
+    expect(passes[1]!.saidRaw).toBe("warning[W0201]: …\n");
+    expect(blocks(run)[0]!.passes).toHaveLength(3);
+  });
+});

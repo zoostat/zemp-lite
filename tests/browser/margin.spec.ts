@@ -815,3 +815,43 @@ test("an error raised inside a function has its trail, each link a way to its li
   // Nothing was run again: the run is still the first.
   await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
 });
+
+test("a loop's output carries its passes, a long list folded to its ends until Show all", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await write(page, "for i in 1..20000 {\n    let x = i * 2\n}\nprint(1)\n");
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  const loop = page.locator('[data-testid="note"][data-line="1"]');
+  await expect(loop).toContainText("20,000 passes");
+  await press(loop);
+  const passes = page.getByTestId("passes");
+  await expect(passes).toContainText("20,000 passes");
+  // More than 20 reported: the first three and the last three, with Show all.
+  await expect(passes.getByTestId("pass")).toHaveCount(6);
+  await expect(passes.getByTestId("pass").first()).toContainText("1 of 20,000");
+  await expect(passes.getByTestId("pass").last()).toContainText("20,000 of 20,000");
+  const all = passes.getByRole("button", { name: /^Show all \d+$/ });
+  const count = Number((await all.textContent())?.replace(/\D/g, ""));
+  await press(all);
+  await expect(passes.getByTestId("pass")).toHaveCount(count);
+});
+
+test("a loop that fails ends its passes on the pass the engine names", async ({ page, press }) => {
+  await scratch(page, press);
+  await write(
+    page,
+    "for y in [2010, 1900] {\n    print(dataset(wages).where(year == y).reg(log(wage) ~ educ).coef(educ))\n}\n",
+  );
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  // What failed is unfolded without asking, its passes under what it printed.
+  const failed = page.locator('[data-testid="block"][data-line="1"]');
+  await expect(failed.getByTestId("printed")).toContainText("0.0495856");
+  const rows = failed.getByTestId("passes").getByTestId("pass");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.last()).toContainText("2 of 2");
+  await expect(rows.last()).toContainText("failed");
+});

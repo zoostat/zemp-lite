@@ -78,6 +78,21 @@ export function said(text: string): Said[] {
   return found;
 }
 
+/**
+ * One pass of a loop, as the engine reported it (#76; the margin editor's design, 7.16.2): its
+ * number of how many, the time it took by the interface's clock between the engine's messages,
+ * and what was printed and said while it went. The engine of 0.8.0 reports a loop's passes
+ * by their number alone, about a hundred of a long loop, the first and the last among them.
+ */
+export interface Pass {
+  pass: number;
+  of: number | null;
+  startedAt: number;
+  ms: number | null;
+  printed: string;
+  saidRaw: string;
+}
+
 /** One statement of a run. */
 export interface Statement {
   /** Which statement, counted from 1, and the line it begins on. */
@@ -91,6 +106,8 @@ export interface Statement {
   ms: number | null;
   /** The pass of a loop it is at, where it is a loop. */
   pass: { pass: number; of: number | null } | null;
+  /** Each pass of a loop the engine reported, in order; none for a statement that is not one. */
+  passes: Pass[];
   startedAt: number;
   /**
    * Where a run of less than the script kept this result from an earlier run: `edited`, its
@@ -178,6 +195,7 @@ export function hear(run: Run, event: RunEvent, now: number): void {
         saidRaw: "",
         ms: null,
         pass: null,
+        passes: [],
         startedAt: now,
       });
       break;
@@ -185,6 +203,11 @@ export function hear(run: Run, event: RunEvent, now: number): void {
       if (going !== null) {
         going.printed += event.stdout;
         going.saidRaw += event.stderr;
+        const pass = going.passes.at(-1);
+        if (pass !== undefined) {
+          pass.printed += event.stdout;
+          pass.saidRaw += event.stderr;
+        }
       } else if (current === undefined) {
         run.beforeRaw += event.stderr;
         run.afterPrinted += event.stdout;
@@ -194,12 +217,26 @@ export function hear(run: Run, event: RunEvent, now: number): void {
       }
       break;
     case "pass":
-      if (going !== null) going.pass = { pass: event.pass, of: event.of };
+      if (going !== null) {
+        going.pass = { pass: event.pass, of: event.of };
+        const before = going.passes.at(-1);
+        if (before !== undefined && before.ms === null) before.ms = now - before.startedAt;
+        going.passes.push({
+          pass: event.pass,
+          of: event.of,
+          startedAt: now,
+          ms: null,
+          printed: "",
+          saidRaw: "",
+        });
+      }
       break;
     case "finished":
       if (going !== null) {
         going.state = event.failed ? "failed" : "done";
         going.ms = now - going.startedAt;
+        const last = going.passes.at(-1);
+        if (last !== undefined && last.ms === null) last.ms = now - last.startedAt;
       }
       break;
   }
@@ -252,6 +289,8 @@ export interface Block {
   pass: { pass: number; of: number | null } | null;
   /** Kept from an earlier run and no longer the script's: its own text edited, or something above it. */
   mark?: "edited" | "stale";
+  /** The passes of a loop the engine reported. */
+  passes: Pass[];
 }
 
 /**
@@ -274,11 +313,17 @@ export function blocks(run: Run): Block[] {
       said: messages,
       ms: null,
       pass: null,
+      passes: [],
     });
   }
   for (const statement of run.statements) {
     const messages = said(statement.saidRaw);
-    if (statement.printed === "" && messages.length === 0 && statement.state === "done") {
+    if (
+      statement.printed === "" &&
+      messages.length === 0 &&
+      statement.passes.length === 0 &&
+      statement.state === "done"
+    ) {
       continue;
     }
     found.push({
@@ -288,6 +333,7 @@ export function blocks(run: Run): Block[] {
       said: messages,
       ms: statement.ms,
       pass: statement.pass,
+      passes: statement.passes,
       ...(statement.mark === undefined ? {} : { mark: statement.mark }),
     });
   }
@@ -299,6 +345,7 @@ export function blocks(run: Run): Block[] {
       said: said(run.afterRaw),
       ms: null,
       pass: null,
+      passes: [],
     });
   }
   return found;

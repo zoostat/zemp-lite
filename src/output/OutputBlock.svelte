@@ -6,6 +6,7 @@
   // Open in Plots, Fold); then what the engine said, each warning and error with Explain,
   // which opens the engine's explained page in place; then what it printed, or its figure.
   import type { Workspace } from "../app/workspace-state.svelte";
+  import { counted } from "../margin/notes";
   import { trailOf } from "../margin/trail";
   import Figure from "../plots/Figure.svelte";
   import { took, type Block, type Said } from "./run";
@@ -51,6 +52,19 @@
       explained = { ...explained, [code]: (error as Error).message };
     }
   }
+
+  // The passes of a loop (#76; the design, 7.16.2): a list of up to 20 is shown whole, a longer
+  // one by its first three and its last three until **Show all** is pressed.
+  let allPasses = $state(false);
+  const passRows = $derived.by(() => {
+    const passes = block.passes;
+    if (allPasses || passes.length <= 20) return passes.map((pass) => ({ pass, gap: false }));
+    return [
+      ...passes.slice(0, 3).map((pass) => ({ pass, gap: false })),
+      ...passes.slice(-3).map((pass, at) => ({ pass, gap: at === 0 })),
+    ];
+  });
+  const passesOf = $derived(block.passes.at(-1)?.of ?? block.passes.at(-1)?.pass ?? 0);
 
   /** The lines the block stands under, in words. */
   const lines = $derived(
@@ -169,6 +183,48 @@
       </div>
     {/each}
     {#if inline}{@render print()}{/if}
+    {#if inline && block.passes.length > 0}
+      <div class="passes" data-testid="passes">
+        <p class="passes-head">
+          Passes <span class="quiet"
+            >· {counted(passesOf)} pass{passesOf === 1 ? "" : "es"}{block.passes.length < passesOf
+              ? `, ${counted(block.passes.length)} of them reported by the engine`
+              : ""}</span
+          >
+        </p>
+        <table>
+          <thead>
+            <tr><th>pass</th><th>time</th></tr>
+          </thead>
+          <tbody>
+            {#each passRows as { pass, gap }, at (at)}
+              {#if gap}
+                <tr class="gap-row"><td colspan="2">…</td></tr>
+              {/if}
+              {@const failed =
+                block.state === "failed" && pass === block.passes[block.passes.length - 1]}
+              <tr class:failed data-testid="pass">
+                <td class="num"
+                  >{counted(pass.pass)}{pass.of === null ? "" : ` of ${counted(pass.of)}`}</td
+                >
+                <td class="num"
+                  >{pass.ms === null ? "" : took(pass.ms)}{failed ? " · failed" : ""}</td
+                >
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+        {#if !allPasses && block.passes.length > 20}
+          <button class="act" onclick={() => (allPasses = true)}
+            >Show all {counted(block.passes.length)}</button
+          >
+        {/if}
+        <p class="quiet small">
+          The engine reports each pass by its number, and the interface times it; the loop variable,
+          the rows, the result and what each pass said come when the engine reports them.
+        </p>
+      </div>
+    {/if}
   </div>
 </section>
 
@@ -353,6 +409,44 @@
   }
   .trail {
     margin-top: 6px;
+  }
+  .passes {
+    margin-top: 8px;
+  }
+  .passes-head {
+    color: var(--ink-2);
+    font-weight: 500;
+    margin: 0;
+  }
+  .passes table {
+    border-collapse: collapse;
+    font-size: 12.5px;
+    margin-top: 4px;
+  }
+  .passes th {
+    color: var(--ink-3);
+    font-weight: 400;
+    padding: 2px 14px 2px 0;
+    text-align: left;
+  }
+  .passes td {
+    border-top: 1px solid var(--line);
+    padding: 2px 14px 2px 0;
+  }
+  .passes .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .passes tr.failed td {
+    color: var(--error);
+  }
+  .gap-row td {
+    color: var(--ink-3);
+  }
+  .quiet {
+    color: var(--ink-3);
+  }
+  .small {
+    font-size: 12.5px;
   }
   .trail-head {
     color: var(--ink-2);

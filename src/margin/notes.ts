@@ -132,7 +132,7 @@ export function notesOf(run: Run, marked: ReadonlyMap<number, { mark: Mark }> = 
       sub,
       tags,
       state,
-      opens: printed !== "" || spoken !== "",
+      opens: printed !== "" || spoken !== "" || (event?.passes.length ?? 0) > 0,
       place: printed.startsWith(PLOT) ? "plots" : null,
     };
   });

@@ -103,3 +103,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 147 unit tests; 209 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 9 `[function]`: the loop inspector.
+
+## 21 November 2026, release 0.2, step 9 (the loop inspector)
+
+**Done.** Step 9 `[function]`: a loop's unfolded output carries its passes as the engine reports them, by number with their time, a long list folded to its first three and last three until **Show all**; a failed loop ends on the pass the engine stopped at. What each pass printed and said, and its variable and rows, wait for the engine (C23). Steps 7a and 7b are green on GitHub.
+
+**Green.** `npm run routine`: 148 unit tests; 213 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 10 `[engine]`: language services in the browser.
