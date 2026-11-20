@@ -8,8 +8,9 @@
   // wider with the code, and the 300 pixels of the notes beside it.
   import { tick } from "svelte";
   import Editor from "../editor/Editor.svelte";
-  import { notesOf } from "../margin/notes";
+  import { counted, notesOf } from "../margin/notes";
   import { placed } from "../output/place";
+  import { took } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
   import { held } from "./steady";
   import { PLOTS, fileTab } from "./views";
@@ -26,19 +27,33 @@
   const notes = $derived(ours === null ? [] : notesOf(ours, workspace.edited));
   const unfolded = $derived(workspace.views.script.unfolded[path] ?? []);
   const notesShown = $derived(workspace.views.script.notes);
-  // An output is shown under its statement where the reader unfolded it. What failed, what
-  // belongs to no statement, and the statement running (whose output carries Cancel until the
-  // top bar's Run reads Stop) are always shown.
+  // An output is shown under its statement where the reader unfolded it; what failed, and
+  // what belongs to no statement, is always shown. A run is stopped from the top bar.
   const blocks = $derived(
     ours === null
       ? []
       : placed(ours).filter(
           (one) =>
             one.block.line === null ||
-            one.block.state !== "done" ||
+            one.block.state === "failed" ||
             unfolded.includes(one.block.line),
         ),
   );
+  // The run's facts, as the results bar gives them (the design, section 5).
+  const facts = $derived.by(() => {
+    if (ours === null) return "not run yet";
+    const statements = (n: number) => `${counted(n)} statement${n === 1 ? "" : "s"}`;
+    const head = `run ${ours.number} · ${ours.clock}`;
+    if (ours.checkOnly) return `check · ${ours.clock}`;
+    if (ours.state === "running") {
+      const at = ours.statements.length;
+      return ours.of === null ? `${head} · running` : `${head} · statement ${at} of ${ours.of}`;
+    }
+    const ran = ours.statements.length;
+    const time = ours.ms === null ? "" : ` in ${took(ours.ms)}`;
+    if (ours.state === "done") return `${head} · ${statements(ran)}${time}`;
+    return `${head} · ${ours.state === "failed" ? "ended with an error" : ours.state} after ${statements(ran)}`;
+  });
   const margin = $derived(
     notesShown
       ? {
@@ -107,7 +122,9 @@
 {:else}
   <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
     <div class="sheet" bind:this={sheet} style:--zemp-margin={notesShown ? "300px" : "0px"}>
-      <div class="controls" role="toolbar" aria-label="What is shown of the results">
+      <div class="results" role="toolbar" aria-label="The run, and what is shown of its results">
+        <span class="facts" data-testid="run-facts">{facts}</span>
+        <span class="gap"></span>
         <button
           class="view"
           aria-pressed={notesShown}
@@ -155,12 +172,22 @@
     max-width: calc(760px * var(--code-scale, 1) + var(--zemp-margin, 0px));
     padding: 0 18px;
   }
-  /* The three controls change only the view: words with a dashed underline (the design, 14.2). */
-  .controls {
+  /* The results bar: the run's facts, and the three controls, which change only the view and
+     so are words with a dashed underline (the design, sections 5 and 14.2). */
+  .results {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
     display: flex;
     gap: 14px;
-    justify-content: flex-end;
-    padding: 10px 0 0;
+    min-height: 36px;
+  }
+  .facts {
+    color: var(--ink-3);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .gap {
+    flex: 1;
   }
   .view {
     background: none;

@@ -105,6 +105,8 @@ export interface Run {
   statements: Statement[];
   /** Each statement as the outcome gives it: what it printed, said and made. Empty until the end. */
   info: StatementInfo[];
+  /** The run's number in this window, counted from 1; 0 for a run that is not of the script. */
+  number: number;
   /** Whether this is a Check alone, which runs nothing, and not a run. */
   checkOnly: boolean;
   /** What the engine said before the first statement started: what its check found. */
@@ -132,6 +134,7 @@ export function begin(script: string, text: string, now: number, clock: string):
     text,
     of: null,
     ranges: null,
+    number: 0,
     checkOnly: false,
     info: [],
     statements: [],

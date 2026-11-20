@@ -1,5 +1,6 @@
 // The colours of Zemp Lite: one set of names, with a value in the light theme and one in the
-// dark (the owner's design guide, sections 2 and 9; open decision #146). Every colour used
+// dark (the owner's design guide, sections 2 and 9; open decision #146), in the quiet look of
+// the margin editor (#174; its design, section 14.1): one surface, hairlines, the logo's violet. Every colour used
 // for text reaches 4.5 to 1 against the grounds it is written on, in both themes (WCAG AA),
 // which `tokens.test.ts` computes from this file.
 
@@ -9,19 +10,22 @@ export type ThemeName = "light" | "dark";
 export const TOKENS = {
   // Grounds.
   page: { light: "#eceae6", dark: "#0d0e12" },
-  window: { light: "#ffffff", dark: "#16171b" },
-  soft: { light: "#f7f7f5", dark: "#1b1d22" },
-  // Rules and the borders of controls.
-  line: { light: "#ebebe8", dark: "#24262c" },
-  "line-strong": { light: "#dcdcd7", dark: "#2e3037" },
+  window: { light: "#ffffff", dark: "#111216" },
+  // A control pointed at, the search and console fields; an unfolded output; an edited line.
+  soft: { light: "#f6f6f4", dark: "#191a1f" },
+  softer: { light: "#fafaf9", dark: "#15161a" },
+  tint: { light: "#f8f6fd", dark: "#141120" },
+  // Hairlines.
+  line: { light: "#ececea", dark: "#22242a" },
+  "line-strong": { light: "#dededa", dark: "#2e3037" },
   // Text: main, secondary, small print; `ink-4` is decoration only, never text.
-  ink: { light: "#1b1b1f", dark: "#e9e9ec" },
+  ink: { light: "#17171a", dark: "#ececef" },
   "ink-2": { light: "#55555c", dark: "#a7a8b0" },
   "ink-3": { light: "#6b6b73", dark: "#8f919c" },
   "ink-4": { light: "#b9b9bf", dark: "#4d4f57" },
   // The logo's violet: focus, the selected row, links; and the one filled button.
   accent: { light: "#5b3a9e", dark: "#b9a4f0" },
-  "accent-soft": { light: "#f1ecfa", dark: "#221a38" },
+  "accent-soft": { light: "#f3effb", dark: "#201a33" },
   button: { light: "#5b3a9e", dark: "#b9a4f0" },
   "button-ink": { light: "#ffffff", dark: "#1a1330" },
   // States.
@@ -53,22 +57,22 @@ export type Token = keyof typeof TOKENS;
 
 /** The text colours, each with the grounds it is written on. */
 export const TEXT_ON: Partial<Record<Token, Token[]>> = {
-  ink: ["window", "soft", "page", "accent-soft", "warning-soft", "error-soft"],
-  "ink-2": ["window", "soft", "page", "warning-soft", "error-soft"],
-  "ink-3": ["window", "soft"],
-  accent: ["window", "soft", "accent-soft"],
+  ink: ["window", "soft", "softer", "tint", "page", "accent-soft", "warning-soft", "error-soft"],
+  "ink-2": ["window", "soft", "softer", "tint", "page", "warning-soft", "error-soft"],
+  "ink-3": ["window", "soft", "softer", "tint"],
+  accent: ["window", "soft", "softer", "accent-soft"],
   "button-ink": ["button"],
-  warning: ["window", "soft", "warning-soft"],
+  warning: ["window", "soft", "softer", "warning-soft"],
   ok: ["window", "soft", "ok-soft"],
-  error: ["window", "soft", "error-soft"],
-  "code-keyword": ["window", "soft"],
-  "code-function": ["window", "soft"],
-  "code-option": ["window", "soft"],
-  "code-operator": ["window", "soft"],
-  "code-text": ["window", "soft"],
-  "code-number": ["window", "soft"],
-  "code-comment": ["window", "soft"],
-  "code-variable": ["window", "soft"],
+  error: ["window", "soft", "softer", "error-soft"],
+  "code-keyword": ["window", "soft", "tint"],
+  "code-function": ["window", "soft", "tint"],
+  "code-option": ["window", "soft", "tint"],
+  "code-operator": ["window", "soft", "tint"],
+  "code-text": ["window", "soft", "tint"],
+  "code-number": ["window", "soft", "tint"],
+  "code-comment": ["window", "soft", "tint"],
+  "code-variable": ["window", "soft", "tint"],
 };
 
 /** The style sheet of the tokens: `--window` and the rest, for each theme. */

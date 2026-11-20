@@ -164,10 +164,14 @@ test("the statement that is running is marked, with Cancel beside the output's t
   const running = page.locator('[data-testid="block"][data-line="2"]').getByTestId("running");
   await expect(running).toContainText(/running · pass [\d,]+ of 200,000/);
   await expect(page.getByTestId("run-summary")).toContainText("statement 2 of 2");
-  // While a run goes it is not run a second time, and its output is not cleared.
+  // While a run goes it is not run a second time, and its output is not cleared: the top
+  // bar's Run reads Stop.
   await expect(
     page.locator("header.top").getByRole("button", { name: "Run", exact: true }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
+  await expect(
+    page.locator("header.top").getByRole("button", { name: "Stop", exact: true }),
+  ).toBeEnabled();
   await expect(page.getByRole("button", { name: "Clear" })).toBeDisabled();
   await press(page.getByRole("button", { name: "Cancel" }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");

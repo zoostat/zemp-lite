@@ -57,7 +57,7 @@ test("the light and dark button switches the theme, and the choice is remembered
   expect(await ground()).toBe("rgb(255, 255, 255)");
   await press(page.getByRole("button", { name: "Switch to the dark theme" }));
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  expect(await ground()).toBe("rgb(22, 23, 27)");
+  expect(await ground()).toBe("rgb(17, 18, 22)");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.getByRole("button", { name: "Switch to the light theme" })).toBeVisible();
@@ -148,8 +148,10 @@ test("in a private window, where the browser keeps nothing, the screen says so a
   await expect(page.getByText("Not kept.")).toBeVisible();
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  // The results are read in Panes, where every output is on the page: the margin editor of
+  // a window this tall draws only what is near the window.
+  await press(page.getByRole("button", { name: "Panes", exact: true }));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   expect(await printed(page)).toBe(example("expected/stdout.txt"));
 });

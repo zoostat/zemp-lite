@@ -194,7 +194,7 @@ test("the Dark switch of the top bar switches the theme", async ({ page, press }
   await expect(dark).toHaveAttribute("aria-checked", "true");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
-    "rgb(22, 23, 27)",
+    "rgb(17, 18, 22)",
   );
 });
 

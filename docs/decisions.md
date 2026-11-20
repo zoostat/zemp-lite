@@ -640,3 +640,20 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **The tests of Inline** are kept as tests of the margin editor (`tests/browser/margin.spec.ts`): with every output unfolded the page reads as Inline did, so their checks hold after **Unfold all**, the kept text included (`example-unfolded.txt`, the same bytes as 0.1's `example-inline.txt`). The browser tests now name **Run**, **Fold all** and **Unfold all** exactly, since a note's spoken name may hold "not run".
 
 **Reason.** The checklist's step 5a; the margin editor's design, sections 5 to 7.5, 7.10, 11, 16 (a note is a real control, colour never alone) and 18; the owner's rulings of 18 November 2026 (R3).
+
+## 21 November 2026: the quiet look (release 0.2, step 5b)
+
+**Choice.** The window takes the quiet look the owner adopted for the margin editor (18 November 2026; its design, section 14):
+
+- **Colours.** `src/theme/tokens.ts` takes the design's tokens: the window `#ffffff` and `#111216`, `soft`, and two new grounds, `softer` (an unfolded output) and `tint` (an edited line); the hairlines; the ink; the violet's soft ground. Every accent, state and code colour is unchanged. The contrast test now also holds every text colour on the new grounds it may be written on: all reach 4.5 to 1 in both themes.
+- **The top bar.** Every control is a word, with a soft ground when pointed at; the layout shown (Margin or Panes) is underlined in violet; ⌘K is a search field, *Search or run a command*, with its key at its end. **Run** is the one filled control, and reads **Stop** while the engine runs (a script, a drawing of figures, the console), which cancels the run as Cancel does; a Check, which cannot be cancelled, leaves Run as it is. With Stop in the top bar, the output of the statement running is no longer shown unasked (5a): its note says `running…` with its passes.
+- **The results bar** over the script: at the left the run's facts in words, `run 2 · 9:42 · 9 statements in 32 ms` (runs numbered in the window), or `statement 4 of 9` while it goes, or how it ended; at the right **Notes · Fold all · Unfold all**.
+- **The foot**, one line: the state of the page after a coloured dot (green in step, amber edited, red refused), its words always beside it; the console; the keys; the status; the engine.
+
+**Not done here.** The places (**Script · Data · Plots**) in the top bar are step 12's; the run record behind the run's facts is step 8's.
+
+**Held by.** The contrast test; browser tests of Stop (the top bar's Run gone and Stop ending the run, in the margin editor and in Panes), of the results bar's facts and numbering, and of the foot on one line in the design's order with its dot; the earlier tests of the top bar's order, Run the one filled, and no text under 12.5 pixels; the dark ground held to the new token.
+
+**Reason.** The checklist's step 5b; open decisions #146 and #174 (R11).
+
+**A test mended with it.** The run on GitHub of step 5a (6e1f266) failed in WebKit on one test, "in a private window, where the browser keeps nothing…": it read the example's results in the margin editor in a window of ordinary height, where the editor draws only what is near the window, so the outputs far down the script were not on the page. The test is of a private window, not of the editor, so it now reads the results in Panes, where every output is on the page; its checks are unchanged. The margin tests' helper that runs and unfolds now waits until every output is drawn before the page is read.

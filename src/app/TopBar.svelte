@@ -1,7 +1,9 @@
 <script lang="ts">
-  // The top bar of a project (the design guide, section 9; open decision #146): the logo and
-  // Projects, the project and its file, ⌘K, the size of code text, Margin | Panes, the Dark
-  // switch, Check and Run. Run is the one filled control.
+  // The top bar of a project (the design guide, section 9; open decision #146), in the quiet
+  // look of the margin editor (#174; its design, sections 5 and 14): the logo and Projects, the
+  // project and its file, a search field for ⌘K, the size of code text, Margin | Panes, the
+  // Dark switch, Check and Run. Every control is a word with a soft ground when pointed at;
+  // Run is the one filled control, and reads Stop while the engine runs.
   import { codeLarger, codeSize, codeSmaller } from "../theme/codesize.svelte";
   import { CODE_SIZES } from "../theme/codesize";
   import Logo from "../theme/Logo.svelte";
@@ -40,10 +42,11 @@
   </span>
   <span class="gap"></span>
   <button
-    class="palette mono"
+    class="search"
     onclick={onpalette}
     aria-label="Commands"
-    title="Every command of the window">{mac ? "⌘K" : "Ctrl K"}</button
+    title="Every command of the window"
+    ><span>Search or run a command</span><kbd class="mono">{mac ? "⌘K" : "Ctrl K"}</kbd></button
   >
   <span class="sizes" role="group" aria-label="Code text size">
     <button onclick={codeSmaller} disabled={codeSize.px === smallest} aria-label="Smaller code text"
@@ -70,18 +73,27 @@
     <i></i>Dark
   </button>
   <button
-    class="chip"
+    class="word control"
     onclick={() => void workspace.check()}
     title="Check the script as Zeff does before it runs it; nothing is run"
     disabled={workspace.running || !workspace.ready}>Check</button
   >
-  <button
-    class="chip run"
-    onclick={() => void workspace.run()}
-    title="Run the script · ⌘↵ or ⌘⇧↵ (Ctrl in place of ⌘ on Windows and Linux)"
-    aria-keyshortcuts="Meta+Enter Control+Enter"
-    disabled={workspace.running || !workspace.ready}>Run</button
-  >
+  {#if workspace.running && workspace.status !== "checking"}
+    <!-- While the engine runs, Run reads Stop: what has finished is kept (the design, 7.8). -->
+    <button
+      class="filled"
+      onclick={() => workspace.cancel()}
+      title="Stop the run; what has finished is kept">Stop</button
+    >
+  {:else}
+    <button
+      class="filled"
+      onclick={() => void workspace.run()}
+      title="Run the script · ⌘↵ or ⌘⇧↵ (Ctrl in place of ⌘ on Windows and Linux)"
+      aria-keyshortcuts="Meta+Enter Control+Enter"
+      disabled={workspace.running || !workspace.ready}>Run</button
+    >
+  {/if}
 </header>
 
 <style>
@@ -128,22 +140,29 @@
   .gap {
     flex: 1;
   }
-  .palette {
-    background: none;
+  /* The search field of ⌘K: a soft field, the key at its end. */
+  .search {
+    align-items: center;
+    background: var(--soft);
     border: 0;
+    border-radius: 8px;
+    color: var(--ink-3);
+    display: inline-flex;
+    gap: 18px;
+    padding: 4px 8px 4px 11px;
+  }
+  .search kbd {
     color: var(--ink-3);
     font-size: 12.5px;
-    padding: 0;
   }
-  .palette:hover {
-    color: var(--accent);
+  .search:hover,
+  .search:focus-visible {
+    color: var(--ink-2);
   }
   .sizes,
   .layouts {
-    border: 1px solid var(--line-strong);
-    border-radius: 7px;
     display: inline-flex;
-    overflow: hidden;
+    gap: 2px;
   }
   .sizes {
     align-items: center;
@@ -152,23 +171,22 @@
   .layouts button {
     background: transparent;
     border: 0;
+    border-radius: 6px;
     color: var(--ink-2);
-    padding: 3px 9px;
+    padding: 3px 8px;
+  }
+  .sizes button:hover:not(:disabled),
+  .layouts button:hover {
+    background: var(--soft);
   }
   .sizes button {
     min-width: 30px;
-  }
-  .sizes button:hover:not(:disabled) {
-    background: var(--accent-soft);
-    color: var(--accent);
   }
   .sizes button:disabled,
   .layouts button:disabled {
     opacity: 0.45;
   }
   .sizes span {
-    border-left: 1px solid var(--line-strong);
-    border-right: 1px solid var(--line-strong);
     color: var(--ink-3);
     font-size: 12.5px;
     font-variant-numeric: tabular-nums;
@@ -180,12 +198,11 @@
     font-size: 12.5px;
     padding: 3px 11px;
   }
-  .layouts button + button {
-    border-left: 1px solid var(--line-strong);
-  }
+  /* The layout shown is underlined in violet, as the current place is (the design, 14). */
   .layouts button.on {
-    background: var(--accent-soft);
     color: var(--accent);
+    text-decoration: underline 2px var(--accent);
+    text-underline-offset: 6px;
   }
   .switch {
     align-items: center;
@@ -222,22 +239,26 @@
   .switch[aria-checked="true"] i::after {
     left: 13px;
   }
-  .chip {
-    background: var(--window);
-    border: 1px solid var(--line-strong);
-    border-radius: 7px;
+  .control {
+    border-radius: 6px;
     color: var(--ink);
-    padding: 3px 11px;
+    padding: 3px 8px;
   }
-  .chip:disabled {
+  .control:hover:not(:disabled) {
+    background: var(--soft);
+  }
+  .control:disabled {
     color: var(--ink-3);
   }
-  .chip.run {
+  /* The one filled control of the window. */
+  .filled {
     background: var(--button);
-    border-color: var(--button);
+    border: 1px solid var(--button);
+    border-radius: 8px;
     color: var(--button-ink);
+    padding: 3px 14px;
   }
-  .chip.run:disabled {
+  .filled:disabled {
     opacity: 0.55;
   }
 </style>

@@ -37,6 +37,9 @@ async function runUnfolded(page: Page, press: Press) {
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await press(page.getByRole("button", { name: "Unfold all", exact: true }));
+  // Every output with something to show is drawn before the page is read.
+  const opening = await page.locator('[data-testid="note"][aria-expanded]').count();
+  await expect(page.locator(".cm-zemp-output")).toHaveCount(opening);
 }
 
 /** The notes of the margin: for each, the line of code it stands on and its words. */
@@ -232,22 +235,78 @@ test("when the check refuses a script, the results of the run before stay on the
   await expect(page.getByTestId("block")).toHaveCount(blocks);
 });
 
-test("the running statement is marked in the margin, with Cancel", async ({ page, press }) => {
+test("the running statement's note says so, Run reads Stop, and Stop ends the run", async ({
+  page,
+  press,
+}) => {
   await scratch(page, press);
   await write(
     page,
     'print("started")\nfor i in 1..200000 {\n    let rows = dataset(wages).where(year == 2015).n_rows()\n}\n',
   );
   await press(page.getByRole("button", { name: "Run", exact: true }));
-  await expect(page.getByTestId("running")).toContainText(/running · pass [\d,]+ of 200,000/);
-  // The loop's block stands under the loop's closing brace, shown while it runs; the
-  // statement that has finished is folded, its note saying what it printed.
-  await expect.poll(() => under(page)).toEqual(["}"]);
+  const loop = page.locator('[data-testid="note"][data-line="2"]');
+  await expect(loop).toContainText("running…");
+  await expect(loop).toContainText(/[\d,]+ passes/);
+  await expect(page.getByTestId("run-facts")).toContainText(/run 1 · \d+:\d\d · statement 2 of 2/);
+  // The statement that has finished keeps its note, saying what it printed; nothing is unfolded.
   await expect(page.locator('[data-testid="note"][data-line="1"]')).toContainText("started");
-  await press(page.getByRole("button", { name: "Cancel" }));
+  await expect(page.locator(".cm-zemp-output")).toHaveCount(0);
+  const top = page.locator("header.top");
+  await expect(top.getByRole("button", { name: "Run", exact: true })).toHaveCount(0);
+  await press(top.getByRole("button", { name: "Stop", exact: true }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
-  await expect(page.getByTestId("running")).toHaveCount(0);
+  await expect(top.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
+  await expect(page.getByTestId("run-facts")).toContainText("cancelled after");
+  // The engine's message of the cancel is under the loop, which failed with it.
   await expect(page.getByTestId("said")).toContainText("Z0705");
+});
+
+test("the results bar gives the run's number, time of day, statements and time", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await expect(page.getByTestId("run-facts")).toHaveText("not run yet");
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("run-facts")).toHaveText(
+    /^run 1 · \d+:\d\d · 9 statements in (\d+ ms|\d+\.\d\d s)$/,
+  );
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 2 · /);
+});
+
+test("the foot is one line: the state after its dot, the console, the keys, the engine", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  const foot = page.locator("footer.bottom .line");
+  const parts = await foot.evaluate((line) =>
+    [...line.children].map((child) => {
+      const box = child.getBoundingClientRect();
+      return {
+        name: child.className.split(" ")[0] ?? child.tagName,
+        middle: box.top + box.height / 2,
+        left: box.left,
+      };
+    }),
+  );
+  // One line: every part on the same row, from left to right in the design's order.
+  const middles = parts.map((part) => part.middle);
+  expect(Math.max(...middles) - Math.min(...middles)).toBeLessThan(3);
+  const order = parts.map((part) => part.name);
+  expect(order.indexOf("state")).toBeLessThan(order.indexOf("mono"));
+  expect(order.at(-1)).toBe("engine");
+  const lefts = parts.map((part) => part.left);
+  expect([...lefts].sort((a, b) => a - b)).toEqual(lefts);
+  // The state's dot is coloured, and its words are there beside it.
+  await expect(foot.locator(".state.ok")).toBeVisible();
+  await write(page, "print(1)\n");
+  await expect(foot.locator(".state.warning")).toContainText("edited · not run");
 });
 
 test("output of an edited script is marked in each margin until the next run", async ({

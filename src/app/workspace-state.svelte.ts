@@ -78,6 +78,8 @@ export class Workspace {
   /** The last Check: the script and its text as checked, and the engine's last line of it. */
   checked = $state<{ script: string; text: string; summary: string } | null>(null);
   #beforeRun: (() => void)[] = [];
+  /** How many runs of a script this window has made: each is numbered (the design, 7.8). */
+  #runs = 0;
   /** The frames the last run left. */
   frames = $state<FrameInfo[]>([]);
   /** Something the user asked for that could not be done, in words. */
@@ -331,6 +333,8 @@ export class Workspace {
     const text = this.buffers[script]?.text ?? "";
     this.running = true;
     const fresh = begin(script, text, performance.now(), clockOf(Date.now()));
+    this.#runs += 1;
+    fresh.number = this.#runs;
     // What the events of the run are heard into: the run as it is shown, once it is shown.
     let run = fresh;
     let shown = false;

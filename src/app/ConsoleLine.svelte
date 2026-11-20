@@ -1,10 +1,22 @@
 <script lang="ts">
-  // The foot of the window (Zemp Specification, section 5): a one-line console that runs a
-  // statement without adding it to the script, and at its right the status. The line grows
+  // The foot of the window (Zemp Specification, section 5; the margin editor's design, section
+  // 5): one line holding the state of the page after a coloured dot, which always has its words
+  // beside it; the console, which runs a statement without adding it to the script; the keys;
+  // and the engine. The line grows
   // upward into a drawer of what was typed and what came of it; Escape shrinks it again.
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
+
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+  /** The colour of the state's dot: in step, out of step, refused, or nothing yet. */
+  const tone = $derived.by(() => {
+    const sync = workspace.sync;
+    if (/^not run · |: [1-9]\d* errors?/.test(sync)) return "error";
+    if (sync.startsWith("edited") || sync.startsWith("stale")) return "warning";
+    if (sync.startsWith("in sync") || sync.endsWith("no problems")) return "ok";
+    return "quiet";
+  });
 
   let typing = $state("");
   let box = $state<HTMLInputElement | null>(null);
@@ -66,6 +78,18 @@
     </div>
   {/if}
   <div class="line">
+    <span class="state {tone}"
+      ><i aria-hidden="true"></i>
+      <span class="sync" data-testid="sync"
+        >{workspace.sync}{workspace.lastRun !== null &&
+        !workspace.lastRun.checkOnly &&
+        !workspace.running &&
+        workspace.refusedErrors === 0 &&
+        workspace.sync !== workspace.checked?.summary
+          ? ` · ${workspace.warnings} warning${workspace.warnings === 1 ? "" : "s"}`
+          : ""}</span
+      ></span
+    >
     <span class="prompt mono" aria-hidden="true">›</span>
     <input
       class="mono"
@@ -79,15 +103,8 @@
       autocomplete="off"
       spellcheck="false"
     />
-    <span class="sync" data-testid="sync"
-      >{workspace.sync}{workspace.lastRun !== null &&
-      !workspace.lastRun.checkOnly &&
-      !workspace.running &&
-      workspace.refusedErrors === 0 &&
-      workspace.sync !== workspace.checked?.summary
-        ? ` · ${workspace.warnings} warning${workspace.warnings === 1 ? "" : "s"}`
-        : ""}</span
-    >
+
+    <span class="keys mono" aria-hidden="true">{mac ? "⌘↵ run · ⌘K" : "Ctrl ↵ run · Ctrl K"}</span>
     <span role="status">{workspace.status}</span>
     <span class="engine">engine Zeff {workspace.engineVersion ?? "…"} · in this browser</span>
   </div>
@@ -125,6 +142,39 @@
     color: var(--ink-3);
     font-family: "Atkinson Hyperlegible Next", sans-serif;
     font-size: 13.5px;
+  }
+  .state {
+    align-items: center;
+    display: inline-flex;
+    flex: none;
+    gap: 7px;
+  }
+  .state i {
+    background: var(--ink-3);
+    border-radius: 50%;
+    display: block;
+    height: 7px;
+    width: 7px;
+  }
+  .state.ok i {
+    background: var(--ok);
+  }
+  .state.warning i {
+    background: var(--warning);
+  }
+  .state.error i {
+    background: var(--error);
+  }
+  .state.error .sync {
+    color: var(--error);
+  }
+  .state.warning .sync {
+    color: var(--warning);
+  }
+  .keys {
+    color: var(--ink-3);
+    flex: none;
+    font-size: 12.5px;
   }
   .sync,
   [role="status"],

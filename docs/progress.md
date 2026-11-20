@@ -63,3 +63,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 137 unit tests; 181 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 5b `[function]`: the quiet look.
+
+## 21 November 2026, release 0.2, step 5b (the quiet look)
+
+**Done.** Step 5b `[function]`: the quiet look's colours; the top bar of words, ⌘K as a search field, **Run** reading **Stop** while the engine runs; the results bar (`run 2 · 9:42 · 9 statements in 32 ms`, and Notes · Fold all · Unfold all); the foot on one line with the state after a coloured dot. Step 5a's run on GitHub had failed on one WebKit test, which read results the editor had not drawn; mended here.
+
+**Green.** `npm run routine`: 137 unit tests; 185 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 6 `[function]`: opening a result.
