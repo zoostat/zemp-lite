@@ -9,16 +9,21 @@
 //   { type: "open", name, cancel }      a project called `name`; `cancel` is a
 //                                       SharedArrayBuffer of four bytes, the cancel flag
 //   { type: "file", path, bytes }       a file of the project, as a Uint8Array
-//   { type: "run", script, text }       run the text of a script of the project
+//   { type: "run", script, text, width } run the text of a script of the project, its tables
+//                                       printed at `width` characters (0 or none: 118)
+//   { type: "statements", script, text } the statements of a text, without running it
 //   { type: "frame", name }             a frame of the last run, by the name of its binding
 //   { type: "read", path }              a file of the project: one put in, or one a run wrote
 // Messages out:
 //   { type: "ready", version }          once, when the engine is loaded: the engine's version
 //   { type: "opened", name }
 //   { type: "filed", path }             the file was put into the project
+//   { type: "ranges", statements }      first in a run: [{ line, end, kind }]
 //   { type: "started" | "finished" | "pass" | "output", ... }   while a run goes
-//   { type: "done", exit_code, stdout, stderr, frames }         its outcome, with the frames
-//                                       its bindings hold: [{ name, rows, variables }]
+//   { type: "done", exit_code, stdout, stderr, statements, frames }   its outcome: each
+//                                       statement with what it printed, said and made, and
+//                                       the frames its bindings hold: [{ name, rows, variables }]
+//   { type: "statements", statements }  the answer to `statements`: [{ line, end, kind }]
 //   { type: "frame", name, bytes }      the frame as an Arrow stream, in a Uint8Array whose
 //                                       buffer is passed to the interface and not copied
 //   { type: "read", path, bytes }       the file, passed in the same way; `bytes` is null
@@ -54,6 +59,10 @@ export function serve(engine, port, deviceBytes) {
       answer({ type: "opened", name: said.name });
       return;
     }
+    if (said.type === "statements") {
+      answer(JSON.parse(engine.statements(String(said.script), String(said.text))));
+      return;
+    }
     if (!["file", "run", "frame", "read"].includes(said.type)) {
       refuse(`no such message: ${String(said.type)}`);
       return;
@@ -76,9 +85,15 @@ export function serve(engine, port, deviceBytes) {
           refuse(`the path \`${String(said.path)}\` is not inside the project`);
         }
         break;
-      case "run":
-        answer(JSON.parse(project.run(said.script, said.text, deviceBytes ?? 0)));
+      case "run": {
+        {
+          const ranges = JSON.parse(engine.statements(said.script, said.text));
+          port.postMessage({ type: "ranges", statements: ranges.statements });
+          const width = Number.isInteger(said.width) && said.width > 0 ? said.width : 0;
+          answer(JSON.parse(project.run(said.script, said.text, deviceBytes ?? 0, width)));
+        }
         break;
+      }
       case "frame": {
         const bytes = project.frame(said.name);
         if (bytes === undefined) {

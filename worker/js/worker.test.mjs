@@ -71,9 +71,34 @@ test("a run tells its steps and what it prints, then its outcome", async (t) => 
   assert.match(done.stderr, /warning\[W0201\]/);
   assert.deepEqual(
     said.map((message) => message.type),
-    ["started", "output", "finished", "started", "finished", "started", "output", "finished"],
+    [
+      "ranges",
+      "started",
+      "output",
+      "finished",
+      "started",
+      "finished",
+      "started",
+      "output",
+      "finished",
+    ],
   );
-  assert.deepEqual(said[0], { type: "started", statement: 1, of: 3, line: 1 });
+  // First the statements as the engine reads them, then each step.
+  assert.deepEqual(said[0], {
+    type: "ranges",
+    statements: [1, 2, 3].map((line) => ({ line, end: line, kind: "statement" })),
+  });
+  assert.deepEqual(said[1], { type: "started", statement: 1, of: 3, line: 1 });
+  // The outcome gives each statement with what it printed and made.
+  assert.deepEqual(
+    done.statements.map((one) => [one.line, one.name, one.type, one.stdout]),
+    [
+      [1, null, "Nothing", "one\n"],
+      [2, "d", "Frame", ""],
+      [3, null, "Nothing", "2\n"],
+    ],
+  );
+  assert.deepEqual(done.statements[1].frame, { rows: 3, variables: 1 });
   const pieces = said.filter((message) => message.type === "output");
   assert.equal(pieces.map((piece) => piece.stdout).join(""), done.stdout);
   assert.equal(pieces.map((piece) => piece.stderr).join(""), done.stderr);
@@ -99,6 +124,42 @@ test("the example prints, in the worker, what `zeff run` 0.8.0 prints, byte for 
     done.frames.map((frame) => frame.name),
     ["wages", "w2010"],
   );
+});
+
+test("a run prints at the width asked, as `zeff run --width` does", async (t) => {
+  const root = path.resolve(here, "..", "..");
+  const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+  const { worker, next } = await opened(t, 0);
+  for (const width of [40, 80]) {
+    worker.postMessage({
+      type: "run",
+      script: "scripts/main.zeff",
+      text: read("examples/scratch/scripts/main.zeff"),
+      width,
+    });
+    const done = await next("done");
+    assert.equal(done.stdout, read(`tests/scripts/widths/example-${width}.stdout`));
+    assert.equal(done.stderr, read(`tests/scripts/widths/example-${width}.stderr`));
+  }
+});
+
+test("the statements of a text are given without a project and without a run", async (t) => {
+  const { worker, next } = started(t, 0);
+  await next("ready");
+  worker.postMessage({
+    type: "statements",
+    id: 7,
+    script: "scripts/main.zeff",
+    text: "// a note\nlet w = dataset(wages)\n    .where(year == 2010)\n\nw\n",
+  });
+  assert.deepEqual(await next("statements"), {
+    type: "statements",
+    id: 7,
+    statements: [
+      { line: 2, end: 3, kind: "statement" },
+      { line: 5, end: 5, kind: "statement" },
+    ],
+  });
 });
 
 test("a file a run wrote is given back, and passed to the interface, not copied", async (t) => {

@@ -594,3 +594,21 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **A project pinned to 0.7.0.** The engine of 0.8.0 refuses to run it, with its own message (Z0710, "this project needs Zeff 0.7.0, but this is Zeff 0.8.0", advising to change the pin in `zeff.toml`); the interface shows it as the engine words it and rewrites nothing, since moving a project to another engine is "Update engine" (Zemp Specification, section 9.1), which is not in this release. Only the projects of the owner's own trial of 0.1, in the browser on this computer, are pinned to 0.7.0; the hosted alpha starts with none. A known issue of the notes.
 
 **Reason.** The checklist's step 2; the standing rule that Zemp uses the engine through its released versions.
+
+## 21 November 2026: what a run tells the interface (release 0.2, step 3)
+
+**Choice.** The worker passes on what Zeff 0.8.0 knows of each statement, in the engine's own words, through two additions to its messages (`worker/js/host.mjs`):
+
+- **The statements of a text** (`statements`, and as the first event of every run, `ranges`): each statement's first and last line and its kind (`statement`, `function`, `use`), from the engine's outline (`language::outline::statements_in`). A chain written over several lines is one statement. It needs no project and runs nothing.
+- **Each statement of a run**, in the outcome (`done.statements`): its range; the name a `let` binds and the type the engine names for what the statement makes (`Frame`, `RegFit`, `Plot`, `Table`, `Nothing`), read from the engine's check of the same text (`run::check_in_project`, the checked program's bindings and expressions); whether it ran; what it printed and said (`Outcome.output.statements`); for a frame bound by `let`, its rows and variables (the kept frames, matched to the `let`s in the order they were bound) and the bytes the engine counts for it (`MemoryNote::Bound`).
+- **A run at a width** (`run`'s `width`, characters; 0 for the engine's 118), as `zeff run --width` prints.
+
+**The interface** keeps the ranges in the run as they arrive (`Run.ranges`), from the outcome where none were told, and a result stands under the last line the engine gives its statement (`src/output/place.ts`). The interface's own reading of where a statement ends, by blank lines, comments and the shape of brackets (0.1, 15 November 2026, step 9), is retired with its tests, as the checklist says. A finding of the check on a line no statement holds stands on that line.
+
+**Dependencies.** `zeff-ir`, a crate of the released engine, at the same commit as the other four, for the checked program's types; and, for the native tests alone, `serde_json` at `=1.0.154` (MIT or Apache-2.0), the version Zeff 0.8.0's language server pins, with `itoa` held to 1.0.18 as in Zeff's lock file. Neither adds to what the engine links beyond `zeff-ir`, which it already linked: the worker is 2,789.3 kB compressed (2,785.2 kB at step 2), the 4 kB being the new code, and its cold start 59.5 ms.
+
+**Not chosen.** Asking the interface to fetch the ranges before each run, as a second message: the worker tells them as the run's first event, so no caller can forget them. Matching a frame to its statement by the hash of the statement's text (`Output.frames`): the hash is the engine's internal one, which no public function computes.
+
+**Held by.** Five native tests (the statements of a text, a chain and a function among them; each statement of the example with its name, type, frame and memory, and what each printed put together equal to `zeff run`'s; the example at widths 40 and 80 equal to `zeff run --width`; a failed run and a refused script, with the statements not reached listed as not run). Three message tests (a run's first event and its outcome's statements; the width; the statements of a text without a project). The released command line's output of the example at widths 40 and 80 is kept in `tests/scripts/widths/`. Unit tests of placing by the engine's ranges, of the engine module's width and `statements`, and of the plots of a run.
+
+**Reason.** The checklist's step 3; finding 3 of `docs/releases/0.2.md`; the margin editor's principle that every character is the engine's (P4, P10).

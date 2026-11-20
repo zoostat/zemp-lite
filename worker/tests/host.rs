@@ -3,8 +3,9 @@
 //! given back. The worker script that carries these as messages is tested under Node
 //! (`js/worker.test.mjs`).
 
+use serde_json::Value;
 use std::cell::RefCell;
-use zemp_worker::{Host, engine_version};
+use zemp_worker::{Host, engine_version, statements, statements_json};
 
 fn never() -> bool {
     false
@@ -13,7 +14,7 @@ fn never() -> bool {
 /// A run with what it told, line by line, and its outcome.
 fn run(host: &Host, text: &str) -> (Vec<String>, String) {
     let told: RefCell<Vec<String>> = RefCell::default();
-    let done = host.run("scripts/main.zeff", text, None, never, &|json| {
+    let done = host.run("scripts/main.zeff", text, None, 0, never, &|json| {
         told.borrow_mut().push(json.to_string());
     });
     (told.into_inner(), done)
@@ -40,7 +41,12 @@ fn a_run_tells_each_event_as_a_line_of_json_and_gives_its_outcome() {
     );
     assert_eq!(
         done,
-        r#"{"type": "done", "exit_code": 0, "stdout": "one\n", "stderr": "", "frames": []}"#
+        concat!(
+            r#"{"type": "done", "exit_code": 0, "stdout": "one\n", "stderr": "", "statements": ["#,
+            r#"{"line": 1, "end": 1, "kind": "statement", "name": null, "type": "Nothing", "ran": true, "stdout": "one\n", "stderr": "", "frame": null, "memory": null}, "#,
+            r#"{"line": 2, "end": 2, "kind": "statement", "name": "a", "type": "Int", "ran": true, "stdout": "", "stderr": "", "frame": null, "memory": null}"#,
+            r#"], "frames": []}"#
+        )
     );
 }
 
@@ -175,4 +181,149 @@ fn field(line: &str, key: &str) -> String {
         }
     }
     panic!("the text under `{key}` does not end");
+}
+
+/// A run at a width of `width` characters, its outcome read as JSON.
+fn run_at(host: &Host, text: &str, width: usize) -> Value {
+    let done = host.run("scripts/main.zeff", text, None, width, never, &|_| {});
+    serde_json::from_str(&done).unwrap()
+}
+
+/// The file of this repository at `path`, as text.
+fn read(path: &str) -> String {
+    std::fs::read_to_string(format!("{}/../{path}", env!("CARGO_MANIFEST_DIR"))).unwrap()
+}
+
+#[test]
+fn the_statements_of_a_text_are_the_engines_from_their_first_line_to_their_last() {
+    let text = "// a comment\n\nlet a = 1\nlet b = dataset(wages)\n    .where(year == 2010)\n\n    .add(y = 1)\n\nfn twice(x: Float) -> Float {\n    x * 2\n}\nb\n";
+    let found: Vec<(u32, u32, &str)> = statements("scripts/main.zeff", text)
+        .iter()
+        .map(|one| (one.line, one.end, one.kind))
+        .collect();
+    assert_eq!(
+        found,
+        [
+            (3, 3, "statement"),
+            (4, 7, "statement"),
+            (9, 11, "function"),
+            (12, 12, "statement")
+        ]
+    );
+    let json: Value = serde_json::from_str(&statements_json("scripts/main.zeff", text)).unwrap();
+    assert_eq!(json["type"], "statements");
+    assert_eq!(json["statements"][1]["end"], 7);
+    // A text with nothing in it has no statements, and one that does not parse is read as far
+    // as the engine reads it.
+    assert!(statements("scripts/main.zeff", "").is_empty());
+    assert!(statements("scripts/main.zeff", "// only a comment\n").is_empty());
+}
+
+#[test]
+fn each_statement_of_the_example_has_what_it_printed_what_it_made_and_its_size() {
+    let host = Host::new("scratch");
+    let text = read("examples/scratch/scripts/main.zeff");
+    let done = run_at(&host, &text, 0);
+    let each = done["statements"].as_array().unwrap();
+    let lines: Vec<u64> = each
+        .iter()
+        .map(|one| one["line"].as_u64().unwrap())
+        .collect();
+    assert_eq!(lines, [4, 5, 8, 12, 13, 16, 17, 20, 21]);
+    assert!(each.iter().all(|one| one["ran"] == true));
+    // What each printed and said, put together in order, is what the whole run printed and
+    // said, which is what `zeff run` prints and says.
+    let joined = |key: &str| -> String {
+        each.iter()
+            .map(|one| one[key].as_str().unwrap().to_string())
+            .collect()
+    };
+    assert_eq!(
+        joined("stdout"),
+        read("examples/scratch/expected/stdout.txt")
+    );
+    assert_eq!(
+        joined("stderr"),
+        read("examples/scratch/expected/stderr.txt")
+    );
+    // The name a `let` binds and the type the engine names; a frame with its size.
+    let wages = &each[0];
+    assert_eq!(wages["name"], "wages");
+    assert_eq!(wages["type"], "Frame");
+    assert_eq!(wages["frame"]["rows"], 18412);
+    assert!(wages["memory"]["own"].as_u64().unwrap() > 0);
+    assert_eq!(each[1]["name"], "w2010");
+    assert_eq!(each[1]["frame"]["rows"], done["frames"][1]["rows"]);
+    assert_eq!(each[2]["name"], Value::Null);
+    assert_eq!(each[2]["type"], "Table");
+    assert_eq!(each[3]["name"], "fit");
+    assert_eq!(each[3]["frame"], Value::Null);
+    assert_eq!(each[5]["type"], "Plot");
+    assert!(each[3]["type"].as_str().unwrap().len() > 1, "{}", each[3]);
+}
+
+#[test]
+fn a_run_prints_at_the_width_asked_as_zeff_run_does() {
+    let text = read("examples/scratch/scripts/main.zeff");
+    for width in [40, 80] {
+        let host = Host::new("scratch");
+        let done = run_at(&host, &text, width);
+        assert_eq!(
+            done["stdout"].as_str().unwrap(),
+            read(&format!("tests/scripts/widths/example-{width}.stdout")),
+            "at {width}"
+        );
+        assert_eq!(
+            done["stderr"].as_str().unwrap(),
+            read(&format!("tests/scripts/widths/example-{width}.stderr")),
+            "at {width}"
+        );
+        let joined: String = done["statements"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|one| one["stdout"].as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(joined, done["stdout"].as_str().unwrap());
+    }
+    // 0 is the engine's own width, 118.
+    let host = Host::new("scratch");
+    assert_eq!(
+        run_at(&host, &text, 0)["stdout"].as_str().unwrap(),
+        run_at(&host, &text, 118)["stdout"].as_str().unwrap()
+    );
+}
+
+#[test]
+fn a_statement_after_the_one_that_failed_is_listed_as_not_run() {
+    let host = Host::new("demo");
+    let done = run_at(&host, &read("tests/scripts/error.zeff"), 0);
+    let each = done["statements"].as_array().unwrap();
+    let failed = each
+        .iter()
+        .position(|one| one["stderr"].as_str().unwrap().contains("error["))
+        .unwrap();
+    assert!(each[..=failed].iter().all(|one| one["ran"] == true));
+    assert!(each[failed + 1..].iter().all(|one| one["ran"] == false));
+    assert!(
+        failed + 1 < each.len(),
+        "the test script has a statement after its error"
+    );
+    assert_eq!(
+        done["stderr"].as_str().unwrap(),
+        read("tests/scripts/error.stderr")
+    );
+}
+
+#[test]
+fn a_refused_script_runs_nothing_and_lists_its_statements() {
+    let host = Host::new("demo");
+    let done = run_at(&host, &read("tests/scripts/refused.zeff"), 0);
+    let each = done["statements"].as_array().unwrap();
+    assert!(!each.is_empty());
+    assert!(each.iter().all(|one| one["ran"] == false));
+    assert_eq!(
+        done["stderr"].as_str().unwrap(),
+        read("tests/scripts/refused.stderr")
+    );
 }

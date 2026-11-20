@@ -39,3 +39,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: the nine sample projects of 0.8.0 identical; 2,785.2 kB compressed, cold start 55.1 ms; 117 unit tests; 163 browser tests passed and 1 skipped by design.
 
 **Next.** Step 3 `[engine]`: what a run tells the interface.
+
+## 21 November 2026, release 0.2, step 3 (what a run tells the interface)
+
+**Done.** Step 3 `[engine]`: the worker tells, for a text, where each statement begins and ends, as the engine's outline reads it (also as the first event of every run), and with each run's outcome, for each statement, what it printed and said at the width asked, the name and the engine's type of what it made, and a frame's rows, variables and memory. Results are placed by the engine's ranges; the interface's own reading of a statement's end is retired.
+
+**Green.** `npm run routine`: 12 native tests and 10 message tests of the worker; the nine samples identical; 2,789.3 kB, cold start 59.5 ms; 117 unit tests; 163 browser tests passed and 1 skipped by design.
+
+**Next.** Step 4 `[engine]`: Check, dependencies and a run of chosen statements.

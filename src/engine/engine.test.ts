@@ -39,6 +39,20 @@ class Stand implements WorkerLike {
   }
 }
 
+/** One statement of a run, as the worker's outcome gives it. */
+const one = {
+  line: 1,
+  end: 1,
+  kind: "statement",
+  name: null,
+  type: "Nothing",
+  ran: true,
+  stdout: "one\n",
+  stderr: "",
+  frame: null,
+  memory: null,
+};
+
 /** An engine, and the stand-ins it has started, the newest last. */
 function engine(): { engine: Engine; workers: Stand[] } {
   const workers: Stand[] = [];
@@ -129,7 +143,9 @@ describe("the engine, from the interface's side", () => {
       type: "run",
       script: "scripts/main.zeff",
       text: 'print("one")\n',
+      width: 0,
     });
+    worker.say({ type: "ranges", statements: [{ line: 1, end: 1, kind: "statement" }] });
     worker.say({ type: "started", statement: 1, of: 1, line: 1 });
     worker.say({ type: "output", stdout: "one\n", stderr: "" });
     worker.say({ type: "finished", statement: 1, of: 1, line: 1, failed: false });
@@ -138,16 +154,18 @@ describe("the engine, from the interface's side", () => {
       exit_code: 0,
       stdout: "one\n",
       stderr: "",
+      statements: [one],
       frames: [{ name: "pay", rows: 3, variables: 2 }],
     });
     expect(await run).toEqual({
       exitCode: 0,
       stdout: "one\n",
       stderr: "",
+      statements: [one],
       frames: [{ name: "pay", rows: 3, variables: 2 }],
       stopped: false,
     });
-    expect(heard.map((event) => event.type)).toEqual(["started", "output", "finished"]);
+    expect(heard.map((event) => event.type)).toEqual(["ranges", "started", "output", "finished"]);
     expect(made.running).toBe(false);
   });
 
@@ -201,6 +219,7 @@ describe("the engine, from the interface's side", () => {
       exitCode: null,
       stdout: "so far\n",
       stderr: "note: a note\n",
+      statements: [],
       frames: [],
       stopped: true,
     });
@@ -241,5 +260,36 @@ describe("the engine, from the interface's side", () => {
     worker.onerror?.({ message: "out of memory" });
     await expect(run).rejects.toThrow("the engine's worker failed: out of memory");
     expect(made.project).toBeNull();
+  });
+});
+
+describe("what the engine tells of statements", () => {
+  it("asks for a run at a width, and gives the statements of a text without running it", async () => {
+    const { engine: made, worker } = await opened();
+    const run = made.run("scripts/main.zeff", "1 + 1\n", undefined, 60);
+    await settle();
+    expect(worker.last).toMatchObject({ type: "run", width: 60 });
+    worker.answer({
+      type: "done",
+      exit_code: 0,
+      stdout: "",
+      stderr: "",
+      statements: [],
+      frames: [],
+    });
+    await run;
+    const asked = made.statements("scripts/main.zeff", "let a = 1\nlet b =\n  2\n");
+    await settle();
+    expect(worker.last).toMatchObject({
+      type: "statements",
+      script: "scripts/main.zeff",
+      text: "let a = 1\nlet b =\n  2\n",
+    });
+    const told = [
+      { line: 1, end: 1, kind: "statement" },
+      { line: 2, end: 3, kind: "statement" },
+    ];
+    worker.answer({ type: "statements", statements: told });
+    expect(await asked).toEqual(told);
   });
 });

@@ -6,7 +6,14 @@ import { Projects } from "./projects";
 import { Session, type Runs } from "./session";
 
 const nothing: Kept = { getItem: () => null, setItem: () => undefined };
-const done: Outcome = { exitCode: 0, stdout: "", stderr: "", frames: [], stopped: false };
+const done: Outcome = {
+  exitCode: 0,
+  stdout: "",
+  stderr: "",
+  statements: [],
+  frames: [],
+  stopped: false,
+};
 
 /** A stand-in for the engine that writes down what it was asked. */
 function engine(): Runs & { asked: string[]; project: string | null } {

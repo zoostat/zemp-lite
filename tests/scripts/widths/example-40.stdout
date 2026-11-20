@@ -1,0 +1,84 @@
+summary · by female
+
+  female   variable     N   missing
+  male     wage       274         3
+  female   wage       257         3
+  male     educ       277         0
+  female   educ       260         0
+  male     exper      276         1
+  female   exper      260         0
+  male     hours      277         0
+  female   hours      259         1
+
+    mean       sd      min      max
+  23.616   12.282    6.090   97.980
+  21.145   10.748    4.580   65.990
+  13.365    2.399    8.000   20.000
+  13.400    2.480    8.000   20.000
+  10.025    6.496    0.000   25.000
+   9.838    6.451    0.000   25.000
+  38.794    8.922   15.500   66.200
+  37.233    8.464    9.000   60.100
+reg · log(wage) ~ educ + exper + female + union
+N = 18,179 (233 rows dropped for NA in model variables)
+standard errors: clustered by worker (3,911 clusters, CR1)
+
+  term          estimate   std.error
+  (intercept)     1.8802      0.0408
+  educ            0.0760      0.0025
+  exper           0.0215      0.0008
+  female         -0.1341      0.0122
+  union           0.0896      0.0128
+
+  t value   p value   95% CI
+    46.10    <0.001   [1.8003, 1.9602]
+    29.82    <0.001   [0.0710, 0.0810]
+    26.03    <0.001   [0.0199, 0.0231]
+   -11.04    <0.001   [-0.1579, -0.1103]
+     7.01    <0.001   [0.0645, 0.1147]
+
+R² 0.210 · adjusted R² 0.210
+plot · w2010 · log(wage) against educ
+
+  axis   title                scale
+  x      Years of schooling   linear
+  y      log(wage)            linear
+
+  limits
+  7.4 to 20.6
+  1.36855 to 4.73792
+
+  breaks
+  8, 10, 12, 14, 16, 18, 20
+  1.5, 2, 2.5, 3, 3.5, 4, 4.5
+
+  layer   mark       data    marks
+      1   fit band   w2010      80
+      2   points     w2010     531
+      3   fit line   w2010      80
+
+  settings
+  95% confidence band, alpha 0.2, 1 band
+  size 4.5, alpha 1
+  least squares of log(wage) on educ, width 1, 1 line
+
+caption: Band: 95% confidence interval of the fitted line
+plot · w2010 · log(wage)
+
+  axis   title       scale
+  x      log(wage)   linear
+  y      count       linear
+
+  limits
+  1.36855 to 4.73792
+  -2.5 to 52.5
+
+  breaks
+  1.5, 2, 2.5, 3, 3.5, 4, 4.5
+  0, 10, 20, 30, 40, 50
+
+  layer   mark        data    marks
+      1   histogram   w2010      30
+
+  settings
+  30 bins of 0.102102 from 1.5217

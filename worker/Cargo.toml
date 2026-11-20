@@ -24,7 +24,13 @@ all = { level = "deny", priority = -1 }
 zeff-engine = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-diagnostics = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-columns = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
+zeff-ir = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-web = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
+
+# A reader of JSON for the native tests alone, at the version the engine's own language server
+# pins (Zeff 0.8.0); nothing of it is linked into the worker.
+[dev-dependencies]
+serde_json = "=1.0.154"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "=0.2.129"

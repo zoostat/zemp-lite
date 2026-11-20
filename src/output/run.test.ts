@@ -6,6 +6,7 @@ const done = (exitCode: number, stderr = ""): Outcome => ({
   exitCode,
   stdout: "",
   stderr,
+  statements: [],
   frames: [],
   stopped: false,
 });
@@ -204,7 +205,11 @@ describe("a run, as the Output panel shows it", () => {
   it("ends a run whose worker was ended under it as stopped, its statement not left running", () => {
     const run = begin("scripts/main.zeff", "x\n", 0, "15:42");
     hear(run, { type: "started", statement: 1, of: 1, line: 1 }, 5);
-    end(run, { exitCode: null, stdout: "", stderr: "", frames: [], stopped: true }, 905);
+    end(
+      run,
+      { exitCode: null, stdout: "", stderr: "", statements: [], frames: [], stopped: true },
+      905,
+    );
     expect(run.state).toBe("stopped");
     expect(blocks(run)).toMatchObject([{ line: 1, state: "failed", ms: 900 }]);
   });

@@ -10,8 +10,36 @@ export interface FrameInfo {
   variables: number;
 }
 
+/**
+ * One statement of a script as the engine reads it: the lines it begins and ends on, counted
+ * from 1, and its kind. A chain written over several lines is one statement.
+ */
+export interface Ranged {
+  line: number;
+  end: number;
+  kind: "statement" | "function" | "use";
+}
+
+/**
+ * One statement of a run, as its outcome gives it: its range; the name it binds and the type
+ * the engine names for what it makes (`Frame`, `RegFit`, `Plot`), where the engine knows
+ * them; whether it ran, and what it printed and said; for a frame bound by `let`, its rows and
+ * variables, and the bytes the engine counts for it. Every word and number is the engine's.
+ */
+export interface StatementInfo extends Ranged {
+  name: string | null;
+  type: string | null;
+  ran: boolean;
+  stdout: string;
+  stderr: string;
+  frame: { rows: number; variables: number } | null;
+  memory: { own: number; kept: number } | null;
+}
+
 /** What the worker tells while a run goes. */
 export type RunEvent =
+  /** First, before any statement: the statements of the text, as the engine reads them. */
+  | { type: "ranges"; statements: Ranged[] }
   /** A statement is about to run: which, counted from 1, of how many, and the line it begins on. */
   | { type: "started"; statement: number; of: number; line: number }
   /** The statement ran, or stopped with an error. */
@@ -25,7 +53,10 @@ export type RunEvent =
 export type Request =
   | { type: "open"; name: string; cancel: SharedArrayBuffer | null }
   | { type: "file"; path: string; bytes: Uint8Array }
-  | { type: "run"; script: string; text: string }
+  /** `width`: the characters tables are printed at; 0 or none for the engine's own, 118. */
+  | { type: "run"; script: string; text: string; width?: number }
+  /** The statements of a text as the engine reads them, without running it. */
+  | { type: "statements"; script: string; text: string }
   | { type: "frame"; name: string }
   | { type: "read"; path: string };
 
@@ -33,7 +64,15 @@ export type Request =
 export type Reply =
   | { type: "opened"; name: string }
   | { type: "filed"; path: string }
-  | { type: "done"; exit_code: number; stdout: string; stderr: string; frames: FrameInfo[] }
+  | {
+      type: "done";
+      exit_code: number;
+      stdout: string;
+      stderr: string;
+      statements: StatementInfo[];
+      frames: FrameInfo[];
+    }
+  | { type: "statements"; statements: Ranged[] }
   | { type: "frame"; name: string; bytes: Uint8Array }
   | { type: "read"; path: string; bytes: Uint8Array | null }
   | { type: "error"; message: string };
@@ -49,6 +88,8 @@ export interface Outcome {
   stdout: string;
   /** Everything the run said: its warnings, notes and errors. */
   stderr: string;
+  /** Each statement of the text, with what it printed, said and made; none where the run was stopped. */
+  statements: StatementInfo[];
   /** The frames the run's bindings hold. */
   frames: FrameInfo[];
   /** Whether the interface ended the worker to stop the run, so that the project in it is gone. */

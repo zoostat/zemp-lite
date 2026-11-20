@@ -30,7 +30,7 @@ describe("a statement typed in the console", () => {
       { type: "finished", statement: 2, of: 2, line: 2, failed: false },
     ];
     events.forEach(hear);
-    end({ exitCode: 0, stdout: "", stderr: "", frames: [], stopped: false });
+    end({ exitCode: 0, stdout: "", stderr: "", statements: [], frames: [], stopped: false });
     const outcome = outcomeOf(run, 2);
     expect(outcome.state).toBe("done");
     expect(outcome.printed).toBe("2\n");
@@ -44,7 +44,7 @@ describe("a statement typed in the console", () => {
       stdout: "",
       stderr: "error[Z0103]: no function is called `bad`\n --> scripts/main.zeff:1:1\n",
     });
-    end({ exitCode: 1, stdout: "", stderr: "", frames: [], stopped: false });
+    end({ exitCode: 1, stdout: "", stderr: "", statements: [], frames: [], stopped: false });
     const outcome = outcomeOf(run, 2);
     expect(outcome.state).toBe("failed");
     expect(outcome.said.map((one) => one.code)).toEqual(["Z0103"]);

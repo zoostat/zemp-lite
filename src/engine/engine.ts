@@ -3,7 +3,7 @@
 // and hears each step as it goes, cancels a run, and reads back a frame or a file. When a
 // project closes the worker is ended, which returns its memory to the browser (Engine and
 // Project Specification, section 8.3, point 7), and the next project starts a new one.
-import type { FromWorker, Outcome, Reply, Request, RunEvent } from "./messages";
+import type { FromWorker, Outcome, Ranged, Reply, Request, RunEvent } from "./messages";
 
 /** As much of a Web Worker as the interface uses, so that a test can stand in for one. */
 export interface WorkerLike {
@@ -122,10 +122,16 @@ export class Engine {
 
   /**
    * Run the text of a script of the project (`script` is its path there). `listener` hears
-   * each step as it starts and ends, each pass of a loop, and each piece of output. One run
-   * goes at a time.
+   * the statements of the text first, then each step as it starts and ends, each pass of a
+   * loop, and each piece of output. `width` is the characters tables are printed at, 0 for the
+   * engine's own. One run goes at a time.
    */
-  run(script: string, text: string, listener?: (event: RunEvent) => void): Promise<Outcome> {
+  run(
+    script: string,
+    text: string,
+    listener?: (event: RunEvent) => void,
+    width = 0,
+  ): Promise<Outcome> {
     if (this.#running !== null) {
       return Promise.reject(new EngineError("a run is already going in this window"));
     }
@@ -150,7 +156,7 @@ export class Engine {
           this.#running = null;
         }
       };
-      this.#ask({ type: "run", script, text }).then(
+      this.#ask({ type: "run", script, text, width }).then(
         (reply) => {
           over();
           try {
@@ -159,6 +165,7 @@ export class Engine {
               exitCode: done.exit_code,
               stdout: done.stdout,
               stderr: done.stderr,
+              statements: done.statements,
               frames: done.frames,
               stopped: false,
             });
@@ -199,6 +206,7 @@ export class Engine {
       exitCode: null,
       stdout: running.stdout,
       stderr: running.stderr,
+      statements: [],
       frames: [],
       stopped: true,
     });
@@ -207,6 +215,11 @@ export class Engine {
   /** Close the project: the worker is ended, and the next project starts a new one. */
   close(): void {
     this.stop();
+  }
+
+  /** The statements of a text as the engine reads them, without running it. */
+  async statements(script: string, text: string): Promise<Ranged[]> {
+    return expect(await this.#ask({ type: "statements", script, text }), "statements").statements;
   }
 
   /** A frame of the last run, by the name of its binding, as the bytes of an Arrow stream. */
@@ -233,6 +246,7 @@ export class Engine {
 
   #hear(said: Exclude<FromWorker, { type: "ready" }>): void {
     if (
+      said.type === "ranges" ||
       said.type === "started" ||
       said.type === "finished" ||
       said.type === "pass" ||

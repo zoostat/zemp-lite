@@ -7,8 +7,11 @@
 //! line of JSON, then its outcome: this much is the host of the engine's own browser build
 //! (`zeff-web`), whose events and default memory budget are used as they are. One thing is
 //! added. A file of the project is given back, so that the interface can read what a run
-//! wrote: at Zeff 0.7.0 a figure leaves the engine only as a file `export` writes
-//! (docs/decisions.md, 15 November 2026).
+//! wrote: at Zeff 0.7.0 and 0.8.0 a figure leaves the engine only as a file `export` writes
+//! (docs/decisions.md, 15 November 2026). And from Zeff 0.8.0 the host tells, for a text, where
+//! each statement begins and ends, and with a run's outcome, for each statement, what it
+//! printed and said at the width asked, what it made and how large a frame it made, all in
+//! the engine's own words (docs/decisions.md, 21 November 2026, release 0.2, step 3).
 //!
 //! The functions here are plain Rust and are tested natively; `browser` binds them for
 //! WebAssembly, and `js/` holds the worker script that carries the messages.
@@ -18,8 +21,12 @@ use std::path::{Component, Path, PathBuf};
 use zeff_diagnostics::json_string;
 use zeff_engine::control::{Control, Event};
 use zeff_engine::fs::{FileSystem, MemoryFileSystem};
+use zeff_engine::interpreter::{MemoryNote, StatementOutput};
+use zeff_engine::language::outline::statements_in;
+use zeff_engine::language::{Position, Range, position};
 use zeff_engine::project::Project;
-use zeff_engine::run::{Frames, RunOptions, run_script_keeping};
+use zeff_engine::run::{Frames, RunOptions, check_in_project, run_script_keeping};
+use zeff_ir::{Program, Statement, Ty};
 use zeff_web::{default_budget, event_json};
 
 #[cfg(target_arch = "wasm32")]
@@ -50,6 +57,85 @@ fn inside(path: &str) -> Option<PathBuf> {
         }
     }
     (parts > 0).then_some(place)
+}
+
+/// One statement of a script as the engine reads it: where it begins and ends, as lines
+/// counted from 1, and its kind (`statement`, `function` or `use`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Ranged {
+    pub line: u32,
+    pub end: u32,
+    pub kind: &'static str,
+}
+
+/// The statements of a text, in order, as the engine's outline gives them (Zeff 0.8.0, step
+/// 8b): a chain written over several lines is one statement.
+pub fn statements(script: &str, text: &str) -> Vec<Ranged> {
+    let whole = Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: position(text, text.len()),
+    };
+    statements_in(script, text, whole)
+        .into_iter()
+        .map(|statement| {
+            let (start, end) = (statement.range.start, statement.range.end);
+            // A range ends before its end; where it ends at the start of a line, its last line
+            // is the one before.
+            let last = if end.character == 0 && end.line > start.line {
+                end.line - 1
+            } else {
+                end.line
+            };
+            Ranged {
+                line: start.line + 1,
+                end: last + 1,
+                kind: statement.kind.name(),
+            }
+        })
+        .collect()
+}
+
+/// The statements of a text as a line of JSON of type `statements`.
+pub fn statements_json(script: &str, text: &str) -> String {
+    let listed: Vec<String> = statements(script, text)
+        .iter()
+        .map(|one| {
+            format!(
+                "{{\"line\": {}, \"end\": {}, \"kind\": \"{}\"}}",
+                one.line, one.end, one.kind
+            )
+        })
+        .collect();
+    format!(
+        "{{\"type\": \"statements\", \"statements\": [{}]}}",
+        listed.join(", ")
+    )
+}
+
+/// What the checked program says a top-level statement makes: the name it binds, if any, and
+/// the type the engine names (`Frame`, `RegFit`, `Plot`), by the line the statement begins on.
+fn made(program: &Program, text: &str) -> Vec<(u32, Option<String>, Option<String>)> {
+    let line = |byte: usize| position(text, byte).line + 1;
+    let named = |ty: &Ty| (*ty != Ty::Unknown).then(|| ty.to_string());
+    program
+        .statements
+        .iter()
+        .filter_map(|statement| match statement {
+            Statement::Let { binding, span, .. } => {
+                let binding = program.bindings.get(*binding)?;
+                Some((
+                    line(span.start),
+                    Some(binding.name.clone()),
+                    named(&binding.ty),
+                ))
+            }
+            Statement::Print { value, span } => Some((line(span.start), None, named(&value.ty))),
+            _ => None,
+        })
+        .collect()
 }
 
 /// A project in memory, and the runs made in it.
@@ -111,13 +197,15 @@ impl Host {
 
     /// Run the text of `script` (its path in the project). `tell` is given each event as a
     /// line of JSON while the run goes; `cancelled` is asked before each step. The budget is
-    /// the project's `memory`, or the browser's default for a device of `device_bytes`. What
+    /// the project's `memory`, or the browser's default for a device of `device_bytes`. Tables
+    /// and frames are printed at `width` characters, or at the engine's 118 where it is 0. What
     /// comes back is the outcome, as a line of JSON of type `done`.
     pub fn run(
         &self,
         script: &str,
         text: &str,
         device_bytes: Option<u64>,
+        width: usize,
         cancelled: fn() -> bool,
         tell: &dyn Fn(&str),
     ) -> String {
@@ -129,16 +217,19 @@ impl Host {
                     1,
                     "",
                     "error[Z0709]: the project's `zeff.toml` could not be read\n",
+                    "[]",
                 );
             }
         };
+        let defaults = RunOptions::default();
         let options = RunOptions {
             // The project's own `memory` comes first; without one the browser has a default.
             memory: match project.manifest.memory {
                 Some(_) => None,
                 None => Some(default_budget(device_bytes)),
             },
-            ..RunOptions::default()
+            width: if width == 0 { defaults.width } else { width },
+            ..defaults
         };
         let control = Control::asking(cancelled);
         let listener = |event: &Event| tell(&event_json(event));
@@ -151,18 +242,103 @@ impl Host {
             &control,
             Some(&listener),
         );
+        let each = self.each(
+            &project,
+            script,
+            text,
+            &outcome.output.statements,
+            &outcome.output.memory,
+            &frames,
+        );
         *self.frames.borrow_mut() = frames;
         self.done(
             outcome.exit_code,
             &outcome.output.stdout,
             &outcome.output.stderr,
+            &each,
         )
     }
 
-    /// The outcome of a run as a line of JSON, with the frames its bindings hold: each by
-    /// name with its rows and variables, which is what an interface lists before it asks for
-    /// one.
-    fn done(&self, exit_code: i32, stdout: &str, stderr: &str) -> String {
+    /// For each statement of the text, in order, as a JSON array: where it begins and ends;
+    /// the name it binds and the type the engine names for what it makes, from the check;
+    /// whether it ran, and what it printed and said; for a frame bound by `let`, its rows and
+    /// variables, and the memory the engine counts for it (Engine Specification, section 8.3,
+    /// point 7). Every word and number is the engine's.
+    fn each(
+        &self,
+        project: &Project,
+        script: &str,
+        text: &str,
+        outputs: &[StatementOutput],
+        memory: &[MemoryNote],
+        frames: &Frames,
+    ) -> String {
+        let made = match zeff_engine::registry::registry() {
+            Ok(registry) => made(
+                &check_in_project(&self.fs, project, script, text, registry)
+                    .checked
+                    .program,
+                text,
+            ),
+            Err(_) => Vec::new(),
+        };
+        // The frames come back in the order they were bound, so the lets that made them are
+        // matched to them in order, by name.
+        let mut unmatched = frames.iter().peekable();
+        let mut listed = Vec::new();
+        for statement in statements(script, text) {
+            let (name, ty) = made
+                .iter()
+                .find(|(line, _, _)| *line == statement.line)
+                .map(|(_, name, ty)| (name.clone(), ty.clone()))
+                .unwrap_or((None, None));
+            let output = outputs.iter().find(|one| one.line == statement.line);
+            let mut frame = "null".to_string();
+            if let Some(name) = &name
+                && unmatched.peek().is_some_and(|(bound, _)| bound == name)
+                && let Some((_, kept)) = unmatched.next()
+            {
+                frame = format!(
+                    "{{\"rows\": {}, \"variables\": {}}}",
+                    kept.table.rows(),
+                    kept.table.names().len()
+                );
+            }
+            let held = memory.iter().find_map(|note| match note {
+                MemoryNote::Bound {
+                    name: bound,
+                    line,
+                    own,
+                    kept,
+                } if *line == statement.line && Some(bound) == name.as_ref() => {
+                    Some(format!("{{\"own\": {own}, \"kept\": {kept}}}"))
+                }
+                _ => None,
+            });
+            let text_of = |value: &Option<String>| match value {
+                Some(value) => json_string(value),
+                None => "null".to_string(),
+            };
+            listed.push(format!(
+                "{{\"line\": {}, \"end\": {}, \"kind\": \"{}\", \"name\": {}, \"type\": {}, \"ran\": {}, \"stdout\": {}, \"stderr\": {}, \"frame\": {frame}, \"memory\": {}}}",
+                statement.line,
+                statement.end,
+                statement.kind,
+                text_of(&name),
+                text_of(&ty),
+                output.is_some(),
+                json_string(output.map_or("", |one| one.stdout.as_str())),
+                json_string(output.map_or("", |one| one.stderr.as_str())),
+                held.unwrap_or_else(|| "null".to_string()),
+            ));
+        }
+        format!("[{}]", listed.join(", "))
+    }
+
+    /// The outcome of a run as a line of JSON, with each statement (see [`Host::each`]) and
+    /// the frames its bindings hold: each by name with its rows and variables, which is what
+    /// an interface lists before it asks for one.
+    fn done(&self, exit_code: i32, stdout: &str, stderr: &str, statements: &str) -> String {
         let frames: Vec<String> = self
             .frames
             .borrow()
@@ -177,7 +353,7 @@ impl Host {
             })
             .collect();
         format!(
-            "{{\"type\": \"done\", \"exit_code\": {exit_code}, \"stdout\": {}, \"stderr\": {}, \"frames\": [{}]}}",
+            "{{\"type\": \"done\", \"exit_code\": {exit_code}, \"stdout\": {}, \"stderr\": {}, \"statements\": {statements}, \"frames\": [{}]}}",
             json_string(stdout),
             json_string(stderr),
             frames.join(", ")

@@ -1,67 +1,54 @@
 import { describe, expect, it } from "vitest";
 import example from "../../examples/scratch/scripts/main.zeff?raw";
-import type { RunEvent } from "../engine/messages";
-import { lastLine, lastLineByShape, placed } from "./place";
+import type { Ranged, RunEvent } from "../engine/messages";
+import { endOf, placed } from "./place";
 import { begin, end, hear } from "./run";
 
-/** A run of `text` whose statements begin on `starts`, each printing its line. */
-function ran(text: string, starts: number[]) {
+const outcome = { exitCode: 0, stdout: "", stderr: "", statements: [], frames: [], stopped: false };
+
+/** Statements from their first and last lines, as the engine's outline gives them. */
+const ranges = (...spans: [number, number][]): Ranged[] =>
+  spans.map(([line, last]) => ({ line, end: last, kind: "statement" }));
+
+/** A run of `text` whose statements the engine reads as `told`, each printing its line. */
+function ran(text: string, told: Ranged[]) {
   const run = begin("scripts/main.zeff", text, 0, "15:42");
-  starts.forEach((line, at) => {
+  hear(run, { type: "ranges", statements: told }, 0);
+  told.forEach(({ line }, at) => {
     const events: RunEvent[] = [
-      { type: "started", statement: at + 1, of: starts.length, line },
+      { type: "started", statement: at + 1, of: told.length, line },
       { type: "output", stdout: `${line}\n`, stderr: "" },
-      { type: "finished", statement: at + 1, of: starts.length, line, failed: false },
+      { type: "finished", statement: at + 1, of: told.length, line, failed: false },
     ];
     for (const event of events) hear(run, event, 1);
   });
-  end(run, { exitCode: 0, stdout: "", stderr: "", frames: [], stopped: false }, 2);
+  end(run, outcome, 2);
   return run;
 }
 
-describe("where a block stands in the Inline layout", () => {
-  it("is under the last line of its statement, before the blank lines and comments that follow", () => {
-    const lines = [
-      "let a = 1",
-      "",
-      "// about b",
-      "let b = frame(",
-      "    x = [1, 2],",
-      ")",
-      "",
-      "// the end",
-    ];
-    expect(lastLine(lines, 1, 4)).toBe(1);
-    expect(lastLine(lines, 4, null)).toBe(6);
-    // A statement of one line that is the script's last.
-    expect(lastLine(["print(1)"], 1, null)).toBe(1);
-    // Two statements on neighbouring lines.
-    expect(lastLine(["a", "b"], 1, 2)).toBe(1);
-  });
-
-  it("puts each result of the example under the statement that made it", () => {
-    const run = ran(example, [4, 5, 8, 12, 13, 16, 17, 20, 21]);
+describe("where a block stands", () => {
+  it("is under the last line the engine gives its statement", () => {
+    const text = "let a = 1\n\n// about b\nlet b = frame(\n    x = [1, 2],\n)\n\n// then\nb\n";
+    const run = ran(text, ranges([1, 1], [4, 6], [9, 9]));
     expect(placed(run).map((one) => [one.block.line, one.after])).toEqual([
-      [4, 4],
-      [5, 5],
-      [8, 8],
-      [12, 12],
-      [13, 13],
-      [16, 16],
-      [17, 17],
-      [20, 20],
-      [21, 21],
+      [1, 1],
+      [4, 6],
+      [9, 9],
     ]);
   });
 
-  it("puts the result of a statement written over several lines under its last line", () => {
-    const text =
-      "let d = frame(\n    x = [1, 2],\n    y = [3, 4],\n)\n\n// then\nd\n    .summary([x])\n";
-    expect(placed(ran(text, [1, 7])).map((one) => one.after)).toEqual([4, 8]);
+  it("puts each result of the example under the statement that made it", () => {
+    const lines = [4, 5, 8, 12, 13, 16, 17, 20, 21];
+    const run = ran(example, ranges(...lines.map((line): [number, number] => [line, line])));
+    expect(placed(run).map((one) => [one.block.line, one.after])).toEqual(
+      lines.map((line) => [line, line]),
+    );
   });
 
-  it("puts what the check found under the line it names, and what belongs to no line at the end", () => {
-    const run = begin("scripts/main.zeff", "print(1)\nlet z = nosuch(3)\n", 0, "15:42");
+  it("puts what the check found under the statement that holds the line it names, and what belongs to no line at the end", () => {
+    const text = "print(1)\nlet z = nosuch(\n    3)\n";
+    const run = begin("scripts/main.zeff", text, 0, "15:42");
+    hear(run, { type: "ranges", statements: ranges([1, 1], [2, 3]) }, 0);
     hear(
       run,
       {
@@ -71,54 +58,57 @@ describe("where a block stands in the Inline layout", () => {
       },
       1,
     );
-    end(run, { exitCode: 1, stdout: "", stderr: "", frames: [], stopped: false }, 2);
-    expect(placed(run).map((one) => one.after)).toEqual([2]);
+    end(run, { ...outcome, exitCode: 1 }, 2);
+    expect(placed(run).map((one) => one.after)).toEqual([3]);
   });
 
-  it("finds the end of a statement from its shape, where no later statement tells it", () => {
-    const lines = [
-      'print("a")',
-      "for i in 1..9 {",
-      "    let rows = d.where(year == 2015) // a } in a comment",
-      "}",
-      'print("b")',
-      "let m = wages",
-      '    .where(industry != "{")',
-      "    .reg(y ~ x +",
-      "         z)",
-      'print("c")',
-    ];
-    expect(lastLineByShape(lines, 1)).toBe(1);
-    expect(lastLineByShape(lines, 2)).toBe(4);
-    expect(lastLineByShape(lines, 5)).toBe(5);
-    expect(lastLineByShape(lines, 6)).toBe(9);
-    expect(lastLineByShape(lines, 10)).toBe(10);
-    // A statement that is never closed runs to the end of the script.
-    expect(lastLineByShape(["f(", "1,"], 1)).toBe(2);
-  });
-
-  it("puts a statement that failed, after which nothing ran, under its own last line", () => {
-    const text = 'print("a")\nlet w = import("data/none.csv")\nprint("b")\n';
-    const run = begin("scripts/main.zeff", text, 0, "15:42");
-    hear(run, { type: "started", statement: 1, of: 3, line: 1 }, 1);
-    hear(run, { type: "output", stdout: "a\n", stderr: "" }, 1);
-    hear(run, { type: "finished", statement: 1, of: 3, line: 1, failed: false }, 1);
-    hear(run, { type: "started", statement: 2, of: 3, line: 2 }, 1);
-    hear(run, { type: "output", stdout: "", stderr: "error[Z0715]: no file\n" }, 1);
-    hear(run, { type: "finished", statement: 2, of: 3, line: 2, failed: true }, 1);
-    end(run, { exitCode: 1, stdout: "", stderr: "", frames: [], stopped: false }, 2);
-    expect(placed(run).map((one) => one.after)).toEqual([1, 2]);
-  });
-
-  it("puts a statement that is running under its own last line, not at the end of the script", () => {
+  it("puts a statement that is running under its own last line, from the moment it starts", () => {
     const text = 'for i in 1..9 {\n    print(i)\n}\nprint("after")\n';
     const run = begin("scripts/main.zeff", text, 0, "15:42");
+    hear(run, { type: "ranges", statements: ranges([1, 3], [4, 4]) }, 0);
     hear(run, { type: "started", statement: 1, of: 2, line: 1 }, 1);
     expect(placed(run).map((one) => one.after)).toEqual([3]);
   });
 
+  it("takes the ranges from the outcome where they were not told before the run", () => {
+    const run = begin("scripts/main.zeff", "let d = frame(\n  x = [1])\nd\n", 0, "15:42");
+    hear(run, { type: "started", statement: 1, of: 2, line: 1 }, 1);
+    hear(run, { type: "finished", statement: 1, of: 2, line: 1, failed: false }, 1);
+    hear(run, { type: "started", statement: 2, of: 2, line: 3 }, 1);
+    hear(run, { type: "output", stdout: "d\n", stderr: "" }, 1);
+    hear(run, { type: "finished", statement: 2, of: 2, line: 3, failed: false }, 1);
+    const info = {
+      name: null,
+      type: null,
+      ran: true,
+      stdout: "",
+      stderr: "",
+      frame: null,
+      memory: null,
+    };
+    end(
+      run,
+      {
+        ...outcome,
+        statements: [
+          { line: 1, end: 2, kind: "statement", ...info },
+          { line: 3, end: 3, kind: "statement", ...info },
+        ],
+      },
+      2,
+    );
+    expect(run.ranges).toEqual(ranges([1, 2], [3, 3]));
+    expect(placed(run).map((one) => one.after)).toEqual([3]);
+  });
+
+  it("stands on the line itself where no statement holds it, or the engine has not said", () => {
+    expect(endOf(ranges([1, 3]), 5)).toBe(5);
+    expect(endOf(null, 2)).toBe(2);
+    expect(endOf(ranges([1, 3]), 2)).toBe(3);
+  });
+
   it("never names a line past the end of the script", () => {
-    expect(placed(ran("a\n", [1, 9])).map((one) => one.after)).toEqual([1, 1]);
-    expect(placed(ran("", [1])).map((one) => one.after)).toEqual([1]);
+    expect(placed(ran("a\n", ranges([1, 1], [9, 9]))).map((one) => one.after)).toEqual([1, 1]);
+    expect(placed(ran("", ranges([1, 1]))).map((one) => one.after)).toEqual([1]);
   });
 });

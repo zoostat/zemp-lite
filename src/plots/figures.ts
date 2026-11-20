@@ -1,6 +1,6 @@
 // A plot from the engine, at the size of its pane (Zemp Specification, section 7: "the engine
 // returns a resolution-independent scene, and the viewer redraws it to the exact size of its
-// pane"). At Zeff 0.7.0 the engine's browser build hands no scene and no plot to an
+// pane"). At Zeff 0.7.0 and 0.8.0 the engine's browser build hands no scene and no plot to an
 // interface; a figure leaves it only as a file that `export` writes. So the interface draws a
 // plot by running Zeff: to the text of the script it adds, for each plot to be shown, an
 // `export` to an SVG file at the size of the place it will be shown in, in millimetres, and
@@ -29,7 +29,7 @@ export function plotsOf(run: Run): PlotStatement[] {
   return run.statements
     .filter((statement) => statement.state === "done" && statement.printed.startsWith(HEAD))
     .map((statement) => {
-      const last = endOf(run, statement.line, true);
+      const last = Math.min(endOf(run.ranges, statement.line), Math.max(lines.length, 1));
       return {
         line: statement.line,
         last,

@@ -10,7 +10,12 @@ export interface Runs {
   readonly project: string | null;
   open(name: string): Promise<void>;
   put(path: string, bytes: Uint8Array): Promise<void>;
-  run(script: string, text: string, listener?: (event: RunEvent) => void): Promise<Outcome>;
+  run(
+    script: string,
+    text: string,
+    listener?: (event: RunEvent) => void,
+    width?: number,
+  ): Promise<Outcome>;
 }
 
 export class Session {
@@ -38,9 +43,15 @@ export class Session {
 
   /**
    * Run the text of a script of the project, the engine first brought in step with the
-   * project's files. The text is what the editor holds, saved or not.
+   * project's files. The text is what the editor holds, saved or not; `width` is the
+   * characters tables are printed at, 0 for the engine's own.
    */
-  async run(script: string, text: string, listener?: (event: RunEvent) => void): Promise<Outcome> {
+  async run(
+    script: string,
+    text: string,
+    listener?: (event: RunEvent) => void,
+    width = 0,
+  ): Promise<Outcome> {
     // A worker that was ended and started again holds no project.
     if (this.#refill || this.#engine.project === null) {
       await this.#engine.open(this.project.info.name);
@@ -57,6 +68,6 @@ export class Session {
       }
     }
     this.#changed.clear();
-    return this.#engine.run(script, text, listener);
+    return this.#engine.run(script, text, listener, width);
   }
 }

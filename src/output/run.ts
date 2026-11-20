@@ -3,7 +3,7 @@
 // a run as events (a statement started, a piece of output, a statement finished) and then its
 // outcome; this file turns them into blocks, one for each line that has something to show.
 // The words are the engine's: nothing here writes a message of its own.
-import type { Outcome, RunEvent } from "../engine/messages";
+import type { Outcome, Ranged, RunEvent } from "../engine/messages";
 
 /** One thing the engine said: a warning, a note or an error. */
 export interface Said {
@@ -100,6 +100,8 @@ export interface Run {
   text: string;
   /** How many statements the script has, once the engine has said. */
   of: number | null;
+  /** The statements of the text as the engine reads them, once it has said: where each ends. */
+  ranges: Ranged[] | null;
   statements: Statement[];
   /** What the engine said before the first statement started: what its check found. */
   beforeRaw: string;
@@ -125,6 +127,7 @@ export function begin(script: string, text: string, now: number, clock: string):
     script,
     text,
     of: null,
+    ranges: null,
     statements: [],
     beforeRaw: "",
     afterPrinted: "",
@@ -141,6 +144,9 @@ export function hear(run: Run, event: RunEvent, now: number): void {
   const current = run.statements.at(-1);
   const going = current !== undefined && current.state === "running" ? current : null;
   switch (event.type) {
+    case "ranges":
+      run.ranges = event.statements;
+      break;
     case "started":
       run.of = event.of;
       run.statements.push({
@@ -180,6 +186,10 @@ export function hear(run: Run, event: RunEvent, now: number): void {
 
 /** The run is over: how it ended. */
 export function end(run: Run, outcome: Outcome, now: number): void {
+  // A run whose ranges were not told before it began has them from its outcome.
+  if (run.ranges === null && outcome.statements.length > 0) {
+    run.ranges = outcome.statements.map(({ line, end, kind }) => ({ line, end, kind }));
+  }
   run.ms = now - run.startedAt;
   // A statement still marked as running did not finish: the run was ended under it.
   for (const statement of run.statements) {

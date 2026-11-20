@@ -14,9 +14,18 @@ import {
   withExports,
 } from "./figures";
 
-/** A run of `text`: each statement given by the line it begins on and what it printed. */
-function ran(text: string, statements: [number, string][]) {
+/**
+ * A run of `text`: each statement given by the line it begins on, what it printed, and the
+ * line it ends on where that is another, as the engine's ranges tell it.
+ */
+function ran(text: string, statements: [number, string, number?][]) {
   const run = begin("scripts/main.zeff", text, 0, "15:42");
+  const ranges = statements.map(([line, , last]) => ({
+    line,
+    end: last ?? line,
+    kind: "statement" as const,
+  }));
+  hear(run, { type: "ranges", statements: ranges }, 0);
   statements.forEach(([line, printed], at) => {
     const events: RunEvent[] = [
       { type: "started", statement: at + 1, of: statements.length, line },
@@ -25,7 +34,7 @@ function ran(text: string, statements: [number, string][]) {
     ];
     for (const event of events) hear(run, event, 1);
   });
-  end(run, { exitCode: 0, stdout: "", stderr: "", frames: [], stopped: false }, 2);
+  end(run, { exitCode: 0, stdout: "", stderr: "", statements: [], frames: [], stopped: false }, 2);
   return run;
 }
 
@@ -56,7 +65,7 @@ describe("the plots of a run", () => {
       'let w = dataset(wages)\nw.plot(x: log(wage))\n    .histogram(bins: 30) // the shape\n\n// after\nprint("x")\n';
     const run = ran(text, [
       [1, ""],
-      [2, "plot · w · log(wage)\n"],
+      [2, "plot · w · log(wage)\n", 3],
       [6, "x\n"],
     ]);
     expect(plotsOf(run)).toEqual([

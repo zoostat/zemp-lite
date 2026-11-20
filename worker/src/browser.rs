@@ -50,11 +50,14 @@ impl Project {
     }
 
     /// Run a script. `device_bytes` is the memory the device reports, or 0 where it reports
-    /// none. The events go to `zeffHost.event`; the outcome comes back as a line of JSON.
-    pub fn run(&self, script: &str, text: &str, device_bytes: f64) -> String {
+    /// none; `width` the width tables are printed at, or 0 for the engine's own. The events
+    /// go to `zeffHost.event`; the outcome comes back as a line of JSON.
+    pub fn run(&self, script: &str, text: &str, device_bytes: f64, width: u32) -> String {
         let device = (device_bytes > 0.0).then_some(device_bytes as u64);
         self.host
-            .run(script, text, device, cancelled, &|json| host_event(json))
+            .run(script, text, device, width as usize, cancelled, &|json| {
+                host_event(json)
+            })
     }
 
     /// A frame of the last run as the bytes of an Arrow stream, or nothing where no binding
@@ -62,6 +65,12 @@ impl Project {
     pub fn frame(&self, name: &str) -> Option<Vec<u8>> {
         self.host.frame(name)
     }
+}
+
+/// The statements of a text as the engine reads them, as a line of JSON.
+#[wasm_bindgen]
+pub fn statements(script: &str, text: &str) -> String {
+    crate::statements_json(script, text)
 }
 
 /// The version of the Zeff engine in the worker.
