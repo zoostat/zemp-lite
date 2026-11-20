@@ -689,3 +689,18 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Asked of the Zeff side.** For exact marks before the cache of 0.11.0: the dependency graph's nodes to say whether a statement reads a file, writes one, or draws random numbers. Added to the note for the Zeff 0.9.0 session in the shared notes folder.
 
 **Reason.** The checklist's step 7a; the margin editor's design, sections 7.8 and 7.9; open decisions #76 and #176 (R9).
+
+## 21 November 2026: Run to here and Run from here (release 0.2, step 7b)
+
+**Choice.** On the machinery of step 7a:
+
+- **Run to here** (#76; R15) runs the statements before the statement the cursor is on, or whose line number is pressed, as the design's table has it ("the statements before the cursor"), so that a reader stops just before a statement to look at what it is given. It is in ⌘K, and on resting over a statement's line number the words *Run to here* appear beside it: a gutter of no width of its own lays a button over each statement's first line number, and the words show while the pointer rests on it. The first statement has none, having nothing before it. The buttons are not stops of the Tab key, one for every statement; the keyboard has the command in ⌘K.
+- **Run from here** (#181) runs the statement at the cursor and every statement after it, with what they need; in ⌘K.
+- **Run the statement at the cursor** is in ⌘K too, beside ⌘↵.
+- Where what a statement asked for needs fails, the run stops there, and the statement's note says `not run · line n failed`, whether or not it had a result before.
+
+**A fault found and mended.** A window is ready before its engine's worker has started, so the first reading of a script's statements (which places the words on the line numbers) could be asked of no worker and fail without a word. The reading now waits for the worker.
+
+**Reason.** The checklist's step 7b; the margin editor's design, sections 7.8 and 15; open decisions #76 and #181.
+
+**A test mended with it.** The run on GitHub of step 7a (ab0746d) failed in Chromium on the margin tests' helper that runs and unfolds: since step 5b it waited for every output of the example to be drawn, but in a window of ordinary height the editor draws only the outputs near the window (three of seven there). The helper now waits until no note on the page is folded, an output is drawn, and their number holds steady; the tests' checks are unchanged.

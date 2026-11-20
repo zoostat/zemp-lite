@@ -71,7 +71,7 @@ export function notesOf(run: Run, marked: ReadonlyMap<number, { mark: Mark }> = 
       asked &&
       failed !== undefined &&
       failed.line < range.line &&
-      event?.mark !== undefined;
+      (event === undefined || event.mark !== undefined);
 
     let main = "";
     let sub = "";

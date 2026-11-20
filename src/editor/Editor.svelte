@@ -17,7 +17,7 @@
   import { onMount } from "svelte";
   import type { Place } from "../app/steady";
   import { inlineOutput, showOutput, type InlineOutput } from "./inline";
-  import { marginNotes, showNotes, type MarginNotes } from "./margin";
+  import { marginNotes, showNotes, showRunTo, type MarginNotes, type RunTo } from "./margin";
   import { zeffLanguage } from "./language";
 
   let {
@@ -29,6 +29,8 @@
     notes = null,
     onunfold,
     onstatement,
+    runto = null,
+    oncursor,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -48,6 +50,10 @@
     onunfold?: (line: number) => void;
     /** ⌘↵: run the statement on this line with what it needs; without it, ⌘↵ runs the script. */
     onstatement?: (line: number) => void;
+    /** Run to here, offered on these statements' line numbers. */
+    runto?: RunTo | null;
+    /** The cursor moved to this line. */
+    oncursor?: (line: number) => void;
   } = $props();
 
   let host: HTMLDivElement;
@@ -181,6 +187,9 @@
           }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onchange(update.state.doc.toString());
+            if (update.selectionSet || update.docChanged) {
+              oncursor?.(update.state.doc.lineAt(update.state.selection.main.head).number);
+            }
           }),
         ],
       }),
@@ -204,6 +213,14 @@
     const shown = notes;
     if (view !== null && inline !== null) {
       view.dispatch({ effects: showNotes.of(shown) });
+    }
+  });
+
+  // Run to here on the statements' line numbers, each time they change.
+  $effect(() => {
+    const offered = runto;
+    if (view !== null && inline !== null) {
+      view.dispatch({ effects: showRunTo.of(offered) });
     }
   });
 

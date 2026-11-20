@@ -95,6 +95,8 @@ export class Workspace {
    * each edit: what marks the results on the page against the script (`src/margin/stale.ts`).
    */
   now = $state<{ path: string; text: string; ranges: Ranged[] } | null>(null);
+  /** The line of the cursor in the margin editor, for the commands that run from it. */
+  cursor = $state<{ path: string; line: number } | null>(null);
   #reading: ReturnType<typeof setTimeout> | null = null;
   /** The frames the last run left. */
   frames = $state<FrameInfo[]>([]);
@@ -461,8 +463,17 @@ export class Workspace {
     }
   }
 
+  /** Have the engine read the statements of a script as it stands, where it has not yet. */
+  readStatements(path: string, text: string): void {
+    const now = this.now;
+    if (now !== null && now.path === path && now.text === text) return;
+    void this.#readStatements(path, text);
+  }
+
   async #readStatements(path: string, text: string): Promise<void> {
     try {
+      // The window can be ready before the engine's worker is: it is waited for.
+      await this.engine.start();
       const ranges = await this.engine.statements(path, text);
       if (this.buffers[path]?.text === text) this.now = { path, text, ranges };
     } catch {

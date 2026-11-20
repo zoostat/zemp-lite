@@ -48,6 +48,25 @@
   const commands = $derived<Command[]>([
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
     { name: "Check the script", hint: "nothing is run", run: () => void workspace.check() },
+    ...(workspace.views.layout === "margin" && workspace.cursor !== null
+      ? [
+          {
+            name: "Run the statement at the cursor",
+            hint: "⌘↵ in the script",
+            run: () => void workspace.runPart("statement", workspace.cursor?.line ?? 1),
+          },
+          {
+            name: "Run to here",
+            hint: `the statements before line ${workspace.cursor.line}`,
+            run: () => void workspace.runPart("to", workspace.cursor?.line ?? 1),
+          },
+          {
+            name: "Run from here",
+            hint: `line ${workspace.cursor.line} and what follows`,
+            run: () => void workspace.runPart("from", workspace.cursor?.line ?? 1),
+          },
+        ]
+      : []),
     {
       name: workspace.views.layout === "margin" ? "Layout: Panes" : "Layout: Margin",
       hint: `now ${workspace.views.layout === "margin" ? "Margin" : "Panes"}`,

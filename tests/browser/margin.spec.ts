@@ -37,9 +37,20 @@ async function runUnfolded(page: Page, press: Press) {
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await press(page.getByRole("button", { name: "Unfold all", exact: true }));
-  // Every output with something to show is drawn before the page is read.
-  const opening = await page.locator('[data-testid="note"][aria-expanded]').count();
-  await expect(page.locator(".cm-zemp-output")).toHaveCount(opening);
+  // Every output is unfolded before the page is read: no note on the page is folded, and
+  // the outputs near the window are drawn (the editor draws only what is near the window).
+  await expect(page.locator('[data-testid="note"][aria-expanded="false"]')).toHaveCount(0);
+  await expect(page.locator(".cm-zemp-output").first()).toBeVisible();
+  // And their number holds steady: the last of them drawn.
+  let drawn = -1;
+  await expect
+    .poll(async () => {
+      const now = await page.locator(".cm-zemp-output").count();
+      const steady = now === drawn;
+      drawn = now;
+      return steady;
+    })
+    .toBe(true);
 }
 
 /** The notes of the margin: for each, the line of code it stands on and its words. */
@@ -669,4 +680,65 @@ test("⌥↵ unfolds and folds the output of the statement at the cursor", async
   );
   // The script is as it was: the key wrote nothing into it.
   expect(await scriptText(page)).toBe(file("examples/scratch/scripts/main.zeff"));
+});
+
+test("Run to here, on a statement's line number, runs the statements before it", async ({
+  page,
+  press,
+  browserName,
+}) => {
+  await scratch(page, press);
+  const runTo = page.locator('[data-testid="run-to-here"][data-line="8"]');
+  await expect(runTo).toHaveCount(1);
+  // The words are offered on the first line of every statement but the first, and only there.
+  await expect(page.getByTestId("run-to-here")).toHaveCount(8);
+  await expect(page.locator('[data-testid="run-to-here"][data-line="7"]')).toHaveCount(0);
+  if (browserName === "chromium") {
+    await expect(runTo.locator("span")).toBeHidden();
+    await runTo.hover();
+    await expect(runTo.locator("span")).toBeVisible();
+    await expect(runTo).toHaveText("Run to here");
+  }
+  await press(runTo);
+  await expect(page.getByRole("status")).toHaveText("done");
+  const note = (line: number) => page.locator(`[data-testid="note"][data-line="${line}"]`);
+  await expect(note(4)).toContainText("Frame · 18,412 × 11");
+  await expect(note(5)).toContainText("Frame");
+  await expect(note(8)).toContainText("not run");
+  await expect(note(21)).toContainText("not run");
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · \d+:\d\d · 2 statements in /);
+});
+
+test("Run from here, from ⌘K, runs the statement at the cursor, what follows and what they need", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await editor(page).focus();
+  await page.keyboard.press("ControlOrMeta+Home");
+  for (let line = 1; line < 16; line++) await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.keyboard.type("run from here");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("done");
+  const note = (line: number) => page.locator(`[data-testid="note"][data-line="${line}"]`);
+  // Lines 16 to 21 ran, with lines 4 and 5, which they need; the summary and the fit did not.
+  for (const line of [4, 5, 16, 17, 20, 21]) await expect(note(line)).not.toContainText("not run");
+  for (const line of [8, 12, 13]) await expect(note(line)).toContainText("not run");
+});
+
+test("where what a statement needs fails, the statement asked for says so", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await write(page, 'print(1)\nlet w = import("data/none.csv")\nprint(2)\n');
+  await page.keyboard.press("ControlOrMeta+Home");
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.keyboard.type("run from here");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  await expect(page.locator('[data-testid="note"][data-line="3"]')).toContainText(
+    "not run · line 2 failed",
+  );
 });

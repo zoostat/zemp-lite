@@ -87,3 +87,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 145 unit tests; 197 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 7b `[function]`: Run to here and Run from here.
+
+## 21 November 2026, release 0.2, step 7b (Run to here and Run from here)
+
+**Done.** Step 7b `[function]`: **Run to here** in ⌘K and as words on resting over a statement's line number; **Run from here** and **Run the statement at the cursor** in ⌘K; `not run · line n failed` where what a statement needs fails. A start-up race mended (the first reading of a script's statements now waits for the engine's worker). 7a's run on GitHub had failed on a test helper that expected outputs the editor had not drawn in a short window; mended here.
+
+**Green.** `npm run routine`: 145 unit tests; 203 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 8 `[function]`: the run's facts and what the run said.

@@ -133,6 +133,23 @@
     return () => watch.disconnect();
   });
 
+  // The engine's reading of the script as it stands, for the marks and for Run to here.
+  $effect(() => {
+    if (workspace.ready && buffer?.loaded) workspace.readStatements(path, buffer.text);
+  });
+  // Run to here on every statement's line number but the first, which has nothing before it.
+  const runto = $derived.by(() => {
+    const now = workspace.now;
+    if (now === null || now.path !== path || buffer === undefined || now.text !== buffer.text) {
+      return null;
+    }
+    const lines = now.ranges.filter((one) => one.kind === "statement").map((one) => one.line);
+    return {
+      lines: lines.slice(1),
+      onrun: (line: number) => void workspace.runPart("to", line),
+    };
+  });
+
   /** ⌥↵: unfold or fold the output of the statement at the cursor. */
   function unfoldAt(line: number): void {
     const range = ours?.ranges?.find(
@@ -215,6 +232,8 @@
             notes={margin}
             onunfold={unfoldAt}
             onstatement={(line) => void workspace.runPart("statement", line)}
+            {runto}
+            oncursor={(line) => (workspace.cursor = { path, line })}
           />
         {/key}
       {/if}
