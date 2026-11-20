@@ -2,9 +2,10 @@
 // left panel and the tabs show, the scripts being edited, and the last run. Every screen of
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
-import type { FrameInfo } from "../engine/messages";
+import type { Checked, FrameInfo, Ranged } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
+import { merged } from "../margin/stale";
 import { begin, blocks, clockOf, end, hear, refused, said, type Run } from "../output/run";
 import {
   keyOf,
@@ -89,6 +90,12 @@ export class Workspace {
   #relaying: ReturnType<typeof setTimeout> | null = null;
   /** What was last copied, in words, for the reader and for a screen reader. */
   copied = $state("");
+  /**
+   * The statements of a script as it stands, as the engine reads them, read a moment after
+   * each edit: what marks the results on the page against the script (`src/margin/stale.ts`).
+   */
+  now = $state<{ path: string; text: string; ranges: Ranged[] } | null>(null);
+  #reading: ReturnType<typeof setTimeout> | null = null;
   /** The frames the last run left. */
   frames = $state<FrameInfo[]>([]);
   /** Something the user asked for that could not be done, in words. */
@@ -296,6 +303,12 @@ export class Workspace {
       return;
     }
     buffer.text = text;
+    // The engine reads the script as it now stands, a moment after the last keystroke.
+    if (this.#reading !== null) clearTimeout(this.#reading);
+    this.#reading = setTimeout(() => {
+      this.#reading = null;
+      void this.#readStatements(path, text);
+    }, 120);
     buffer.saved = false;
     this.#saving = this.#saving
       .then(() => this.project.writeText(path, text))
@@ -438,36 +451,111 @@ export class Workspace {
     try {
       await this.#saving;
       const checked = await this.session.check(script, text);
-      // The findings, as a run that the check refused: under the lines they name.
-      const run = begin(script, text, performance.now(), clockOf(Date.now()));
-      run.checkOnly = true;
-      hear(run, { type: "ranges", statements: checked.ranges }, performance.now());
-      hear(run, { type: "output", stdout: "", stderr: checked.found }, performance.now());
-      end(
-        run,
-        {
-          exitCode: checked.exitCode,
-          stdout: "",
-          stderr: checked.found,
-          statements: [],
-          frames: [],
-          stopped: false,
-        },
-        performance.now(),
-      );
-      if (refused(run)) {
-        const earlier = this.lastRun;
-        if (earlier === null || earlier.script !== script) {
-          this.lastRun = run;
-          this.refusal = null;
-        } else {
-          this.refusal = run;
-        }
-      } else if (this.refusal?.script === script) {
-        this.refusal = null;
-      }
+      this.#showChecked(script, text, checked);
       this.checked = { script, text, summary: checked.summary };
       this.status = "done";
+    } catch (error) {
+      this.status = (error as Error).message;
+    } finally {
+      this.running = false;
+    }
+  }
+
+  async #readStatements(path: string, text: string): Promise<void> {
+    try {
+      const ranges = await this.engine.statements(path, text);
+      if (this.buffers[path]?.text === text) this.now = { path, text, ranges };
+    } catch {
+      // The engine is not there to ask: the marks wait for the next edit or run.
+    }
+  }
+
+  /**
+   * Run less than the script (the margin editor's design, 7.8), by the line of the statement
+   * the cursor is on: `statement` runs it with every statement it needs (⌘↵; #176, R9), `to`
+   * the statements before it (Run to here; #76), `from` it and every statement after it, with
+   * what they need (Run from here; #181). The engine keeps nothing between two runs in a
+   * browser at 0.8.0, so what is needed runs again from the top, the other statements blanked;
+   * the other results on the page stay, marked where they are no longer the script's. The
+   * whole script is checked first, as Zeff checks before it runs.
+   */
+  async runPart(kind: "statement" | "to" | "from", line: number): Promise<void> {
+    if (this.running) return;
+    this.running = true;
+    const work = this.#runPart(this.#busy, kind, line);
+    this.#busy = work;
+    await work;
+  }
+
+  async #runPart(
+    before: Promise<void>,
+    kind: "statement" | "to" | "from",
+    line: number,
+  ): Promise<void> {
+    await before;
+    const script = this.scriptPath;
+    await this.#load(script);
+    const text = this.buffers[script]?.text ?? "";
+    this.running = true;
+    try {
+      await this.#saving;
+      const checked = await this.session.check(script, text);
+      if (checked.exitCode !== 0) {
+        // Refused: nothing runs, and the findings stand under their lines, as Check shows them.
+        this.#showChecked(script, text, checked);
+        this.checked = { script, text, summary: checked.summary };
+        this.status = "done";
+        return;
+      }
+      const graph = await this.session.dependencies(script, text);
+      const target = graph
+        .filter((one) => one.line <= line)
+        .reduce<number | null>((at, one) => Math.max(at ?? 0, one.line), null);
+      const wanted =
+        kind === "statement"
+          ? graph.filter((one) => one.line === target)
+          : kind === "to"
+            ? graph.filter((one) => target !== null && one.line < target)
+            : graph.filter((one) => one.line >= (target ?? graph[0]?.line ?? 1));
+      const lines = wanted
+        .flatMap((one) => one.needs)
+        .filter((one, at, all) => all.indexOf(one) === at)
+        .sort((a, b) => a - b);
+      if (lines.length === 0) {
+        this.status = "nothing to run there";
+        return;
+      }
+      const previous = this.lastRun;
+      const unfolded = this.views.script.unfolded[script];
+      if (previous !== null && previous.script === script && unfolded !== undefined) {
+        const now = followed(previous.text, text, unfolded);
+        if (now.join() !== unfolded.join()) this.setUnfolded(script, now);
+      }
+      const fresh = begin(script, text, performance.now(), clockOf(Date.now()));
+      this.#runs += 1;
+      fresh.number = this.#runs;
+      fresh.width = this.printWidth;
+      fresh.partial = lines;
+      this.status = "running";
+      const outcome = await this.session.run(
+        script,
+        text,
+        (event) => hear(fresh, event, performance.now()),
+        this.printWidth,
+        lines,
+      );
+      end(fresh, outcome, performance.now());
+      this.refusal = null;
+      this.figures = {};
+      this.#wanted.clear();
+      this.lastRun =
+        previous !== null && previous.script === script ? merged(previous, fresh) : fresh;
+      this.frames = outcome.frames;
+      this.status = outcome.stopped
+        ? "stopped"
+        : outcome.exitCode === 0
+          ? "done"
+          : `ended with exit code ${outcome.exitCode}`;
     } catch (error) {
       this.status = (error as Error).message;
     } finally {
@@ -554,6 +642,41 @@ export class Workspace {
   /** A code's explained page, as `zeff explain` prints it. */
   async explain(code: string): Promise<string> {
     return (await this.engine.explain(code)).text;
+  }
+
+  /**
+   * What a check found, shown as a run the check refused: under the lines it names, the
+   * results on the page kept; or, where there are none, as the page itself.
+   */
+  #showChecked(script: string, text: string, checked: Checked): void {
+    // The findings, as a run that the check refused: under the lines they name.
+    const run = begin(script, text, performance.now(), clockOf(Date.now()));
+    run.checkOnly = true;
+    hear(run, { type: "ranges", statements: checked.ranges }, performance.now());
+    hear(run, { type: "output", stdout: "", stderr: checked.found }, performance.now());
+    end(
+      run,
+      {
+        exitCode: checked.exitCode,
+        stdout: "",
+        stderr: checked.found,
+        statements: [],
+        frames: [],
+        stopped: false,
+      },
+      performance.now(),
+    );
+    if (refused(run)) {
+      const earlier = this.lastRun;
+      if (earlier === null || earlier.script !== script) {
+        this.lastRun = run;
+        this.refusal = null;
+      } else {
+        this.refusal = run;
+      }
+    } else if (this.refusal?.script === script) {
+      this.refusal = null;
+    }
   }
 
   /** The statements of the last run that ended in a plot, once the run is over. */

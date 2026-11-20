@@ -19,6 +19,8 @@ export interface InlineOutput {
   placed: Placed[];
   /** The script has been edited since the run. */
   edited: boolean;
+  /** How the output of the statement on `line` stands, where it is no longer the script's. */
+  stale?: (line: number | null) => "edited" | "stale" | null;
   /**
    * What the engine's check found when it refused the script, where the results of the run
    * before were kept: each finding under the line it names, above what is kept there.
@@ -52,7 +54,7 @@ function heights(workspace: Workspace): Map<string, number> {
 
 class BlockWidget extends WidgetType {
   readonly #placed: Placed;
-  readonly #edited: boolean;
+  readonly #edited: "edited" | "stale" | null;
   readonly #oncancel: () => void;
   readonly #onfold: ((line: number) => void) | undefined;
   readonly #workspace: Workspace;
@@ -63,7 +65,7 @@ class BlockWidget extends WidgetType {
   readonly #sized: string;
   #component: Record<string, unknown> | null = null;
 
-  constructor(placed: Placed, output: InlineOutput, edited: boolean) {
+  constructor(placed: Placed, output: InlineOutput, edited: "edited" | "stale" | null) {
     super();
     const { oncancel, onfold, workspace } = output;
     this.#placed = placed;
@@ -87,7 +89,8 @@ class BlockWidget extends WidgetType {
       target: dom,
       props: {
         block: this.#placed.block,
-        edited: this.#edited,
+        edited: this.#edited !== null,
+        ...(this.#edited === "stale" ? { word: "stale" } : {}),
         inline: true,
         oncancel: this.#oncancel,
         workspace: this.#workspace,
@@ -194,7 +197,12 @@ const field = StateField.define<Shown>({
         blocks: set(
           doc,
           output.placed,
-          (one) => new BlockWidget(one, output, output.edited),
+          (one) =>
+            new BlockWidget(
+              one,
+              output,
+              output.edited ? "edited" : (output.stale?.(one.block.line) ?? null),
+            ),
           2,
           output.basis === now.basis ? now.blocks : null,
         ),
@@ -205,7 +213,7 @@ const field = StateField.define<Shown>({
             : set(
                 doc,
                 refused.placed,
-                (one) => new BlockWidget(one, output, refused.edited),
+                (one) => new BlockWidget(one, output, refused.edited ? "edited" : null),
                 1,
                 refused.basis === now.refusedBasis ? now.refused : null,
               ),

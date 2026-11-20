@@ -229,14 +229,13 @@ test("when the check refuses a script, the results of the run before stay on the
   await expect(error).toHaveCount(1);
   expect((await under(page)).at(-1)).toBe("let z = nosuch(3)");
   await expect(error).not.toContainText("edited · not run");
-  // The results of the run before are all still there, figures too, each marked as not
-  // being of the script as it now stands.
+  // The results of the run before are all still there, figures too; a line added at the end
+  // reads nothing they made, so none of them is marked.
   expect(await printed(page)).toBe(before);
   await expect(page.locator('[data-testid="figure"] img')).toHaveCount(2);
   await expect(page.getByTestId("block")).toHaveCount(blocks + 1);
-  await expect(page.getByTestId("block").filter({ hasText: "edited · not run" })).toHaveCount(
-    blocks,
-  );
+  await expect(page.getByTestId("block").filter({ hasText: "edited · not run" })).toHaveCount(0);
+  await expect(page.getByTestId("block").filter({ hasText: "stale" })).toHaveCount(0);
 
   // The script edited again: what the check said is not of the script as it stands either.
   await page.keyboard.insertText("// a note\n");
@@ -326,26 +325,86 @@ test("the foot is one line: the state after its dot, the console, the keys, the 
   await expect(foot.locator(".state.warning")).toContainText("edited · not run");
 });
 
-test("output of an edited script is marked in each margin until the next run", async ({
+test("an edit marks its statement edited and what stands below it stale; a comment marks nothing", async ({
   page,
   press,
 }) => {
   await scratch(page, press);
-  await write(page, "print(6 * 7)\nprint(1)\n");
+  await write(page, "let a = 6\nprint(a * 7)\nprint(1)\n");
   await runUnfolded(page, press);
   await expect.poll(() => printed(page)).toBe("42\n1\n");
+  const block = (line: number) => page.locator(`[data-testid="block"][data-line="${line}"]`);
+  const note = (line: number) => page.locator(`[data-testid="note"][data-line="${line}"]`);
   await editor(page).focus();
+  // A comment typed above: the outputs move with their statements, and nothing is marked.
   await page.keyboard.press("ControlOrMeta+Home");
   await page.keyboard.type("// a note\n");
-  const blocks = page.getByTestId("block");
-  await expect(blocks.first()).toContainText("edited · not run");
-  await expect(blocks.last()).toContainText("edited · not run");
-  // The outputs moved with their statements when a line was typed above them.
-  expect(await under(page)).toEqual(["print(6 * 7)", "print(1)"]);
+  await expect(note(2)).not.toContainText("edited");
+  await expect(note(2)).not.toContainText("stale");
+  expect(await under(page)).toEqual(["print(a * 7)", "print(1)"]);
+  // The second statement edited: it is edited, the one below it stale, the one above fresh.
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("End");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.type(" + 1");
+  await expect
+    .poll(() => scriptText(page))
+    .toBe("// a note\nlet a = 6\nprint(a * 7 + 1)\nprint(1)\n");
+  await expect(note(2)).toContainText("edited · not run");
+  await expect(note(3)).toContainText("stale");
+  await expect(note(1)).not.toContainText("stale");
+  await expect(block(2)).toContainText("edited · not run");
+  await expect(block(3)).toContainText("stale");
+  // The whole script run again: every result is the script's.
+  await page.keyboard.press("Shift+ControlOrMeta+Enter");
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect.poll(() => printed(page)).toBe("43\n1\n");
+  await expect(page.getByTestId("note").filter({ hasText: "stale" })).toHaveCount(0);
+});
+
+test("⌘↵ runs the statement at the cursor with what it needs, and leaves the rest as it was", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await write(page, "let a = 6\nlet b = 2\nprint(a * 7)\nprint(b)\n");
+  await runUnfolded(page, press);
+  await expect.poll(() => printed(page)).toBe("42\n2\n");
+  const note = (line: number) => page.locator(`[data-testid="note"][data-line="${line}"]`);
+  await editor(page).focus();
+  await page.keyboard.press("ControlOrMeta+Home");
+  // Line 1 edited: what reads it (line 3) and what stands below are no longer the script's.
+  await page.keyboard.press("End");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.type("10");
+  await expect(note(1)).toContainText("edited · not run");
+  await expect(note(3)).toContainText("stale");
+  // ⌘↵ on line 3: it runs with line 1, which it reads; line 2 and line 4 are not run.
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ControlOrMeta+Enter");
   await expect(page.getByRole("status")).toHaveText("done");
-  await expect(blocks.first()).not.toContainText("edited · not run");
-  expect(await under(page)).toEqual(["print(6 * 7)", "print(1)"]);
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 2 · /);
+  await expect(note(1)).not.toContainText("edited");
+  await expect(note(3)).not.toContainText("stale");
+  await expect(page.locator('[data-testid="block"][data-line="3"]')).toContainText("70");
+  // Line 4 was not run: its result is the run before's, and it stands below a change, so it
+  // stays marked.
+  await expect(note(4)).toContainText("stale");
+  expect(await scriptText(page)).toBe("let a = 10\nlet b = 2\nprint(a * 7)\nprint(b)\n");
+});
+
+test("⌘↵ in a script the check refuses runs nothing, and shows what the check found", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await write(page, "print(1)\nlet z = nosuch(3)\n");
+  await editor(page).focus();
+  await page.keyboard.press("ControlOrMeta+Home");
+  await page.keyboard.press("ControlOrMeta+Enter");
+  await expect(page.getByTestId("block").first()).toContainText("no function is called `nosuch`");
+  expect(await printed(page)).toBe("");
 });
 
 test("the code's column widens with the size of the code, and the notes keep their 300 pixels", async ({
@@ -396,7 +455,7 @@ test("a run leaves the reader where they were in the script, not at the top of t
   for (const how of ["key", "button"]) {
     if (how === "key") {
       await editor(page).evaluate((node) => (node as HTMLElement).focus({ preventScroll: true }));
-      await page.keyboard.press("ControlOrMeta+Enter");
+      await page.keyboard.press("Shift+ControlOrMeta+Enter");
     } else {
       await press(page.getByRole("button", { name: "Run", exact: true }));
     }

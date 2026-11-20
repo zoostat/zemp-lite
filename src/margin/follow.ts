@@ -57,12 +57,30 @@ export function lineMap(before: string, after: string): Map<number, number> {
   return map;
 }
 
-/** The lines `lines` of `before`, carried to where they stand in `after`, in order. */
+/**
+ * Where a line of `before` stands in `after`: where it is kept, there; where it was changed,
+ * the line as far below the nearest kept line above it as it was, unless a kept line stands
+ * there or the text is shorter; `null` where it cannot be placed.
+ */
+export function placeOf(map: Map<number, number>, line: number, lines: number): number | null {
+  const kept = map.get(line);
+  if (kept !== undefined) return kept;
+  const above = [...map.keys()].filter((old) => old < line).sort((a, b) => b - a)[0];
+  const guess = above === undefined ? line : (map.get(above) as number) + (line - above);
+  const taken = new Set(map.values());
+  return guess <= lines && !taken.has(guess) ? guess : null;
+}
+
+/**
+ * The lines `lines` of `before`, carried to where they stand in `after`, in order: a line
+ * changed in place is followed to its place, and a line taken out is dropped.
+ */
 export function followed(before: string, after: string, lines: number[]): number[] {
   if (before === after || lines.length === 0) return lines;
   const map = lineMap(before, after);
+  const count = after.split("\n").length;
   return lines
-    .map((line) => map.get(line))
-    .filter((line): line is number => line !== undefined)
+    .map((line) => placeOf(map, line, count))
+    .filter((line): line is number => line !== null)
     .sort((x, y) => x - y);
 }

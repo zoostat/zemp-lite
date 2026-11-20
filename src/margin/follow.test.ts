@@ -9,16 +9,19 @@ describe("what is unfolded, followed through an edit", () => {
     expect(followed("// a\n// b\nx\ny\n", "x\ny\n", [3, 4])).toEqual([1, 2]);
   });
 
-  it("drops a line whose statement was taken out or changed, and keeps the others", () => {
+  it("drops a line taken out, and follows a line changed in place", () => {
     expect(followed("a\nb\nc\n", "a\nc\n", [1, 2, 3])).toEqual([1, 2]);
-    expect(followed("a\nb\nc\n", "a\nB\nc\n", [2, 3])).toEqual([3]);
+    expect(followed("a\nb\nc\n", "a\nB\nc\n", [2, 3])).toEqual([2, 3]);
+    // Changed in place and moved down by a line typed above it.
+    expect(followed("a\nb\nc\n", "// x\na\nB\nc\n", [2])).toEqual([3]);
   });
 
   it("follows lines through an edit in the middle of a long script", () => {
     const before = Array.from({ length: 50 }, (_, at) => `line ${at}`).join("\n");
     const lines = before.split("\n");
     lines.splice(20, 1, "new one", "new two");
-    expect(followed(before, lines.join("\n"), [10, 30, 21])).toEqual([10, 31]);
+    // Line 21 was changed into two lines: it is followed to the first of them.
+    expect(followed(before, lines.join("\n"), [10, 30, 21])).toEqual([10, 21, 31]);
   });
 
   it("maps every line of a text to itself when nothing changed", () => {

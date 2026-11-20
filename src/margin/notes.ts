@@ -4,6 +4,7 @@
 // frame's rows and variables, the head of what the statement printed, the codes of what it
 // said. The interface adds the state of the result (running, waiting, edited, failed) in words.
 import { said, type Run } from "../output/run";
+import type { Mark } from "./stale";
 
 /** A word on a note: a warning's or an error's code, or the state of the result. */
 export interface Tag {
@@ -19,7 +20,7 @@ export interface Note {
   /** The type the engine names, and the size where the engine gives one. */
   sub: string;
   tags: Tag[];
-  state: "fresh" | "running" | "waiting" | "failed" | "not run" | "edited";
+  state: "fresh" | "running" | "waiting" | "failed" | "not run" | "edited" | "stale";
   /** Whether it has an output to unfold: something printed or said. */
   opens: boolean;
   /** The place that shows what it made at length: Plots for a plot; none otherwise yet. */
@@ -41,11 +42,11 @@ const firstLine = (text: string) => (text.split("\n")[0] ?? "").trimEnd();
 const PLOT = "plot · ";
 
 /**
- * The notes of a run, one for each statement of its text, in order. `edited` says that the
- * script has been edited since the run: until the engine says which results it would reuse,
- * every result is then marked, as in 0.1 (the design's section 7.9).
+ * The notes of a run, one for each statement of its text, in order. `marked` gives, by the
+ * line a statement began on in the run's text, how its result stands to the script as it is
+ * now (`src/margin/stale.ts`); a result a run of less than the script kept carries its own mark.
  */
-export function notesOf(run: Run, edited: boolean): Note[] {
+export function notesOf(run: Run, marked: ReadonlyMap<number, { mark: Mark }> = new Map()): Note[] {
   const ranges = (run.ranges ?? []).filter((range) => range.kind === "statement");
   const ended = run.state !== "running";
   return ranges.map((range) => {
@@ -59,7 +60,18 @@ export function notesOf(run: Run, edited: boolean): Note[] {
     if (event?.state === "running") state = "running";
     else if (event?.state === "failed") state = "failed";
     else if (event === undefined) state = ended ? "not run" : "waiting";
-    if (edited && ended) state = "edited";
+    else if (event.mark !== undefined) state = event.mark;
+    const live = marked.get(range.line)?.mark;
+    if (ended && live !== undefined && live !== "fresh" && state !== "edited") state = live;
+    // A run of less than the script that stopped before a statement it was asked for.
+    const failed = run.statements.find((one) => one.state === "failed" && one.mark === undefined);
+    const asked = run.partial?.includes(range.line) ?? false;
+    const stopped =
+      ended &&
+      asked &&
+      failed !== undefined &&
+      failed.line < range.line &&
+      event?.mark !== undefined;
 
     let main = "";
     let sub = "";
@@ -104,9 +116,15 @@ export function notesOf(run: Run, edited: boolean): Note[] {
       failed: "failed",
       "not run": "not run",
       edited: "edited · not run",
+      stale: "stale",
     };
-    const word = words[state];
-    if (word !== undefined) tags.push({ text: word, kind: "state" });
+    if (stopped) {
+      state = "not run";
+      tags.push({ text: `not run · line ${failed.line} failed`, kind: "state" });
+    } else {
+      const word = words[state];
+      if (word !== undefined) tags.push({ text: word, kind: "state" });
+    }
 
     return {
       line: range.line,

@@ -61,7 +61,7 @@ function exampleRun() {
 describe("the notes of the example", () => {
   it("are one on the first line of each statement, saying what it made and how large", () => {
     const { run } = exampleRun();
-    const notes = notesOf(run, false);
+    const notes = notesOf(run);
     expect(notes.map((note) => note.line)).toEqual([4, 5, 8, 12, 13, 16, 17, 20, 21]);
     expect(notes.every((note) => note.state === "fresh")).toBe(true);
     const at = (line: number) => notes.find((note) => note.line === line)!;
@@ -85,7 +85,7 @@ describe("the notes of the example", () => {
   it("hold no word or number that the engine did not return", () => {
     const { run, done } = exampleRun();
     const returned = JSON.stringify(done);
-    for (const note of notesOf(run, false)) {
+    for (const note of notesOf(run)) {
       for (const word of [
         note.main,
         ...note.sub.split(" · "),

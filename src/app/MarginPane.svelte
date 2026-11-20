@@ -9,6 +9,7 @@
   import { tick } from "svelte";
   import Editor from "../editor/Editor.svelte";
   import { counted, notesOf } from "../margin/notes";
+  import { marks } from "../margin/stale";
   import { placed } from "../output/place";
   import { took } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
@@ -24,7 +25,19 @@
   const run = $derived(workspace.lastRun);
   // The last run belongs to this script only where it is the one that ran.
   const ours = $derived(run !== null && run.script === path ? run : null);
-  const notes = $derived(ours === null ? [] : notesOf(ours, workspace.edited));
+  // How each result stands to the script as it is now: by the engine's reading of the script
+  // after the last edit; until it has read it, every result is marked edited, as in 0.1.
+  const marked = $derived.by(() => {
+    if (ours === null || buffer === undefined || buffer.text === ours.text) return new Map();
+    const now = workspace.now;
+    if (now === null || now.path !== path || now.text !== buffer.text) {
+      return new Map(
+        (ours.ranges ?? []).map((range) => [range.line, { mark: "edited" as const, line: null }]),
+      );
+    }
+    return marks(ours, now.text, now.ranges);
+  });
+  const notes = $derived(ours === null ? [] : notesOf(ours, marked));
   const unfolded = $derived(workspace.views.script.unfolded[path] ?? []);
   const notesShown = $derived(workspace.views.script.notes);
   // An output is shown under its statement where the reader unfolded it; what failed, and
@@ -80,7 +93,14 @@
   const output = $derived({
     basis: run === null ? "" : `${run.startedAt}:${blocks.map((one) => one.block.line).join(",")}`,
     placed: blocks,
-    edited: workspace.edited,
+    edited: false,
+    // An output is marked where its result is no longer the script's (`src/margin/stale.ts`).
+    stale: (line: number | null): "edited" | "stale" | null => {
+      if (line === null) return null;
+      const live = marked.get(line)?.mark ?? "fresh";
+      if (live !== "fresh") return live;
+      return ours?.statements.find((one) => one.line === line)?.mark ?? null;
+    },
     refused,
     oncancel: () => workspace.cancel(),
     onfold: (line: number) => workspace.toggleUnfolded(path, line),
@@ -194,6 +214,7 @@
             inline={output}
             notes={margin}
             onunfold={unfoldAt}
+            onstatement={(line) => void workspace.runPart("statement", line)}
           />
         {/key}
       {/if}

@@ -92,6 +92,12 @@ export interface Statement {
   /** The pass of a loop it is at, where it is a loop. */
   pass: { pass: number; of: number | null } | null;
   startedAt: number;
+  /**
+   * Where a run of less than the script kept this result from an earlier run: `edited`, its
+   * own text changed and it was not run; `stale`, something above it changed. Absent for a
+   * result this run made.
+   */
+  mark?: "edited" | "stale";
 }
 
 export interface Run {
@@ -107,6 +113,8 @@ export interface Run {
   info: StatementInfo[];
   /** The width in characters its tables were printed at; 0 for the engine's own, 118. */
   width: number;
+  /** The lines of the statements a run of less than the script ran; `null` for the whole script. */
+  partial: number[] | null;
   /** The run's number in this window, counted from 1; 0 for a run that is not of the script. */
   number: number;
   /** Whether this is a Check alone, which runs nothing, and not a run. */
@@ -137,6 +145,7 @@ export function begin(script: string, text: string, now: number, clock: string):
     of: null,
     ranges: null,
     width: 0,
+    partial: null,
     number: 0,
     checkOnly: false,
     info: [],
@@ -241,6 +250,8 @@ export interface Block {
   said: Said[];
   ms: number | null;
   pass: { pass: number; of: number | null } | null;
+  /** Kept from an earlier run and no longer the script's: its own text edited, or something above it. */
+  mark?: "edited" | "stale";
 }
 
 /**
@@ -277,6 +288,7 @@ export function blocks(run: Run): Block[] {
       said: messages,
       ms: statement.ms,
       pass: statement.pass,
+      ...(statement.mark === undefined ? {} : { mark: statement.mark }),
     });
   }
   if (run.afterPrinted !== "" || run.afterRaw !== "") {

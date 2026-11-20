@@ -17,6 +17,7 @@
     workspace = null,
     last = null,
     onfold,
+    word = "edited · not run",
   }: {
     block: Block;
     /** The script has been edited since this ran: the block is not the script's any more. */
@@ -29,6 +30,8 @@
     last?: number | null;
     /** In the margin editor: fold this output away. */
     onfold?: () => void;
+    /** What an output that is not the script's is said to be: edited, or stale. */
+    word?: string;
   } = $props();
 
   // The explained pages opened, by code, while they are being fetched `null`.
@@ -81,7 +84,7 @@
       <span class="gap"></span>
     {/if}
     {#if edited}
-      <span class="state warn">edited · not run</span>
+      <span class="state warn">{word}</span>
     {:else if block.state === "running"}
       <span class="running" data-testid="running"
         ><i aria-hidden="true"></i>running{block.pass === null

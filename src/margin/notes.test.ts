@@ -43,7 +43,7 @@ describe("a note", () => {
     hear(run, { type: "finished", statement: 1, of: 3, line: 1, failed: false }, 2);
     hear(run, { type: "started", statement: 2, of: 3, line: 2 }, 3);
     hear(run, { type: "pass", pass: 40, of: 200000, line: 2 }, 4);
-    const notes = notesOf(run, false);
+    const notes = notesOf(run);
     expect(notes.map((note) => note.state)).toEqual(["fresh", "running", "waiting"]);
     expect(notes[1]!.tags).toEqual([{ text: "running…", kind: "state" }]);
     expect(notes[1]!.sub).toBe("200,000 passes");
@@ -68,7 +68,7 @@ describe("a note", () => {
       ),
       5,
     );
-    const notes = notesOf(run, false);
+    const notes = notesOf(run);
     expect(notes.map((note) => note.state)).toEqual(["fresh", "failed", "not run"]);
     expect(notes[1]!.tags).toEqual([
       { text: "Z0715", kind: "error" },
@@ -77,14 +77,19 @@ describe("a note", () => {
     expect(notes[1]!.opens).toBe(true);
   });
 
-  it("marks every result once the script is edited, as 0.1 does until the engine says more", () => {
+  it("marks a result as its mark against the script as it stands says", () => {
     const run = begin("s.zeff", "let a = 1\n", 0, "9:42");
     hear(run, { type: "ranges", statements: ranges(1) }, 0);
     hear(run, { type: "started", statement: 1, of: 1, line: 1 }, 1);
     hear(run, { type: "finished", statement: 1, of: 1, line: 1, failed: false }, 2);
     end(run, outcome([info(1, { name: "a", type: "Int" })]), 3);
-    expect(notesOf(run, false)[0]).toMatchObject({ main: "a", sub: "Int", state: "fresh" });
-    expect(notesOf(run, true)[0]!.tags).toEqual([{ text: "edited · not run", kind: "state" }]);
+    expect(notesOf(run)[0]).toMatchObject({ main: "a", sub: "Int", state: "fresh" });
+    expect(notesOf(run, new Map([[1, { mark: "edited" as const }]]))[0]!.tags).toEqual([
+      { text: "edited · not run", kind: "state" },
+    ]);
+    expect(notesOf(run, new Map([[1, { mark: "stale" as const }]]))[0]!.tags).toEqual([
+      { text: "stale", kind: "state" },
+    ]);
   });
 
   it("names what a statement that is not a `let` made from the head of what it printed", () => {
@@ -103,7 +108,7 @@ describe("a note", () => {
       ]),
       3,
     );
-    const notes = notesOf(run, false);
+    const notes = notesOf(run);
     expect(notes.map((note) => [note.main, note.sub])).toEqual([
       ["reg", "RegFit · log(wage) ~ educ"],
       ["2.5", "Float"],
@@ -124,6 +129,6 @@ describe("a note", () => {
       },
       0,
     );
-    expect(notesOf(run, false).map((note) => note.line)).toEqual([4]);
+    expect(notesOf(run).map((note) => note.line)).toEqual([4]);
   });
 });

@@ -673,3 +673,19 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Not done here.** An opened result keeping its height while its statement runs again rests on the reckoned heights of 0.1 and the page held during a run; the print's tables as cells for a screen reader wait for the engine (C7, R10).
 
 **Reason.** The checklist's step 6; the margin editor's design, sections 7.4, 7.13 and 15; open decision #175 (C6), worked round at 0.8.0 by a run at the width.
+
+## 21 November 2026: running less than the script, and what is stale (release 0.2, step 7a)
+
+**Split.** Step 7 was split, as too large for one session: 7a, the machinery of a run of less than the script and the marking of results (`[engine]`); 7b, Run to here and Run from here on it (`[function]`).
+
+**⌘↵ (R9).** In the margin editor, ⌘↵ (Ctrl ↵) runs the statement at the cursor with every statement it needs, as the engine's dependency graph gives them (`needed_by`: what it reads, theirs in turn, and every earlier statement that sets the seed); ⌘⇧↵ runs the script. The whole script is checked first, as Zeff checks before it runs; a refused script runs nothing and shows what the check found. The engine of 0.8.0 keeps nothing between two runs in a browser, so what is needed runs again from the top, the other statements blanked (step 4). In Panes ⌘↵ still runs the script.
+
+**The page after it** (`src/margin/stale.ts`, `merged`): the results the run made, and every other result of the page before, moved to the line its statement now begins on; a result whose statement is gone is gone. Runs are numbered as any run.
+
+**What is marked.** At 0.8.0 the engine can say neither whether it would reuse a result (C3) nor which statements read a file or draw random numbers, which its dependency graph does not see. So the rule is the safe one, as the design asks until the engine answers ("too many marked is safe, too few is not"): a statement whose own text changed is `edited · not run`; every result at or below the line after the first change (a statement changed or added, or where one was taken out) is `stale`, keeping its last value; every result above it is fresh. A comment, a blank line and a statement added at the end mark nothing. The marks are worked out as the script is edited, against the engine's own reading of its statements a moment after the last keystroke, and an output says `edited · not run` or `stale` accordingly. A change of spacing inside a statement is marked as an edit, where the engine would see none: safe, and mended when C3 comes.
+
+**What is unfolded follows the script** through edits, a line changed in place included: it is placed by the nearest unchanged line above it (`placeOf` in `src/margin/follow.ts`), which the marking uses too. A browser test found that without it an edited statement's output folded itself on the next run.
+
+**Asked of the Zeff side.** For exact marks before the cache of 0.11.0: the dependency graph's nodes to say whether a statement reads a file, writes one, or draws random numbers. Added to the note for the Zeff 0.9.0 session in the shared notes folder.
+
+**Reason.** The checklist's step 7a; the margin editor's design, sections 7.8 and 7.9; open decisions #76 and #176 (R9).

@@ -79,3 +79,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 16 native and 13 message tests of the worker; the nine samples identical; 2,792.2 kB; 138 unit tests; 193 browser tests passed and 1 skipped by design.
 
 **Next.** Step 7 `[engine]`: running less than the script, and staleness.
+
+## 21 November 2026, release 0.2, step 7a (running less than the script, and what is stale)
+
+**Done.** Step 7 split into 7a and 7b. Step 7a `[engine]`: ⌘↵ runs the statement at the cursor with what it needs; the page keeps every other result where its statement now stands. As the script is edited, an edited statement is marked `edited · not run` and every result below the first change `stale`, the safe rule while the engine cannot say which statements read a file or draw (asked of Zeff 0.9.0 in the shared note); a comment or a new last line marks nothing. Step 6 is green on GitHub.
+
+**Green.** `npm run routine`: 145 unit tests; 197 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 7b `[function]`: Run to here and Run from here.

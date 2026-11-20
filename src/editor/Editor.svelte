@@ -28,6 +28,7 @@
     inline = null,
     notes = null,
     onunfold,
+    onstatement,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -45,6 +46,8 @@
     notes?: MarginNotes | null;
     /** ⌥↵ (Alt ↵): unfold or fold the output of the statement on this line. */
     onunfold?: (line: number) => void;
+    /** ⌘↵: run the statement on this line with what it needs; without it, ⌘↵ runs the script. */
+    onstatement?: (line: number) => void;
   } = $props();
 
   let host: HTMLDivElement;
@@ -149,7 +152,14 @@
           // Run from the keyboard: ⌘↵ and ⌘⇧↵ (Ctrl on Windows and Linux). Tab indents;
           // Escape and then Tab moves on to the next control, for those who use the keyboard alone.
           keymap.of([
-            { key: "Mod-Enter", run },
+            {
+              key: "Mod-Enter",
+              run: (target) => {
+                if (onstatement === undefined) return run();
+                onstatement(target.state.doc.lineAt(target.state.selection.main.head).number);
+                return true;
+              },
+            },
             {
               key: "Alt-Enter",
               run: (target) => {
