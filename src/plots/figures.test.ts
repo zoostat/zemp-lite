@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import example from "../../examples/scratch/scripts/main.zeff?raw";
+import example from "../../tests/scripts/example/scripts/main.zeff?raw";
 import composedExample from "../../tests/scripts/figures/example-with-exports.zeff?raw";
 import type { RunEvent } from "../engine/messages";
 import { begin, end, hear } from "../output/run";

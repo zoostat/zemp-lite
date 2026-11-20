@@ -7,7 +7,12 @@ browser tests run the same scripts through the interface and hold what the Outpu
 files: a plain script, one with warnings, one that stops at an error, and one the engine's check
 refuses before it starts.
 
-`figures/example-with-exports.zeff` is the Scratch example with the two `export` lines the interface
+`example/` is the example the browser tests are written on: the Scratch project's example of release
+0.1 (`scripts/main.zeff`), with what the released `zeff run` 0.8.0 printed and said for it
+(`expected/`). The tests write it into the Scratch project, whose own scripts a visitor opens
+(`examples/scratch/`, with their expected outputs beside them, and tests of their own).
+
+`figures/example-with-exports.zeff` is that example with the two `export` lines the interface
 adds to draw its two plots at 567 by 352 pixels (150.02 by 93.13 mm); the two SVG files beside it are
 what the released command line wrote for that text. A unit test holds the text the interface composes
 to this file, and the engine's worker build to these bytes.

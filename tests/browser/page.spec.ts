@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, printed, saidAsWritten, scriptText, test, write } from "./support";
+import { expect, printed, saidAsWritten, scriptText, test, write, useExample } from "./support";
 
 const example = (file: string) =>
-  readFileSync(new URL(`../../examples/scratch/${file}`, import.meta.url), "utf8");
+  readFileSync(new URL(`../scripts/example/${file}`, import.meta.url), "utf8");
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -13,6 +13,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page).toHaveURL(/#\/p\/scratch$/);
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   // These tests are of the Panes layout; a project opens in the margin editor.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
@@ -69,10 +70,7 @@ test("with no choice made, the theme is the system's", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
-test("the Scratch project holds the example, which prints what `zeff run` 0.8.0 prints, byte for byte", async ({
-  page,
-  press,
-}) => {
+test("the example prints what `zeff run` 0.8.0 prints, byte for byte", async ({ page, press }) => {
   const before = Date.now();
   await scratch(page, press);
   // For the notes of the release, not a limit: from asking for the page to the engine ready.
@@ -148,6 +146,7 @@ test("in a private window, where the browser keeps nothing, the screen says so a
   await expect(page.getByText("Not kept.")).toBeVisible();
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   // The results are read in Panes, where every output is on the page: the margin editor of
   // a window this tall draws only what is near the window.
   await press(page.getByRole("button", { name: "Panes", exact: true }));

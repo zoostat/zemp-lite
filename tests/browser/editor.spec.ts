@@ -1,7 +1,7 @@
 // The editor (release 0.1, step 7): CodeMirror, with line numbers, the current line marked,
 // and the code coloured in the categories of the design guide.
 import type { Page } from "@playwright/test";
-import { editor, expect, printed, scriptText, test, write } from "./support";
+import { editor, expect, printed, scriptText, test, write, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -10,6 +10,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   // These tests are of the Panes layout; a project opens in the margin editor.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }

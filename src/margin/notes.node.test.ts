@@ -29,7 +29,7 @@ function exampleRun() {
     Project: new (name: string) => Project;
     statements: (script: string, text: string) => string;
   };
-  const text = readFileSync(new URL("examples/scratch/scripts/main.zeff", root), "utf8");
+  const text = readFileSync(new URL("tests/scripts/example/scripts/main.zeff", root), "utf8");
   const done = JSON.parse(new engine.Project("scratch").run("scripts/main.zeff", text, 0, 0)) as {
     exit_code: number;
     stdout: string;

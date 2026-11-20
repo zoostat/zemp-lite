@@ -5,7 +5,7 @@
 // is kept in tests/scripts/repl/.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { editor, expect, scriptText, test, write } from "./support";
+import { editor, expect, scriptText, test, write, useExample } from "./support";
 
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
@@ -15,6 +15,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
 }
 
 /** The lines `zeff repl` read, the statements and the commands, from a file kept beside its outputs. */

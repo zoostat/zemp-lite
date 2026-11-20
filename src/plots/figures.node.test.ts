@@ -38,7 +38,7 @@ describe("the figures the interface asks the engine for", () => {
     };
     expect(done.exit_code, done.stderr).toBe(0);
     // The script's own output is unchanged by what was added: the added lines print nothing.
-    expect(done.stdout).toBe(read("examples/scratch/expected/stdout.txt").toString("utf8"));
+    expect(done.stdout).toBe(read("tests/scripts/example/expected/stdout.txt").toString("utf8"));
     for (const index of [1, 2]) {
       const written = project.file(`output/zemp-figure-${index}.svg`);
       expect(written).toBeDefined();

@@ -1,21 +1,23 @@
-// A first look at the wages that ship with Zeff: a summary, a regression and two figures.
-// Press Run to see each result under the line that made it.
+// Returns to schooling, in the wages panel that ships with Zeff.
+// Press Run: each statement's note stands beside it; click a note to open its result.
 
+// # Sample
 let wages = dataset(wages)
-let w2010 = wages.where(year == 2010)
+    .where(year >= 2012 && age >= 25)
+    .add(lwage = log(wage), exper2 = exper^2)
 
-// Describe: hourly wage, schooling, experience and hours, for men and for women.
-w2010.summary([wage, educ, exper, hours], by: female)
+// # Describe
+wages.summary([lwage, educ, exper, hours], by: female)
+let shape = wages.plot(x: lwage).histogram(bins: 30)
 
-// The return to schooling: log wage on schooling, experience, sex and union membership,
-// with standard errors clustered by worker.
-let fit = wages.reg(log(wage) ~ educ + exper + female + union, cluster: worker)
-fit
+// # Models
+let m1 = wages.reg(lwage ~ educ + exper + exper2, se: robust)
+let m2 = wages.reg(lwage ~ educ + exper + exper2 + female + union,
+    cluster: worker)
+let m3 = wages.reg(lwage ~ educ + exper + exper2 + female + union,
+    fe: industry + year, cluster: worker)
+report([m1, m2, m3])
 
-// Log wage against schooling in 2010, with the fitted line.
-let schooling = w2010.scatter(educ, log(wage), fit: linear)
-schooling
-
-// The shape of log wages in 2010.
-let shape = w2010.plot(x: log(wage)).histogram(bins: 30)
-shape
+// # Figure
+let y2019 = wages.where(year == 2019)
+let schooling = y2019.scatter(educ, lwage, fit: linear)

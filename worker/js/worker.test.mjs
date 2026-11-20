@@ -105,7 +105,7 @@ test("a run tells its steps and what it prints, then its outcome", async (t) => 
 });
 
 test("the example prints, in the worker, what `zeff run` 0.8.0 prints, byte for byte", async (t) => {
-  const example = path.resolve(here, "..", "..", "examples", "scratch");
+  const example = path.resolve(here, "..", "..", "tests", "scripts", "example");
   const read = (file) => fs.readFileSync(path.join(example, file), "utf8");
   const { worker, said, next } = await opened(t, 0);
   worker.postMessage({ type: "run", script: "scripts/main.zeff", text: read("scripts/main.zeff") });
@@ -134,7 +134,7 @@ test("a run prints at the width asked, as `zeff run --width` does", async (t) =>
     worker.postMessage({
       type: "run",
       script: "scripts/main.zeff",
-      text: read("examples/scratch/scripts/main.zeff"),
+      text: read("tests/scripts/example/scripts/main.zeff"),
       width,
     });
     const done = await next("done");

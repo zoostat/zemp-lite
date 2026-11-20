@@ -2,7 +2,7 @@
 // statement that made it, and the frame chosen as a grid drawn as it is scrolled, every cell
 // as the engine prints it.
 import type { Page } from "@playwright/test";
-import { expect, test } from "./support";
+import { expect, test, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -17,6 +17,7 @@ async function ran(page: Page, press: (target: ReturnType<Page["locator"]>) => P
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await press(

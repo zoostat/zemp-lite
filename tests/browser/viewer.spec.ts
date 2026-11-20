@@ -2,7 +2,7 @@
 // sizes, and a figure saved by the engine's `export`.
 import { readFileSync } from "node:fs";
 import type { Locator, Page } from "@playwright/test";
-import { expect, test } from "./support";
+import { expect, test, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 const kept = (name: string) => readFileSync(new URL(`../scripts/figures/${name}`, import.meta.url));
@@ -13,6 +13,7 @@ async function viewer(page: Page, press: (target: Locator) => Promise<void>): Pr
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   await press(page.getByRole("button", { name: "Panes", exact: true }));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
@@ -225,6 +226,7 @@ test("from the margin editor the viewer is opened with ⌘K, in the script's pla
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await page.keyboard.press("ControlOrMeta+k");
@@ -261,6 +263,7 @@ test("the places: Script and Plots in the top bar, and the list of plots at the 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   const places = page.getByRole("navigation", { name: "Places" });

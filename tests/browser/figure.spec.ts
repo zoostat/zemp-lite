@@ -1,7 +1,7 @@
 // A plot from the engine, at the size of its pane (release 0.1, step 11).
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, printed, saidAsWritten, scriptText, test, write } from "./support";
+import { expect, printed, saidAsWritten, scriptText, test, write, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -12,6 +12,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
 }
 
 /** The figure shown for the plot of a line: the image, the SVG it holds, and its sizes. */
@@ -76,9 +77,9 @@ test("the lines added to draw the figures never show: the script and its output 
   await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   await figure(page, 17);
   await figure(page, 21);
-  expect(await scriptText(page)).toBe(file("examples/scratch/scripts/main.zeff"));
-  expect(await printed(page)).toBe(file("examples/scratch/expected/stdout.txt"));
-  expect(await saidAsWritten(page)).toBe(file("examples/scratch/expected/stderr.txt"));
+  expect(await scriptText(page)).toBe(file("tests/scripts/example/scripts/main.zeff"));
+  expect(await printed(page)).toBe(file("tests/scripts/example/expected/stdout.txt"));
+  expect(await saidAsWritten(page)).toBe(file("tests/scripts/example/expected/stderr.txt"));
   await expect(page.locator("header.top")).toContainText("· saved");
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
   // The statements of the run are still the script's nine.

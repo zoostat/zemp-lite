@@ -3,7 +3,16 @@
 // marked, and the output marked when the script has been edited since.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { blocksAsText, expect, printed, saidAsWritten, test, wheelTo, write } from "./support";
+import {
+  blocksAsText,
+  expect,
+  printed,
+  saidAsWritten,
+  test,
+  wheelTo,
+  write,
+  useExample,
+} from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -12,6 +21,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   // These tests are of the Panes layout; a project opens in the margin editor.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
@@ -55,7 +65,7 @@ test("each result of the example sits under the line that made it, with its time
   );
   await expect(page.getByTestId("run-summary")).toHaveText(/^run \d{1,2}:\d\d · 9 statements · \d/);
   // Taken together the blocks are what `zeff run` prints, to the byte.
-  expect(await printed(page)).toBe(file("examples/scratch/expected/stdout.txt"));
+  expect(await printed(page)).toBe(file("tests/scripts/example/expected/stdout.txt"));
 });
 
 test("the panel's text for the example is the text kept for it", async ({ page, press }) => {
@@ -133,7 +143,7 @@ test("in Panes too, a refused script leaves the results of the run before in the
   const summary = await page.getByTestId("run-summary").textContent();
   const blocks = await page.getByTestId("block").count();
 
-  await write(page, file("examples/scratch/scripts/main.zeff") + "let z = nosuch(3)\n");
+  await write(page, file("tests/scripts/example/scripts/main.zeff") + "let z = nosuch(3)\n");
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("not run · 1 error found by the check");
   await expect(page.getByTestId("refused")).toContainText("did not start: the check found 1 error");

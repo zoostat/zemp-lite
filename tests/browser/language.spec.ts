@@ -2,7 +2,7 @@
 // one types, what it knows of a word on resting over it, and no wait while a run goes, since
 // it runs in a worker of its own.
 import type { Page } from "@playwright/test";
-import { editor, expect, test, write } from "./support";
+import { editor, expect, test, write, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -10,6 +10,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
 }
 
 test("the language server's diagnostics are underlined as one types, and go when mended", async ({

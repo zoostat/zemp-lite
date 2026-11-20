@@ -3,6 +3,7 @@
 // always there for quick exploration. On the web the folders live in the browser's private
 // file system, under `projects/`.
 import example from "../../examples/scratch/scripts/main.zeff?raw";
+import instruments from "../../examples/scratch/scripts/instruments.zeff?raw";
 import { ENGINE } from "../app/version";
 import type { Kept } from "../theme/theme";
 import { Inside, type Entry, type Folder } from "./folder";
@@ -140,10 +141,18 @@ export class Projects {
     return { folder, name: wanted, opened: null };
   }
 
-  /** The Scratch project, made with the example the first time it is asked for. */
+  /**
+   * The Scratch project, made the first time it is asked for with its two examples: the
+   * returns to schooling on `wages`, which opens, and instrumental variables on `staff`, the
+   * engine's own sample of 0.8.0 (the owner's answer to question 7 of release 0.2).
+   */
   async scratch(): Promise<ProjectInfo> {
     if ((await this.#root.read(`${ROOT}/${SCRATCH}/zeff.toml`)) === null) {
       await this.#fill(SCRATCH, "Scratch", example);
+      await this.#root.write(
+        `${ROOT}/${SCRATCH}/scripts/instruments.zeff`,
+        encoder.encode(instruments),
+      );
     }
     return { folder: SCRATCH, name: "Scratch", opened: this.#opened()[SCRATCH] ?? null };
   }

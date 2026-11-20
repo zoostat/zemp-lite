@@ -1,7 +1,7 @@
 // Projects that are kept: made, closed, and found again. In WebKit these tests have a browser
 // profile on disk, whose private file system is one place shared by every test (see
 // `support.ts`), so they run one after another and nowhere else is that storage used.
-import { expect, printed, scriptText, test, write } from "./support";
+import { expect, printed, scriptText, test, write, useExample } from "./support";
 
 test.use({ keptProfile: true });
 test.describe.configure({ mode: "serial" });
@@ -56,7 +56,9 @@ test("a project is made, and is still there with its script after the page is re
 test("the Scratch project keeps what the user wrote in it", async ({ page, press }) => {
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
-  await expect.poll(() => scriptText(page)).toMatch(/^\/\/ A first look at the wages/);
+  await expect
+    .poll(() => scriptText(page))
+    .toMatch(/^\/\/ Returns to schooling, in the wages panel/);
   await write(page, "print(1)\n");
   await expect(page.getByText("saving")).toHaveCount(0);
   await press(page.getByRole("button", { name: "Projects" }));
@@ -146,6 +148,7 @@ test("what is unfolded, and whether the notes are shown, are kept with the proje
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await press(page.locator('[data-testid="note"][data-line="8"]'));
@@ -182,6 +185,7 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   await press(page.getByRole("button", { name: "Panes", exact: true }));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");

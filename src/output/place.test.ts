@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import example from "../../examples/scratch/scripts/main.zeff?raw";
+import example from "../../tests/scripts/example/scripts/main.zeff?raw";
 import type { Ranged, RunEvent } from "../engine/messages";
 import { endOf, placed } from "./place";
 import { begin, end, hear } from "./run";

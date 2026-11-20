@@ -14,6 +14,8 @@ import {
   test,
   wheelTo,
   write,
+  useExample,
+  EXAMPLE,
 } from "./support";
 
 // The editor draws the part of a script that is near the window, as editors do, and the rest
@@ -26,10 +28,22 @@ const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta
 
 type Press = (target: ReturnType<Page["locator"]>) => Promise<void>;
 
-async function scratch(page: Page, press: Press) {
+/**
+ * Open the Scratch project and put the tests' example in it; with `reopened`, then close the
+ * project and open it again, so that its script is shown by an editor that was never typed
+ * into, as a project opened afresh is.
+ */
+async function scratch(page: Page, press: Press, reopened = false) {
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
+  if (reopened) {
+    await press(page.getByRole("button", { name: "Projects" }));
+    await press(page.getByRole("button", { name: "Scratch project" }));
+    await expect(page.getByRole("status")).toHaveText(READY);
+    await expect.poll(() => scriptText(page)).toBe(EXAMPLE);
+  }
 }
 
 /** Run the script, and unfold every output once it has run: the page Inline showed. */
@@ -94,7 +108,7 @@ test("a project opens in the margin editor: 760 pixels of code and 300 of notes,
   // The column is centred in the window.
   const window = page.viewportSize()!.width;
   expect(Math.abs(column.x + column.width / 2 - window / 2)).toBeLessThan(2);
-  await expect.poll(() => scriptText(page)).toBe(file("examples/scratch/scripts/main.zeff"));
+  await expect.poll(() => scriptText(page)).toBe(file("tests/scripts/example/scripts/main.zeff"));
 });
 
 test("each statement's output is directly under it, and the script itself is not changed", async ({
@@ -113,10 +127,10 @@ test("each statement's output is directly under it, and the script itself is not
     "shape",
   ]);
   // What is printed and said is what `zeff run` 0.8.0 prints and says, to the byte.
-  expect(await printed(page)).toBe(file("examples/scratch/expected/stdout.txt"));
-  expect(await saidAsWritten(page)).toBe(file("examples/scratch/expected/stderr.txt"));
+  expect(await printed(page)).toBe(file("tests/scripts/example/expected/stdout.txt"));
+  expect(await saidAsWritten(page)).toBe(file("tests/scripts/example/expected/stderr.txt"));
   // Inline output is never written into the script: the editor holds the file as it was.
-  expect(await scriptText(page)).toBe(file("examples/scratch/scripts/main.zeff"));
+  expect(await scriptText(page)).toBe(file("tests/scripts/example/scripts/main.zeff"));
   await expect(page.locator("header.top")).toContainText("· saved");
 });
 
@@ -254,7 +268,7 @@ test("when the check refuses a script, the results of the run before stay on the
   await expect(error).toContainText("edited · not run");
 
   // The slip mended: the script runs, and the page is the run's own again.
-  await write(page, file("examples/scratch/scripts/main.zeff"));
+  await write(page, file("tests/scripts/example/scripts/main.zeff"));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
   await expect(error).toHaveCount(0);
@@ -439,7 +453,9 @@ test("a run leaves the reader where they were in the script, not at the top of t
 }) => {
   // A window of an ordinary height, in which the script with its output is far longer.
   await page.setViewportSize({ width: 1280, height: 700 });
-  await scratch(page, press);
+  // An editor never typed into, as a project opened afresh has: the reader's place is all
+  // this tests.
+  await scratch(page, press, true);
   await runUnfolded(page, press);
   const pane = page.getByRole("region", { name: "Script with its notes and output" });
   const top = () => pane.evaluate((node) => Math.round(node.scrollTop));
@@ -528,7 +544,7 @@ test("a script opens folded: a note on the first line of each statement, and no 
   expect(shown[0]![1]).toBe("wagesFrame · 18,412 × 11");
   expect(shown[2]![1]).toContain("summaryTable · by femaleW0201");
   // Running never moved the code: the script is the file as it was.
-  expect(await scriptText(page)).toBe(file("examples/scratch/scripts/main.zeff"));
+  expect(await scriptText(page)).toBe(file("tests/scripts/example/scripts/main.zeff"));
   // The notes stand at the right of the code, in a column 300 pixels wide.
   const note = (await page.getByTestId("note").first().boundingBox())!;
   const code = (await page.locator(".cm-line").first().boundingBox())!;
@@ -639,7 +655,7 @@ test("Copy as text gives what `zeff run` prints, at the engine's own width", asy
     const copied = await page.evaluate(() => navigator.clipboard.readText());
     expect(copied.startsWith("reg · log(wage) ~ educ + exper + female + union")).toBe(true);
     // The window is narrower than 118 characters, yet the copy is the print at 118.
-    expect(file("examples/scratch/expected/stdout.txt")).toContain(copied);
+    expect(file("tests/scripts/example/expected/stdout.txt")).toContain(copied);
   }
 });
 
@@ -679,7 +695,7 @@ test("⌥↵ unfolds and folds the output of the statement at the cursor", async
     "false",
   );
   // The script is as it was: the key wrote nothing into it.
-  expect(await scriptText(page)).toBe(file("examples/scratch/scripts/main.zeff"));
+  expect(await scriptText(page)).toBe(file("tests/scripts/example/scripts/main.zeff"));
 });
 
 test("Run to here, on a statement's line number, runs the statements before it", async ({

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import sample from "../../docs/spec/zeff_samples.zeff?raw";
-import example from "../../examples/scratch/scripts/main.zeff?raw";
+import example from "../../tests/scripts/example/scripts/main.zeff?raw";
 import { KEYWORDS, VALUES, tokens, type Kind } from "./zeff";
 
 /** A line as its tokens, each as its text and kind. */

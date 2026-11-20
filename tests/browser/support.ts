@@ -8,6 +8,7 @@
 // `press` sends the click to the element itself, and a test that needs a real drag is
 // skipped. On GitHub the mouse must work: there the fallback is refused, so that the tests
 // of record are always made with the real mouse.
+import { readFileSync } from "node:fs";
 import { test as base, expect, type Locator, type Page } from "@playwright/test";
 
 /** Empty this origin's private file system and its kept settings, from a page with nothing on it. */
@@ -136,6 +137,26 @@ export async function write(page: Page, text: string): Promise<void> {
   await editor(page).focus();
   await page.keyboard.press("ControlOrMeta+a");
   await page.keyboard.insertText(text);
+}
+
+/**
+ * The example the browser tests are written on: the Scratch project's example of release
+ * 0.1, kept in `tests/scripts/example/` with what `zeff run` prints for it. The Scratch
+ * project a visitor opens holds other scripts (`examples/scratch/`), with tests of their own.
+ */
+export const EXAMPLE = readFileSync(
+  new URL("../scripts/example/scripts/main.zeff", import.meta.url),
+  "utf8",
+);
+
+/** Put the tests' example in the script shown, in place of what it holds, and wait until it is kept. */
+export async function useExample(page: Page): Promise<void> {
+  await write(page, EXAMPLE);
+  await expect.poll(() => scriptText(page)).toBe(EXAMPLE);
+  // The cursor back at the start and the editor left, as a script just opened is.
+  await page.keyboard.press("ControlOrMeta+Home");
+  await editor(page).blur();
+  await expect(page.getByText("saving")).toHaveCount(0);
 }
 
 /** What the Output panel shows as printed, the statements' output one after another. */

@@ -139,30 +139,65 @@ fn a_frame_of_the_last_run_is_given_as_an_arrow_stream() {
     assert_eq!(host.frame("n"), None);
 }
 
-/// The example the prototype opens with (`examples/scratch/`), run through the host: what it
-/// prints and says is, byte for byte, what `zeff run` of the released 0.8.0 printed for it,
-/// which `expected/` holds.
-#[test]
-fn the_example_prints_what_zeff_run_prints() {
-    let example = concat!(env!("CARGO_MANIFEST_DIR"), "/../examples/scratch");
-    let read = |file: &str| std::fs::read_to_string(format!("{example}/{file}")).unwrap();
-    let host = Host::new("scratch");
-    let (told, done) = run(&host, &read("scripts/main.zeff"));
+/// A script of the repository and what `zeff run` of the released 0.8.0 printed and said for
+/// it, run through the host: the two must be the same, byte for byte, as the run goes and in
+/// its outcome; the outcome is given back.
+fn prints_as_zeff_run(host: &Host, script: &str, text: &str, stdout: &str, stderr: &str) -> String {
+    let asked = Asked::default();
+    let told = RefCell::new(Vec::new());
+    let done = host.run(script, text, &asked, never, &|line| {
+        told.borrow_mut().push(line.to_string())
+    });
+    let told = told.into_inner();
     let piece = |key: &str| -> String {
         told.iter()
             .filter(|line| line.starts_with(r#"{"type": "output""#))
             .map(|line| field(line, key))
             .collect()
     };
-    assert_eq!(piece("stdout"), read("expected/stdout.txt"));
-    assert_eq!(piece("stderr"), read("expected/stderr.txt"));
-    assert_eq!(field(&done, "stdout"), read("expected/stdout.txt"));
-    assert_eq!(field(&done, "stderr"), read("expected/stderr.txt"));
-    assert!(done.contains(r#""exit_code": 0"#));
+    assert_eq!(piece("stdout"), stdout, "{script}");
+    assert_eq!(piece("stderr"), stderr, "{script}");
+    assert_eq!(field(&done, "stdout"), stdout, "{script}");
+    assert_eq!(field(&done, "stderr"), stderr, "{script}");
+    assert!(done.contains(r#""exit_code": 0"#), "{script}: {done}");
+    done
+}
+
+/// The example of the tests (`tests/scripts/example/`, the Scratch project's example of
+/// release 0.1), run through the host: what it prints and says is what `zeff run` printed.
+#[test]
+fn the_example_prints_what_zeff_run_prints() {
+    let host = Host::new("scratch");
+    let done = prints_as_zeff_run(
+        &host,
+        "scripts/main.zeff",
+        &read("tests/scripts/example/scripts/main.zeff"),
+        &read("tests/scripts/example/expected/stdout.txt"),
+        &read("tests/scripts/example/expected/stderr.txt"),
+    );
     assert!(
         done.contains(r#"{"name": "wages", "rows": 18412, "variables": "#),
         "{done}"
     );
+}
+
+/// The two scripts of the Scratch project a first visitor opens (`examples/scratch/`): the
+/// returns to schooling, and the engine's own sample on instrumental variables, each printing
+/// what `zeff run` of the released 0.8.0 printed for it.
+#[test]
+fn the_scratch_projects_scripts_print_what_zeff_run_prints() {
+    let host = Host::new("scratch");
+    for name in ["main", "instruments"] {
+        prints_as_zeff_run(
+            &host,
+            &format!("scripts/{name}.zeff"),
+            &read(&format!("examples/scratch/scripts/{name}.zeff")),
+            &read(&format!("examples/scratch/expected/{name}.stdout")),
+            &read(&format!("examples/scratch/expected/{name}.stderr")),
+        );
+    }
+    // The table the sample's last section exports is written into the project.
+    assert!(host.file("output/table_iv.tex").is_some());
 }
 
 /// The text a line of JSON holds under `key`, read back from its JSON form: enough of a
@@ -234,7 +269,7 @@ fn the_statements_of_a_text_are_the_engines_from_their_first_line_to_their_last(
 #[test]
 fn each_statement_of_the_example_has_what_it_printed_what_it_made_and_its_size() {
     let host = Host::new("scratch");
-    let text = read("examples/scratch/scripts/main.zeff");
+    let text = read("tests/scripts/example/scripts/main.zeff");
     let done = run_at(&host, &text, 0);
     let each = done["statements"].as_array().unwrap();
     let lines: Vec<u64> = each
@@ -252,11 +287,11 @@ fn each_statement_of_the_example_has_what_it_printed_what_it_made_and_its_size()
     };
     assert_eq!(
         joined("stdout"),
-        read("examples/scratch/expected/stdout.txt")
+        read("tests/scripts/example/expected/stdout.txt")
     );
     assert_eq!(
         joined("stderr"),
-        read("examples/scratch/expected/stderr.txt")
+        read("tests/scripts/example/expected/stderr.txt")
     );
     // The name a `let` binds and the type the engine names; a frame with its size.
     let wages = &each[0];
@@ -276,7 +311,7 @@ fn each_statement_of_the_example_has_what_it_printed_what_it_made_and_its_size()
 
 #[test]
 fn a_run_prints_at_the_width_asked_as_zeff_run_does() {
-    let text = read("examples/scratch/scripts/main.zeff");
+    let text = read("tests/scripts/example/scripts/main.zeff");
     for width in [40, 80] {
         let host = Host::new("scratch");
         let done = run_at(&host, &text, width);
@@ -450,7 +485,7 @@ fn what_a_statement_needs_is_the_engines_dependency_graph() {
 
 #[test]
 fn a_run_of_chosen_statements_runs_them_alone_and_prints_what_the_whole_run_prints_for_them() {
-    let text = read("examples/scratch/scripts/main.zeff");
+    let text = read("tests/scripts/example/scripts/main.zeff");
     let whole = run_at(&Host::new("scratch"), &text, 0);
     // The summary at line 8 needs the frames of lines 4 and 5.
     let lines: [u32; 3] = [4, 5, 8];

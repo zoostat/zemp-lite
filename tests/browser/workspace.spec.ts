@@ -1,7 +1,7 @@
 // The shell of the workspace, in Panes (open decision #146): the top bar, the one left panel
 // with its two tabs, the editor tabs, and the Output panel under the script.
 import type { Page } from "@playwright/test";
-import { editor, expect, scriptText, test } from "./support";
+import { editor, expect, scriptText, test, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -9,6 +9,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   // These tests are of the Panes layout; a project opens in the margin editor.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }

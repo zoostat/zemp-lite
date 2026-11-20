@@ -3,7 +3,7 @@
 // findings do, the results on the page stay, and the status gives the engine's last line.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, printed, test, write } from "./support";
+import { expect, printed, test, write, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -12,6 +12,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
@@ -24,7 +25,7 @@ test("Check says what `zeff check` says of a script with no problems, and runs n
   await expect(page.getByTestId("sync")).toHaveText("checked scripts/main.zeff: no problems");
   await expect(page.getByTestId("block")).toHaveCount(0);
   // Once the script is edited, what the check said is no longer of it.
-  await write(page, file("examples/scratch/scripts/main.zeff") + "print(1)\n");
+  await write(page, file("tests/scripts/example/scripts/main.zeff") + "print(1)\n");
   await expect(page.getByTestId("sync")).toHaveText("not run yet");
 });
 
@@ -38,7 +39,7 @@ test("what Check finds stands under its line, and the results of the run before 
   const before = await printed(page);
   const blocks = await page.getByTestId("block").count();
 
-  await write(page, file("examples/scratch/scripts/main.zeff") + "let z = nosuch(3)\n");
+  await write(page, file("tests/scripts/example/scripts/main.zeff") + "let z = nosuch(3)\n");
   await press(page.getByRole("button", { name: "Check" }));
   await expect(page.getByTestId("sync")).toHaveText("not run · 1 error found by the check");
   await expect(page.getByTestId("refused")).toContainText("found 1 error; nothing was run");

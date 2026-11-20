@@ -1,6 +1,6 @@
 // ⌘K and the console line (release 0.1, step 10).
 import type { Page } from "@playwright/test";
-import { editor, expect, printed, scriptText, test, write } from "./support";
+import { editor, expect, printed, scriptText, test, write, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -9,6 +9,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await useExample(page);
 }
 
 /** Open the palette, type, and run the first command listed. */
