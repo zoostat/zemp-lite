@@ -176,6 +176,11 @@
             aria-expanded={code in explained}
             onclick={() => void explain(code)}>Explain</button
           >
+          {#if code.startsWith("Z9")}
+            <button class="act" onclick={() => void workspace?.reportProblem()}
+              >Report a problem</button
+            >
+          {/if}
           {#if code in explained}
             <pre class="mono explained" data-testid="explained">{explained[code] ?? "…"}</pre>
           {/if}

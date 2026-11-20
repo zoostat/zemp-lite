@@ -14,6 +14,7 @@
   import LeftPanel from "./LeftPanel.svelte";
   import MainPane from "./MainPane.svelte";
   import Palette from "./Palette.svelte";
+  import ReportWindow from "./ReportWindow.svelte";
   import Splitter from "./Splitter.svelte";
   import TopBar from "./TopBar.svelte";
   import { LEFT_WIDTH, fileTab } from "./views";
@@ -53,6 +54,11 @@
   const commands = $derived<Command[]>([
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
     { name: "Check the script", hint: "nothing is run", run: () => void workspace.check() },
+    {
+      name: "Report a problem",
+      hint: "a bug report built here, nothing sent",
+      run: () => void workspace.reportProblem(),
+    },
     {
       name: "Place: Script",
       hint: "the script with its notes",
@@ -190,6 +196,7 @@
   {/key}
 {/if}
 
+<ReportWindow {workspace} />
 {#if palette}
   <Palette {commands} onclose={() => (palette = false)} />
 {/if}

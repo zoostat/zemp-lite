@@ -558,6 +558,79 @@ impl Host {
         }
     }
 
+    /// The bug report of a script's failure, as `zeff report-bug` builds it (Language Reference,
+    /// section 11.1; the Zemp Specification, section 5, "Report a problem"): the engine runs
+    /// the script, keeps the failing statement and only the statements it needs, runs them
+    /// alone to see that they fail in the same way, and writes what went wrong, the engine's
+    /// version and `platform`, those statements, and the schema of the data, never a row. The
+    /// report is built here and written nowhere: the interface shows it whole and the user
+    /// saves it, and nothing is sent. As a line of JSON of type `report`: the report's file
+    /// name, its text, its kind and code, how many statements it keeps of how many; or, where
+    /// there is nothing to report, why, in the engine's words (its first line).
+    pub fn report(&self, script: &str, text: &str, platform: &str) -> String {
+        self.report_with(script, text, platform, None)
+    }
+
+    /// [`Host::report`] with the engine's test hook, which plants an internal error at the
+    /// statement on `line`; for tests alone, as the engine's own tests use it.
+    pub fn report_planted(&self, script: &str, text: &str, platform: &str, line: u32) -> String {
+        self.report_with(script, text, platform, Some(line))
+    }
+
+    fn report_with(
+        &self,
+        script: &str,
+        text: &str,
+        platform: &str,
+        planted: Option<u32>,
+    ) -> String {
+        use zeff_engine::bug_report::{self, Asked};
+        let none = |message: &str| {
+            format!(
+                "{{\"type\": \"report\", \"ok\": false, \"message\": {}}}",
+                json_string(message)
+            )
+        };
+        let Ok(project) = Project::open(&self.fs, Path::new(ROOT)) else {
+            return none("the project's `zeff.toml` could not be read");
+        };
+        let options = RunOptions {
+            memory: match project.manifest.memory {
+                Some(_) => None,
+                None => Some(default_budget(None)),
+            },
+            panic_at_line: planted,
+            ..RunOptions::default()
+        };
+        let asked = Asked {
+            script,
+            text,
+            line: None,
+            reference: None,
+            include_data: false,
+            synthetic: false,
+            trials: bug_report::TRIALS,
+            platform,
+            options,
+        };
+        match bug_report::build(&self.fs, &project, &asked) {
+            Ok(report) => format!(
+                "{{\"type\": \"report\", \"ok\": true, \"kind\": {}, \"code\": {}, \"name\": {}, \"text\": {}, \"kept\": {}, \"of\": {}, \"reduced\": {}}}",
+                json_string(report.kind.name()),
+                report
+                    .code
+                    .as_deref()
+                    .map_or("null".to_string(), json_string),
+                json_string(&report.name),
+                json_string(&report.text),
+                report.kept,
+                report.of,
+                report.reduced
+            ),
+            Err(why) => none(why.to_string().lines().next().unwrap_or_default()),
+        }
+    }
+
     /// The bindings of a text with their types, as `zeff repl`'s `:vars` lists those of its
     /// session: each name once, with the type the engine's checker gives it now (a later `let`
     /// shadows an earlier one), the names lined up, in the order they were last bound; only

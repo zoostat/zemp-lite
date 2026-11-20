@@ -903,3 +903,54 @@ fn the_bindings_are_listed_as_zeff_repl_lists_them() {
         "no bindings yet: `let name = ...` makes one\n"
     );
 }
+
+#[test]
+fn a_report_of_a_failure_is_what_zeff_report_bug_writes() {
+    // tests/scripts/report/: the reports the released `zeff report-bug` wrote for two scripts
+    // run as a project's `scripts/main.zeff`, on this machine (`aarch64 macos`).
+    for (script, written) in [
+        ("error.zeff", "main-Z0715-2c0bfa05.md"),
+        ("framed.zeff", "main-Z0707-e8fac637.md"),
+    ] {
+        let host = Host::new("demo");
+        let text = read(&format!("tests/scripts/report/{script}"));
+        let report: Value =
+            serde_json::from_str(&host.report("scripts/main.zeff", &text, "aarch64 macos"))
+                .unwrap();
+        assert_eq!(report["type"], "report");
+        assert_eq!(report["ok"], true, "{report}");
+        assert_eq!(report["kind"], "error");
+        assert_eq!(report["name"], written);
+        assert_eq!(
+            report["text"],
+            read(&format!("tests/scripts/report/{written}")),
+            "{script}"
+        );
+        assert_eq!(report["reduced"], true);
+    }
+}
+
+#[test]
+fn a_report_of_an_internal_error_says_it_is_a_bug_in_zeff_and_nothing_to_report_is_said() {
+    let host = Host::new("demo");
+    let text = read("tests/scripts/report/framed.zeff");
+    // The engine's test hook plants an internal error at the third statement.
+    let report: Value =
+        serde_json::from_str(&host.report_planted("scripts/main.zeff", &text, "wasm32 browser", 3))
+            .unwrap();
+    assert_eq!(report["kind"], "internal error", "{report}");
+    assert_eq!(report["code"], "Z9001");
+    assert!(report["name"].as_str().unwrap().starts_with("main-Z9001-"));
+    let written = report["text"].as_str().unwrap();
+    assert!(written.contains("This is a bug in Zeff, not in the script"));
+    assert!(written.contains("- platform: wasm32 browser"));
+    // A script that runs through has nothing to report, as the command line says.
+    let none: Value =
+        serde_json::from_str(&host.report("scripts/main.zeff", "print(1)\n", "wasm32 browser"))
+            .unwrap();
+    assert_eq!(none["ok"], false);
+    assert_eq!(
+        none["message"],
+        "the script ran without an error: there is nothing to report"
+    );
+}

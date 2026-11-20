@@ -4,6 +4,7 @@
 // project closes the worker is ended, which returns its memory to the browser (Engine and
 // Project Specification, section 8.3, point 7), and the next project starts a new one.
 import type {
+  Report,
   Rows,
   Filtered,
   View,
@@ -329,6 +330,23 @@ export class Engine {
       rows: found.rows,
       filter,
     };
+  }
+
+  /** The bug report of a script's failure, as `zeff report-bug` builds it: built in the worker and sent nowhere. */
+  async report(script: string, text: string): Promise<Report> {
+    const found = expect(await this.#ask({ type: "report", script, text }), "report");
+    return found.ok
+      ? {
+          ok: true,
+          kind: found.kind,
+          code: found.code,
+          name: found.name,
+          text: found.text,
+          kept: found.kept,
+          of: found.of,
+          reduced: found.reduced,
+        }
+      : { ok: false, message: found.message };
   }
 
   /** The bindings of a text with their types, as `zeff repl`'s `:vars` lists them: what it prints and says. */

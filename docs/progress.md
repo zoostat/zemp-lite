@@ -175,3 +175,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 164 unit tests; 270 browser tests passed and 2 skipped by design; 24 native tests of the worker; the nine samples identical; the worker within its limits.
 
 **Next.** Step 16 `[function]`: Report a problem, and the edition check.
+
+## 21 November 2026, release 0.2, step 16 (Report a problem, and the edition check)
+
+**Done.** Step 16 `[function]`: **Report a problem**, at an internal error and in ⌘K: the engine's own report of the failure, built in the worker as `zeff report-bug` builds it (byte for byte, but for the platform), shown whole and saved as a file; nothing sent. The edition check (`npm run check:edition`, in the routine and on GitHub): nothing of Zemp Studio's and no dialog, guide or builder in the Lite build, tried on deliberate breaches.
+
+**Green.** `npm run routine`: 164 unit tests; 274 browser tests passed and 2 skipped by design; 26 native tests; the edition check and its four tests; the nine samples identical.
+
+**Next.** Step 17 `[engine]`: the host (Cloudflare Pages at `lite.zeff-lang.dev`), which needs the owner's account, the DNS record and a token in the repository's secrets.

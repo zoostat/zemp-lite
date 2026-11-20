@@ -326,6 +326,28 @@ test("a frame is kept to the rows of a condition, sorted and searched as the vie
   assert.deepEqual(found.variables[0].bars, { counts: [2, 1], levels: ["north", "south"] });
 });
 
+test("the bug report of a failure is built in the worker, and nothing to report is said", async (t) => {
+  const { worker, next } = await opened(t, 0);
+  worker.postMessage({
+    type: "report",
+    id: 21,
+    script: "scripts/main.zeff",
+    text: 'print("a")\nlet w = import("data/none.csv")\n',
+  });
+  const report = await next("report");
+  assert.equal(report.id, 21);
+  assert.equal(report.ok, true);
+  assert.equal(report.kind, "error");
+  assert.equal(report.code, "Z0715");
+  assert.match(report.name, /^main-Z0715-[0-9a-f]{8}\.md$/);
+  assert.match(report.text, /^# Zeff bug report: an error, Z0715\n/);
+  assert.match(report.text, /- platform: wasm32 browser\n/);
+  worker.postMessage({ type: "report", script: "scripts/main.zeff", text: "print(1)\n" });
+  const none = await next("report");
+  assert.equal(none.ok, false);
+  assert.equal(none.message, "the script ran without an error: there is nothing to report");
+});
+
 test("a file a run wrote is given back, and passed to the interface, not copied", async (t) => {
   const { worker, said, next } = await opened(t, 0);
   const script =

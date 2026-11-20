@@ -25,3 +25,8 @@ runs; the prototype must show the refusal as the command line words it.
 project, the lines of `console.txt` (`vars.stdout`, `console.stderr`, and the script `:save` wrote,
 `explore.zeff`) and of `paths.txt` (`paths.stderr`). The console line's `:vars` and `:save` are held
 to them; `:clear`, which the console line has and `zeff repl` does not, is named there as unknown.
+
+`report/` holds the reports the released `zeff report-bug` of 0.8.0 wrote into `.zeff/reports/` for
+`error.zeff` and `framed.zeff`, each run as `scripts/main.zeff` of a new project on this machine
+(`platform: aarch64 macos`). The worker's report of each is held to them byte for byte; the
+browser's, which names its platform `wasm32 browser`, differs in that line alone.

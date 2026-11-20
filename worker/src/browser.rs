@@ -7,6 +7,10 @@
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
+/// The machine a report names, as `zeff report-bug` names its own (`aarch64 macos`): the
+/// engine's build for the browser, which knows no more of the machine than that.
+const PLATFORM: &str = "wasm32 browser";
+
 #[wasm_bindgen]
 extern "C" {
     /// The worker script's `zeffHost.event`: one event of the run, as a line of JSON.
@@ -92,6 +96,12 @@ impl Project {
         };
         self.host
             .rows(name, offset as usize, limit as usize, &shown)
+    }
+
+    /// The bug report of a script's failure, as `zeff report-bug` builds it, built in the
+    /// worker and sent nowhere, as a line of JSON; the platform is named as the browser.
+    pub fn report(&self, script: &str, text: &str) -> String {
+        self.host.report(script, text, PLATFORM)
     }
 
     /// The bindings of a text with their types, as `zeff repl`'s `:vars` lists them, as a

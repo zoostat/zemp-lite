@@ -1,0 +1,4 @@
+let w = dataset(wages).where(year == 2015)
+let n = w.n_rows()
+print(n)
+w.save("nofolder/w.csv")

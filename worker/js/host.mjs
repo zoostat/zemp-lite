@@ -23,6 +23,8 @@
 //                                       the engine prints it: sorted by the variable `sort`
 //                                       (descending where `desc`), kept to the rows of the
 //                                       last filter where `filtered`, and to those `search` finds
+//   { type: "report", script, text }    the bug report of the script's failure, as `zeff
+//                                       report-bug` builds it; written nowhere, sent nowhere
 //   { type: "vars", script, text }      the bindings of a text with their types, as `zeff
 //                                       repl`'s `:vars` lists them
 //   { type: "filter", name, condition } keep the viewer's frame to the rows of a condition,
@@ -49,6 +51,9 @@
 //                                       `rows`: each variable with its header's distribution
 //   { type: "filter", ok, rows, said }  the answer to `filter`
 //   { type: "vars", printed, said }     the answer to `vars`
+//   { type: "report", ok, kind, code, name, text, kept, of, reduced }   the answer to
+//                                       `report`; where there is nothing to report, ok is
+//                                       false and `message` says why
 //   { type: "help", page, message }     the answer to `help`: the page, or null and why
 //   { type: "explained", page }         the answer to `explain`: the page, as `zeff explain
 //                                       --format json` gives it, its `text` what it prints
@@ -115,6 +120,7 @@ export function serve(engine, port, deviceBytes) {
         "rows",
         "filter",
         "vars",
+        "report",
       ].includes(said.type)
     ) {
       refuse(`no such message: ${String(said.type)}`);
@@ -133,6 +139,7 @@ export function serve(engine, port, deviceBytes) {
         rows: "rows of a frame were asked for",
         filter: "a filter was asked for",
         vars: "the bindings were asked for",
+        report: "a report was asked for",
       }[said.type];
       refuse(`${what} before a project was opened`);
       return;
@@ -170,6 +177,9 @@ export function serve(engine, port, deviceBytes) {
         answer(page);
         break;
       }
+      case "report":
+        answer(JSON.parse(project.report(String(said.script), String(said.text))));
+        break;
       case "vars":
         answer(JSON.parse(project.vars(String(said.script), String(said.text))));
         break;

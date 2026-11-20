@@ -1,0 +1,4 @@
+print("a")
+print(1 / 0)
+let w = import("data/none.csv")
+print("b")

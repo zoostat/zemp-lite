@@ -174,6 +174,15 @@
                     onclose();
                   }}>Explain</button
                 >
+                {#if code.startsWith("Z9")}
+                  <button
+                    class="act"
+                    onclick={() => {
+                      void workspace.reportProblem();
+                      onclose();
+                    }}>Report a problem</button
+                  >
+                {/if}
               {/if}
               {#if one.line !== null}
                 {@const line = one.line}

@@ -3,7 +3,7 @@
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
 import { Language, type Diagnostic, type Range } from "../engine/language";
-import type { Checked, FrameInfo, Ranged, Rows, View } from "../engine/messages";
+import type { Checked, FrameInfo, Ranged, Report, Rows, View } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
@@ -462,6 +462,35 @@ export class Workspace {
    * Go to a line of a file of the project: its tab opened and shown, and the editor asked to
    * put the cursor on the line and bring it into view. Each asking is told apart by its count.
    */
+  /** Report a problem: the report being built, the one built, or why there is none. */
+  report = $state<{ building: true } | ({ building: false; script: string } & Report) | null>(null);
+
+  /**
+   * Report a problem (the Zemp Specification, section 5): the engine builds the bug report of
+   * the last run's failure in the worker, as `zeff report-bug` builds it, from the text that
+   * ran (the script as it stands where nothing has run); the window shows it whole for the
+   * user to read and save. Nothing is sent, and nothing is written into the project.
+   */
+  async reportProblem(): Promise<void> {
+    const run = this.lastRun;
+    const script = run?.script ?? this.scriptPath;
+    await this.#load(script);
+    const text = run?.text ?? this.buffers[script]?.text ?? "";
+    this.report = { building: true };
+    const before = this.#busy;
+    const work = (async () => {
+      await before;
+      await this.#saving;
+      try {
+        this.report = { building: false, script, ...(await this.engine.report(script, text)) };
+      } catch (error) {
+        this.report = { building: false, script, ok: false, message: (error as Error).message };
+      }
+    })();
+    this.#busy = work;
+    await work;
+  }
+
   /** A statement for the script's editor to put in at the cursor, until it is put in. */
   inserting = $state<{ path: string; text: string; count: number } | null>(null);
   #insertions = 0;

@@ -109,6 +109,24 @@ export interface Filtered {
   said: string;
 }
 
+/**
+ * A bug report of a script's failure, as `zeff report-bug` builds it, or why there is none:
+ * the file's name, the report, its kind (`error`, `internal error`) and code, and how many
+ * statements it keeps of how many.
+ */
+export type Report =
+  | {
+      ok: true;
+      kind: string;
+      code: string | null;
+      name: string;
+      text: string;
+      kept: number;
+      of: number;
+      reduced: boolean;
+    }
+  | { ok: false; message: string };
+
 /** How the data viewer shows a frame: kept to the rows of a condition, sorted, searched. */
 export interface View {
   where: string;
@@ -170,6 +188,7 @@ export type Request =
     }
   | { type: "filter"; name: string; condition: string }
   | { type: "vars"; script: string; text: string }
+  | { type: "report"; script: string; text: string }
   | { type: "dependencies"; script: string; text: string }
   /** The statements of a text as the engine reads them, without running it. */
   | { type: "statements"; script: string; text: string }
@@ -205,6 +224,7 @@ export type Reply =
   | ({ type: "rows" } & Omit<Rows, "filter">)
   | ({ type: "filter" } & Filtered)
   | { type: "vars"; printed: string; said: string }
+  | ({ type: "report" } & Report)
   | { type: "frame"; name: string; bytes: Uint8Array }
   | { type: "read"; path: string; bytes: Uint8Array | null }
   | { type: "error"; message: string };

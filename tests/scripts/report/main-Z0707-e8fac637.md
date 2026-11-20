@@ -1,0 +1,60 @@
+# Zeff bug report: an error, Z0707
+
+This file was written by `zeff report-bug` on your computer. Nothing has been sent
+anywhere. Read it before you attach it to an issue: it holds statements of your script,
+the names and types of your variables and the names of the files they were read from.
+It holds no rows of your data.
+A message is quoted as it was printed, and a message may name a value where it must (a
+text that could not be converted, the levels of a group): read those lines too.
+
+## What went wrong
+
+The script stopped with an error:
+
+    error[Z0707]: cannot write `nofolder/w.csv`: the folder `nofolder/` does not exist; `output/` is created as needed, another folder you create first
+     --> scripts/main.zeff:4:8
+      |
+    4 | w.save("nofolder/w.csv")
+      |        ^^^^^^^^^^^^^^^^ files are written only under the project folder
+      |
+      = help: write under the project, as in `output/w.csv`
+
+## Zeff
+
+- version: 0.8.0
+- edition: preview
+- platform: aarch64 macos
+
+## The statements
+
+The failing statement and the statements it depends on: 2 of the 4 statements of
+`scripts/main.zeff` (lines 1 and 4). Run alone, they fail in the same way.
+
+    let w = dataset(wages).where(year == 2015)
+    w.save("nofolder/w.csv")
+
+## The run
+
+- seed: none is set by these statements
+- warnings and notes before the failure: none
+
+## The data
+
+The frames the statements hold: the names and types of their variables and how many
+values are missing. No value is written here.
+
+`w`: 2,179 rows × 11 variables
+
+    worker    Int
+    year      Int
+    wage      Float     27 missing
+    educ      Int
+    exper     Int       3 missing
+    age       Int
+    hours     Float     9 missing
+    union     Int
+    female    Int
+    industry  Category  12 levels
+    firm      Int
+
+The statements read no file.

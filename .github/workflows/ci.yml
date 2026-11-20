@@ -81,6 +81,9 @@ jobs:
       - name: Type check
         run: npm run check:types
 
+      - name: Edition check (Lite never depends on Zemp Studio; no dialog, guide or builder)
+        run: npm run check:edition
+
       # The worker: the released Zeff engine, built here to WebAssembly. The compiler is the
       # one worker/rust-toolchain.toml pins, which rustup installs when it is first asked for.
       - name: Install the pinned Rust toolchain
