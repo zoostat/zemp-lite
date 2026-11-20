@@ -237,15 +237,17 @@
     margin: 2px 0 0 16px;
     overflow-x: auto;
   }
-  .said,
   .apart {
     color: var(--ink-3);
     font-family: "Atkinson Hyperlegible Next", sans-serif;
-    font-size: 12px;
+    font-size: 12.5px;
     margin-left: 10px;
   }
+  .said,
   .told {
     margin: 2px 0 0 16px;
+  }
+  .told {
     white-space: pre-wrap;
   }
   .said {

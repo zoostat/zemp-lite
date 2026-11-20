@@ -1,0 +1,2 @@
+let wages = dataset(wages)
+wages.reg(log(wage) ~ union + exper + exper^2, fe: worker + year, cluster: worker)

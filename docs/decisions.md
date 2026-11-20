@@ -890,3 +890,15 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Tests.** Every browser test arrives as a returning visitor (`tests/browser/support.ts` puts the note into each test's browser before its pages load, unless the test asks for `firstVisit`); the first-visit tests open in a fresh browser: the Start screen with its three steps done and its promises, **Open Zemp Lite**, the welcome screen, the next visit straight to it, and the example run and read from there; the narrow line on both screens. The check made after each deployment goes through the Start screen and measures the first start up to **Open Zemp Lite** being ready (200 and 336 ms on the local build).
 
 **Reason.** The checklist's step 18; the design guide, section 9; #33; the Zemp Specification, sections 13 and 14.
+
+## 21 November 2026: The close, prepared (release 0.2, step 19a)
+
+**Split.** Step 19 was split: 19a, what needs neither the host nor the owner, done now; 19b, the pre-release routine on the hosted alpha, the reader test and the owner's trial, after step 17b.
+
+**The reader test** (the testing handbook, section 2.4, item 4; question 3 of this release, "as recommended": one test serving Zemp Lite 0.2 and Zeff 0.9.0): ten scripts of two to eight lines on the shipped data (`wages`, `staff`, `sleep`), without comments, since the test is whether the code alone is read as meant. Each is there to catch a misreading a reader could make: a quadratic term, a band of ages, clustered errors, two-way fixed effects, an interaction written `*`, a sum contrast, analytic weights, the side an instrument stands on, a range that includes its end, a test's default, the order of `case` and of `levels:`. All ten run on the released 0.8.0 (each checked by its command line, and held by a native test); the key states for each what it does as the engine's output confirms it (the defaults among them: classical errors where `se:` is not given; Welch's test). `docs/releases/0.2-reader-test/` holds `README.md` (how the owner runs it: five to eight readers, answers written before running, misreadings copied word for word), `sheet.md` (for the readers) and `key.md` (for the owner alone).
+
+**The acceptance tests** of the design's section 21 were gone through one by one in the draft notes. Going through them found two faults, mended in this step: a console mark set at 12 px (the floor is 12.5), and a rule of the console's styles split by step 15, which had taken the indent from what a console statement said. It also named one more writer of the script than the console line's copy: **Format the script**, which writes the engine's formatted text when it is asked for.
+
+**The notes** (`docs/releases/0.2-notes.md`) drafted: what shipped, breaking changes (none), reference versions (the released command line alone), what is left out and why, known issues, the acceptance tests as they stand, the measures, the validation suite; the parts that need the hosted alpha are marked "at the close".
+
+**Reason.** The checklist's step 19; the testing handbook, section 2.4; the design's section 21.

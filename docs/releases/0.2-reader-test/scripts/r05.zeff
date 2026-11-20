@@ -1,0 +1,3 @@
+let wages = dataset(wages)
+    .add(lwage = log(wage), industry = category(industry, contrast: sum))
+wages.reg(lwage ~ educ + industry, se: robust)

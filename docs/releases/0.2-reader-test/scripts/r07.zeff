@@ -1,0 +1,2 @@
+let staff = dataset(staff)
+staff.ivreg(productivity ~ age + training, instruments: training ~ offer, fe: site, se: robust)

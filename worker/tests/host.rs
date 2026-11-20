@@ -989,3 +989,30 @@ fn a_report_of_an_internal_error_says_it_is_a_bug_in_zeff_and_nothing_to_report_
         "the script ran without an error: there is nothing to report"
     );
 }
+
+#[test]
+fn the_reader_tests_scripts_each_run_without_an_error() {
+    // docs/releases/0.2-reader-test/scripts: the ten scripts of the reader test (the testing
+    // handbook, section 2.4, item 4), which the readers paste into the alpha.
+    let folder = format!(
+        "{}/../docs/releases/0.2-reader-test/scripts",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let mut names: Vec<String> = std::fs::read_dir(&folder)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+        .filter(|name| name.ends_with(".zeff"))
+        .collect();
+    names.sort();
+    assert_eq!(names.len(), 10);
+    for name in names {
+        let host = Host::new("reader");
+        let text = std::fs::read_to_string(format!("{folder}/{name}")).unwrap();
+        let done = run_at(&host, &text, 0);
+        assert_eq!(done["exit_code"], 0, "{name}: {}", done["stderr"]);
+        assert!(
+            !done["stdout"].as_str().unwrap().is_empty(),
+            "{name} printed nothing"
+        );
+    }
+}

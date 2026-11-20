@@ -1,0 +1,2 @@
+let wages = dataset(wages).where(year == 2019)
+wages.reg(log(wage) ~ educ + exper, weights: hours, weight_type: analytic, se: robust)

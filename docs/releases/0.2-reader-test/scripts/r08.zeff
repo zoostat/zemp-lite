@@ -1,0 +1,5 @@
+let wages = dataset(wages)
+let fits = [for y in 2010..2021 {
+    wages.where(year == y).reg(log(wage) ~ educ + exper)
+}]
+report(fits)

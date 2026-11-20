@@ -91,3 +91,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 164 unit tests; 282 browser tests passed and 2 skipped by design; 27 native tests; the after-deployment check on the local build (first start 200 and 336 ms).
 
 **Next.** Step 19 (the close): the pre-release routine, the reader test and the owner's trial, which need the deployed alpha, so step 17b (the owner's account, token, address and visit count) comes first; then "Release 0.2".
+
+## 21 November 2026, release 0.2, step 19a (the close, prepared)
+
+**Done.** Step 19 split into 19a and 19b. Step 19a `[function]`: the reader test made ready (ten scripts that run on 0.8.0, the readers' sheet, the owner's key, how to run it, in `docs/releases/0.2-reader-test/`); the design's acceptance tests gone through in the draft notes (`docs/releases/0.2-notes.md`), which found and mended two faults of the console's styles; the measures that need no host. Steps 18a is green on GitHub.
+
+**Green.** `npm run routine`: 164 unit tests; 282 browser tests passed and 2 skipped by design; 28 native tests.
+
+**Next.** Step 17b waits for the owner: a Cloudflare account, the token and account ID in the repository's secrets, then the address `lite.zeff-lang.dev` and the visit count switched on in the Pages project. Then 19b `[function]`: the routine on the hosted alpha, the reader test the owner runs, his trial, and "Release 0.2".

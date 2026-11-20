@@ -1,0 +1,8 @@
+let wages = dataset(wages)
+    .where(!is_missing(wage))
+    .add(band = category(case {
+        age < 30 => "young",
+        age < 50 => "middle",
+        _ => "older",
+    }, levels: ["young", "middle", "older"]))
+wages.reg(log(wage) ~ educ + band, cluster: firm)

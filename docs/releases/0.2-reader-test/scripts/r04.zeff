@@ -1,0 +1,2 @@
+let wages = dataset(wages).where(year >= 2015)
+wages.reg(log(wage) ~ educ * female + exper, se: robust)

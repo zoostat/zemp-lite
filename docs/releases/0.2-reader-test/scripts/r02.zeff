@@ -1,0 +1,2 @@
+let wages = dataset(wages).where(age >= 25 && age < 55)
+wages.reg(log(wage) ~ educ + female + union, cluster: worker)
