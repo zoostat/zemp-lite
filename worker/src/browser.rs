@@ -70,9 +70,34 @@ impl Project {
             .run(script, text, &asked, cancelled, &|json| host_event(json))
     }
 
-    /// Rows of a frame of the last run, each cell as the engine prints it, as a line of JSON.
-    pub fn rows(&self, name: &str, offset: u32, limit: u32) -> String {
-        self.host.rows(name, offset as usize, limit as usize)
+    /// Rows of a frame of the last run as the data viewer shows it, each cell as the engine
+    /// prints it, as a line of JSON: sorted by `sort` (none where it is empty), descending
+    /// where `desc` is true, kept to the rows of the last filter where `filtered` is true, and
+    /// to the rows a non-empty `search` finds.
+    #[allow(clippy::too_many_arguments)]
+    pub fn rows(
+        &self,
+        name: &str,
+        offset: u32,
+        limit: u32,
+        sort: &str,
+        desc: bool,
+        filtered: bool,
+        search: &str,
+    ) -> String {
+        let shown = crate::Shown {
+            sort: (!sort.is_empty()).then_some((sort, desc)),
+            filtered,
+            search,
+        };
+        self.host
+            .rows(name, offset as usize, limit as usize, &shown)
+    }
+
+    /// Keep the viewer's frame to the rows of a condition, as `name.where(condition)` keeps
+    /// them, as a line of JSON.
+    pub fn filter(&self, name: &str, condition: &str) -> String {
+        self.host.filter(name, condition)
     }
 
     /// The help page of a function, as `zeff help` prints it in this project, as a line of JSON.

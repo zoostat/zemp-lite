@@ -385,20 +385,81 @@ describe("a function's help page", () => {
 });
 
 describe("rows of a frame", () => {
+  const page = {
+    name: "pay",
+    header: "pay · 3 rows × 1 variable",
+    total: 3,
+    kept: 3,
+    offset: 200,
+    variables: [
+      {
+        name: "id",
+        type: "Int",
+        label: "",
+        missing: 0,
+        right: true,
+        contrast: null,
+        bars: { counts: [1, 1, 1], levels: ["1", "2", "3"] },
+        codes: null,
+      },
+    ],
+    rows: [],
+  };
+
   it("are asked for a page at a time, and given as the engine writes them", async () => {
     const { engine: made, worker } = await opened();
     const asked = made.rows("pay", 200, 200);
     await settle();
-    expect(worker.last).toMatchObject({ type: "rows", name: "pay", offset: 200, limit: 200 });
-    const page = {
+    expect(worker.last).toMatchObject({
+      type: "rows",
       name: "pay",
-      header: "pay · 3 rows × 1 variable",
-      total: 3,
       offset: 200,
-      variables: [{ name: "id", type: "Int", label: "", missing: 0, right: true }],
-      rows: [],
-    };
+      limit: 200,
+      sort: "",
+      filtered: false,
+      search: "",
+    });
     worker.answer({ type: "rows", ...page });
-    expect(await asked).toEqual(page);
+    expect(await asked).toEqual({ ...page, filter: null });
+  });
+
+  it("are kept to a condition by the engine first, and again after a run", async () => {
+    const { engine: made, worker } = await opened();
+    const view = { where: "id > 1", sort: { variable: "id", desc: true }, search: "" };
+    const asked = made.rows("pay", 0, 200, view);
+    await settle();
+    expect(worker.last).toMatchObject({ type: "filter", name: "pay", condition: "id > 1" });
+    worker.answer({ type: "filter", ok: true, rows: 2, said: "" });
+    await settle();
+    expect(worker.last).toMatchObject({ type: "rows", sort: "id", desc: true, filtered: true });
+    worker.answer({ type: "rows", ...page, kept: 2 });
+    expect((await asked).filter).toEqual({ ok: true, rows: 2, said: "" });
+    // Asked again before any run, the filter the worker holds is used.
+    const again = made.rows("pay", 200, 200, view);
+    await settle();
+    expect(worker.last).toMatchObject({ type: "rows", offset: 200 });
+    worker.answer({ type: "rows", ...page, kept: 2 });
+    await again;
+    // After a run, the worker holds no filter: it is run again.
+    const ran = made.run("scripts/main.zeff", "let pay = 1\n");
+    await settle();
+    worker.answer({
+      type: "done",
+      exit_code: 0,
+      stdout: "",
+      stderr: "",
+      statements: [],
+      frames: [],
+    });
+    await ran;
+    const after = made.rows("pay", 0, 200, view);
+    await settle();
+    expect(worker.last).toMatchObject({ type: "filter", condition: "id > 1" });
+    worker.answer({ type: "filter", ok: false, rows: 0, said: "error[Z0201]: …" });
+    await settle();
+    // A condition the engine cannot run leaves every row.
+    expect(worker.last).toMatchObject({ type: "rows", filtered: false });
+    worker.answer({ type: "rows", ...page });
+    expect((await after).filter?.ok).toBe(false);
   });
 });

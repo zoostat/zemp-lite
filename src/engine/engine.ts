@@ -5,6 +5,8 @@
 // Project Specification, section 8.3, point 7), and the next project starts a new one.
 import type {
   Rows,
+  Filtered,
+  View,
   Checked,
   ExplainedPage,
   FromWorker,
@@ -48,6 +50,9 @@ export class Engine {
   #ready: Promise<string> | null = null;
   #version: string | null = null;
   #waiting = new Map<number, Waiting>();
+  /** Runs asked for of this worker: the worker holds a filter until the next run. */
+  #runs = 0;
+  #filter: { name: string; condition: string; runs: number; answer: Filtered } | null = null;
   #nextId = 1;
   #flag: Int32Array | null = null;
   #running: Running | null = null;
@@ -89,6 +94,8 @@ export class Engine {
     }
     const worker = this.#spawn();
     this.#worker = worker;
+    // A new worker holds no filter.
+    this.#filter = null;
     this.#ready = new Promise<string>((resolve, reject) => {
       worker.onerror = (event) => {
         const error = new EngineError(
@@ -151,6 +158,7 @@ export class Engine {
     if (this.#project === null) {
       return Promise.reject(new EngineError("no project is open in the engine"));
     }
+    this.#runs += 1;
     // The flag is the interface's: cleared before a run is asked for.
     if (this.#flag !== null) {
       Atomics.store(this.#flag, 0, 0);
@@ -278,17 +286,58 @@ export class Engine {
       .statements;
   }
 
-  /** Rows of a frame of the last run, from `offset`, at most `limit`, each cell as the engine prints it. */
-  async rows(name: string, offset: number, limit: number): Promise<Rows> {
-    const found = expect(await this.#ask({ type: "rows", name, offset, limit }), "rows");
+  /**
+   * Rows of a frame of the last run as the data viewer shows it, from `offset`, at most
+   * `limit`, each cell as the engine prints it: kept to the rows of `view.where` as
+   * `name.where(…)` keeps them, sorted as `data.sort` sorts, and kept to the rows a search
+   * finds. The worker holds a filter until the next run, so one is run again where a run has
+   * been made since; a filter the engine cannot run leaves every row, with what it said.
+   */
+  async rows(
+    name: string,
+    offset: number,
+    limit: number,
+    view: View = { where: "", sort: null, search: "" },
+  ): Promise<Rows> {
+    const where = view.where.trim();
+    let filter: Filtered | null = null;
+    if (where !== "") {
+      const held = this.#filter;
+      filter =
+        held !== null && held.name === name && held.condition === where && held.runs === this.#runs
+          ? held.answer
+          : await this.filter(name, where);
+    }
+    const asked: Request = {
+      type: "rows",
+      name,
+      offset,
+      limit,
+      sort: view.sort?.variable ?? "",
+      desc: view.sort?.desc ?? false,
+      filtered: filter?.ok === true,
+      search: view.search,
+    };
+    const found = expect(await this.#ask(asked), "rows");
     return {
       name: found.name,
       header: found.header,
       total: found.total,
+      kept: found.kept,
       offset: found.offset,
       variables: found.variables,
       rows: found.rows,
+      filter,
     };
+  }
+
+  /** Keep a frame of the last run to the rows of a condition, as `name.where(condition)` keeps them. */
+  async filter(name: string, condition: string): Promise<Filtered> {
+    const runs = this.#runs;
+    const found = expect(await this.#ask({ type: "filter", name, condition }), "filter");
+    const answer = { ok: found.ok, rows: found.rows, said: found.said };
+    this.#filter = { name, condition, runs, answer };
+    return answer;
   }
 
   /** A frame of the last run, by the name of its binding, as the bytes of an Arrow stream. */

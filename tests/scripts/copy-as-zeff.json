@@ -1,0 +1,54 @@
+[
+  {
+    "kind": "view",
+    "frame": "wages",
+    "where": "year >= 2010 && female == 1",
+    "sort": { "variable": "age", "desc": false },
+    "statement": "wages.where(year >= 2010 && female == 1).sort(age)"
+  },
+  {
+    "kind": "view",
+    "frame": "wages",
+    "where": "",
+    "sort": { "variable": "wage", "desc": true },
+    "statement": "wages.sort(wage, desc: true)"
+  },
+  {
+    "kind": "view",
+    "frame": "wages",
+    "where": "exper > 10",
+    "sort": null,
+    "statement": "wages.where(exper > 10)"
+  },
+  {
+    "kind": "type",
+    "frame": "wages",
+    "variable": "educ",
+    "type": "Float",
+    "statement": "let wages = wages.add(educ = to(educ, Float))"
+  },
+  {
+    "kind": "type",
+    "frame": "wages",
+    "variable": "firm",
+    "type": "Category",
+    "statement": "let wages = wages.add(firm = category(firm))"
+  },
+  {
+    "kind": "contrast",
+    "frame": "wages",
+    "variable": "industry",
+    "contrast": "sum",
+    "statement": "let wages = wages.add(industry = category(industry, contrast: sum))"
+  },
+  {
+    "kind": "labels",
+    "frame": "wages",
+    "variable": "union",
+    "labels": [
+      { "code": 0, "label": "not a member" },
+      { "code": 1, "label": "member" }
+    ],
+    "statement": "let wages = wages.label(union, [0 => \"not a member\", 1 => \"member\"])"
+  }
+]

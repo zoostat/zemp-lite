@@ -33,6 +33,7 @@ use zeff_web::{default_budget, event_json};
 
 #[cfg(target_arch = "wasm32")]
 mod browser;
+mod view;
 
 /// Where the project lies in the worker's memory.
 const ROOT: &str = "/project";
@@ -200,6 +201,29 @@ pub struct Asked<'a> {
     pub only: Option<&'a [u32]>,
 }
 
+/// How the data viewer shows a frame (#75): sorted by a variable (`true` for descending) or
+/// not; kept to the rows of the condition last given to [`Host::filter`] or not; and kept to
+/// the rows with a cell that holds `search`.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Shown<'a> {
+    pub sort: Option<(&'a str, bool)>,
+    pub filtered: bool,
+    pub search: &'a str,
+}
+
+/// The binding the viewer's filter is run into; the user never sees it, since the statement
+/// copied is written with the frame's own name.
+const FILTERED: &str = "zemp_viewer_rows";
+
+/// Never cancelled: a filter is short, and runs only the statements it needs.
+fn never() -> bool {
+    false
+}
+
+/// A frame kept to the rows of a condition: the frame's name, the condition, and the frame
+/// the engine made of them.
+type Filtered = (String, String, zeff_core::value::Frame);
+
 /// A project in memory, and the runs made in it.
 pub struct Host {
     fs: MemoryFileSystem,
@@ -207,6 +231,15 @@ pub struct Host {
     language: RefCell<zeff_lsp::Server>,
     /// The frames the bindings of the last run held when it ended, for the interface to show.
     frames: RefCell<Frames>,
+    /// The script and the text the last run ran, which a filter runs again with its statement.
+    last: RefCell<Option<(String, String)>>,
+    /// The viewer's frame kept to the rows of a condition, until the next run.
+    filtered: RefCell<Option<Filtered>>,
+    /// The rows of the viewer's last view, by what made them, so that a scroll does not put
+    /// them in order again.
+    kept: RefCell<Option<(String, Vec<usize>)>>,
+    /// The small distributions of the headers of the viewer's last frame, by what made it.
+    bars: RefCell<Option<(String, Vec<String>)>>,
 }
 
 impl Host {
@@ -225,6 +258,10 @@ impl Host {
             fs,
             language: RefCell::new(zeff_lsp::Server::new()),
             frames: RefCell::default(),
+            last: RefCell::default(),
+            filtered: RefCell::default(),
+            kept: RefCell::default(),
+            bars: RefCell::default(),
         }
     }
 
@@ -331,6 +368,10 @@ impl Host {
             &frames,
         );
         *self.frames.borrow_mut() = frames;
+        *self.last.borrow_mut() = Some((script.to_string(), text.to_string()));
+        self.filtered.borrow_mut().take();
+        self.kept.borrow_mut().take();
+        self.bars.borrow_mut().take();
         self.done(
             outcome.exit_code,
             &outcome.output.stdout,
@@ -341,39 +382,91 @@ impl Host {
 
     /// Rows of a frame of the last run, for the data viewer (#75): the frame's header line as
     /// the engine prints it (`wages · 18,412 rows × 11 variables`); each variable with its type,
-    /// its label, its count of missing values and how its cells line up; and the rows from
-    /// `offset`, at most `limit` of them, each cell written as the engine prints it (a labelled
-    /// value by its label, a date in ISO form, a missing value `NA`). As a line of JSON of type
-    /// `rows`, or of type `error` where no binding of the last run held a frame of that name.
-    pub fn rows(&self, name: &str, offset: usize, limit: usize) -> String {
+    /// its label, its count of missing values, how its cells line up, the small distribution
+    /// of its header and, for a whole-number variable of few values, its codes; how many rows
+    /// the view keeps; and the rows of the view from `offset`, at most `limit` of them, each
+    /// cell written as the engine prints it (a labelled value by its label, a date in ISO form,
+    /// a missing value `NA`). The view (see [`Shown`]) is the frame, or the frame kept to the
+    /// rows of the last [`Host::filter`], put in order by a variable as `data.sort` puts it and
+    /// kept to the rows a search finds. As a line of JSON of type `rows`, or of type `error`
+    /// where no binding of the last run held a frame of that name or the sort cannot be made.
+    pub fn rows(&self, name: &str, offset: usize, limit: usize, shown: &Shown<'_>) -> String {
+        let error = |message: &str| {
+            format!(
+                "{{\"type\": \"error\", \"message\": {}}}",
+                json_string(message)
+            )
+        };
         let frames = self.frames.borrow();
         let Some((_, frame)) = frames.iter().rev().find(|(bound, _)| bound == name) else {
-            return format!(
-                "{{\"type\": \"error\", \"message\": {}}}",
-                json_string(&format!("no frame called `{name}` in the last run"))
-            );
+            return error(&format!("no frame called `{name}` in the last run"));
         };
-        let table = &frame.table;
-        let total = table.rows();
-        let to = total.min(offset.saturating_add(limit));
+        let filtered = self.filtered.borrow();
+        let (table, condition) = match filtered.as_ref() {
+            Some((of, condition, kept)) if shown.filtered && of == name => {
+                (&kept.table, condition.as_str())
+            }
+            _ => (&frame.table, ""),
+        };
+        let key = format!(
+            "{name}\u{0}{condition}\u{0}{:?}\u{0}{}",
+            shown.sort, shown.search
+        );
+        if self
+            .kept
+            .borrow()
+            .as_ref()
+            .is_none_or(|(made, _)| *made != key)
+        {
+            let rows = match view::order(table, shown.sort) {
+                Ok(rows) => view::found(table, rows, shown.search),
+                Err(message) => return error(&message),
+            };
+            *self.kept.borrow_mut() = Some((key, rows));
+        }
+        let base = format!("{name}\u{0}{condition}");
+        if self
+            .bars
+            .borrow()
+            .as_ref()
+            .is_none_or(|(made, _)| *made != base)
+        {
+            let drawn = table
+                .columns()
+                .map(|(_, column)| view::bars(column))
+                .collect();
+            *self.bars.borrow_mut() = Some((base, drawn));
+        }
+        let kept = self.kept.borrow();
+        let rows_kept = kept.as_ref().map_or(&[][..], |(_, rows)| rows.as_slice());
+        let bars = self.bars.borrow();
+        let drawn = bars.as_ref().map_or(&[][..], |(_, drawn)| drawn.as_slice());
         let mut variables = Vec::new();
         let mut columns = Vec::new();
-        for (variable, column) in table.columns() {
+        for (index, (variable, column)) in table.columns().enumerate() {
             let right = matches!(
                 zeff_core::display::column_alignment(column),
                 zeff_core::value::Align::Right
             );
             variables.push(format!(
-                "{{\"name\": {}, \"type\": {}, \"label\": {}, \"missing\": {}, \"right\": {right}}}",
+                "{{\"name\": {}, \"type\": {}, \"label\": {}, \"missing\": {}, \"right\": {right}, \"contrast\": {}, \"bars\": {}, \"codes\": {}}}",
                 json_string(variable),
                 json_string(column.ty().name()),
                 json_string(column.metadata().get(zeff_columns::MetadataKey::Label).unwrap_or("")),
                 column.n_missing(),
+                column
+                    .contrast()
+                    .map_or("null".to_string(), |contrast| json_string(contrast.as_str())),
+                drawn.get(index).map_or("null", String::as_str),
+                view::codes(column),
             ));
             columns.push(column);
         }
-        let rows: Vec<String> = (offset.min(total)..to)
-            .map(|row| {
+        let from = offset.min(rows_kept.len());
+        let to = rows_kept.len().min(from.saturating_add(limit));
+        let rows: Vec<String> = rows_kept[from..to]
+            .iter()
+            .map(|&row| {
                 let cells: Vec<String> = columns
                     .iter()
                     .map(|column| json_string(&zeff_core::display::labelled_cell(column, row)))
@@ -382,13 +475,109 @@ impl Host {
             })
             .collect();
         format!(
-            "{{\"type\": \"rows\", \"name\": {}, \"header\": {}, \"total\": {total}, \"offset\": {}, \"variables\": [{}], \"rows\": [{}]}}",
+            "{{\"type\": \"rows\", \"name\": {}, \"header\": {}, \"total\": {}, \"kept\": {}, \"offset\": {from}, \"variables\": [{}], \"rows\": [{}]}}",
             json_string(name),
             json_string(&zeff_core::display::frame_header(frame)),
-            offset.min(total),
+            frame.table.rows(),
+            rows_kept.len(),
             variables.join(", "),
             rows.join(", ")
         )
+    }
+
+    /// Keep the viewer's frame `name` to the rows of `condition` (#75), by running, as the
+    /// engine runs it, the statement `name.where(condition)` after the text of the last run,
+    /// with only the statements it needs: what the view then shows is what that statement,
+    /// pasted into the script, gives. An empty condition keeps every row. As a line of JSON of
+    /// type `filter`: whether it ran, how many rows it kept, and what the engine said of the
+    /// statement (a note of rows dropped where the condition was `NA`, or the error that
+    /// stopped it), each diagnostic by its first line.
+    pub fn filter(&self, name: &str, condition: &str) -> String {
+        let answer = |ok: bool, rows: usize, said: &str| {
+            format!(
+                "{{\"type\": \"filter\", \"ok\": {ok}, \"rows\": {rows}, \"said\": {}}}",
+                json_string(said)
+            )
+        };
+        self.kept.borrow_mut().take();
+        let condition = condition.trim();
+        if condition.is_empty() {
+            self.filtered.borrow_mut().take();
+            return answer(true, 0, "");
+        }
+        if condition.contains(['\n', '\r']) {
+            return answer(false, 0, "a condition is one line");
+        }
+        let Some((script, text)) = self.last.borrow().clone() else {
+            return answer(false, 0, "run the script first");
+        };
+        let mut composed = text.clone();
+        if !composed.is_empty() && !composed.ends_with('\n') {
+            composed.push('\n');
+        }
+        let line = u32::try_from(composed.lines().count() + 1).unwrap_or(u32::MAX);
+        composed.push_str(&format!("let {FILTERED} = {name}.where({condition})\n"));
+        let Ok(project) = Project::open(&self.fs, Path::new(ROOT)) else {
+            return answer(false, 0, "the project's `zeff.toml` could not be read");
+        };
+        let needs = self.needed(&project, &script, &composed, line);
+        let text = only(&script, &composed, &needs);
+        let options = RunOptions {
+            memory: match project.manifest.memory {
+                Some(_) => None,
+                None => Some(default_budget(None)),
+            },
+            ..RunOptions::default()
+        };
+        let control = Control::asking(never);
+        let (outcome, frames) =
+            run_script_keeping(&self.fs, &project, &script, &text, &options, &control, None);
+        let said = outcome
+            .output
+            .statements
+            .iter()
+            .find(|one| one.line == line)
+            .map_or(outcome.output.stderr.as_str(), |one| one.stderr.as_str());
+        let headlines: Vec<&str> = said
+            .lines()
+            .filter(|line| {
+                ["error", "warning", "note"]
+                    .iter()
+                    .any(|kind| line.starts_with(kind))
+            })
+            .collect();
+        let said = headlines.join("\n");
+        match frames.into_iter().find(|(bound, _)| bound == FILTERED) {
+            Some((_, frame)) => {
+                let rows = frame.table.rows();
+                *self.filtered.borrow_mut() =
+                    Some((name.to_string(), condition.to_string(), frame));
+                answer(true, rows, &said)
+            }
+            None => answer(false, 0, &said),
+        }
+    }
+
+    /// The lines of every statement the statement on `line` needs to run as it would, itself
+    /// included, from the engine's dependency graph.
+    fn needed(&self, project: &Project, script: &str, text: &str, line: u32) -> Vec<u32> {
+        let Ok(registry) = zeff_engine::registry::registry() else {
+            return vec![line];
+        };
+        let program = check_in_project(&self.fs, project, script, text, registry)
+            .checked
+            .program;
+        let graph = graph(&program, script);
+        let line_of = |index: usize| position(text, graph.statements[index].span.start).line + 1;
+        match (0..graph.statements.len()).find(|&index| line_of(index) == line) {
+            Some(index) => graph
+                .needed_by(index)
+                .statements
+                .iter()
+                .map(|&index| line_of(index))
+                .collect(),
+            None => vec![line],
+        }
     }
 
     /// The help page of a function, as `zeff help <name>` prints it inside this project: a

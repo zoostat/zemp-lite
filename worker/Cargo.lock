@@ -1135,6 +1135,7 @@ dependencies = [
  "zeff-engine",
  "zeff-ir",
  "zeff-lsp",
+ "zeff-plot",
  "zeff-web",
 ]
 

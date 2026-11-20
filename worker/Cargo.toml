@@ -28,6 +28,9 @@ zeff-lsp = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038
 zeff-core = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-ir = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-web = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
+# The bins of the engine's own histogram, for the small distribution in each column's header
+# of the data viewer; the engine links it already, so nothing more is compiled in.
+zeff-plot = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 
 # A reader of JSON for the native tests alone, at the version the engine's own language server
 # pins (Zeff 0.8.0); nothing of it is linked into the worker.

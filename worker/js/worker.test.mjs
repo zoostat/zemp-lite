@@ -290,6 +290,42 @@ test("rows of a frame of the last run are given a page at a time, as the engine 
   ]);
 });
 
+test("a frame is kept to the rows of a condition, sorted and searched as the viewer asks", async (t) => {
+  const { worker, next } = await opened(t, 0);
+  worker.postMessage({
+    type: "run",
+    script: "scripts/main.zeff",
+    text: 'let pay = frame(region = ["north", "south", "north"], wage = [23.5, NA, 31.25])\n',
+  });
+  await next("done");
+  worker.postMessage({ type: "filter", id: 12, name: "pay", condition: 'region == "north"' });
+  const filtered = await next("filter");
+  assert.equal(filtered.id, 12);
+  assert.equal(filtered.ok, true);
+  assert.equal(filtered.rows, 2);
+  worker.postMessage({
+    type: "rows",
+    name: "pay",
+    offset: 0,
+    limit: 10,
+    sort: "wage",
+    desc: true,
+    filtered: true,
+  });
+  const page = await next("rows");
+  assert.equal(page.total, 3);
+  assert.equal(page.kept, 2);
+  assert.deepEqual(page.rows, [
+    ["north", "31.25"],
+    ["north", "23.5"],
+  ]);
+  worker.postMessage({ type: "rows", name: "pay", offset: 0, limit: 10, search: "SOUTH" });
+  const found = await next("rows");
+  assert.equal(found.kept, 1);
+  assert.deepEqual(found.rows, [["south", "NA"]]);
+  assert.deepEqual(found.variables[0].bars, { counts: [2, 1], levels: ["north", "south"] });
+});
+
 test("a file a run wrote is given back, and passed to the interface, not copied", async (t) => {
   const { worker, said, next } = await opened(t, 0);
   const script =

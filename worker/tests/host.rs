@@ -6,7 +6,7 @@
 use serde_json::Value;
 use std::cell::RefCell;
 use zemp_worker::{
-    Asked, Host, engine_version, explain, explained_codes, only, statements, statements_json,
+    Asked, Host, Shown, engine_version, explain, explained_codes, only, statements, statements_json,
 };
 
 fn never() -> bool {
@@ -631,7 +631,7 @@ fn a_page_of_a_frames_rows_is_written_as_the_engine_prints_the_frame() {
     let host = Host::new("demo");
     let done = run_at(&host, "let wages = dataset(wages)\nwages\n", 0);
     let printed = done["stdout"].as_str().unwrap().to_string();
-    let page: Value = serde_json::from_str(&host.rows("wages", 0, 3)).unwrap();
+    let page: Value = serde_json::from_str(&host.rows("wages", 0, 3, &Shown::default())).unwrap();
     assert_eq!(page["type"], "rows");
     // The header is the engine's first line of the frame.
     assert_eq!(
@@ -662,8 +662,215 @@ fn a_page_of_a_frames_rows_is_written_as_the_engine_prints_the_frame() {
         }
     }
     // A page past the end is empty, and a frame not bound is said to be none.
-    let past: Value = serde_json::from_str(&host.rows("wages", 18412, 50)).unwrap();
+    let past: Value =
+        serde_json::from_str(&host.rows("wages", 18412, 50, &Shown::default())).unwrap();
     assert!(past["rows"].as_array().unwrap().is_empty());
-    let none: Value = serde_json::from_str(&host.rows("nosuch", 0, 5)).unwrap();
+    let none: Value = serde_json::from_str(&host.rows("nosuch", 0, 5, &Shown::default())).unwrap();
     assert_eq!(none["type"], "error");
+}
+
+/// Every row of a view of a frame, its cells as the engine prints them.
+fn every_row(host: &Host, name: &str, shown: &Shown<'_>) -> (Value, Vec<Value>) {
+    let page: Value = serde_json::from_str(&host.rows(name, 0, usize::MAX, shown)).unwrap();
+    assert_eq!(page["type"], "rows", "{page}");
+    let rows = page["rows"].as_array().unwrap().clone();
+    (page, rows)
+}
+
+#[test]
+fn a_sorted_view_is_what_data_sort_gives() {
+    let host = Host::new("demo");
+    run_at(
+        &host,
+        "let wages = dataset(wages)\nlet down = wages.sort(wage, desc: true)\nlet up = wages.sort(hours)\n",
+        0,
+    );
+    for (sort, made) in [(("wage", true), "down"), (("hours", false), "up")] {
+        let shown = Shown {
+            sort: Some(sort),
+            ..Shown::default()
+        };
+        let (page, viewed) = every_row(&host, "wages", &shown);
+        let (_, sorted) = every_row(&host, made, &Shown::default());
+        assert_eq!(page["kept"], 18412);
+        assert_eq!(viewed, sorted, "the view sorted by {sort:?} is `{made}`");
+    }
+    // A variable not in the frame cannot sort it, and the view says so.
+    let shown = Shown {
+        sort: Some(("nosuch", false)),
+        ..Shown::default()
+    };
+    let error: Value = serde_json::from_str(&host.rows("wages", 0, 5, &shown)).unwrap();
+    assert_eq!(error["type"], "error");
+}
+
+#[test]
+fn a_filtered_view_is_what_data_where_gives() {
+    let host = Host::new("demo");
+    run_at(
+        &host,
+        "let wages = dataset(wages)\nlet kept = wages.where(year >= 2010 && female == 1).sort(age)\nlet older = wages.where(exper > 10)\n",
+        0,
+    );
+    let filtered: Value =
+        serde_json::from_str(&host.filter("wages", "year >= 2010 && female == 1")).unwrap();
+    assert_eq!(filtered["type"], "filter");
+    assert_eq!(filtered["ok"], true, "{filtered}");
+    let shown = Shown {
+        sort: Some(("age", false)),
+        filtered: true,
+        ..Shown::default()
+    };
+    let (page, viewed) = every_row(&host, "wages", &shown);
+    let (_, made) = every_row(&host, "kept", &Shown::default());
+    assert_eq!(page["kept"].as_u64().unwrap() as usize, made.len());
+    assert_eq!(filtered["rows"].as_u64().unwrap() as usize, made.len());
+    assert_eq!(viewed, made);
+    // The frame's own header and count stay those of the whole frame.
+    assert_eq!(page["total"], 18412);
+    // Not filtered, the view is the whole frame again.
+    let (whole, _) = every_row(&host, "wages", &Shown::default());
+    assert_eq!(whole["kept"], 18412);
+
+    // What the engine says of the statement comes with it: the note of the rows dropped
+    // where the condition was NA, and the error of a condition it cannot run.
+    let noted: Value = serde_json::from_str(&host.filter("wages", "exper > 10")).unwrap();
+    assert_eq!(noted["ok"], true);
+    assert!(
+        noted["said"].as_str().unwrap().starts_with("note"),
+        "{noted}"
+    );
+    let (_, viewed) = every_row(
+        &host,
+        "wages",
+        &Shown {
+            filtered: true,
+            ..Shown::default()
+        },
+    );
+    let (_, made) = every_row(&host, "older", &Shown::default());
+    assert_eq!(viewed, made);
+    let refused: Value = serde_json::from_str(&host.filter("wages", "yaer > 1")).unwrap();
+    assert_eq!(refused["ok"], false);
+    assert!(
+        refused["said"].as_str().unwrap().starts_with("error"),
+        "{refused}"
+    );
+    // An empty condition keeps every row.
+    let cleared: Value = serde_json::from_str(&host.filter("wages", "")).unwrap();
+    assert_eq!(cleared["ok"], true);
+}
+
+#[test]
+fn a_search_keeps_the_rows_with_a_cell_that_holds_it_and_each_header_has_its_distribution() {
+    let host = Host::new("demo");
+    run_at(&host, "let wages = dataset(wages)\n", 0);
+    let shown = Shown {
+        search: "MANU",
+        ..Shown::default()
+    };
+    let (page, rows) = every_row(&host, "wages", &shown);
+    let kept = page["kept"].as_u64().unwrap() as usize;
+    assert_eq!(kept, rows.len());
+    assert!(kept > 0 && kept < 18412, "{kept}");
+    for row in &rows {
+        assert!(
+            row.as_array().unwrap().iter().any(|cell| cell
+                .as_str()
+                .unwrap()
+                .to_lowercase()
+                .contains("manu"))
+        );
+    }
+    // A number's header has the bins of the engine's histogram, and a whole number of a few
+    // values a bar for each value, by its label: their counts add to the values not missing.
+    for variable in page["variables"].as_array().unwrap() {
+        let bars = &variable["bars"];
+        if variable["name"] == "female" {
+            assert_eq!(bars["levels"], serde_json::json!(["male", "female"]));
+        }
+        if variable["type"] == "Float" || variable["type"] == "Int" {
+            let counted: u64 = bars["counts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|count| count.as_u64().unwrap())
+                .sum();
+            assert_eq!(
+                counted + variable["missing"].as_u64().unwrap(),
+                18412,
+                "{variable}"
+            );
+            assert!(bars["levels"].is_array() || bars["width"].as_f64().unwrap() > 0.0);
+        }
+    }
+}
+
+#[test]
+fn each_statement_copy_as_zeff_writes_gives_what_the_view_showed() {
+    // The statements of tests/scripts/copy-as-zeff.json, which the interface's own tests hold
+    // its builders to, each run by the engine after the frame is made.
+    let cases: Value = serde_json::from_str(&read("tests/scripts/copy-as-zeff.json")).unwrap();
+    for case in cases.as_array().unwrap() {
+        let statement = case["statement"].as_str().unwrap();
+        let host = Host::new("demo");
+        match case["kind"].as_str().unwrap() {
+            "view" => {
+                let done = run_at(
+                    &host,
+                    &format!("let wages = dataset(wages)\nlet copied = {statement}\n"),
+                    0,
+                );
+                assert_eq!(done["exit_code"], 0, "{statement}: {done}");
+                let condition = case["where"].as_str().unwrap();
+                let filtered: Value =
+                    serde_json::from_str(&host.filter("wages", condition)).unwrap();
+                assert_eq!(filtered["ok"], true, "{filtered}");
+                let sort = case["sort"]["variable"]
+                    .as_str()
+                    .map(|variable| (variable, case["sort"]["desc"] == true));
+                let shown = Shown {
+                    sort,
+                    filtered: !condition.is_empty(),
+                    ..Shown::default()
+                };
+                let (_, viewed) = every_row(&host, "wages", &shown);
+                let (_, made) = every_row(&host, "copied", &Shown::default());
+                assert_eq!(viewed, made, "{statement}");
+            }
+            kind => {
+                let done = run_at(
+                    &host,
+                    &format!("let wages = dataset(wages)\n{statement}\n"),
+                    0,
+                );
+                assert_eq!(done["exit_code"], 0, "{statement}: {done}");
+                let (page, _) = every_row(&host, "wages", &Shown::default());
+                let name = case["variable"].as_str().unwrap();
+                let variable = page["variables"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .find(|one| one["name"] == name)
+                    .unwrap()
+                    .clone();
+                match kind {
+                    "type" => assert_eq!(variable["type"], case["type"], "{statement}"),
+                    "contrast" => {
+                        assert_eq!(variable["contrast"], case["contrast"], "{statement}")
+                    }
+                    "labels" => {
+                        let shown: Vec<&str> = variable["codes"]
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .map(|one| one["shown"].as_str().unwrap())
+                            .collect();
+                        assert_eq!(shown, ["not a member", "member"], "{statement}");
+                    }
+                    other => panic!("no such case: {other}"),
+                }
+            }
+        }
+    }
 }

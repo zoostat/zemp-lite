@@ -5,6 +5,8 @@
 // file holds that is not understood is passed over, and the default is used in its place, so
 // a file written by a later version, or damaged, never keeps a project from opening.
 
+import type { View } from "../engine/messages";
+
 export type Layout = "margin" | "panes";
 
 /** The version of the view state this build writes; a file without one is of version 1. */
@@ -28,13 +30,16 @@ export interface ViewState {
   /**
    * The data viewer: the frame shown, by the name of its binding; the list shown or hidden; the
    * variable chosen for the inspector; and, for each frame, the variables hidden from the grid.
-   * Hiding is the view's alone: a hidden variable is still in every result and export.
+   * Hiding is the view's alone: a hidden variable is still in every result and export. And
+   * for each frame, how it is shown: kept to the rows of a condition, sorted and searched,
+   * which the viewer's Copy as Zeff writes as a statement and the script never holds.
    */
   data: {
     frame: string | null;
     list: boolean;
     variable: string | null;
     hidden: Record<string, string[]>;
+    shown: Record<string, View>;
   };
   /** The parts of the file this build does not know, kept as they were (a later build's). */
   others: Record<string, unknown>;
@@ -77,6 +82,21 @@ export const OUTPUT_SHARE = { least: 0.12, most: 0.85, usual: 0.42 } as const;
 
 /** The tab of the plot viewer. */
 export const PLOTS = "view:plots";
+/** A frame's view as the file has it; `null` where it is not one, or is the frame as it is. */
+function viewOf(from: unknown): View | null {
+  if (typeof from !== "object" || from === null) return null;
+  const one = from as Record<string, unknown>;
+  const where = typeof one["where"] === "string" ? one["where"] : "";
+  const search = typeof one["search"] === "string" ? one["search"] : "";
+  const sort = one["sort"] as Record<string, unknown> | null | undefined;
+  const sorted =
+    typeof sort === "object" && sort !== null && typeof sort["variable"] === "string"
+      ? { variable: sort["variable"], desc: sort["desc"] === true }
+      : null;
+  if (where === "" && search === "" && sorted === null) return null;
+  return { where, sort: sorted, search };
+}
+
 /** The tab of the data viewer. */
 export const DATA = "view:data";
 
@@ -91,7 +111,7 @@ export function usual(): ViewState {
     // Zemp Lite opens in the margin editor, every output folded (#174).
     layout: "margin",
     script: { notes: true, unfolded: {} },
-    data: { frame: null, list: true, variable: null, hidden: {} },
+    data: { frame: null, list: true, variable: null, hidden: {}, shown: {} },
     others: {},
     left: { tab: "project", width: LEFT_WIDTH.usual, shown: true },
     output: { share: OUTPUT_SHARE.usual, shown: true },
@@ -158,6 +178,13 @@ export function readViews(text: string | null): ViewState {
           const kept = [...new Set(names.filter((one): one is string => typeof one === "string"))];
           if (kept.length > 0) state.data.hidden[frame] = kept;
         }
+      }
+    }
+    const shown = data["shown"];
+    if (typeof shown === "object" && shown !== null && !Array.isArray(shown)) {
+      for (const [frame, view] of Object.entries(shown as Record<string, unknown>)) {
+        const read = viewOf(view);
+        if (read !== null) state.data.shown[frame] = read;
       }
     }
   }

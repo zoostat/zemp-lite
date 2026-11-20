@@ -75,17 +75,61 @@ export interface ExplainedPage {
 }
 
 /**
- * Rows of a frame of the last run, for the data viewer: the engine's header line of the frame;
- * each variable with its type, its label, its count of missing values and whether its cells
- * line up on the right; and rows from `offset`, each cell as the engine prints it.
+ * The small distribution in a column's header, from the engine: for a number, a date or a
+ * time, the count in each bin of the histogram it draws where a script asks for none, with
+ * where the bins begin and how wide each is; for a category, a truth value, or a text or a
+ * whole number of few values, the count of each value, by the cell the engine prints for it.
+ */
+export interface Bars {
+  counts: number[];
+  start?: number;
+  width?: number;
+  levels?: string[];
+}
+
+/** A variable of a frame as the data viewer shows it. */
+export interface Variable {
+  name: string;
+  type: string;
+  label: string;
+  missing: number;
+  /** Whether its cells line up on the right, as the engine prints them. */
+  right: boolean;
+  /** A category's contrast, as the engine names it; `null` for another type. */
+  contrast: string | null;
+  bars: Bars | null;
+  /** A whole-number variable of few values: each value, and the cell printed for it. */
+  codes: { code: number; shown: string }[] | null;
+}
+
+/** The answer to a filter: whether the engine ran it, how many rows it kept, and what it said. */
+export interface Filtered {
+  ok: boolean;
+  rows: number;
+  said: string;
+}
+
+/** How the data viewer shows a frame: kept to the rows of a condition, sorted, searched. */
+export interface View {
+  where: string;
+  sort: { variable: string; desc: boolean } | null;
+  search: string;
+}
+
+/**
+ * Rows of a frame of the last run, for the data viewer: the engine's header line of the frame
+ * and its count of rows; how many rows the view keeps; each variable; the rows of the view
+ * from `offset`, each cell as the engine prints it; and the answer to the view's filter.
  */
 export interface Rows {
   name: string;
   header: string;
   total: number;
+  kept: number;
   offset: number;
-  variables: { name: string; type: string; label: string; missing: number; right: boolean }[];
+  variables: Variable[];
   rows: string[][];
+  filter: Filtered | null;
 }
 
 /** What the worker tells while a run goes. */
@@ -114,7 +158,17 @@ export type Request =
   | { type: "explain"; code: string }
   | { type: "language"; body: string }
   | { type: "help"; name: string }
-  | { type: "rows"; name: string; offset: number; limit: number }
+  | {
+      type: "rows";
+      name: string;
+      offset: number;
+      limit: number;
+      sort?: string;
+      desc?: boolean;
+      filtered?: boolean;
+      search?: string;
+    }
+  | { type: "filter"; name: string; condition: string }
   | { type: "dependencies"; script: string; text: string }
   /** The statements of a text as the engine reads them, without running it. */
   | { type: "statements"; script: string; text: string }
@@ -147,7 +201,8 @@ export type Reply =
   | { type: "explained"; page: ExplainedPage }
   | { type: "language"; messages: string[] }
   | { type: "help"; page: string | null; message: string }
-  | ({ type: "rows" } & Rows)
+  | ({ type: "rows" } & Omit<Rows, "filter">)
+  | ({ type: "filter" } & Filtered)
   | { type: "frame"; name: string; bytes: Uint8Array }
   | { type: "read"; path: string; bytes: Uint8Array | null }
   | { type: "error"; message: string };

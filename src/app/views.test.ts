@@ -29,7 +29,35 @@ describe("the view state of a project", () => {
       page: "slide",
       list: false,
     };
+    state.data = {
+      frame: "wages",
+      list: false,
+      variable: "wage",
+      hidden: { wages: ["firm"] },
+      shown: {
+        wages: { where: "year >= 2010", sort: { variable: "wage", desc: true }, search: "" },
+        w2010: { where: "", sort: null, search: "Mining" },
+      },
+    };
     expect(readViews(writeViews(state))).toEqual(state);
+  });
+
+  it("reads each frame's view in the data viewer, and passes over one it cannot read", () => {
+    const read = readViews(
+      JSON.stringify({
+        data: {
+          shown: {
+            wages: { where: "female == 1", sort: { variable: "age", desc: "yes" } },
+            odd: { sort: { desc: true } },
+            plain: { where: "", search: "" },
+            broken: 3,
+          },
+        },
+      }),
+    );
+    expect(read.data.shown).toEqual({
+      wages: { where: "female == 1", sort: { variable: "age", desc: false }, search: "" },
+    });
   });
 
   it("is the usual one where there is no file, or one that cannot be read", () => {

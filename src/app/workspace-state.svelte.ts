@@ -3,7 +3,7 @@
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
 import { Language, type Diagnostic, type Range } from "../engine/language";
-import type { Checked, FrameInfo, Ranged, Rows } from "../engine/messages";
+import type { Checked, FrameInfo, Ranged, Rows, View } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
@@ -1181,9 +1181,36 @@ export class Workspace {
     this.#keep();
   }
 
-  /** Rows of a frame of the last run, each cell as the engine prints it. */
+  /** How the data viewer shows a frame: kept to the rows of a condition, sorted, searched. */
+  viewOf(frame: string): View {
+    return this.views.data.shown[frame] ?? { where: "", sort: null, search: "" };
+  }
+
+  /** Change how the data viewer shows a frame; the frame and the script do not change. */
+  setView(frame: string, change: Partial<View>): void {
+    const view = { ...this.viewOf(frame), ...change };
+    const others = Object.entries(this.views.data.shown).filter(([one]) => one !== frame);
+    const plain = view.where.trim() === "" && view.sort === null && view.search === "";
+    this.views.data.shown = Object.fromEntries(plain ? others : [...others, [frame, view]]);
+    this.#keep();
+  }
+
+  /** Rows of a frame of the last run as the data viewer shows it, each cell as the engine prints it. */
   rows(name: string, offset: number, limit: number): Promise<Rows> {
-    return this.engine.rows(name, offset, limit);
+    return this.engine.rows(name, offset, limit, this.viewOf(name));
+  }
+
+  /**
+   * Put text on the clipboard for the data viewer: a statement of Copy as Zeff, or a range of
+   * cells; `what` says which, in the words the viewer shows once it is copied.
+   */
+  async copyFromData(text: string, what: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.copied = what;
+    } catch {
+      this.copied = "the browser did not let the text be copied";
+    }
   }
 
   /** Show or hide the list of plots at the left of the plot viewer. */

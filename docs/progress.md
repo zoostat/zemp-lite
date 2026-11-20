@@ -159,3 +159,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 153 unit tests; 248 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 14b `[function]`: sorting, search, copying, Copy as Zeff.
+
+## 21 November 2026, release 0.2, step 14b (Data: sorting, a condition, search, copying, Copy as Zeff)
+
+**Done.** Step 14b `[function]`: a sort from each header, made by the kernel function `data.sort` calls; **Keep rows where**, a condition run by the engine as `wages.where(…)` with only the statements it needs, its note or error in the engine's words; a search that keeps and marks the cells that hold it; the live count of rows kept; each header's small distribution in the engine's own histogram bins; a range of cells copied as the engine wrote them; **Copy as Zeff** for the view and, in the inspector, for a change of type, contrast or labels, each statement run by the engine in a native test and held to what the view showed. Steps 13 and 14a are green on GitHub.
+
+**Green.** `npm run routine`: 164 unit tests; 262 browser tests passed and 2 skipped by design; 23 native tests of the worker; the nine samples identical; the worker within its limits.
+
+**Next.** Step 15 `[function]`: the console line and Panes.

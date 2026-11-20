@@ -211,3 +211,45 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
     "true",
   );
 });
+
+test("the data viewer's sort and condition are kept with the project, and nothing else is", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "New project…" }));
+  await page.getByLabel("The name of the new project").fill("Viewed");
+  await press(page.getByRole("button", { name: "Create" }));
+  await expect(page).toHaveURL(/#\/p\/viewed$/);
+  await write(page, "let wages = dataset(wages)\n");
+  await expect(page.getByText("saving")).toHaveCount(0);
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const toData = async () => {
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText("done");
+    await press(
+      page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Data" }),
+    );
+  };
+  await toData();
+  const sort = page.getByRole("grid").getByRole("button", { name: "Sort by age" });
+  await press(sort);
+  await expect(sort).toHaveText("↑");
+  const where = page.getByRole("textbox", { name: "Keep rows where" });
+  await where.fill("year == 2012");
+  await where.press("Enter");
+  await expect(page.getByTestId("kept-count")).toHaveText(/^[\d,]+ of 18,412 rows$/);
+  await page.waitForTimeout(1500);
+
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await toData();
+  await expect(page.getByRole("grid").getByRole("button", { name: "Sort by age" })).toHaveText("↑");
+  await expect(page.getByRole("textbox", { name: "Keep rows where" })).toHaveValue("year == 2012");
+  await expect(page.getByTestId("kept-count")).toHaveText(/^[\d,]+ of 18,412 rows$/);
+  // The script is as it was: the viewer wrote nothing into it.
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Script" }),
+  );
+  await expect.poll(() => scriptText(page)).toBe("let wages = dataset(wages)\n");
+});

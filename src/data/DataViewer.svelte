@@ -4,11 +4,16 @@
   // the frame chosen as a grid. The grid draws only the rows near its window and asks the
   // engine for them a page at a time, so a frame of any length scrolls without a pause; every
   // cell is written as the engine prints it, a missing value `NA`, never blank. The header and
-  // the row numbers with the first variable stay in place as the grid is scrolled. Nothing
-  // here writes a statement: the viewer is read-only.
+  // the row numbers with the first variable stay in place as the grid is scrolled. The view
+  // can be kept to the rows of a condition, sorted by a variable and searched, each done by
+  // the engine (step 14b); each header draws the variable's distribution as the engine bins
+  // it; a range of cells can be copied as the engine wrote them; and Copy as Zeff (#114) puts
+  // on the clipboard the statement that gives what the view shows. Nothing here writes a
+  // statement into the script: the viewer is read-only.
   import type { Workspace } from "../app/workspace-state.svelte";
-  import type { Rows } from "../engine/messages";
+  import type { Bars, Rows } from "../engine/messages";
   import { counted } from "../margin/notes";
+  import { CONTRASTS, TYPES, contrastAsZeff, labelsAsZeff, typeAsZeff, viewAsZeff } from "./zeff";
 
   let { workspace, onback = null }: { workspace: Workspace; onback?: (() => void) | null } =
     $props();
@@ -16,7 +21,7 @@
   /** Rows fetched at a time, the height of a row and of the header, in pixels. */
   const PAGE = 200;
   const ROW = 26;
-  const HEAD = 44;
+  const HEAD = 58;
 
   const frames = $derived(workspace.frames);
   /** The line of the statement that made a frame, from the last run. */
@@ -33,37 +38,49 @@
   let first = $state<Rows | null>(null);
   let shownFor = $state<string | null>(null);
   let problem = $state("");
+  // Each fetch of the pages afresh: an answer to an earlier one is not shown.
+  let generation = 0;
+
+  // How the frame is shown: the view state, kept with the project.
+  const view = $derived(
+    chosen === null ? { where: "", sort: null, search: "" } : workspace.viewOf(chosen),
+  );
 
   async function fetchPage(name: string, page: number): Promise<void> {
     if (asked[page]) return;
     asked[page] = true;
+    const asking = generation;
     try {
       const found = await workspace.rows(name, page * PAGE, PAGE);
-      if (name !== shownFor) return;
+      if (name !== shownFor || asking !== generation) return;
       pages = { ...pages, [page]: found.rows };
       if (page === 0) first = found;
     } catch (error) {
-      problem = (error as Error).message;
+      if (asking === generation) problem = (error as Error).message;
     }
   }
 
-  // A new frame chosen, or a new run: the pages fetched afresh.
+  // A new frame chosen, a new run or a new view: the pages fetched afresh.
   $effect(() => {
     const name = chosen;
     void workspace.lastRun?.startedAt;
+    void [view.where, view.sort?.variable, view.sort?.desc, view.search];
+    generation += 1;
     pages = {};
     asked = {};
-    first = null;
     problem = "";
+    selection = null;
     shownFor = name;
     if (name !== null) void fetchPage(name, 0);
+    else first = null;
   });
 
   // The window of the grid, and the rows near it.
   let grid = $state<HTMLElement | null>(null);
   let top = $state(0);
   let height = $state(600);
-  const total = $derived(first?.total ?? 0);
+  // The rows the view keeps: the grid is as long as they are.
+  const total = $derived(first?.kept ?? 0);
   const from = $derived(Math.max(0, Math.floor(top / ROW) - 20));
   const to = $derived(Math.min(total, Math.ceil((top + height) / ROW) + 20));
   // (The header stands above the first row: a row's place is the header's height and its own.)
@@ -117,6 +134,147 @@
   });
   const visible = $derived(Array.from({ length: Math.max(0, to - from) }, (_, at) => from + at));
 
+  // The condition and the search as they are typed: the condition is given to the engine on
+  // Enter, the search a moment after the last key.
+  let condition = $state("");
+  let searching = $state("");
+  let typedFor: string | null = null;
+  $effect(() => {
+    if (chosen !== typedFor) {
+      typedFor = chosen;
+      condition = view.where;
+      searching = view.search;
+    }
+  });
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
+  function search(text: string): void {
+    searching = text;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      if (chosen !== null) workspace.setView(chosen, { search: searching });
+    }, 250);
+  }
+  function keep(): void {
+    if (chosen !== null) workspace.setView(chosen, { where: condition.trim() });
+  }
+  function clearView(): void {
+    condition = "";
+    searching = "";
+    if (chosen !== null) workspace.setView(chosen, { where: "", sort: null, search: "" });
+  }
+  /** Sorted by a variable: none, then up, then down, then none again. */
+  function sortBy(name: string): void {
+    if (chosen === null) return;
+    const now = view.sort;
+    const next =
+      now === null || now.variable !== name
+        ? { variable: name, desc: false }
+        : now.desc
+          ? null
+          : { variable: name, desc: true };
+    workspace.setView(chosen, { sort: next });
+  }
+  const wanted = $derived(view.search.toLowerCase());
+  const matches = (cell: string) => wanted !== "" && cell.toLowerCase().includes(wanted);
+
+  // What was copied from here, in words.
+  let copied = $state("");
+  async function copy(text: string, what: string): Promise<void> {
+    await workspace.copyFromData(text, what);
+    copied = workspace.copied;
+  }
+  const statement = $derived(
+    chosen === null ? null : viewAsZeff(chosen, { where: view.where, sort: view.sort }),
+  );
+  function copyView(): void {
+    if (statement === null) return;
+    const searched = view.search === "" ? "" : " · the search is the viewer's and is not in it";
+    void copy(statement, `copied ${statement}${searched}`);
+  }
+
+  // A range of cells: from the cell pressed to the one the mouse is let go over, or the one
+  // pressed with Shift; columns by their place among the variables shown.
+  let selection = $state<{ r0: number; c0: number; r1: number; c1: number } | null>(null);
+  let dragging = false;
+  const span = $derived(
+    selection === null
+      ? null
+      : {
+          top: Math.min(selection.r0, selection.r1),
+          bottom: Math.max(selection.r0, selection.r1),
+          left: Math.min(selection.c0, selection.c1),
+          right: Math.max(selection.c0, selection.c1),
+        },
+  );
+  const inRange = (row: number, column: number) =>
+    span !== null &&
+    row >= span.top &&
+    row <= span.bottom &&
+    column >= span.left &&
+    column <= span.right;
+  function press(event: MouseEvent, row: number, column: number): void {
+    if (event.button !== 0) return;
+    if (event.shiftKey && selection !== null) {
+      selection = { ...selection, r1: row, c1: column };
+    } else {
+      selection = { r0: row, c0: column, r1: row, c1: column };
+      dragging = true;
+    }
+    grid?.focus();
+  }
+  function over(row: number, column: number): void {
+    if (dragging && selection !== null) selection = { ...selection, r1: row, c1: column };
+  }
+  async function copyCells(): Promise<void> {
+    if (span === null || chosen === null) return;
+    const columns = shown.slice(span.left, span.right + 1).map(({ at }) => at);
+    const found = await workspace.rows(chosen, span.top, span.bottom - span.top + 1);
+    const text = found.rows.map((row) => columns.map((at) => row[at] ?? "").join("\t")).join("\n");
+    const rows = found.rows.length;
+    await copy(
+      `${text}\n`,
+      `copied ${counted(rows)} row${rows === 1 ? "" : "s"} × ${counted(columns.length)} column${columns.length === 1 ? "" : "s"} of cells`,
+    );
+  }
+  function keydown(event: KeyboardEvent): void {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "c" && span !== null) {
+      event.preventDefault();
+      void copyCells();
+    } else if (event.key === "Escape") {
+      selection = null;
+    }
+  }
+
+  // The small distribution in a header: a bar for each bin or value, as high as its count.
+  function described(bars: Bars): string {
+    if (bars.levels !== undefined) {
+      return bars.levels
+        .map((level, at) => `${level} ${counted(bars.counts[at] ?? 0)}`)
+        .join(" · ");
+    }
+    return `${bars.counts.length} bins of the engine's histogram`;
+  }
+  const most = (bars: Bars) => Math.max(1, ...bars.counts);
+
+  // The inspector's Copy as Zeff: another type, another contrast, labels for the codes.
+  let toType = $state("");
+  let toContrast = $state("");
+  let labels = $state<Record<number, string>>({});
+  $effect(() => {
+    const variable = inspected;
+    toType = TYPES.find((one) => one !== variable?.type) ?? "Float";
+    toContrast = CONTRASTS.find((one) => one !== variable?.contrast) ?? "sum";
+    labels = Object.fromEntries(
+      (variable?.codes ?? []).map((one) => [
+        one.code,
+        one.shown === String(one.code) ? "" : one.shown,
+      ]),
+    );
+  });
+  function copyStatement(text: string | null): void {
+    if (text !== null) void copy(text, `copied ${text}`);
+  }
+
   // Each column as wide as its name or its widest cell of the first page, within bounds.
   const widths = $derived(
     (first?.variables ?? []).map((variable, at) => {
@@ -129,6 +287,8 @@
   );
   const numberWidth = $derived(Math.max(String(total).length * 8 + 22, 48));
 </script>
+
+<svelte:window onmouseup={() => (dragging = false)} />
 
 <div class="data" data-testid="data">
   {#if workspace.views.data.list}
@@ -215,6 +375,11 @@
         >
       {/if}
       <h2 class="mono" data-testid="frame-header">{first?.header ?? chosen ?? "No frame"}</h2>
+      {#if first !== null && (view.where !== "" || view.search !== "" || first.kept !== first.total)}
+        <span class="count" data-testid="kept-count"
+          >{counted(first.kept)} of {counted(first.total)} rows</span
+        >
+      {/if}
       {#if hidden.length > 0}
         <span class="about"
           >{counted(hidden.length)} hidden ·
@@ -224,6 +389,62 @@
         >
       {/if}
     </div>
+    {#if chosen !== null}
+      <div class="tools">
+        <label class="where">
+          <span>Keep rows where</span>
+          <input
+            class="mono"
+            type="text"
+            spellcheck="false"
+            placeholder="year >= 2010"
+            aria-label="Keep rows where"
+            bind:value={condition}
+            onkeydown={(event) => {
+              if (event.key === "Enter") keep();
+              else if (event.key === "Escape") {
+                condition = "";
+                keep();
+              }
+            }}
+          />
+        </label>
+        <button class="word" onclick={keep}>Keep</button>
+        <input
+          class="find search"
+          type="search"
+          placeholder="Search the cells"
+          aria-label="Search the cells"
+          value={searching}
+          oninput={(event) => search(event.currentTarget.value)}
+        />
+        {#if span !== null}
+          <button class="word" onclick={() => void copyCells()}
+            >Copy {counted(span.bottom - span.top + 1)} × {counted(span.right - span.left + 1)} cells</button
+          >
+        {/if}
+        <button
+          class="word"
+          disabled={statement === null}
+          title="The statement that gives what the view shows, put on the clipboard"
+          onclick={copyView}>Copy as Zeff</button
+        >
+        {#if view.where !== "" || view.sort !== null || view.search !== ""}
+          <button class="word" onclick={clearView}>Clear</button>
+        {/if}
+      </div>
+      {#if first?.filter && first.filter.said !== ""}
+        <p
+          class="said mono"
+          class:problem={!first.filter.ok}
+          role={first.filter.ok ? undefined : "alert"}
+          data-testid="filter-said"
+        >
+          {first.filter.said}
+        </p>
+      {/if}
+      {#if copied}<p class="said" data-testid="data-copied">{copied}</p>{/if}
+    {/if}
     {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
     {#if first !== null}
       <div
@@ -232,6 +453,7 @@
         aria-label="The rows of {first.name}"
         aria-rowcount={total + 1}
         tabindex="0"
+        onkeydown={keydown}
         bind:this={grid}
         bind:clientHeight={height}
         onscroll={() => (top = grid?.scrollTop ?? 0)}
@@ -259,7 +481,35 @@
                     >{variable.type}{#if variable.missing > 0}<span class="miss">
                         · {counted(variable.missing)} NA</span
                       >{/if}</span
-                  ></button
+                  >{#if variable.bars !== null}{@const bars = variable.bars}<svg
+                      class="spark"
+                      viewBox="0 0 {bars.counts.length} 12"
+                      preserveAspectRatio="none"
+                      role="img"
+                      aria-label={described(bars)}
+                      data-testid="spark"
+                      ><title>{described(bars)}</title>{#each bars.counts as count, bin (bin)}<rect
+                          x={bin + 0.08}
+                          width="0.84"
+                          y={12 - (12 * count) / most(bars)}
+                          height={(12 * count) / most(bars)}
+                        />{/each}</svg
+                    >{/if}</button
+                ><button
+                  class="sort"
+                  class:on={view.sort?.variable === variable.name}
+                  aria-label="Sort by {variable.name}"
+                  title={view.sort?.variable === variable.name
+                    ? view.sort.desc
+                      ? "Sorted down: press to stop sorting"
+                      : "Sorted up: press to sort down"
+                    : "Sort up"}
+                  onclick={() => sortBy(variable.name)}
+                  >{view.sort?.variable === variable.name
+                    ? view.sort.desc
+                      ? "↓"
+                      : "↑"
+                    : "↕"}</button
                 ><button
                   class="hide"
                   aria-label="Hide {variable.name}"
@@ -291,9 +541,15 @@
                     class:frozen-2={index === 0}
                     class:right={variable.right}
                     class:na={cell === "NA"}
+                    class:match={matches(cell)}
+                    class:selected={inRange(row, index)}
                     style:width="{widths[at]}px"
                     style:left={index === 0 ? `${numberWidth}px` : undefined}
-                    role="gridcell">{cell}</span
+                    role="gridcell"
+                    tabindex="-1"
+                    aria-selected={inRange(row, index)}
+                    onmousedown={(event) => press(event, row, index)}
+                    onmouseenter={() => over(row, index)}>{cell}</span
                   >
                 {/each}
               {/if}
@@ -319,6 +575,66 @@
       <button class="word" onclick={() => hide(inspected.name, !hidden.includes(inspected.name))}
         >{hidden.includes(inspected.name) ? "Show in the grid" : "Hide from the grid"}</button
       >
+      <div class="as-zeff" data-testid="copy-as-zeff">
+        <span class="as-head">Copy as Zeff</span>
+        <div class="as-row">
+          <select aria-label="Another type for {inspected.name}" bind:value={toType}>
+            {#each TYPES.filter((one) => one !== inspected.type) as type (type)}
+              <option value={type}>{type}</option>
+            {/each}
+          </select>
+          <button
+            class="word"
+            onclick={() =>
+              chosen !== null && copyStatement(typeAsZeff(chosen, inspected.name, toType))}
+            >Copy the change of type</button
+          >
+        </div>
+        {#if inspected.type === "Category"}
+          <div class="as-row">
+            <select aria-label="Another contrast for {inspected.name}" bind:value={toContrast}>
+              {#each CONTRASTS as contrast (contrast)}
+                <option value={contrast}>{contrast}</option>
+              {/each}
+            </select>
+            <button
+              class="word"
+              onclick={() =>
+                chosen !== null &&
+                copyStatement(contrastAsZeff(chosen, inspected.name, toContrast))}
+              >Copy the contrast</button
+            >
+          </div>
+        {/if}
+        {#if inspected.codes !== null}
+          <div class="labels">
+            {#each inspected.codes as one (one.code)}
+              <label class="as-row"
+                ><span class="mono code">{one.code}</span><input
+                  type="text"
+                  aria-label="The label of {one.code}"
+                  bind:value={labels[one.code]}
+                /></label
+              >
+            {/each}
+            <button
+              class="word"
+              onclick={() =>
+                chosen !== null &&
+                copyStatement(
+                  labelsAsZeff(
+                    chosen,
+                    inspected.name,
+                    (inspected.codes ?? []).map((one) => ({
+                      code: one.code,
+                      label: labels[one.code] ?? "",
+                    })),
+                  ),
+                )}>Copy the labels</button
+            >
+          </div>
+        {/if}
+      </div>
       <pre class="mono summary" data-testid="variable-summary">{summary === ""
           ? "…"
           : summary}</pre>
@@ -607,6 +923,133 @@
   .quiet {
     color: var(--ink-3);
     padding: 10px 14px;
+  }
+  .count {
+    color: var(--ink-2);
+    font-size: 13px;
+  }
+  .tools {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 14px;
+  }
+  .where {
+    align-items: center;
+    color: var(--ink-2);
+    display: flex;
+    flex: 1 1 320px;
+    font-size: 13px;
+    gap: 8px;
+  }
+  .where input {
+    background: var(--soft);
+    border: 0;
+    border-radius: 6px;
+    color: var(--ink);
+    flex: 1;
+    font-size: 12.5px;
+    min-width: 120px;
+    padding: 4px 8px;
+  }
+  .search {
+    flex: 0 1 220px;
+    width: auto;
+  }
+  .word:disabled {
+    color: var(--ink-3);
+    cursor: default;
+  }
+  .word:disabled:hover {
+    background: none;
+  }
+  .said {
+    color: var(--ink-2);
+    font-size: 12.5px;
+    margin: 0;
+    padding: 4px 14px;
+    white-space: pre-wrap;
+  }
+  .said.problem {
+    color: var(--error);
+  }
+  .spark {
+    display: block;
+    fill: var(--ink-3);
+    height: 12px;
+    margin-top: 2px;
+    opacity: 0.7;
+    width: 100%;
+  }
+  .headcell.chosen .spark {
+    fill: var(--accent);
+  }
+  .sort {
+    background: none;
+    border: 0;
+    border-radius: 4px;
+    color: var(--ink-3);
+    cursor: pointer;
+    flex: none;
+    font: inherit;
+    padding: 0 3px;
+  }
+  .sort.on {
+    color: var(--accent);
+  }
+  .sort:hover {
+    background: var(--soft);
+  }
+  .cell.match {
+    background: var(--tint);
+  }
+  .cell.selected {
+    background: var(--accent-soft);
+  }
+  .grid {
+    user-select: none;
+  }
+  .as-zeff {
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 8px 14px 4px;
+  }
+  .as-head {
+    color: var(--ink-2);
+    font-size: 13px;
+  }
+  .as-row {
+    align-items: center;
+    display: flex;
+    gap: 6px;
+  }
+  .as-zeff .word {
+    margin: 0;
+  }
+  .as-zeff select,
+  .as-zeff input {
+    background: var(--soft);
+    border: 0;
+    border-radius: 6px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    padding: 3px 6px;
+  }
+  .labels {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .code {
+    color: var(--ink-3);
+    min-width: 3ch;
+    text-align: right;
   }
   .problem {
     color: var(--error);

@@ -18,8 +18,13 @@
 //   { type: "dependencies", script, text }  what each statement of a text needs
 //   { type: "language", body }          a message of the Language Server Protocol for the
 //                                       engine's language server, over the project
-//   { type: "rows", name, offset, limit } rows of a frame of the last run, each cell as the
-//                                       engine prints it
+//   { type: "rows", name, offset, limit, sort, desc, filtered, search }   rows of a frame of
+//                                       the last run as the data viewer shows it, each cell as
+//                                       the engine prints it: sorted by the variable `sort`
+//                                       (descending where `desc`), kept to the rows of the
+//                                       last filter where `filtered`, and to those `search` finds
+//   { type: "filter", name, condition } keep the viewer's frame to the rows of a condition,
+//                                       as `name.where(condition)` keeps them
 //   { type: "help", name }              the help page of a function, as `zeff help` prints it
 //   { type: "explain", code }           the explained page of a code (needs no project)
 //   { type: "codes" }                   every code with an explained page (needs no project)
@@ -38,7 +43,9 @@
 //   { type: "checked", exit_code, said, found, summary, findings }   the answer to `check`
 //   { type: "language", messages }      the answer to `language`: the bodies of the server's
 //                                       messages, in order
-//   { type: "rows", name, header, total, offset, variables, rows }   the answer to `rows`
+//   { type: "rows", name, header, total, kept, offset, variables, rows }   the answer to
+//                                       `rows`: each variable with its header's distribution
+//   { type: "filter", ok, rows, said }  the answer to `filter`
 //   { type: "help", page, message }     the answer to `help`: the page, or null and why
 //   { type: "explained", page }         the answer to `explain`: the page, as `zeff explain
 //                                       --format json` gives it, its `text` what it prints
@@ -103,6 +110,7 @@ export function serve(engine, port, deviceBytes) {
         "language",
         "help",
         "rows",
+        "filter",
       ].includes(said.type)
     ) {
       refuse(`no such message: ${String(said.type)}`);
@@ -119,6 +127,7 @@ export function serve(engine, port, deviceBytes) {
         language: "the language server was asked",
         help: "a help page was asked for",
         rows: "rows of a frame were asked for",
+        filter: "a filter was asked for",
       }[said.type];
       refuse(`${what} before a project was opened`);
       return;
@@ -143,11 +152,22 @@ export function serve(engine, port, deviceBytes) {
       }
       case "rows": {
         const page = JSON.parse(
-          project.rows(String(said.name), Number(said.offset) || 0, Number(said.limit) || 100),
+          project.rows(
+            String(said.name),
+            Number(said.offset) || 0,
+            Number(said.limit) || 100,
+            typeof said.sort === "string" ? said.sort : "",
+            said.desc === true,
+            said.filtered === true,
+            typeof said.search === "string" ? said.search : "",
+          ),
         );
         answer(page);
         break;
       }
+      case "filter":
+        answer(JSON.parse(project.filter(String(said.name), String(said.condition ?? ""))));
+        break;
       case "help":
         answer(JSON.parse(project.help(String(said.name))));
         break;
