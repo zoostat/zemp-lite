@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { blocksAsText, expect, printed, saidAsWritten, test, wheelTo, write } from "./support";
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
@@ -71,7 +71,7 @@ test("the panel's text for the example is the text kept for it", async ({ page, 
 });
 
 for (const name of ["plain", "warning", "error", "refused"]) {
-  test(`the script "${name}" is shown as \`zeff run\` 0.7.0 prints it`, async ({ page, press }) => {
+  test(`the script "${name}" is shown as \`zeff run\` 0.8.0 prints it`, async ({ page, press }) => {
     await scratch(page, press);
     await write(page, file(`tests/scripts/${name}.zeff`));
     await press(page.getByRole("button", { name: "Run" }));

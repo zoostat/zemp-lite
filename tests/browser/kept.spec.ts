@@ -6,7 +6,7 @@ import { expect, printed, scriptText, test, write } from "./support";
 test.use({ keptProfile: true });
 test.describe.configure({ mode: "serial" });
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 
 test("the welcome screen says that projects are kept on this computer", async ({ page }) => {
   await page.goto("/");

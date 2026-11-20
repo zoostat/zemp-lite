@@ -1,4 +1,4 @@
-# The toolchain the Zeff repository pins for 0.7.0, so that the engine is built here by the
+# The toolchain the Zeff repository pins for 0.8.0 (as for 0.7.0), so that the engine is built here by the
 # compiler that built its release.
 [toolchain]
 channel = "1.99.1"

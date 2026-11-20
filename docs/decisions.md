@@ -582,3 +582,15 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Choice.** The tests serve the build on 4174 (`playwright.config.ts`); `npm run preview` keeps 4173 for the owner. The owner's preview was left running. Nothing else of the tests changed, and GitHub's runs are unaffected.
 
 **Reason.** A window the owner keeps open must never stop the routine, nor be closed by it.
+
+## 21 November 2026: the worker on Zeff 0.8.0 (release 0.2, step 2)
+
+**Choice.** `worker/Cargo.toml` depends on the same four crates at the commit of the tag `v0.8.0` (6bfa6c55a5584e4e038fc828fef900a30f0856c3). `worker/Cargo.lock` was begun afresh from the lock file of `v0.8.0`, so that every crate the engine links is at the version it was released with: cargo kept all of them and changed only the Zeff crates' source and version. The compiler (1.99.1), the profile, the flags and `wasm-bindgen` 0.2.129 are those 0.8.0 pins, unchanged from 0.7.0. The interface, the worker's tests and the browser tests name the engine 0.8.0, and a new project is pinned to it.
+
+**The released command line,** built from the same commit into `worker/target/zeff-0.8.0/` (not committed), made every expected output of this repository again: the example, the four short scripts, the specification's sample, and the five figure files. All were byte for byte those of 0.7.0, so no kept file changed; `tests/scripts/README.md` says so. `zeff new` of 0.8.0 writes the same `zeff.toml` as Zemp Lite's, to the character.
+
+**Measured.** The worker is 2,785.2 kB compressed with Brotli (2,552.1 kB on 0.7.0; Zeff 0.8.0's own worker 2,782 kB) and its cold start 55.1 ms under Node, against the 5 MB and the second of risk R4. `check:samples` now runs the nine sample projects of 0.8.0, `instruments` among them, all identical.
+
+**A project pinned to 0.7.0.** The engine of 0.8.0 refuses to run it, with its own message (Z0710, "this project needs Zeff 0.7.0, but this is Zeff 0.8.0", advising to change the pin in `zeff.toml`); the interface shows it as the engine words it and rewrites nothing, since moving a project to another engine is "Update engine" (Zemp Specification, section 9.1), which is not in this release. Only the projects of the owner's own trial of 0.1, in the browser on this computer, are pinned to 0.7.0; the hosted alpha starts with none. A known issue of the notes.
+
+**Reason.** The checklist's step 2; the standing rule that Zemp uses the engine through its released versions.

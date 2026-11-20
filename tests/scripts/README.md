@@ -1,7 +1,8 @@
 # Scripts with what `zeff run` printed for them
 
 Each `name.zeff` here was run as `scripts/main.zeff` of a project by the command line of the released
-Zeff 0.7.0, and what it printed and said is kept beside it as `name.stdout` and `name.stderr`. The
+Zeff 0.7.0, and again by that of the released 0.8.0, which printed, said and wrote the same bytes for
+every file here (21 November 2026); what it printed and said is kept beside it as `name.stdout` and `name.stderr`. The
 browser tests run the same scripts through the interface and hold what the Output panel shows to these
 files: a plain script, one with warnings, one that stops at an error, and one the engine's check
 refuses before it starts.
@@ -17,5 +18,5 @@ viewer's **Save…** must give for the same plot, format and page, byte for byte
 
 `specification-sample.stderr` is what the released command line says of the specification's sample
 script (`docs/spec/zeff_samples.zeff`) run as a project's `scripts/main.zeff`. That script is written
-for Zeff 1.0 and uses a module of a project of its own, so the engine of 0.7.0 refuses it before it
+for Zeff 1.0 and uses a module of a project of its own, so the engines of 0.7.0 and 0.8.0 refuse it before it
 runs; the prototype must show the refusal as the command line words it.

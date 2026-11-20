@@ -21,7 +21,7 @@ fn run(host: &Host, text: &str) -> (Vec<String>, String) {
 
 #[test]
 fn the_engine_is_the_released_one() {
-    assert_eq!(engine_version(), "0.7.0");
+    assert_eq!(engine_version(), "0.8.0");
 }
 
 #[test]
@@ -65,7 +65,7 @@ fn a_file_put_into_the_project_is_read_by_a_run_and_given_back() {
     );
     // The manifest the host wrote is a file of the project like any other.
     let manifest = String::from_utf8(host.file("zeff.toml").unwrap()).unwrap();
-    assert!(manifest.contains("zeff = \"0.7.0\""), "{manifest}");
+    assert!(manifest.contains("zeff = \"0.8.0\""), "{manifest}");
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn a_frame_of_the_last_run_is_given_as_an_arrow_stream() {
 }
 
 /// The example the prototype opens with (`examples/scratch/`), run through the host: what it
-/// prints and says is, byte for byte, what `zeff run` of the released 0.7.0 printed for it,
+/// prints and says is, byte for byte, what `zeff run` of the released 0.8.0 printed for it,
 /// which `expected/` holds.
 #[test]
 fn the_example_prints_what_zeff_run_prints() {

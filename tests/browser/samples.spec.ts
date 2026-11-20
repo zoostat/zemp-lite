@@ -2,14 +2,14 @@
 // released Zeff engine run through the interface itself, and what the Output panel shows held
 // to what the Zeff repository expects `zeff run` to print for them. The samples are those of
 // the engine's own source at the pinned commit, which cargo fetched to build the worker;
-// `tools/check-samples.mjs` runs all eight through the worker alone.
+// `tools/check-samples.mjs` runs all nine through the worker alone.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, printed, saidAsWritten, test, write } from "./support";
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 
 /** The folder of the engine's sample projects. */
 function samples(): string {
@@ -29,7 +29,7 @@ function samples(): string {
 
 // Three projects that need no file of their own: they run on the data shipped with the engine.
 for (const name of ["regression", "simulation", "plots"]) {
-  test(`the sample project "${name}" of Zeff 0.7.0 reads in the prototype as \`zeff run\` prints it`, async ({
+  test(`the sample project "${name}" of Zeff 0.8.0 reads in the prototype as \`zeff run\` prints it`, async ({
     page,
     press,
   }) => {
@@ -55,7 +55,7 @@ for (const name of ["regression", "simulation", "plots"]) {
   });
 }
 
-test("the specification's sample script, written for Zeff 1.0, is refused as `zeff run` 0.7.0 refuses it", async ({
+test("the specification's sample script, written for Zeff 1.0, is refused as `zeff run` 0.8.0 refuses it", async ({
   page,
   press,
 }) => {

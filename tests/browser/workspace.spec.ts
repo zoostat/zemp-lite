@@ -3,7 +3,7 @@
 import type { Page } from "@playwright/test";
 import { editor, expect, scriptText, test } from "./support";
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.goto("/");
@@ -70,7 +70,7 @@ test("the left panel has two tabs, Project with the files and Objects with what 
 
   await press(left.getByRole("tab", { name: "Objects" }));
   await expect(left.getByText("Run the script to see what it leaves in memory.")).toBeVisible();
-  await expect(left.getByText("Zeff 0.7.0 in this browser")).toBeVisible();
+  await expect(left.getByText("Zeff 0.8.0 in this browser")).toBeVisible();
   await press(page.getByRole("button", { name: "Run" }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(left.getByText("18,412 rows × ")).toBeVisible();

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { expect, printed, saidAsWritten, scriptText, test, write } from "./support";
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 test.use({ viewport: { width: 1280, height: 3200 } });

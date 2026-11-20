@@ -31,3 +31,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Step 2 `[engine]`: the worker on Zeff 0.8.0, best begun in a fresh session on the most capable model.
 
 **For the owner to decide or do.** Nothing to decide. A Zeff session is to enter the answers and the amendments from the note; then this copy is refreshed again.
+
+## 21 November 2026, release 0.2, step 2 (the worker on Zeff 0.8.0)
+
+**Done.** Step 2 `[engine]`: the worker built on the released Zeff 0.8.0 (6bfa6c5) with its own lock file's versions; every expected output re-made by the released 0.8.0 command line, all byte for byte as before; the interface names the engine 0.8.0. The owner's instruction of this day: work on through the steps, each with its note, his approval given to the recommended course.
+
+**Green.** `npm run routine`: the nine sample projects of 0.8.0 identical; 2,785.2 kB compressed, cold start 55.1 ms; 117 unit tests; 163 browser tests passed and 1 skipped by design.
+
+**Next.** Step 3 `[engine]`: what a run tells the interface.

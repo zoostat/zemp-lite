@@ -5,7 +5,7 @@
 export const VERSION: string = __ZEMP_VERSION__;
 
 /** The Zeff engine this release runs on. */
-export const ENGINE = "0.7.0";
+export const ENGINE = "0.8.0";
 
 /**
  * A version as the interface writes it: major and minor alone where the patch is 0, as the

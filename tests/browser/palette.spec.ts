@@ -2,7 +2,7 @@
 import type { Page } from "@playwright/test";
 import { editor, expect, printed, scriptText, test, write } from "./support";
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.emulateMedia({ colorScheme: "light" });
@@ -208,7 +208,7 @@ test("the last line says how the output stands to the script, and names the engi
   await page.keyboard.press("ControlOrMeta+End");
   await page.keyboard.type("\nprint(1)");
   await expect(sync).toHaveText("edited · not run · 1 warning");
-  await expect(page.getByText("engine Zeff 0.7.0 · in this browser")).toBeVisible();
+  await expect(page.getByText("engine Zeff 0.8.0 · in this browser")).toBeVisible();
 });
 
 test("every control of the window can be reached from the keyboard", async ({ page, press }) => {

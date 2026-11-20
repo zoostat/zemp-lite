@@ -2,7 +2,7 @@
 // type-checked with the tools; it needs the worker built (`npm run build:worker`).
 //
 // The text the interface sends for the figures of the example, run through the engine's
-// worker build, writes the files the released `zeff run` 0.7.0 wrote for the same text
+// worker build, writes the files the released `zeff run` 0.8.0 wrote for the same text
 // (`tests/scripts/figures/`), byte for byte: the figure a pane shows is the figure `export`
 // writes at that size, and nothing of the interface's is in it.
 import { existsSync, readFileSync } from "node:fs";
@@ -20,7 +20,7 @@ interface Project {
 }
 
 describe("the figures the interface asks the engine for", () => {
-  it("are, byte for byte, the files `zeff run` 0.7.0 writes for the same text", () => {
+  it("are, byte for byte, the files `zeff run` 0.8.0 writes for the same text", () => {
     expect(existsSync(built), "the worker is not built: run `npm run build:worker` first").toBe(
       true,
     );

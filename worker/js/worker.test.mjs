@@ -53,9 +53,9 @@ async function opened(t, deviceBytes) {
 const bytes = (text) => new TextEncoder().encode(text);
 const text = (some) => new TextDecoder().decode(some);
 
-test("the engine in the worker is the released Zeff 0.7.0", async (t) => {
+test("the engine in the worker is the released Zeff 0.8.0", async (t) => {
   const { next } = started(t, 0);
-  assert.deepEqual(await next("ready"), { type: "ready", version: "0.7.0" });
+  assert.deepEqual(await next("ready"), { type: "ready", version: "0.8.0" });
 });
 
 test("a run tells its steps and what it prints, then its outcome", async (t) => {
@@ -79,7 +79,7 @@ test("a run tells its steps and what it prints, then its outcome", async (t) => 
   assert.equal(pieces.map((piece) => piece.stderr).join(""), done.stderr);
 });
 
-test("the example prints, in the worker, what `zeff run` 0.7.0 prints, byte for byte", async (t) => {
+test("the example prints, in the worker, what `zeff run` 0.8.0 prints, byte for byte", async (t) => {
   const example = path.resolve(here, "..", "..", "examples", "scratch");
   const read = (file) => fs.readFileSync(path.join(example, file), "utf8");
   const { worker, said, next } = await opened(t, 0);

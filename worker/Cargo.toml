@@ -18,13 +18,13 @@ unsafe_code = "deny"
 [lints.clippy]
 all = { level = "deny", priority = -1 }
 
-# The engine is the released Zeff 0.7.0, by the commit of its tag v0.7.0, and nothing else:
+# The engine is the released Zeff 0.8.0, by the commit of its tag v0.8.0, and nothing else:
 # Zemp uses the engine through its released versions (docs/decisions.md).
 [dependencies]
-zeff-engine = { git = "https://github.com/zoostat/zeff", rev = "9a3cabd121d241a34e97ade5441c3fc9fd98928e" }
-zeff-diagnostics = { git = "https://github.com/zoostat/zeff", rev = "9a3cabd121d241a34e97ade5441c3fc9fd98928e" }
-zeff-columns = { git = "https://github.com/zoostat/zeff", rev = "9a3cabd121d241a34e97ade5441c3fc9fd98928e" }
-zeff-web = { git = "https://github.com/zoostat/zeff", rev = "9a3cabd121d241a34e97ade5441c3fc9fd98928e" }
+zeff-engine = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
+zeff-diagnostics = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
+zeff-columns = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
+zeff-web = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "=0.2.129"

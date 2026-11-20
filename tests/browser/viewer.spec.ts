@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./support";
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 const kept = (name: string) => readFileSync(new URL(`../scripts/figures/${name}`, import.meta.url));
 
 /** Run the example in Panes and open the plot viewer. */
@@ -141,7 +141,7 @@ test("a plot is previewed at the sizes of a journal column, a page's width and a
 });
 
 for (const format of ["svg", "pdf", "png"] as const) {
-  test(`a plot saved as ${format.toUpperCase()} at one-column size is the file \`zeff run\` 0.7.0 writes, byte for byte`, async ({
+  test(`a plot saved as ${format.toUpperCase()} at one-column size is the file \`zeff run\` 0.8.0 writes, byte for byte`, async ({
     page,
     press,
   }) => {

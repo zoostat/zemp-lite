@@ -844,8 +844,8 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "zeff-columns"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "arrow-array",
  "arrow-buffer",
@@ -858,8 +858,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-core"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-columns",
  "zeff-dates",
@@ -870,8 +870,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-data"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "encoding_rs",
  "unicode-normalization",
@@ -886,8 +886,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-datasets"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-columns",
  "zeff-core",
@@ -897,18 +897,18 @@ dependencies = [
 
 [[package]]
 name = "zeff-dates"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 
 [[package]]
 name = "zeff-diagnostics"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 
 [[package]]
 name = "zeff-dist"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-columns",
  "zeff-core",
@@ -919,8 +919,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-engine"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "encoding_rs",
  "toml",
@@ -946,16 +946,16 @@ dependencies = [
 
 [[package]]
 name = "zeff-hash"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "blake3",
 ]
 
 [[package]]
 name = "zeff-ir"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-dates",
  "zeff-diagnostics",
@@ -965,13 +965,13 @@ dependencies = [
 
 [[package]]
 name = "zeff-kernels"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 
 [[package]]
 name = "zeff-numeric"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "libm",
  "zeff-kernels",
@@ -979,8 +979,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-plot"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "miniz_oxide",
  "unicode-normalization",
@@ -998,13 +998,13 @@ dependencies = [
 
 [[package]]
 name = "zeff-registry"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 
 [[package]]
 name = "zeff-regress"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-columns",
  "zeff-core",
@@ -1017,8 +1017,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-results"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-columns",
  "zeff-core",
@@ -1031,8 +1031,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-stats"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-columns",
  "zeff-core",
@@ -1046,16 +1046,16 @@ dependencies = [
 
 [[package]]
 name = "zeff-syntax"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-diagnostics",
 ]
 
 [[package]]
 name = "zeff-text"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "regex",
  "zeff-core",
@@ -1066,8 +1066,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-time"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "zeff-core",
  "zeff-dates",
@@ -1077,8 +1077,8 @@ dependencies = [
 
 [[package]]
 name = "zeff-web"
-version = "0.7.0"
-source = "git+https://github.com/zoostat/zeff?rev=9a3cabd121d241a34e97ade5441c3fc9fd98928e#9a3cabd121d241a34e97ade5441c3fc9fd98928e"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 dependencies = [
  "wasm-bindgen",
  "zeff-columns",

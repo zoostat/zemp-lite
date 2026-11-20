@@ -5,7 +5,7 @@ import { expect, printed, saidAsWritten, scriptText, test, write } from "./suppo
 const example = (file: string) =>
   readFileSync(new URL(`../../examples/scratch/${file}`, import.meta.url), "utf8");
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 
 /** Open the Scratch project from the welcome screen and wait for the engine. */
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
@@ -36,7 +36,7 @@ test("the welcome screen opens, names the release and says where projects are ke
     page.getByText(browserName === "webkit" ? "Not kept." : "Kept on this computer."),
   ).toBeVisible();
   await expect(page.getByText("No project yet.")).toBeVisible();
-  await expect(page.getByText("engine Zeff 0.7.0 · in this browser")).toBeVisible();
+  await expect(page.getByText("engine Zeff 0.8.0 · in this browser")).toBeVisible();
   // The shipped fonts are the ones drawn: no outside server is asked for one.
   await page.evaluate(() => document.fonts.ready);
   expect(await page.evaluate(() => document.fonts.check('16px "Atkinson Hyperlegible Next"'))).toBe(
@@ -69,7 +69,7 @@ test("with no choice made, the theme is the system's", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
-test("the Scratch project holds the example, which prints what `zeff run` 0.7.0 prints, byte for byte", async ({
+test("the Scratch project holds the example, which prints what `zeff run` 0.8.0 prints, byte for byte", async ({
   page,
   press,
 }) => {

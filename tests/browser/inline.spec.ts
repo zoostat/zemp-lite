@@ -20,7 +20,7 @@ import {
 // a window tall enough to hold it.
 test.use({ viewport: { width: 1280, height: 3200 } });
 
-const READY = "engine Zeff 0.7.0 ready";
+const READY = "engine Zeff 0.8.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
@@ -76,7 +76,7 @@ test("each statement's output is directly under it, and the script itself is not
     "let shape = w2010.plot(x: log(wage)).histogram(bins: 30)",
     "shape",
   ]);
-  // What is printed and said is what `zeff run` 0.7.0 prints and says, to the byte.
+  // What is printed and said is what `zeff run` 0.8.0 prints and says, to the byte.
   expect(await printed(page)).toBe(file("examples/scratch/expected/stdout.txt"));
   expect(await saidAsWritten(page)).toBe(file("examples/scratch/expected/stderr.txt"));
   // Inline output is never written into the script: the editor holds the file as it was.
