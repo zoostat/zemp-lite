@@ -94,6 +94,12 @@ impl Project {
             .rows(name, offset as usize, limit as usize, &shown)
     }
 
+    /// The bindings of a text with their types, as `zeff repl`'s `:vars` lists them, as a
+    /// line of JSON.
+    pub fn vars(&self, script: &str, text: &str) -> String {
+        self.host.vars(script, text)
+    }
+
     /// Keep the viewer's frame to the rows of a condition, as `name.where(condition)` keeps
     /// them, as a line of JSON.
     pub fn filter(&self, name: &str, condition: &str) -> String {

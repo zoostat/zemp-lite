@@ -1,0 +1,11 @@
+let wages = dataset(wages)
+let m = wages.reg(log(wage) ~ educ + exper)
+let n = wages.n_rows()
+let wages = wages.where(year == 2015)
+:vars
+:save scripts/explore.zeff
+:save scripts/explore.zeff
+:save scripts/main.zeff
+:save
+:clear
+:quit

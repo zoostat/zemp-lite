@@ -331,6 +331,12 @@ export class Engine {
     };
   }
 
+  /** The bindings of a text with their types, as `zeff repl`'s `:vars` lists them: what it prints and says. */
+  async vars(script: string, text: string): Promise<{ printed: string; said: string }> {
+    const found = expect(await this.#ask({ type: "vars", script, text }), "vars");
+    return { printed: found.printed, said: found.said };
+  }
+
   /** Keep a frame of the last run to the rows of a condition, as `name.where(condition)` keeps them. */
   async filter(name: string, condition: string): Promise<Filtered> {
     const runs = this.#runs;

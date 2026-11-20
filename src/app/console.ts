@@ -6,6 +6,22 @@
 import { blocks, begin, end, hear, type Block, type Run, type Said } from "../output/run";
 import type { Outcome, RunEvent } from "../engine/messages";
 
+/**
+ * The console's commands, for `:help`: in the form `zeff repl` lists its own, with the
+ * console's statements standing for its session, and `:clear`, the console's own.
+ */
+export const CONSOLE_HELP = `\
+Type a statement to run it after the script; it is not added to the script. The console keeps
+it, so that the next statement sees what it made. ↑ and ↓ recall what was typed, Tab completes,
+and ⌘↵ (Ctrl ↵) copies the line into the script at the cursor.
+
+  :vars             list the bindings and their types
+  :save <path>      write the console's statements as a script of the project
+  :clear            empty the console and forget its statements
+  :help <name>      a function's help page, a package's functions, or a code such as Z0101
+  :help             this text
+`;
+
 /** One statement typed in the console, with what came of it. */
 export interface Entry {
   statement: string;

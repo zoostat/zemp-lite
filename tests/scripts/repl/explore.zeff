@@ -1,0 +1,4 @@
+let wages = dataset(wages)
+let m = wages.reg(log(wage) ~ educ + exper)
+let n = wages.n_rows()
+let wages = wages.where(year == 2015)

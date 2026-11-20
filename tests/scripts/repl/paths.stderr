@@ -1,0 +1,4 @@
+Zeff 0.8.0 console in the project `demo`; :help lists the commands, :quit leaves
+error: the folder of `notes/x.zeff` does not exist; `:save scripts/<name>.zeff` writes beside the other scripts
+error[Z0707]: cannot write `../x.zeff`: it is outside the project
+  = help: write under the project, as in `output/x.zeff`

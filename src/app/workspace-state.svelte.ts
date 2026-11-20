@@ -19,7 +19,8 @@ import {
 } from "../plots/figures";
 import { compared, moved, ordered, toggled } from "../plots/viewer";
 import { Session } from "../project/session";
-import { History, composed, consoleRun, outcomeOf, type Entry } from "./console";
+import { CONSOLE_HELP, History, composed, consoleRun, outcomeOf, type Entry } from "./console";
+import { parts } from "../project/folder";
 import {
   DATA,
   PLOTS,
@@ -461,6 +462,30 @@ export class Workspace {
    * Go to a line of a file of the project: its tab opened and shown, and the editor asked to
    * put the cursor on the line and bring it into view. Each asking is told apart by its count.
    */
+  /** A statement for the script's editor to put in at the cursor, until it is put in. */
+  inserting = $state<{ path: string; text: string; count: number } | null>(null);
+  #insertions = 0;
+
+  /**
+   * ⌘↵ on the console line: the statement copied into the script at the cursor, as one edit
+   * that undo takes back; the script shown where another place was. A command to the console
+   * (a line beginning with a colon) is not a statement and is not copied.
+   */
+  async copyIntoScript(line: string): Promise<void> {
+    const statement = line.trim();
+    if (statement === "" || statement.startsWith(":")) return;
+    this.history.add(line);
+    const path = this.scriptPath;
+    await this.open(path);
+    this.#insertions += 1;
+    this.inserting = { path, text: statement, count: this.#insertions };
+  }
+
+  /** The editor put the statement in. */
+  inserted(count: number): void {
+    if (this.inserting?.count === count) this.inserting = null;
+  }
+
   async goTo(path: string, line: number): Promise<void> {
     await this.open(path);
     this.reveal = { path, line, count: (this.reveal?.count ?? 0) + 1 };
@@ -1279,40 +1304,7 @@ export class Workspace {
     this.history.add(line);
     this.consoleOpen = true;
     if (statement.startsWith(":")) {
-      const help = /^:help(?:\s+(\S+))?$/.exec(statement);
-      if (statement === ":clear") {
-        this.entries = [];
-        this.#kept = [];
-      } else if (help !== null) {
-        // `:help name` prints the page as `zeff repl` does; `:help` alone names how.
-        const name = help[1];
-        if (name === undefined) {
-          this.entries.push({
-            statement,
-            state: "done",
-            printed: "",
-            said: [],
-            told: "`:help name` gives a function's page; F1 opens it beside the script.",
-          });
-        } else {
-          const found = await this.helpPage(name);
-          this.entries.push({
-            statement,
-            state: "done",
-            printed: found.page ?? "",
-            said: [],
-            told: found.page === null ? found.message : "",
-          });
-        }
-      } else {
-        this.entries.push({
-          statement,
-          state: "done",
-          printed: "",
-          said: [],
-          told: `\`${statement.split(/\s/)[0]}\` comes with the alpha; \`:clear\` empties the console.`,
-        });
-      }
+      await this.#command(statement);
       return;
     }
     this.entries.push({ statement, state: "running", printed: "", said: [], told: "" });
@@ -1343,6 +1335,94 @@ export class Workspace {
     })();
     this.#busy = work;
     await work;
+  }
+
+  /**
+   * A word to the console itself (the Zemp Specification, section 5): `:help`, `:vars` and
+   * `:save` as `zeff repl` has them, in its words, the console's statements standing for the
+   * session; `:clear`, the console's own, empties it and forgets its statements.
+   */
+  async #command(statement: string): Promise<void> {
+    const [name = "", ...rest] = statement.slice(1).trim().split(/\s+/);
+    const argument = rest.join(" ");
+    // The command takes its place at once and waits its turn, as a statement does, so that
+    // what it answers follows what was typed before it.
+    this.entries.push({ statement, state: "running", printed: "", said: [], told: "" });
+    const entry = this.entries[this.entries.length - 1] as Entry;
+    const tell = (printed: string, told: string) =>
+      Object.assign(entry, { state: "done", printed, told });
+    const before = this.#busy;
+    const work = (async () => {
+      await before;
+      if (name === "clear") {
+        this.entries = [];
+        this.#kept = [];
+      } else if (name === "help" && argument === "") {
+        tell(CONSOLE_HELP, "");
+      } else if (name === "help") {
+        const found = await this.helpPage(argument);
+        tell(found.page ?? "", found.page === null ? `error: ${found.message}` : "");
+      } else if (name === "vars") {
+        const script = this.scriptPath;
+        await this.#load(script);
+        const { text } = composed(this.buffers[script]?.text ?? "", this.#kept, "");
+        const found = await this.engine.vars(script, text);
+        tell(found.printed, found.said.trimEnd());
+      } else if (name === "save") {
+        tell("", await this.#save(argument));
+      } else {
+        tell("", `unknown console command \`:${name}\`; :help lists the commands`);
+      }
+    })().catch((error: Error) => {
+      Object.assign(entry, { state: "failed", told: error.message });
+    });
+    this.#busy = work;
+    await work;
+  }
+
+  /** Files `:save` wrote in this window, which it may write again. */
+  #saved: string[] = [];
+
+  /**
+   * `:save <path>`: the console's statements written as a script of the project, as `zeff
+   * repl` writes its session: only a new file, or one it wrote here; in a folder that is
+   * there; never outside the project. What it says, in the command line's words.
+   */
+  async #save(path: string): Promise<string> {
+    if (path === "") return "`:save` needs a path, as in `:save scripts/explore.zeff`";
+    let segments: string[] | null;
+    try {
+      segments = path.startsWith("/") ? null : parts(path.replace(/^(\.\/)+/, ""));
+    } catch {
+      segments = null;
+    }
+    if (segments === null || segments.length === 0) {
+      const file =
+        path
+          .split("/")
+          .filter((one) => one !== "")
+          .at(-1) ?? "explore.zeff";
+      return `error[Z0707]: cannot write \`${path}\`: it is outside the project\n  = help: write under the project, as in \`output/${file}\``;
+    }
+    const target = segments.join("/");
+    if (segments[0] === ".zemp") {
+      return `error: \`${path}\` is the window's own folder; \`:save scripts/<name>.zeff\` writes beside the other scripts`;
+    }
+    const kind = await this.project.kind(target);
+    if (kind === "folder" || (kind === "file" && !this.#saved.includes(target))) {
+      return `error: \`${path}\` already exists; \`:save\` writes only a new file, or one it wrote in this session`;
+    }
+    const folder = segments.slice(0, -1).join("/");
+    if (folder !== "" && (await this.project.kind(folder)) !== "folder") {
+      return `error: the folder of \`${path}\` does not exist; \`:save scripts/<name>.zeff\` writes beside the other scripts`;
+    }
+    const n = this.#kept.length;
+    await this.project.writeText(target, this.#kept.map((one) => `${one}\n`).join(""));
+    if (!this.#saved.includes(target)) this.#saved.push(target);
+    this.session.changed(target);
+    this.language?.changed(target);
+    await this.refresh();
+    return `saved the ${n} ${n === 1 ? "statement" : "statements"} of the session to ${path}`;
   }
 
   /** End the run: before its next step where that can be asked, at once where it cannot. */

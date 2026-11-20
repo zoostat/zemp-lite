@@ -188,10 +188,11 @@ test("the console recalls what was typed, grows into a drawer, shrinks with Esca
   await expect(console_).not.toBeFocused();
   await console_.focus();
   await expect(drawer.getByTestId("entry")).toHaveCount(2);
-  // A word to the console itself: one that waits for the alpha, and the one that empties it.
+  // A word to the console itself: the bindings, as `zeff repl` lists them, and the one that
+  // empties it.
   await console_.fill(":vars");
   await console_.press("Enter");
-  await expect(drawer.getByTestId("entry").last()).toContainText("`:vars` comes with the alpha");
+  await expect(drawer.getByTestId("console-printed").last()).toHaveText("a  Int");
   await console_.fill(":clear");
   await console_.press("Enter");
   await expect(drawer).toHaveCount(0);

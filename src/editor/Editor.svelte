@@ -43,6 +43,8 @@
     runto = null,
     oncursor,
     reveal = null,
+    inserting = null,
+    oninserted,
     diagnostics = [],
     onhover,
     oncomplete,
@@ -74,6 +76,14 @@
     oncursor?: (line: number) => void;
     /** A line to bring into view with the cursor on it; a new `count` asks again. */
     reveal?: { line: number; count: number } | null;
+    /**
+     * A statement to put into the script at the cursor (⌘↵ on the console line): on the
+     * cursor's line where it is blank, else on a line of its own after it, as one edit that
+     * undo takes back. Each asking is told apart by its count, and `oninserted` is told once
+     * it is made, so that a request is carried out once.
+     */
+    inserting?: { text: string; count: number } | null;
+    oninserted?: (count: number) => void;
     /** What the language server says of the text, as it says it: underlined where it says. */
     diagnostics?: Diagnostic[];
     /** What the language server knows of the word at a place (lines and columns from 0). */
@@ -390,6 +400,27 @@
       effects: EditorView.scrollIntoView(line.from, { y: "center" }),
     });
     view.focus();
+  });
+
+  // A statement from the console line, put in at the cursor.
+  let inserted = 0;
+  $effect(() => {
+    const asked = inserting;
+    if (view === null || asked === null || asked.count === inserted) return;
+    inserted = asked.count;
+    const state = view.state;
+    const line = state.doc.lineAt(state.selection.main.head);
+    const blank = line.text.trim() === "";
+    const from = blank ? line.from : line.to;
+    const insert = blank ? asked.text : `\n${asked.text}`;
+    view.dispatch({
+      changes: { from, to: blank ? line.to : line.to, insert },
+      selection: { anchor: from + insert.length },
+      scrollIntoView: true,
+      userEvent: "input.paste",
+    });
+    view.focus();
+    oninserted?.(asked.count);
   });
 
   // Run to here on the statements' line numbers, each time they change.

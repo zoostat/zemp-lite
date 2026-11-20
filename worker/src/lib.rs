@@ -558,6 +558,53 @@ impl Host {
         }
     }
 
+    /// The bindings of a text with their types, as `zeff repl`'s `:vars` lists those of its
+    /// session: each name once, with the type the engine's checker gives it now (a later `let`
+    /// shadows an earlier one), the names lined up, in the order they were last bound; only
+    /// the bindings of the text's top level, which a statement after it can read. As a line of
+    /// JSON of type `vars`: what is printed, and what is said where there is no binding.
+    pub fn vars(&self, script: &str, text: &str) -> String {
+        let answer = |printed: &str, said: &str| {
+            format!(
+                "{{\"type\": \"vars\", \"printed\": {}, \"said\": {}}}",
+                json_string(printed),
+                json_string(said)
+            )
+        };
+        let none = "no bindings yet: `let name = ...` makes one\n";
+        let Ok(project) = Project::open(&self.fs, Path::new(ROOT)) else {
+            return answer("", "error: the project's `zeff.toml` could not be read\n");
+        };
+        let Ok(registry) = zeff_engine::registry::registry() else {
+            return answer("", none);
+        };
+        let program = check_in_project(&self.fs, &project, script, text, registry)
+            .checked
+            .program;
+        let mut bindings: Vec<&zeff_ir::Binding> = Vec::new();
+        for statement in &program.statements {
+            if let Statement::Let { binding, .. } = statement
+                && let Some(binding) = program.bindings.get(*binding)
+            {
+                bindings.retain(|b| b.name != binding.name);
+                bindings.push(binding);
+            }
+        }
+        if bindings.is_empty() {
+            return answer("", none);
+        }
+        let width = bindings
+            .iter()
+            .map(|b| b.name.chars().count())
+            .max()
+            .unwrap_or(0);
+        let printed: String = bindings
+            .iter()
+            .map(|binding| format!("{:width$}  {}\n", binding.name, binding.ty))
+            .collect();
+        answer(&printed, "")
+    }
+
     /// The lines of every statement the statement on `line` needs to run as it would, itself
     /// included, from the engine's dependency graph.
     fn needed(&self, project: &Project, script: &str, text: &str, line: u32) -> Vec<u32> {

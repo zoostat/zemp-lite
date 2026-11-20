@@ -20,3 +20,8 @@ viewer's **Save…** must give for the same plot, format and page, byte for byte
 script (`docs/spec/zeff_samples.zeff`) run as a project's `scripts/main.zeff`. That script is written
 for Zeff 1.0 and uses a module of a project of its own, so the engines of 0.7.0 and 0.8.0 refuse it before it
 runs; the prototype must show the refusal as the command line words it.
+
+`repl/` holds what the released `zeff repl` of 0.8.0 printed and said when it was given, in a new
+project, the lines of `console.txt` (`vars.stdout`, `console.stderr`, and the script `:save` wrote,
+`explore.zeff`) and of `paths.txt` (`paths.stderr`). The console line's `:vars` and `:save` are held
+to them; `:clear`, which the console line has and `zeff repl` does not, is named there as unknown.

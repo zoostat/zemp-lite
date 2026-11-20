@@ -28,7 +28,13 @@
   }
 
   function key(event: KeyboardEvent): void {
-    if (event.key === "Enter" && !event.metaKey && !event.ctrlKey) {
+    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+      // ⌘↵ copies the line into the script at the cursor; the line is recalled by ↑.
+      event.preventDefault();
+      const line = typing;
+      if (line.trim() !== "" && !line.trim().startsWith(":")) typing = "";
+      void workspace.copyIntoScript(line);
+    } else if (event.key === "Enter" && !event.metaKey && !event.ctrlKey) {
       event.preventDefault();
       const line = typing;
       typing = "";
@@ -66,7 +72,12 @@
     <div class="drawer" bind:this={drawer} role="log" aria-label="Console output">
       {#each workspace.entries as entry, at (at)}
         <div class="entry {entry.state}" data-testid="entry">
-          <div class="asked mono"><span aria-hidden="true">›</span> {entry.statement}</div>
+          <div class="asked mono">
+            <span aria-hidden="true">›</span>
+            {entry.statement}{#if !entry.statement.startsWith(":")}<span class="apart"
+                >not in the script</span
+              >{/if}
+          </div>
           {#if entry.state === "running"}<div class="told">running…</div>{/if}
           {#if entry.printed !== ""}<pre
               class="mono"
@@ -227,8 +238,15 @@
     overflow-x: auto;
   }
   .said,
+  .apart {
+    color: var(--ink-3);
+    font-family: "Atkinson Hyperlegible Next", sans-serif;
+    font-size: 12px;
+    margin-left: 10px;
+  }
   .told {
     margin: 2px 0 0 16px;
+    white-space: pre-wrap;
   }
   .said {
     color: var(--ink-2);

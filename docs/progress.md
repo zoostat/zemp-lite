@@ -167,3 +167,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 164 unit tests; 262 browser tests passed and 2 skipped by design; 23 native tests of the worker; the nine samples identical; the worker within its limits.
 
 **Next.** Step 15 `[function]`: the console line and Panes.
+
+## 21 November 2026, release 0.2, step 15 (the console line and Panes)
+
+**Done.** Step 15 `[function]`: the console line's `:help`, `:vars` and `:save` as the released `zeff repl` has them, in its words (held to its outputs, kept in `tests/scripts/repl/`), `:clear` the console's own, each command answered in turn; a console statement marked *not in the script*; ⌘↵ copying the console line into the script at the cursor, an edit undo takes back; Panes with F1 and the Help panel beside its language services. The specification's "`:clear` … as in `zeff repl`" is wrong at 0.8.0 (the REPL has no `:clear`); the correction is passed to the Zeff session in the shared notes.
+
+**Green.** `npm run routine`: 164 unit tests; 270 browser tests passed and 2 skipped by design; 24 native tests of the worker; the nine samples identical; the worker within its limits.
+
+**Next.** Step 16 `[function]`: Report a problem, and the edition check.

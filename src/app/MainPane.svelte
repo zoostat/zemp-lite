@@ -11,6 +11,7 @@
   import { held, marked } from "./steady";
   import { DATA, PLOTS, tabPath } from "./views";
   import DataViewer from "../data/DataViewer.svelte";
+  import HelpPanel from "../margin/HelpPanel.svelte";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
@@ -113,72 +114,81 @@
   </div>
 
   {#if path !== null && buffer !== undefined}
-    <div class="script" bind:this={pane}>
-      <div class="editor">
-        {#if buffer.loaded}
-          {#key path}
-            <Editor
-              text={buffer.text}
-              label="The script"
-              onchange={(text) => workspace.edit(path, text)}
-              onrun={() => void workspace.run()}
-              diagnostics={workspace.diagnostics[path] ?? []}
-              onhover={(line, character) => workspace.hover(path, line, character)}
-              oncomplete={(line, character) => workspace.complete(path, line, character)}
-              onusage={(line, character) => workspace.signature(path, line, character)}
-            />
-          {/key}
-        {/if}
-      </div>
-      <div
-        class="output"
-        class:closed={!workspace.views.output.shown}
-        style:height={workspace.views.output.shown ? `${share * 100}%` : null}
-      >
-        {#if workspace.views.output.shown}
-          <Splitter
-            orientation="horizontal"
-            label="The height of the Output panel"
-            value={Math.round(share * 100)}
-            least={12}
-            most={85}
-            ondrag={dragged}
-            onstep={(direction) => workspace.setOutputShare(share - direction * 0.04)}
-          />
-        {/if}
-        <div class="head">
-          <button
-            class="fold"
-            onclick={() => workspace.toggleOutput()}
-            aria-expanded={workspace.views.output.shown}
-            aria-label={workspace.views.output.shown ? "Hide the output" : "Show the output"}
-          >
-            <span class:turned={!workspace.views.output.shown} aria-hidden="true">⌄</span>
-          </button>
-          <span class="title">Output</span>
-          {#if run !== null}
-            <span class="about" data-testid="run-summary">{summary(run)}</span>
+    <div class="beside">
+      <div class="script" bind:this={pane}>
+        <div class="editor">
+          {#if buffer.loaded}
+            {#key path}
+              <Editor
+                text={buffer.text}
+                label="The script"
+                onchange={(text) => workspace.edit(path, text)}
+                onrun={() => void workspace.run()}
+                diagnostics={workspace.diagnostics[path] ?? []}
+                onhover={(line, character) => workspace.hover(path, line, character)}
+                oncomplete={(line, character) => workspace.complete(path, line, character)}
+                onusage={(line, character) => workspace.signature(path, line, character)}
+                inserting={workspace.inserting?.path === path ? workspace.inserting : null}
+                oninserted={(count) => workspace.inserted(count)}
+                onfunction={(name) => workspace.atFunction(name)}
+                onhelp={(name) => void workspace.showHelp(name)}
+              />
+            {/key}
           {/if}
-          <span class="gap"></span>
-          {#if workspace.running}
-            <button class="word" onclick={() => workspace.cancel()}>Cancel</button>
-          {/if}
-          <button class="word" onclick={() => workspace.clear()} disabled={workspace.running}
-            >Clear</button
-          >
         </div>
-        {#if workspace.views.output.shown}
-          <div class="body" data-testid="output" bind:this={body}>
-            <OutputPanel
-              {run}
-              edited={workspace.edited}
-              refusal={workspace.refusal}
-              refusalEdited={workspace.refusalEdited}
-              {workspace}
+        <div
+          class="output"
+          class:closed={!workspace.views.output.shown}
+          style:height={workspace.views.output.shown ? `${share * 100}%` : null}
+        >
+          {#if workspace.views.output.shown}
+            <Splitter
+              orientation="horizontal"
+              label="The height of the Output panel"
+              value={Math.round(share * 100)}
+              least={12}
+              most={85}
+              ondrag={dragged}
+              onstep={(direction) => workspace.setOutputShare(share - direction * 0.04)}
             />
+          {/if}
+          <div class="head">
+            <button
+              class="fold"
+              onclick={() => workspace.toggleOutput()}
+              aria-expanded={workspace.views.output.shown}
+              aria-label={workspace.views.output.shown ? "Hide the output" : "Show the output"}
+            >
+              <span class:turned={!workspace.views.output.shown} aria-hidden="true">⌄</span>
+            </button>
+            <span class="title">Output</span>
+            {#if run !== null}
+              <span class="about" data-testid="run-summary">{summary(run)}</span>
+            {/if}
+            <span class="gap"></span>
+            {#if workspace.running}
+              <button class="word" onclick={() => workspace.cancel()}>Cancel</button>
+            {/if}
+            <button class="word" onclick={() => workspace.clear()} disabled={workspace.running}
+              >Clear</button
+            >
           </div>
-        {/if}
+          {#if workspace.views.output.shown}
+            <div class="body" data-testid="output" bind:this={body}>
+              <OutputPanel
+                {run}
+                edited={workspace.edited}
+                refusal={workspace.refusal}
+                refusalEdited={workspace.refusalEdited}
+                {workspace}
+              />
+            </div>
+          {/if}
+        </div>
       </div>
+      {#if workspace.help.shown}
+        <HelpPanel {workspace} />
+      {/if}
     </div>
   {:else if workspace.views.active === PLOTS}
     <PlotViewer {workspace} />
@@ -261,11 +271,18 @@
     min-height: 36px;
     padding: 4px 16px;
   }
+  .beside {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+  }
   .script {
     display: flex;
     flex: 1;
     flex-direction: column;
     min-height: 0;
+    min-width: 0;
   }
   .editor {
     background: var(--window);

@@ -23,6 +23,8 @@
 //                                       the engine prints it: sorted by the variable `sort`
 //                                       (descending where `desc`), kept to the rows of the
 //                                       last filter where `filtered`, and to those `search` finds
+//   { type: "vars", script, text }      the bindings of a text with their types, as `zeff
+//                                       repl`'s `:vars` lists them
 //   { type: "filter", name, condition } keep the viewer's frame to the rows of a condition,
 //                                       as `name.where(condition)` keeps them
 //   { type: "help", name }              the help page of a function, as `zeff help` prints it
@@ -46,6 +48,7 @@
 //   { type: "rows", name, header, total, kept, offset, variables, rows }   the answer to
 //                                       `rows`: each variable with its header's distribution
 //   { type: "filter", ok, rows, said }  the answer to `filter`
+//   { type: "vars", printed, said }     the answer to `vars`
 //   { type: "help", page, message }     the answer to `help`: the page, or null and why
 //   { type: "explained", page }         the answer to `explain`: the page, as `zeff explain
 //                                       --format json` gives it, its `text` what it prints
@@ -111,6 +114,7 @@ export function serve(engine, port, deviceBytes) {
         "help",
         "rows",
         "filter",
+        "vars",
       ].includes(said.type)
     ) {
       refuse(`no such message: ${String(said.type)}`);
@@ -128,6 +132,7 @@ export function serve(engine, port, deviceBytes) {
         help: "a help page was asked for",
         rows: "rows of a frame were asked for",
         filter: "a filter was asked for",
+        vars: "the bindings were asked for",
       }[said.type];
       refuse(`${what} before a project was opened`);
       return;
@@ -165,6 +170,9 @@ export function serve(engine, port, deviceBytes) {
         answer(page);
         break;
       }
+      case "vars":
+        answer(JSON.parse(project.vars(String(said.script), String(said.text))));
+        break;
       case "filter":
         answer(JSON.parse(project.filter(String(said.name), String(said.condition ?? ""))));
         break;

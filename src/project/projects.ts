@@ -236,6 +236,11 @@ export class Project {
     return this.#files.read(path);
   }
 
+  /** Whether a path of the project is a file, a folder, or nothing. */
+  kind(path: string): Promise<"file" | "folder" | null> {
+    return this.#files.kind(path);
+  }
+
   async readText(path: string): Promise<string | null> {
     const bytes = await this.#files.read(path);
     return bytes === null ? null : decoder.decode(bytes);

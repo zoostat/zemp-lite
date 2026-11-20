@@ -1,0 +1,6 @@
+Zeff 0.8.0 console in the project `demo`; :help lists the commands, :quit leaves
+saved the 4 statements of the session to scripts/explore.zeff
+saved the 4 statements of the session to scripts/explore.zeff
+error: `scripts/main.zeff` already exists; `:save` writes only a new file, or one it wrote in this session
+`:save` needs a path, as in `:save scripts/explore.zeff`
+unknown console command `:clear`; :help lists the commands

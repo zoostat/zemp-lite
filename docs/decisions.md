@@ -824,3 +824,17 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Not here.** Sorting by several variables; a condition built by pointing at a cell; the rate of 60 frames a second while scrolling, measured with the others at step 19.
 
 **Reason.** The checklist's step 14b; open decisions #75 and #114; the Zemp Specification, section 2 (the table of what Lite has).
+
+## 21 November 2026: The console line's commands, ⌘↵ into the script, and Panes (release 0.2, step 15)
+
+**Choice** (the Zemp Specification, section 5, the margin editor's paragraph): `:help`, `:vars` and `:save` work as the released `zeff repl` has them, in its words, with the console line's statements (those that ran, which the next statement sees) standing for its session. `:vars` lists the bindings of the script and the console's statements as the engine's checker types them, each name once, lined up, a later `let` last (the worker's `vars`, the engine's own check); only the top level is listed, never a function's parameters or its own `let`s. `:save <path>` writes the console's statements as a script of the project: only a new file, or one it wrote in this window; in a folder that is there; never outside the project (`Z0707`) nor into `.zemp/`. `:help` lists the commands in the form `zeff repl` lists its own; `:help name` gives the engine's page. An unknown command is named in `zeff repl`'s words. Each command takes its place in the console as it is typed and waits its turn behind what runs, so that its answer follows what came before it. A console statement's value is marked *not in the script*.
+
+**`:clear`** is the console line's own: it empties the console and forgets its statements. The specification says it works "as in `zeff repl`", but `zeff repl` of 0.8.0 has no `:clear` and says it does not know it; the correction of that sentence is passed to the Zeff session in the shared notes (it alone edits the specification), with a proposed wording.
+
+**⌘↵ on the console line** copies the statement into the script at the cursor, on the cursor's line where that is blank and on a line of its own after it otherwise, as one edit that undo takes back; the script is shown where another place was, the console line is emptied and ↑ recalls it. A command is never copied. The editor carries out each request once (it is counted, and cleared when made), so a request is never made twice when the editor is drawn again.
+
+**Panes** (R2) keeps the engine's language services as the margin editor has them: the Check findings in its Output panel, hover, completion, the usage of a call and the diagnostics, and now F1 and the Help panel beside the script.
+
+**Held by.** A native test holding `:vars` to what the released `zeff repl` printed for the same statements (`tests/scripts/repl/`); browser tests holding `:vars`, `:save` (four answers, a folder not there and a path outside the project) and the file `:save` writes to `zeff repl`'s, line for line; `:help`, an unknown command and `:clear`; ⌘↵ and undo; F1 in Panes.
+
+**Reason.** The checklist's step 15; the Zemp Specification, section 5; R2 of #176.

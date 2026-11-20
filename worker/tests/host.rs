@@ -874,3 +874,32 @@ fn each_statement_copy_as_zeff_writes_gives_what_the_view_showed() {
         }
     }
 }
+
+#[test]
+fn the_bindings_are_listed_as_zeff_repl_lists_them() {
+    // tests/scripts/repl/vars.stdout is what the released `zeff repl` printed for `:vars`
+    // after the four statements of tests/scripts/repl/console.txt.
+    let typed = read("tests/scripts/repl/console.txt");
+    let statements: String = typed
+        .lines()
+        .filter(|line| !line.starts_with(':'))
+        .map(|line| format!("{line}\n"))
+        .collect();
+    let host = Host::new("demo");
+    let listed: Value = serde_json::from_str(&host.vars("scripts/main.zeff", &statements)).unwrap();
+    assert_eq!(listed["type"], "vars");
+    assert_eq!(listed["printed"], read("tests/scripts/repl/vars.stdout"));
+    assert_eq!(listed["said"], "");
+    // A function's parameters and its own lets are not bindings a later statement sees.
+    let with_function =
+        format!("fn twice(x: Float) -> Float {{\n    let y = x * 2\n    y\n}}\n{statements}");
+    let listed: Value =
+        serde_json::from_str(&host.vars("scripts/main.zeff", &with_function)).unwrap();
+    assert_eq!(listed["printed"], read("tests/scripts/repl/vars.stdout"));
+    let none: Value = serde_json::from_str(&host.vars("scripts/main.zeff", "print(1)\n")).unwrap();
+    assert_eq!(none["printed"], "");
+    assert_eq!(
+        none["said"],
+        "no bindings yet: `let name = ...` makes one\n"
+    );
+}

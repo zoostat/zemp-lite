@@ -284,6 +284,8 @@
               {runto}
               oncursor={(line) => (workspace.cursor = { path, line })}
               reveal={workspace.reveal?.path === path ? workspace.reveal : null}
+              inserting={workspace.inserting?.path === path ? workspace.inserting : null}
+              oninserted={(count) => workspace.inserted(count)}
               diagnostics={workspace.diagnostics[path] ?? []}
               onhover={(line, character) => workspace.hover(path, line, character)}
               oncomplete={(line, character) => workspace.complete(path, line, character)}
