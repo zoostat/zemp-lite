@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig } from "vitest/config";
 
@@ -31,6 +32,12 @@ function hostHeaders(text: string): Record<string, string> {
   return headers;
 }
 
+// The engine's WebAssembly, as the worker's build made it: the Start screen of a first visit
+// fetches it, checks that it is this file (its SHA-256) and says how far the fetching has gone
+// (its size). Before the worker is built there is none, and the Start screen says so.
+const engineFile = new URL("./worker/pkg/web/zemp_worker_bg.wasm", import.meta.url);
+const engineBytes = existsSync(engineFile) ? readFileSync(engineFile) : null;
+
 export default defineConfig({
   plugins: [svelte()],
   server: { headers: isolation },
@@ -41,6 +48,10 @@ export default defineConfig({
   build: { target: "es2022" },
   define: {
     __ZEMP_VERSION__: JSON.stringify(manifest.version),
+    __ENGINE_SHA256__: JSON.stringify(
+      engineBytes === null ? null : createHash("sha256").update(engineBytes).digest("hex"),
+    ),
+    __ENGINE_BYTES__: JSON.stringify(engineBytes?.length ?? null),
   },
   test: {
     include: ["src/**/*.test.ts"],

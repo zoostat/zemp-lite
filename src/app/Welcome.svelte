@@ -6,6 +6,7 @@
   import Logo from "../theme/Logo.svelte";
   import ThemeButton from "../theme/ThemeButton.svelte";
   import Watermark from "../theme/Watermark.svelte";
+  import NarrowLine from "./NarrowLine.svelte";
   import { ENGINE, VERSION, shown } from "./version";
 
   let {
@@ -56,6 +57,7 @@
   }
 </script>
 
+<NarrowLine />
 <div class="welcome">
   <Watermark />
   <div class="corner"><ThemeButton /></div>
@@ -64,7 +66,13 @@
     <h1 class="brand">
       <Logo size={34} />
       Zemp Lite <small>{shown(VERSION)}</small>
+      <span class="alpha" data-testid="alpha">alpha</span>
     </h1>
+    <p class="alpha-line">
+      The first public preview: much is still to come, and what is here will change; every result is
+      the released Zeff {ENGINE} engine's own. Something wrong? In a project, ⌘K →
+      <b>Report a problem</b> builds a report here, which you read and save; nothing is sent.
+    </p>
 
     {#if naming}
       <form class="naming" onsubmit={create}>
@@ -104,7 +112,9 @@
     </button>
     <button class="act" onclick={scratch}>
       <span class="what">Scratch project</span>
-      <span class="about">a worked example to run and change</span>
+      <span class="about"
+        >two worked examples to run and change: the returns to schooling, and instrumental variables</span
+      >
     </button>
 
     <p class="store">
@@ -145,6 +155,23 @@
     min-height: 0;
     overflow: hidden;
     position: relative;
+  }
+  .alpha {
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    font-family: "Atkinson Hyperlegible Next", sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    margin-left: 4px;
+    padding: 1px 10px;
+    vertical-align: middle;
+  }
+  .alpha-line {
+    color: var(--ink-2);
+    font-size: 14px;
+    margin: -6px 0 18px;
+    max-width: 520px;
   }
   .corner {
     position: absolute;

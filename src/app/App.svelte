@@ -6,6 +6,8 @@
   import { MemoryFolder, OpfsFolder } from "../project/folder";
   import { Projects, type Project } from "../project/projects";
   import { browserStorage } from "../theme/theme.svelte";
+  import Start from "./Start.svelte";
+  import { ENGINE_SHA256, VERSION } from "./version";
   import Welcome from "./Welcome.svelte";
   import Workspace from "./Workspace.svelte";
 
@@ -21,6 +23,28 @@
   function named(): string | null {
     const found = /^#\/p\/([^/]+)$/.exec(window.location.hash);
     return found === null ? null : decodeURIComponent(found[1] as string);
+  }
+
+  // A first visit opens on the Start screen, which fetches, checks and starts the engine; the
+  // browser then keeps the engine, and the next visit opens straight on the welcome screen.
+  // What was opened is noted by the engine's digest, so that a new engine is started afresh.
+  const STARTED = "zemp-started";
+  const opened = `${VERSION} ${ENGINE_SHA256 ?? ""}`;
+  function startedBefore(): boolean {
+    try {
+      return localStorage.getItem(STARTED) === opened;
+    } catch {
+      return false;
+    }
+  }
+  let started = $state(startedBefore());
+  function onstarted(): void {
+    try {
+      localStorage.setItem(STARTED, opened);
+    } catch {
+      // A browser that keeps nothing opens on the Start screen each time.
+    }
+    started = true;
   }
 
   let project = $state<Project | null>(null);
@@ -57,7 +81,9 @@
   }
 </script>
 
-{#if !ready || projects === null}
+{#if !started}
+  <Start {engine} onopen={onstarted} />
+{:else if !ready || projects === null}
   <p class="waiting" role="status">Opening…</p>
 {:else if project === null}
   {#key naming}

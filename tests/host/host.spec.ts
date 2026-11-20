@@ -10,14 +10,19 @@ test("the page is isolated, and the engine starts and runs the example", async (
   const from = Date.now();
   await page.goto("/");
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
-  await page.getByRole("button", { name: "Scratch project" }).click();
-  await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
+  // A first visit: the Start screen fetches, checks and starts the engine.
+  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  await expect(open).toBeEnabled({ timeout: 30_000 });
   const started = Date.now() - from;
   test.info().annotations.push({
     type: "first start",
     description: `${started} ms from the first request to the engine ready (the goal: 2,000 ms)`,
   });
   console.log(`first start: ${started} ms (the goal: 2,000 ms)`);
+  await expect(page.getByTestId("step-check")).toHaveClass(/done/);
+  await open.click();
+  await page.getByRole("button", { name: "Scratch project" }).click();
+  await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
 });

@@ -13,6 +13,7 @@
   import RunPanel from "../margin/RunPanel.svelte";
   import LeftPanel from "./LeftPanel.svelte";
   import MainPane from "./MainPane.svelte";
+  import NarrowLine from "./NarrowLine.svelte";
   import Palette from "./Palette.svelte";
   import ReportWindow from "./ReportWindow.svelte";
   import Splitter from "./Splitter.svelte";
@@ -31,7 +32,6 @@
   // svelte-ignore state_referenced_locally
   const workspace = new Workspace(project, engine, language);
 
-  let width = $state(window.innerWidth);
   let body = $state<HTMLElement | null>(null);
 
   let palette = $state(false);
@@ -152,16 +152,11 @@
   }
 </script>
 
-<svelte:window bind:innerWidth={width} onkeydown={keys} />
+<svelte:window onkeydown={keys} />
 
 <TopBar {workspace} onclose={() => void close()} onpalette={() => (palette = true)} />
 
-{#if width < 1200}
-  <p class="narrow" role="note">
-    Zemp Lite is laid out for a window at least 1,200 pixels wide; this one is {width}. No smaller
-    layout exists yet.
-  </p>
-{/if}
+<NarrowLine />
 
 {#if workspace.views.layout === "margin"}
   <MarginPane {workspace} />
@@ -241,13 +236,5 @@
   .rail button:hover {
     background: var(--line);
     color: var(--ink);
-  }
-  .narrow {
-    background: var(--warning-soft);
-    border-bottom: 1px solid var(--line);
-    color: var(--warning);
-    flex: none;
-    margin: 0;
-    padding: 6px 18px;
   }
 </style>

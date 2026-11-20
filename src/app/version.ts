@@ -19,3 +19,9 @@ export function shown(version: string): string {
   const [, major, minor, patch, rest] = parts;
   return patch === "0" ? `${major}.${minor}${rest}` : `${major}.${minor}.${patch}${rest}`;
 }
+
+/** The SHA-256 of the engine's file this build was made with, which a first visit checks. */
+export const ENGINE_SHA256: string | null = __ENGINE_SHA256__;
+
+/** The size of the engine's file, in bytes, against which its fetching is counted. */
+export const ENGINE_BYTES: number | null = __ENGINE_BYTES__;

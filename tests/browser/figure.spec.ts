@@ -114,6 +114,21 @@ test("in Panes a plot is under its statement in the Output panel and in the Plot
   );
   // The list of plots hidden, so that the plot has the tab's width.
   await press(plots.getByRole("button", { name: "‹ Hide" }));
+  await expect(plots.getByRole("list", { name: "Plots of the last run" })).toBeHidden();
+  // The plot is laid out again for the wider place: it is read once its size holds steady
+  // (on a slow machine the first reading can come before the new layout).
+  let last = "";
+  await expect
+    .poll(
+      async () => {
+        const now = JSON.stringify((await figure(page, 17, plots.locator(".stage"))).shown);
+        const steady = now === last;
+        last = now;
+        return steady;
+      },
+      { intervals: [300] },
+    )
+    .toBe(true);
   const inTab = await figure(page, 17, plots.locator(".stage"));
   expect(inTab.shown).toEqual(inTab.place);
   expect(Math.abs(inTab.own![0]! - inTab.shown[0]!)).toBeLessThan(1);

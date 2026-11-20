@@ -8,8 +8,15 @@
 // `press` sends the click to the element itself, and a test that needs a real drag is
 // skipped. On GitHub the mouse must work: there the fallback is refused, so that the tests
 // of record are always made with the real mouse.
-import { readFileSync } from "node:fs";
-import { test as base, expect, type Locator, type Page } from "@playwright/test";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import {
+  test as base,
+  expect,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 
 /** Empty this origin's private file system and its kept settings, from a page with nothing on it. */
 async function empty(page: Page): Promise<void> {
@@ -27,6 +34,21 @@ async function empty(page: Page): Promise<void> {
   await page.unroute("**/empty-the-storage");
 }
 
+/**
+ * What a returning visitor's browser holds: the note that the Start screen of a first visit
+ * was opened for this build's engine (`App.svelte`), by the version and the digest of the
+ * engine's file the build was made from.
+ */
+const engineFile = new URL("../../worker/pkg/web/zemp_worker_bg.wasm", import.meta.url);
+const VERSION = (
+  JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as {
+    version: string;
+  }
+).version;
+const STARTED = `${VERSION} ${
+  existsSync(engineFile) ? createHash("sha256").update(readFileSync(engineFile)).digest("hex") : ""
+}`;
+
 interface Shared {
   /** Whether a click of the mouse lands where it is aimed, in this browser on this machine. */
   mouseWorks: boolean;
@@ -35,12 +57,18 @@ interface Shared {
 interface Each {
   /** Whether the test needs a browser profile that keeps a page's private file system. */
   keptProfile: boolean;
+  /**
+   * Whether the browser is a first visitor's, which opens on the Start screen; every other
+   * test's browser has opened it before, and opens on the welcome screen.
+   */
+  firstVisit: boolean;
   /** Press a button or a control: with the mouse where it works, by its click event where not. */
   press: (target: Locator) => Promise<void>;
 }
 
 export const test = base.extend<Each, Shared>({
   keptProfile: [false, { option: true }],
+  firstVisit: [false, { option: true }],
   // WebKit gives a page no private file system in the short-lived profile a test normally
   // gets, which behaves as a private window does: there the interface keeps projects for the
   // life of the tab, and most tests run so. A test of projects that are kept asks for
@@ -49,12 +77,28 @@ export const test = base.extend<Each, Shared>({
   // machine, shared by all of them and by later runs, so those tests are in one file, run one
   // after another, and the storage is emptied before and after each (`kept.spec.ts`).
   context: async (
-    { browser, browserName, playwright, contextOptions, baseURL, keptProfile },
+    { browser, browserName, playwright, contextOptions, baseURL, keptProfile, firstVisit },
     use,
     testInfo,
   ) => {
+    // A returning visitor: the note is put back before every page of the context, the
+    // storage being emptied between tests of kept profiles.
+    const returning = async (context: BrowserContext) => {
+      if (!firstVisit) {
+        await context.addInitScript((started: string) => {
+          try {
+            if (location.pathname !== "/empty-the-storage") {
+              localStorage.setItem("zemp-started", started);
+            }
+          } catch {
+            // A page that is given no storage opens on the Start screen.
+          }
+        }, STARTED);
+      }
+    };
     if (browserName !== "webkit" || !keptProfile) {
       const context = await browser.newContext({ ...contextOptions, baseURL });
+      await returning(context);
       await use(context);
       await context.close();
       return;
@@ -63,6 +107,7 @@ export const test = base.extend<Each, Shared>({
       testInfo.outputPath("webkit-profile"),
       { ...contextOptions, baseURL },
     );
+    await returning(context);
     const page = context.pages()[0] ?? (await context.newPage());
     await empty(page);
     await use(context);

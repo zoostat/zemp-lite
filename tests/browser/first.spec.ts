@@ -66,3 +66,66 @@ test("each statement of the returns to schooling has its note beside it once it 
     await expect(note(line)).toHaveText(words);
   }
 });
+
+test.describe("a first visit, in a browser that has never opened Zemp Lite", () => {
+  test.use({ firstVisit: true });
+
+  test("opens on the Start screen: the engine fetched, checked and started, then Open Zemp Lite", async ({
+    page,
+    press,
+  }) => {
+    await page.goto("/");
+    const start = page.getByTestId("start");
+    await expect(start.getByRole("heading", { level: 1 })).toContainText("Zemp Lite 0.2");
+    await expect(start.getByTestId("alpha")).toHaveText("alpha");
+    await expect(start).toContainText("the first public preview of Zemp Lite");
+    // The three steps, each done in turn.
+    await expect(start.getByTestId("step-fetch")).toHaveClass(/done/);
+    await expect(start.getByTestId("step-fetch")).toContainText(/100 % of [\d.]+ MB/);
+    await expect(start.getByTestId("step-check")).toHaveClass(/done/);
+    await expect(start.getByTestId("step-start")).toHaveClass(/done/);
+    await expect(start.getByTestId("step-start")).toContainText("Zeff 0.8.0 ready");
+    // The four promises.
+    for (const promise of [
+      "It runs here.",
+      "Your data stays on this computer,",
+      "No account.",
+      "The next visit opens at once:",
+    ]) {
+      await expect(start.getByText(promise)).toBeVisible();
+    }
+    await expect(page.getByRole("link", { name: "What is counted" })).toBeVisible();
+    const open = start.getByRole("button", { name: "Open Zemp Lite" });
+    await expect(open).toBeEnabled();
+    await press(open);
+    await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+    await expect(page.getByTestId("alpha")).toHaveText("alpha");
+    await expect(page.getByText("Report a problem", { exact: true })).toBeVisible();
+
+    // The next visit opens straight on the welcome screen.
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+    await expect(page.getByTestId("start")).toHaveCount(0);
+
+    // And a stranger runs the example and reads its results, untold: Run, then a note.
+    await press(page.getByRole("button", { name: "Scratch project" }));
+    await expect(page.getByRole("status")).toHaveText(READY);
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText("done");
+    await press(page.locator('[data-testid="note"][data-line="10"]'));
+    await expect(page.locator(".cm-zemp-output").first()).toContainText("summary · by female");
+  });
+
+  test("a window narrower than 1,200 pixels says so on the Start and welcome screens", async ({
+    page,
+    press,
+  }) => {
+    await page.setViewportSize({ width: 1000, height: 800 });
+    await page.goto("/");
+    const line = page.getByRole("note");
+    await expect(line).toContainText("at least 1,200 pixels wide; this one is 1000.");
+    await press(page.getByRole("button", { name: "Open Zemp Lite" }));
+    await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+    await expect(line).toContainText("No smaller layout exists yet.");
+  });
+});

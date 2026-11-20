@@ -83,3 +83,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 164 unit tests; 278 browser tests passed and 2 skipped by design; 27 native tests; the nine samples identical.
 
 **Next.** Step 18b `[function]`: the Start screen of a first visit. Step 17b still waits for the owner.
+
+## 21 November 2026, release 0.2, step 18b (the first visit: the Start screen)
+
+**Done.** Step 18b `[function]`: a first visit opens on the Start screen (the engine fetched with its progress, checked against the digest it was built with, started; four promises; **Open Zemp Lite**), the next straight on the welcome screen; **alpha** and what it means, with the place of **Report a problem** and **What is counted**; the narrow-window line on every screen. A test made steady on GitHub's WebKit (a plot measured before its new layout). Steps 16 and 17a are green on GitHub.
+
+**Green.** `npm run routine`: 164 unit tests; 282 browser tests passed and 2 skipped by design; 27 native tests; the after-deployment check on the local build (first start 200 and 336 ms).
+
+**Next.** Step 19 (the close): the pre-release routine, the reader test and the owner's trial, which need the deployed alpha, so step 17b (the owner's account, token, address and visit count) comes first; then "Release 0.2".
