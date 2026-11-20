@@ -1,0 +1,6 @@
+note: `data/none.csv` is checked at run time: the file does not exist yet, so the variables of this frame are checked when the script runs
+ --> scripts/main.zeff:3:16
+  |
+3 | let w = import("data/none.csv")
+  |                ^^^^^^^^^^^^^^^ no schema before the run
+checked scripts/main.zeff: no problems

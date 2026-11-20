@@ -47,6 +47,7 @@
   // The commands of ⌘K: every control of the window, and what has no button of its own.
   const commands = $derived<Command[]>([
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
+    { name: "Check the script", hint: "nothing is run", run: () => void workspace.check() },
     {
       name: workspace.views.layout === "inline" ? "Layout: Panes" : "Layout: Inline",
       hint: `now ${workspace.views.layout === "inline" ? "Inline" : "Panes"}`,

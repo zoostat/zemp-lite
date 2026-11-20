@@ -162,6 +162,53 @@ test("the statements of a text are given without a project and without a run", a
   });
 });
 
+test("the check of a text is what `zeff check` says of it, and runs nothing", async (t) => {
+  const root = path.resolve(here, "..", "..");
+  const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+  const { worker, said, next } = await opened(t, 0);
+  worker.postMessage({
+    type: "check",
+    id: 3,
+    script: "scripts/main.zeff",
+    text: read("tests/scripts/refused.zeff"),
+  });
+  const checked = await next("checked");
+  assert.equal(checked.id, 3);
+  assert.equal(checked.exit_code, 1);
+  assert.equal(checked.said, read("tests/scripts/check/refused.stderr"));
+  assert.equal(checked.summary, "scripts/main.zeff: 1 error, 0 warnings");
+  assert.equal(checked.findings[0].code, "Z0103");
+  assert.deepEqual(checked.ranges, [
+    { line: 1, end: 1, kind: "statement" },
+    { line: 2, end: 2, kind: "statement" },
+  ]);
+  assert.equal(said.filter((message) => message.type === "started").length, 0);
+});
+
+test("what each statement needs, and a run of the statements one needs alone", async (t) => {
+  const { worker, next } = await opened(t, 0);
+  const text = "let a = 2\nlet b = 3\nprint(a * 10)\nprint(b)\n";
+  worker.postMessage({ type: "dependencies", script: "scripts/main.zeff", text });
+  const graph = await next("dependencies");
+  assert.deepEqual(
+    graph.statements.map((one) => [one.line, one.makes, one.needs]),
+    [
+      [1, "a", [1]],
+      [2, "b", [2]],
+      [3, null, [1, 3]],
+      [4, null, [2, 4]],
+    ],
+  );
+  worker.postMessage({ type: "run", script: "scripts/main.zeff", text, only: [1, 3] });
+  const done = await next("done");
+  assert.equal(done.exit_code, 0, done.stderr);
+  assert.equal(done.stdout, "20\n");
+  assert.deepEqual(
+    done.statements.map((one) => one.line),
+    [1, 3],
+  );
+});
+
 test("a file a run wrote is given back, and passed to the interface, not copied", async (t) => {
   const { worker, said, next } = await opened(t, 0);
   const script =

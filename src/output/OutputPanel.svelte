@@ -36,9 +36,14 @@
   {#if refusal !== null && run !== null}
     <!-- Nothing ran: what the check found, and under it the results that are kept. -->
     <p class="refused" role="note" data-testid="refused">
-      The run of {refusal.clock} did not start: the check found {errors} error{errors === 1
-        ? ""
-        : "s"}. The results under {errors === 1 ? "it" : "them"} are those of the run of {run.clock}.
+      {#if refusal.checkOnly}
+        The check of {refusal.clock} found {errors} error{errors === 1 ? "" : "s"}; nothing was run.
+      {:else}
+        The run of {refusal.clock} did not start: the check found {errors} error{errors === 1
+          ? ""
+          : "s"}.
+      {/if}
+      The results under {errors === 1 ? "it" : "them"} are those of the run of {run.clock}.
     </p>
     {#each found as block, at (at)}
       <OutputBlock {block} edited={refusalEdited} {workspace} />

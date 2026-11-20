@@ -11,7 +11,11 @@
 //   { type: "file", path, bytes }       a file of the project, as a Uint8Array
 //   { type: "run", script, text, width } run the text of a script of the project, its tables
 //                                       printed at `width` characters (0 or none: 118)
+//                                       with `only`, a list of lines, the statements that begin
+//                                       on them run alone, the others blanked
 //   { type: "statements", script, text } the statements of a text, without running it
+//   { type: "check", script, text }     the engine's check of a text, as `zeff check` makes it
+//   { type: "dependencies", script, text }  what each statement of a text needs
 //   { type: "frame", name }             a frame of the last run, by the name of its binding
 //   { type: "read", path }              a file of the project: one put in, or one a run wrote
 // Messages out:
@@ -24,6 +28,9 @@
 //                                       statement with what it printed, said and made, and
 //                                       the frames its bindings hold: [{ name, rows, variables }]
 //   { type: "statements", statements }  the answer to `statements`: [{ line, end, kind }]
+//   { type: "checked", exit_code, said, found, summary, findings }   the answer to `check`
+//   { type: "dependencies", statements } the answer to `dependencies`:
+//                                       [{ line, makes, reads, seeds, needs }]
 //   { type: "frame", name, bytes }      the frame as an Arrow stream, in a Uint8Array whose
 //                                       buffer is passed to the interface and not copied
 //   { type: "read", path, bytes }       the file, passed in the same way; `bytes` is null
@@ -63,7 +70,7 @@ export function serve(engine, port, deviceBytes) {
       answer(JSON.parse(engine.statements(String(said.script), String(said.text))));
       return;
     }
-    if (!["file", "run", "frame", "read"].includes(said.type)) {
+    if (!["file", "run", "frame", "read", "check", "dependencies"].includes(said.type)) {
       refuse(`no such message: ${String(said.type)}`);
       return;
     }
@@ -73,6 +80,8 @@ export function serve(engine, port, deviceBytes) {
         run: "a run was asked for",
         frame: "a frame was asked for",
         read: "a file was asked for",
+        check: "a check was asked for",
+        dependencies: "the dependencies were asked for",
       }[said.type];
       refuse(`${what} before a project was opened`);
       return;
@@ -90,10 +99,17 @@ export function serve(engine, port, deviceBytes) {
           const ranges = JSON.parse(engine.statements(said.script, said.text));
           port.postMessage({ type: "ranges", statements: ranges.statements });
           const width = Number.isInteger(said.width) && said.width > 0 ? said.width : 0;
-          answer(JSON.parse(project.run(said.script, said.text, deviceBytes ?? 0, width)));
+          const only = Array.isArray(said.only) ? new Uint32Array(said.only) : undefined;
+          answer(JSON.parse(project.run(said.script, said.text, deviceBytes ?? 0, width, only)));
         }
         break;
       }
+      case "check":
+        answer(JSON.parse(project.check(String(said.script), String(said.text))));
+        break;
+      case "dependencies":
+        answer(JSON.parse(project.dependencies(String(said.script), String(said.text))));
+        break;
       case "frame": {
         const bytes = project.frame(said.name);
         if (bytes === undefined) {

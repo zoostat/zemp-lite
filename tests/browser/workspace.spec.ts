@@ -40,7 +40,7 @@ test("the top bar carries its controls in order, Run the one filled, and what is
     "Run",
   ]);
   await expect(bar.getByRole("switch", { name: "Dark" })).toBeVisible();
-  await expect(bar.getByRole("button", { name: "Check" })).toBeDisabled();
+  await expect(bar.getByRole("button", { name: "Check" })).toBeEnabled();
   await expect(bar.getByRole("button", { name: "Panes" })).toHaveAttribute("aria-pressed", "true");
   // Run is filled with the logo's violet; the others are outlined words.
   const run = bar.getByRole("button", { name: "Run" });

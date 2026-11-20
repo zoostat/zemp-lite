@@ -73,6 +73,8 @@ export class Workspace {
    * the run before it were kept on the page: nothing ran, so those are still the latest.
    */
   refusal = $state<Run | null>(null);
+  /** The last Check: the script and its text as checked, and the engine's last line of it. */
+  checked = $state<{ script: string; text: string; summary: string } | null>(null);
   #beforeRun: (() => void)[] = [];
   /** The frames the last run left. */
   frames = $state<FrameInfo[]>([]);
@@ -357,6 +359,68 @@ export class Workspace {
     }
   }
 
+  /**
+   * The engine's check of the script, as the editor holds it, as `zeff check` makes it: what
+   * it finds stands under the lines it names, as a refused run's findings do, and the results
+   * on the page stay; nothing runs. The status line gives the engine's last line of it.
+   */
+  async check(): Promise<void> {
+    if (this.running) {
+      return;
+    }
+    this.running = true;
+    const work = this.#check(this.#busy);
+    this.#busy = work;
+    await work;
+  }
+
+  async #check(before: Promise<void>): Promise<void> {
+    await before;
+    const script = this.scriptPath;
+    await this.#load(script);
+    const text = this.buffers[script]?.text ?? "";
+    this.running = true;
+    this.status = "checking";
+    try {
+      await this.#saving;
+      const checked = await this.session.check(script, text);
+      // The findings, as a run that the check refused: under the lines they name.
+      const run = begin(script, text, performance.now(), clockOf(Date.now()));
+      run.checkOnly = true;
+      hear(run, { type: "ranges", statements: checked.ranges }, performance.now());
+      hear(run, { type: "output", stdout: "", stderr: checked.found }, performance.now());
+      end(
+        run,
+        {
+          exitCode: checked.exitCode,
+          stdout: "",
+          stderr: checked.found,
+          statements: [],
+          frames: [],
+          stopped: false,
+        },
+        performance.now(),
+      );
+      if (refused(run)) {
+        const earlier = this.lastRun;
+        if (earlier === null || earlier.script !== script) {
+          this.lastRun = run;
+          this.refusal = null;
+        } else {
+          this.refusal = run;
+        }
+      } else if (this.refusal?.script === script) {
+        this.refusal = null;
+      }
+      this.checked = { script, text, summary: checked.summary };
+      this.status = "done";
+    } catch (error) {
+      this.status = (error as Error).message;
+    } finally {
+      this.running = false;
+    }
+  }
+
   /** The statements of the last run that ended in a plot, once the run is over. */
   get plots(): PlotStatement[] {
     const run = this.lastRun;
@@ -537,10 +601,16 @@ export class Workspace {
 
   /** How the output stands to the script: not run yet, running, in sync, or edited since. */
   get sync(): string {
-    if (this.running) return "running";
-    if (this.lastRun === null) return "not run yet";
+    if (this.running) return this.status === "checking" ? "checking" : "running";
     const errors = this.refusedErrors;
     if (errors > 0) return `not run · ${errors} error${errors === 1 ? "" : "s"} found by the check`;
+    // What the last Check said, while the script is as it was checked.
+    const checked = this.checked;
+    if (checked !== null && checked.script === this.scriptPath) {
+      const buffer = this.buffers[checked.script];
+      if (buffer !== undefined && buffer.text === checked.text) return checked.summary;
+    }
+    if (this.lastRun === null) return "not run yet";
     return this.edited ? "edited · not run" : "in sync";
   }
 

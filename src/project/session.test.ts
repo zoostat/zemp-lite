@@ -30,9 +30,26 @@ function engine(): Runs & { asked: string[]; project: string | null } {
       asked.push(`put ${path} (${bytes.byteLength})`);
       return Promise.resolve();
     },
-    run(script, text) {
-      asked.push(`run ${script}: ${text.trim()}`);
+    run(script, text, _listener, _width, only) {
+      asked.push(
+        `run ${script}: ${text.trim()}${only === undefined ? "" : ` (only ${only.join(", ")})`}`,
+      );
       return Promise.resolve(done);
+    },
+    check(script) {
+      asked.push(`check ${script}`);
+      return Promise.resolve({
+        exitCode: 0,
+        said: `checked ${script}: no problems\n`,
+        found: "",
+        summary: `checked ${script}: no problems`,
+        findings: [],
+        ranges: [],
+      });
+    },
+    dependencies(script) {
+      asked.push(`dependencies ${script}`);
+      return Promise.resolve([]);
     },
   };
 }
@@ -84,5 +101,20 @@ describe("a session", () => {
     runs.asked.length = 0;
     await made.run("scripts/main.zeff", "1\n");
     expect(runs.asked.slice(0, 2)).toEqual(["open demo", "put scripts/main.zeff (8)"]);
+  });
+
+  it("brings the engine in step with the project before a check, a graph or a run of chosen statements", async () => {
+    const { runs, session: made } = await session();
+    await made.check("scripts/main.zeff", "1\n");
+    expect(runs.asked.filter((one) => one.startsWith("open"))).toHaveLength(1);
+    expect(runs.asked.at(-1)).toBe("check scripts/main.zeff");
+    await made.dependencies("scripts/main.zeff", "1\n");
+    await made.run("scripts/main.zeff", "1\n2\n", undefined, 0, [2]);
+    // The project was given to the engine once, before the first of the three.
+    expect(runs.asked.filter((one) => one.startsWith("open"))).toHaveLength(1);
+    expect(runs.asked.slice(-2)).toEqual([
+      "dependencies scripts/main.zeff",
+      "run scripts/main.zeff: 1\n2 (only 2)",
+    ]);
   });
 });

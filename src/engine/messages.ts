@@ -36,6 +36,35 @@ export interface StatementInfo extends Ranged {
   memory: { own: number; kept: number } | null;
 }
 
+/** The engine's check of a text, as `zeff check` makes it. */
+export interface Checked {
+  /** 1 where it found an error, 0 otherwise. */
+  exitCode: number;
+  /** All it says, as `zeff check` writes it. */
+  said: string;
+  /** What it found, as `zeff check` writes it, without its last line. */
+  found: string;
+  /** Its last line: "checked scripts/main.zeff: no problems", "scripts/main.zeff: 1 error, 0 warnings". */
+  summary: string;
+  /** Each finding as the engine's own record of it. */
+  findings: Record<string, unknown>[];
+  /** The statements of the text, as the engine reads them. */
+  ranges: Ranged[];
+}
+
+/**
+ * What one statement needs, from the engine's dependency graph: the line it begins on, the
+ * name it makes, the lines of the statements it reads from, whether it sets the seed, and the
+ * lines of every statement it needs to run as it ran, itself included.
+ */
+export interface Needs {
+  line: number;
+  makes: string | null;
+  reads: number[];
+  seeds: boolean;
+  needs: number[];
+}
+
 /** What the worker tells while a run goes. */
 export type RunEvent =
   /** First, before any statement: the statements of the text, as the engine reads them. */
@@ -53,8 +82,13 @@ export type RunEvent =
 export type Request =
   | { type: "open"; name: string; cancel: SharedArrayBuffer | null }
   | { type: "file"; path: string; bytes: Uint8Array }
-  /** `width`: the characters tables are printed at; 0 or none for the engine's own, 118. */
-  | { type: "run"; script: string; text: string; width?: number }
+  /**
+   * `width`: the characters tables are printed at; 0 or none for the engine's own, 118.
+   * `only`: the lines of the statements to run alone, the others blanked.
+   */
+  | { type: "run"; script: string; text: string; width?: number; only?: number[] }
+  | { type: "check"; script: string; text: string }
+  | { type: "dependencies"; script: string; text: string }
   /** The statements of a text as the engine reads them, without running it. */
   | { type: "statements"; script: string; text: string }
   | { type: "frame"; name: string }
@@ -73,6 +107,16 @@ export type Reply =
       frames: FrameInfo[];
     }
   | { type: "statements"; statements: Ranged[] }
+  | {
+      type: "checked";
+      exit_code: number;
+      said: string;
+      found: string;
+      summary: string;
+      findings: Record<string, unknown>[];
+      ranges: Ranged[];
+    }
+  | { type: "dependencies"; statements: Needs[] }
   | { type: "frame"; name: string; bytes: Uint8Array }
   | { type: "read"; path: string; bytes: Uint8Array | null }
   | { type: "error"; message: string };

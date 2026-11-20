@@ -293,3 +293,66 @@ describe("what the engine tells of statements", () => {
     expect(await asked).toEqual(told);
   });
 });
+
+describe("Check and the dependencies", () => {
+  it("asks for the check of a text and gives the engine's answer", async () => {
+    const { engine: made, worker } = await opened();
+    const asked = made.check("scripts/main.zeff", "nosuch(1)\n");
+    await settle();
+    expect(worker.last).toMatchObject({ type: "check", script: "scripts/main.zeff" });
+    worker.answer({
+      type: "checked",
+      exit_code: 1,
+      said: "error[Z0103]: …\n\nscripts/main.zeff: 1 error, 0 warnings\n",
+      found: "error[Z0103]: …\n",
+      summary: "scripts/main.zeff: 1 error, 0 warnings",
+      findings: [{ code: "Z0103" }],
+      ranges: [{ line: 1, end: 1, kind: "statement" }],
+    });
+    expect(await asked).toEqual({
+      exitCode: 1,
+      said: "error[Z0103]: …\n\nscripts/main.zeff: 1 error, 0 warnings\n",
+      found: "error[Z0103]: …\n",
+      summary: "scripts/main.zeff: 1 error, 0 warnings",
+      findings: [{ code: "Z0103" }],
+      ranges: [{ line: 1, end: 1, kind: "statement" }],
+    });
+  });
+
+  it("asks for the dependencies, and for a run of chosen statements", async () => {
+    const { engine: made, worker } = await opened();
+    const asked = made.dependencies("scripts/main.zeff", "let a = 1\na\n");
+    await settle();
+    const told = [
+      { line: 1, makes: "a", reads: [], seeds: false, needs: [1] },
+      { line: 2, makes: null, reads: [1], seeds: false, needs: [1, 2] },
+    ];
+    worker.answer({ type: "dependencies", statements: told });
+    expect(await asked).toEqual(told);
+    const run = made.run("scripts/main.zeff", "let a = 1\na\n", undefined, 0, [1, 2]);
+    await settle();
+    expect(worker.last).toMatchObject({ type: "run", only: [1, 2] });
+    worker.answer({
+      type: "done",
+      exit_code: 0,
+      stdout: "",
+      stderr: "",
+      statements: [],
+      frames: [],
+    });
+    await run;
+    // A whole run sends no `only`.
+    const whole = made.run("scripts/main.zeff", "1\n");
+    await settle();
+    expect(worker.last).not.toHaveProperty("only");
+    worker.answer({
+      type: "done",
+      exit_code: 0,
+      stdout: "",
+      stderr: "",
+      statements: [],
+      frames: [],
+    });
+    await whole;
+  });
+});

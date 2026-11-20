@@ -5,7 +5,7 @@
 
 use serde_json::Value;
 use std::cell::RefCell;
-use zemp_worker::{Host, engine_version, statements, statements_json};
+use zemp_worker::{Asked, Host, engine_version, only, statements, statements_json};
 
 fn never() -> bool {
     false
@@ -14,9 +14,15 @@ fn never() -> bool {
 /// A run with what it told, line by line, and its outcome.
 fn run(host: &Host, text: &str) -> (Vec<String>, String) {
     let told: RefCell<Vec<String>> = RefCell::default();
-    let done = host.run("scripts/main.zeff", text, None, 0, never, &|json| {
-        told.borrow_mut().push(json.to_string());
-    });
+    let done = host.run(
+        "scripts/main.zeff",
+        text,
+        &Asked::default(),
+        never,
+        &|json| {
+            told.borrow_mut().push(json.to_string());
+        },
+    );
     (told.into_inner(), done)
 }
 
@@ -185,7 +191,11 @@ fn field(line: &str, key: &str) -> String {
 
 /// A run at a width of `width` characters, its outcome read as JSON.
 fn run_at(host: &Host, text: &str, width: usize) -> Value {
-    let done = host.run("scripts/main.zeff", text, None, width, never, &|_| {});
+    let asked = Asked {
+        width,
+        ..Asked::default()
+    };
+    let done = host.run("scripts/main.zeff", text, &asked, never, &|_| {});
     serde_json::from_str(&done).unwrap()
 }
 
@@ -326,4 +336,152 @@ fn a_refused_script_runs_nothing_and_lists_its_statements() {
         done["stderr"].as_str().unwrap(),
         read("tests/scripts/refused.stderr")
     );
+}
+
+#[test]
+fn the_check_finds_what_zeff_check_finds_and_says_it_the_same_way() {
+    for name in ["plain", "warning", "error", "refused"] {
+        let host = Host::new("demo");
+        let checked: Value = serde_json::from_str(&host.check(
+            "scripts/main.zeff",
+            &read(&format!("tests/scripts/{name}.zeff")),
+        ))
+        .unwrap();
+        assert_eq!(checked["type"], "checked");
+        let said = checked["said"].as_str().unwrap();
+        assert_eq!(
+            said,
+            read(&format!("tests/scripts/check/{name}.stderr")),
+            "{name}"
+        );
+        // Its two parts: what it found, then its last line.
+        let found = checked["found"].as_str().unwrap();
+        let summary = checked["summary"].as_str().unwrap();
+        assert!(said.starts_with(found), "{name}");
+        assert!(said.ends_with(&format!("{summary}\n")), "{name}");
+        let refused = name == "refused";
+        assert_eq!(checked["exit_code"], i32::from(refused), "{name}");
+        // A record for every message it wrote, an error among them only where it refused.
+        let records = checked["findings"].as_array().unwrap();
+        let messages = said
+            .lines()
+            .filter(|line| {
+                ["error", "warning", "note"]
+                    .iter()
+                    .any(|kind| line.starts_with(kind))
+            })
+            .count();
+        assert_eq!(records.len(), messages, "{name}");
+        assert_eq!(
+            records.iter().any(|one| one["severity"] == "error"),
+            refused,
+            "{name}"
+        );
+    }
+    let host = Host::new("demo");
+    let checked: Value =
+        serde_json::from_str(&host.check("scripts/main.zeff", &read("tests/scripts/refused.zeff")))
+            .unwrap();
+    let finding = &checked["findings"][0];
+    assert_eq!(finding["code"], "Z0103");
+    assert_eq!(finding["severity"], "error");
+}
+
+/// What each statement of `text` needs, by the line it begins on, as lines.
+fn needs(text: &str) -> Vec<(u64, Vec<u64>)> {
+    let host = Host::new("demo");
+    let graph: Value = serde_json::from_str(&host.dependencies("scripts/main.zeff", text)).unwrap();
+    assert_eq!(graph["type"], "dependencies");
+    graph["statements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|one| {
+            (
+                one["line"].as_u64().unwrap(),
+                one["needs"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|line| line.as_u64().unwrap())
+                    .collect(),
+            )
+        })
+        .collect()
+}
+
+#[test]
+fn what_a_statement_needs_is_the_engines_dependency_graph() {
+    // Each statement needs itself and what it reads, and theirs; nothing else.
+    assert_eq!(
+        needs("let a = 1\nlet b = 2\nlet c = a + 1\nprint(c)\nprint(b)\n"),
+        [
+            (1, vec![1]),
+            (2, vec![2]),
+            (3, vec![1, 3]),
+            (4, vec![1, 3, 4]),
+            (5, vec![2, 5])
+        ]
+    );
+    // A later `let` of the same name shadows the earlier: a statement reads the one above it.
+    assert_eq!(
+        needs("let a = 1\nprint(a)\nlet a = 2\nprint(a)\n"),
+        [(1, vec![1]), (2, vec![1, 2]), (3, vec![3]), (4, vec![3, 4])]
+    );
+    // A seed set earlier is kept for every statement after it, since the graph cannot tell
+    // which statements draw.
+    assert_eq!(
+        needs("let n = 3\nseed(7)\nlet x = draw(normal(), n)\nprint(1)\n"),
+        [
+            (1, vec![1]),
+            (2, vec![2]),
+            (3, vec![1, 2, 3]),
+            (4, vec![2, 4])
+        ]
+    );
+    // A chain over several lines is one statement, known by its first line.
+    assert_eq!(
+        needs("let w = dataset(wages)\n    .where(year == 2010)\nw.summary([wage])\n"),
+        [(1, vec![1]), (3, vec![1, 3])]
+    );
+}
+
+#[test]
+fn a_run_of_chosen_statements_runs_them_alone_and_prints_what_the_whole_run_prints_for_them() {
+    let text = read("examples/scratch/scripts/main.zeff");
+    let whole = run_at(&Host::new("scratch"), &text, 0);
+    // The summary at line 8 needs the frames of lines 4 and 5.
+    let lines: [u32; 3] = [4, 5, 8];
+    let host = Host::new("scratch");
+    let asked = Asked {
+        only: Some(&lines),
+        ..Asked::default()
+    };
+    let done: Value =
+        serde_json::from_str(&host.run("scripts/main.zeff", &text, &asked, never, &|_| {}))
+            .unwrap();
+    assert_eq!(done["exit_code"], 0, "{}", done["stderr"]);
+    let ran: Vec<u64> = done["statements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|one| one["line"].as_u64().unwrap())
+        .collect();
+    assert_eq!(ran, lines.map(u64::from));
+    for one in done["statements"].as_array().unwrap() {
+        let same = whole["statements"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|other| other["line"] == one["line"])
+            .unwrap();
+        assert_eq!(one["stdout"], same["stdout"], "line {}", one["line"]);
+        assert_eq!(one["stderr"], same["stderr"], "line {}", one["line"]);
+    }
+    // The text run keeps every line where it was, with the others blanked.
+    let blanked = only("scripts/main.zeff", &text, &lines);
+    assert_eq!(blanked.lines().count(), text.lines().count());
+    assert!(blanked.lines().nth(11).unwrap().trim().is_empty());
+    assert_eq!(blanked.lines().nth(7), text.lines().nth(7));
+    assert_eq!(blanked.lines().next(), text.lines().next());
 }

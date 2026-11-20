@@ -19,11 +19,13 @@
 use std::cell::RefCell;
 use std::path::{Component, Path, PathBuf};
 use zeff_diagnostics::json_string;
+use zeff_diagnostics::{Diagnostic, Severity, Source, Sources};
 use zeff_engine::control::{Control, Event};
+use zeff_engine::dependencies::graph;
 use zeff_engine::fs::{FileSystem, MemoryFileSystem};
 use zeff_engine::interpreter::{MemoryNote, StatementOutput};
 use zeff_engine::language::outline::statements_in;
-use zeff_engine::language::{Position, Range, position};
+use zeff_engine::language::{Position, Range, offset, position};
 use zeff_engine::project::Project;
 use zeff_engine::run::{Frames, RunOptions, check_in_project, run_script_keeping};
 use zeff_ir::{Program, Statement, Ty};
@@ -98,8 +100,8 @@ pub fn statements(script: &str, text: &str) -> Vec<Ranged> {
         .collect()
 }
 
-/// The statements of a text as a line of JSON of type `statements`.
-pub fn statements_json(script: &str, text: &str) -> String {
+/// The statements of a text as a JSON array of `{line, end, kind}`.
+fn ranges_json(script: &str, text: &str) -> String {
     let listed: Vec<String> = statements(script, text)
         .iter()
         .map(|one| {
@@ -109,10 +111,48 @@ pub fn statements_json(script: &str, text: &str) -> String {
             )
         })
         .collect();
+    format!("[{}]", listed.join(", "))
+}
+
+/// The statements of a text as a line of JSON of type `statements`.
+pub fn statements_json(script: &str, text: &str) -> String {
     format!(
-        "{{\"type\": \"statements\", \"statements\": [{}]}}",
-        listed.join(", ")
+        "{{\"type\": \"statements\", \"statements\": {}}}",
+        ranges_json(script, text)
     )
+}
+
+/// The text with every statement that does not begin on one of `lines` blanked: each of its
+/// characters but the line breaks becomes a space, so that every line and column of what
+/// stays is where it was, and the engine names the script's own lines. A function, a `use`,
+/// a comment and a blank line stay as they are.
+pub fn only(script: &str, text: &str, lines: &[u32]) -> String {
+    let mut bytes = text.as_bytes().to_vec();
+    let whole = Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: position(text, text.len()),
+    };
+    for statement in statements_in(script, text, whole) {
+        if statement.kind.name() != "statement" || lines.contains(&(statement.range.start.line + 1))
+        {
+            continue;
+        }
+        let (from, to) = (
+            offset(text, statement.range.start),
+            offset(text, statement.range.end),
+        );
+        for byte in &mut bytes[from..to] {
+            // A byte of a character of several bytes becomes a space each, which keeps the
+            // text valid and every later byte where it was.
+            if *byte != b'\n' && *byte != b'\r' {
+                *byte = b' ';
+            }
+        }
+    }
+    String::from_utf8(bytes).unwrap_or_else(|_| text.to_string())
 }
 
 /// What the checked program says a top-level statement makes: the name it binds, if any, and
@@ -136,6 +176,16 @@ fn made(program: &Program, text: &str) -> Vec<(u32, Option<String>, Option<Strin
             _ => None,
         })
         .collect()
+}
+
+/// How a run is asked for: the memory the device reports, where it reports any; the width
+/// tables are printed at, 0 for the engine's own; and the lines of the statements to run
+/// alone, where only some are to run.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Asked<'a> {
+    pub device_bytes: Option<u64>,
+    pub width: usize,
+    pub only: Option<&'a [u32]>,
 }
 
 /// A project in memory, and the runs made in it.
@@ -197,18 +247,33 @@ impl Host {
 
     /// Run the text of `script` (its path in the project). `tell` is given each event as a
     /// line of JSON while the run goes; `cancelled` is asked before each step. The budget is
-    /// the project's `memory`, or the browser's default for a device of `device_bytes`. Tables
-    /// and frames are printed at `width` characters, or at the engine's 118 where it is 0. What
-    /// comes back is the outcome, as a line of JSON of type `done`.
+    /// the project's `memory`, or the browser's default for a device of `asked.device_bytes`.
+    /// Tables and frames are printed at `asked.width` characters, or at the engine's 118
+    /// where it is 0. With `asked.only`, only the statements that begin on those lines run, in
+    /// the order of the script, and the outcome lists them alone. What comes back is the outcome, as a line of
+    /// JSON of type `done`.
     pub fn run(
         &self,
         script: &str,
         text: &str,
-        device_bytes: Option<u64>,
-        width: usize,
+        asked: &Asked<'_>,
         cancelled: fn() -> bool,
         tell: &dyn Fn(&str),
     ) -> String {
+        let Asked {
+            device_bytes,
+            width,
+            only: chosen,
+        } = *asked;
+        // A run of chosen statements runs the text with the others blanked (see [`only`]).
+        let blanked;
+        let text = match chosen {
+            Some(lines) => {
+                blanked = only(script, text, lines);
+                blanked.as_str()
+            }
+            None => text,
+        };
         let project = match Project::open(&self.fs, Path::new(ROOT)) {
             Ok(project) => project,
             Err(_) => {
@@ -256,6 +321,132 @@ impl Host {
             &outcome.output.stdout,
             &outcome.output.stderr,
             &each,
+        )
+    }
+
+    /// The engine's check of the text of `script`, as `zeff check` makes it, as a line of
+    /// JSON of type `checked`: its exit code; all it says, as `zeff check` writes it (`said`),
+    /// and that in two parts, what it found (`found`) and its last line (`summary`); and each
+    /// finding as the engine's JSON record (`findings`).
+    pub fn check(&self, script: &str, text: &str) -> String {
+        let project = match Project::open(&self.fs, Path::new(ROOT)) {
+            Ok(project) => project,
+            Err(_) => {
+                return format!(
+                    "{{\"type\": \"checked\", \"exit_code\": 1, \"said\": {0}, \"found\": {0}, \"summary\": \"\", \"findings\": [], \"ranges\": []}}",
+                    json_string("error[Z0709]: the project's `zeff.toml` could not be read\n")
+                );
+            }
+        };
+        let registry = match zeff_engine::registry::registry() {
+            Ok(registry) => registry,
+            Err(_) => {
+                return "{\"type\": \"checked\", \"exit_code\": 2, \"said\": \"\", \"found\": \"\", \"summary\": \"\", \"findings\": [], \"ranges\": []}".to_string();
+            }
+        };
+        let in_project = check_in_project(&self.fs, &project, script, text, registry);
+        let mut sources = Sources::new();
+        sources.add(Source::new(script.to_string(), text.to_string()));
+        for module in in_project.module_sources {
+            sources.add(module);
+        }
+        let diagnostics: Vec<Diagnostic> = in_project.checked.diagnostics.into_vec();
+        let count = |severity: Severity| {
+            diagnostics
+                .iter()
+                .filter(|one| one.severity == severity)
+                .count()
+        };
+        let (errors, warnings) = (count(Severity::Error), count(Severity::Warning));
+        let found: Vec<String> = diagnostics.iter().map(|one| one.render(&sources)).collect();
+        let plural = |n: usize, word: &str| {
+            if n == 1 {
+                format!("{n} {word}")
+            } else {
+                format!("{n} {word}s")
+            }
+        };
+        let summary = if errors == 0 && warnings == 0 {
+            format!("checked {script}: no problems")
+        } else {
+            format!(
+                "{script}: {}, {}",
+                plural(errors, "error"),
+                plural(warnings, "warning")
+            )
+        };
+        let records: Vec<String> = diagnostics
+            .iter()
+            .map(|one| one.to_json(&sources))
+            .collect();
+        let found = found.join("\n");
+        // `zeff check` sets its last line apart by a blank line where it found an error or a
+        // warning, and writes it straight after a note.
+        let said = if found.is_empty() {
+            format!("{summary}\n")
+        } else if errors + warnings > 0 {
+            format!("{found}\n{summary}\n")
+        } else {
+            format!("{found}{summary}\n")
+        };
+        format!(
+            "{{\"type\": \"checked\", \"exit_code\": {}, \"said\": {}, \"found\": {}, \"summary\": {}, \"findings\": [{}], \"ranges\": {}}}",
+            i32::from(errors > 0),
+            json_string(&said),
+            json_string(&found),
+            json_string(&summary),
+            records.join(", "),
+            ranges_json(script, text)
+        )
+    }
+
+    /// What each statement of the text needs, from the engine's dependency graph
+    /// (`zeff_engine::dependencies`), as a line of JSON of type `dependencies`: for each
+    /// top-level statement, the line it begins on, the name it makes, the lines of the
+    /// statements it reads from, whether it sets the seed, and the lines of every statement it
+    /// needs to run as it ran, itself included. The graph does not see a statement that reads
+    /// a file another one writes.
+    pub fn dependencies(&self, script: &str, text: &str) -> String {
+        let empty = "{\"type\": \"dependencies\", \"statements\": []}".to_string();
+        let Ok(project) = Project::open(&self.fs, Path::new(ROOT)) else {
+            return empty;
+        };
+        let Ok(registry) = zeff_engine::registry::registry() else {
+            return empty;
+        };
+        let program = check_in_project(&self.fs, &project, script, text, registry)
+            .checked
+            .program;
+        let graph = graph(&program, script);
+        let line = |index: usize| position(text, graph.statements[index].span.start).line + 1;
+        let lines = |indices: &[usize]| {
+            indices
+                .iter()
+                .map(|index| line(*index).to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+        let listed: Vec<String> = graph
+            .statements
+            .iter()
+            .enumerate()
+            .map(|(index, node)| {
+                let makes = node
+                    .defines
+                    .and_then(|binding| program.bindings.get(binding))
+                    .map_or("null".to_string(), |binding| json_string(&binding.name));
+                format!(
+                    "{{\"line\": {}, \"makes\": {makes}, \"reads\": [{}], \"seeds\": {}, \"needs\": [{}]}}",
+                    line(index),
+                    lines(&node.reads),
+                    node.seeds,
+                    lines(&graph.needed_by(index).statements)
+                )
+            })
+            .collect();
+        format!(
+            "{{\"type\": \"dependencies\", \"statements\": [{}]}}",
+            listed.join(", ")
         )
     }
 

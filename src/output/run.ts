@@ -103,6 +103,8 @@ export interface Run {
   /** The statements of the text as the engine reads them, once it has said: where each ends. */
   ranges: Ranged[] | null;
   statements: Statement[];
+  /** Whether this is a Check alone, which runs nothing, and not a run. */
+  checkOnly: boolean;
   /** What the engine said before the first statement started: what its check found. */
   beforeRaw: string;
   /** What was printed or said after the last statement finished. */
@@ -128,6 +130,7 @@ export function begin(script: string, text: string, now: number, clock: string):
     text,
     of: null,
     ranges: null,
+    checkOnly: false,
     statements: [],
     beforeRaw: "",
     afterPrinted: "",

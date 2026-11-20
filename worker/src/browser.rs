@@ -50,14 +50,35 @@ impl Project {
     }
 
     /// Run a script. `device_bytes` is the memory the device reports, or 0 where it reports
-    /// none; `width` the width tables are printed at, or 0 for the engine's own. The events
-    /// go to `zeffHost.event`; the outcome comes back as a line of JSON.
-    pub fn run(&self, script: &str, text: &str, device_bytes: f64, width: u32) -> String {
-        let device = (device_bytes > 0.0).then_some(device_bytes as u64);
+    /// none; `width` the width tables are printed at, or 0 for the engine's own; `only`, where
+    /// given, the lines of the statements to run alone. The events go to `zeffHost.event`;
+    /// the outcome comes back as a line of JSON.
+    pub fn run(
+        &self,
+        script: &str,
+        text: &str,
+        device_bytes: f64,
+        width: u32,
+        only: Option<Vec<u32>>,
+    ) -> String {
+        let asked = crate::Asked {
+            device_bytes: (device_bytes > 0.0).then_some(device_bytes as u64),
+            width: width as usize,
+            only: only.as_deref(),
+        };
         self.host
-            .run(script, text, device, width as usize, cancelled, &|json| {
-                host_event(json)
-            })
+            .run(script, text, &asked, cancelled, &|json| host_event(json))
+    }
+
+    /// The engine's check of a text, as `zeff check` makes it, as a line of JSON.
+    pub fn check(&self, script: &str, text: &str) -> String {
+        self.host.check(script, text)
+    }
+
+    /// What each statement of a text needs, from the engine's dependency graph, as a line of
+    /// JSON.
+    pub fn dependencies(&self, script: &str, text: &str) -> String {
+        self.host.dependencies(script, text)
     }
 
     /// A frame of the last run as the bytes of an Arrow stream, or nothing where no binding

@@ -81,8 +81,10 @@
     />
     <span class="sync" data-testid="sync"
       >{workspace.sync}{workspace.lastRun !== null &&
+      !workspace.lastRun.checkOnly &&
       !workspace.running &&
-      workspace.refusedErrors === 0
+      workspace.refusedErrors === 0 &&
+      workspace.sync !== workspace.checked?.summary
         ? ` · ${workspace.warnings} warning${workspace.warnings === 1 ? "" : "s"}`
         : ""}</span
     >

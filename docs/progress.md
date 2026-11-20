@@ -47,3 +47,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 12 native tests and 10 message tests of the worker; the nine samples identical; 2,789.3 kB, cold start 59.5 ms; 117 unit tests; 163 browser tests passed and 1 skipped by design.
 
 **Next.** Step 4 `[engine]`: Check, dependencies and a run of chosen statements.
+
+## 21 November 2026, release 0.2, step 4 (Check, dependencies, chosen statements)
+
+**Done.** Step 4 `[engine]`: **Check** works (top bar and ⌘K), saying what `zeff check` says, to the byte, with its findings under their lines and nothing run; the worker gives the engine's dependency graph (what each statement reads and needs) and runs chosen statements alone, the others blanked so that every line stays where it was.
+
+**Green.** `npm run routine`: 15 native and 12 message tests of the worker; the nine samples identical; 2,794.3 kB, cold start 54.1 ms; 120 unit tests; 171 browser tests passed and 1 skipped by design.
+
+**Next.** Step 5 `[engine]`: the margin.

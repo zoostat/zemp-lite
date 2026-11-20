@@ -1,0 +1,9 @@
+error[Z0103]: no function is called `nosuch`
+ --> scripts/main.zeff:2:9
+  |
+2 | let z = nosuch(3)
+  |         ^^^^^^ not a function of Zeff
+  |
+  = help: `zeff help` lists the functions of this release
+
+scripts/main.zeff: 1 error, 0 warnings

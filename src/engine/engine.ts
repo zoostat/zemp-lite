@@ -3,7 +3,16 @@
 // and hears each step as it goes, cancels a run, and reads back a frame or a file. When a
 // project closes the worker is ended, which returns its memory to the browser (Engine and
 // Project Specification, section 8.3, point 7), and the next project starts a new one.
-import type { FromWorker, Outcome, Ranged, Reply, Request, RunEvent } from "./messages";
+import type {
+  Checked,
+  FromWorker,
+  Needs,
+  Outcome,
+  Ranged,
+  Reply,
+  Request,
+  RunEvent,
+} from "./messages";
 
 /** As much of a Web Worker as the interface uses, so that a test can stand in for one. */
 export interface WorkerLike {
@@ -124,13 +133,15 @@ export class Engine {
    * Run the text of a script of the project (`script` is its path there). `listener` hears
    * the statements of the text first, then each step as it starts and ends, each pass of a
    * loop, and each piece of output. `width` is the characters tables are printed at, 0 for the
-   * engine's own. One run goes at a time.
+   * engine's own; `only`, where given, the lines of the statements to run alone. One run goes
+   * at a time.
    */
   run(
     script: string,
     text: string,
     listener?: (event: RunEvent) => void,
     width = 0,
+    only?: number[],
   ): Promise<Outcome> {
     if (this.#running !== null) {
       return Promise.reject(new EngineError("a run is already going in this window"));
@@ -156,7 +167,9 @@ export class Engine {
           this.#running = null;
         }
       };
-      this.#ask({ type: "run", script, text, width }).then(
+      const asked: Request = { type: "run", script, text, width };
+      if (only !== undefined) asked.only = only;
+      this.#ask(asked).then(
         (reply) => {
           over();
           try {
@@ -220,6 +233,25 @@ export class Engine {
   /** The statements of a text as the engine reads them, without running it. */
   async statements(script: string, text: string): Promise<Ranged[]> {
     return expect(await this.#ask({ type: "statements", script, text }), "statements").statements;
+  }
+
+  /** The engine's check of a text of the project, as `zeff check` makes it. */
+  async check(script: string, text: string): Promise<Checked> {
+    const checked = expect(await this.#ask({ type: "check", script, text }), "checked");
+    return {
+      exitCode: checked.exit_code,
+      said: checked.said,
+      found: checked.found,
+      summary: checked.summary,
+      findings: checked.findings,
+      ranges: checked.ranges,
+    };
+  }
+
+  /** What each statement of a text of the project needs, from the engine's dependency graph. */
+  async dependencies(script: string, text: string): Promise<Needs[]> {
+    return expect(await this.#ask({ type: "dependencies", script, text }), "dependencies")
+      .statements;
   }
 
   /** A frame of the last run, by the name of its binding, as the bytes of an Arrow stream. */

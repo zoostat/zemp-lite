@@ -69,8 +69,11 @@
   <button class="switch" role="switch" aria-checked={theme.name === "dark"} onclick={switchTheme}>
     <i></i>Dark
   </button>
-  <button class="chip" disabled title="Check arrives with the language server, in the alpha"
-    >Check</button
+  <button
+    class="chip"
+    onclick={() => void workspace.check()}
+    title="Check the script as Zeff does before it runs it; nothing is run"
+    disabled={workspace.running || !workspace.ready}>Check</button
   >
   <button
     class="chip run"

@@ -2,7 +2,7 @@
 // the browser's private file system; the engine has its own copy in the worker's memory. A
 // session keeps the second in step with the first: before a run it gives the engine every
 // file once, and afterwards only the files changed since.
-import type { Outcome, RunEvent } from "../engine/messages";
+import type { Checked, Needs, Outcome, RunEvent } from "../engine/messages";
 import type { Project } from "./projects";
 
 /** As much of the engine as a session uses. */
@@ -15,7 +15,10 @@ export interface Runs {
     text: string,
     listener?: (event: RunEvent) => void,
     width?: number,
+    only?: number[],
   ): Promise<Outcome>;
+  check(script: string, text: string): Promise<Checked>;
+  dependencies(script: string, text: string): Promise<Needs[]>;
 }
 
 export class Session {
@@ -44,14 +47,34 @@ export class Session {
   /**
    * Run the text of a script of the project, the engine first brought in step with the
    * project's files. The text is what the editor holds, saved or not; `width` is the
-   * characters tables are printed at, 0 for the engine's own.
+   * characters tables are printed at, 0 for the engine's own; `only`, where given, the lines
+   * of the statements to run alone.
    */
   async run(
     script: string,
     text: string,
     listener?: (event: RunEvent) => void,
     width = 0,
+    only?: number[],
   ): Promise<Outcome> {
+    await this.#sync();
+    return this.#engine.run(script, text, listener, width, only);
+  }
+
+  /** The engine's check of a text, the engine first brought in step with the project's files. */
+  async check(script: string, text: string): Promise<Checked> {
+    await this.#sync();
+    return this.#engine.check(script, text);
+  }
+
+  /** What each statement of a text needs, from the engine's dependency graph. */
+  async dependencies(script: string, text: string): Promise<Needs[]> {
+    await this.#sync();
+    return this.#engine.dependencies(script, text);
+  }
+
+  /** Bring the engine in step with the project's files. */
+  async #sync(): Promise<void> {
     // A worker that was ended and started again holds no project.
     if (this.#refill || this.#engine.project === null) {
       await this.#engine.open(this.project.info.name);
@@ -68,6 +91,5 @@ export class Session {
       }
     }
     this.#changed.clear();
-    return this.#engine.run(script, text, listener, width);
   }
 }
