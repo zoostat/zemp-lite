@@ -175,3 +175,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Zemp 0.2 alpha, once Zeff 0.8.0 is released ("Start release 0.2"); before it, a Zeff session enters the shared notes in the register.
 
 **For the owner to decide.** Once they stand in the register: the four points of the addendum to #164, besides the questions of the entries above.
+
+## 21 November 2026: release 0.2 planned
+
+**Done.** "Start release 0.2": v0.1.0 tagged and the tree clean; the row of section 15 and sections 2, 3, 5, 7, 8, 10, 13 and 14 of the Zemp Specification, the testing handbook, risks R4, R10 and R11, the open decisions due at the alpha and the register's entries #174 to #197 (Zeff 08a18a4) were read, with the margin editor's design (version 0.9) and what the released Zeff 0.8.0 gives an interface. The checklist is `docs/releases/0.2.md`: 19 steps, with what the reading found, what 0.2 leaves out, and 17 questions. A note for the Zeff 0.9.0 session on what 0.8.0 gives an interface is in the shared notes folder. No code is written.
+
+**Green.** Nothing to run: documents only.
+
+**Next.** The owner's "go" and his answers. Then step 1 `[engine]`: open the release (the copy of the specification brought to 08a18a4, the decisions recorded, the amendments of the Zemp Specification written for a Zeff session).
+
+**For the owner to decide.** The questions of `docs/releases/0.2.md`, among them #27, #37, #74, #75, #177, R2, R4, R8, R9, R14, R15, #181, R19, the reader test and the example; and, as actions, the Cloudflare account and address, the deployment token, the trademark filing.
