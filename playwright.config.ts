@@ -3,7 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 // The browser tests run against the built interface, in the two engines the editions meet:
 // Chromium (the browsers, and WebView2 on Windows) and WebKit (Safari, and the web views of
 // macOS and Linux; Zemp Specification, section 3).
-const port = 4173;
+// The tests serve the build on a port of their own, so that a preview the owner keeps open on
+// Vite's usual port (4173, `npm run preview`) never stops the routine.
+const port = 4174;
 
 export default defineConfig({
   testDir: "tests/browser",

@@ -512,3 +512,73 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **What was found.** The register already holds the entry, #164 (17 November 2026): `poly(x, degree:, raw:)` in `regress` at 1.2, recommended, deadline 1.1. So it was not proposed again; the note `zeff-poly-addendum-to-164-for-the-register.md` in the shared notes folder adds what #164 leaves open: (1) the names of a `poly` term's columns, which #164 gives as R's although the owner's ruling of 23 October 2026 names the `poly` contrast's columns `var=linear`, `var=quadratic` (recommended `poly(exper)=quadratic`, the degree left out so that fits of different degrees line up in `report`); (2) the rows and weights the basis is orthogonal on (the estimation rows, unweighted; R differs when rows are dropped); (3) for `margins` at 0.9.0, the slope taken through `exper` and `exper^2` together, as Stata's `margins` and R's `marginaleffects` do; (4) two messages an R user meets today, `I(exper^2)` answered "did you mean `PI`?" and `poly(exper, 2)` given no route, with Z0103's help to show the Zeff form at 0.9.0.
 
 **Reason.** The owner's word of 20 November 2026. The register is edited in the Zeff repository, never from here; nothing in this repository's code or specification was changed.
+
+## 21 November 2026: release 0.2 opened, and the owner's answers (release 0.2, step 1)
+
+**The owner's word.** "Go, as recommended", to the checklist of `docs/releases/0.2.md` (19 steps) and its seventeen questions. So, each as recommended there:
+
+1. **#27, a Zemp server.** None before 1.0. The alpha sends nothing to any server but the host's cookie-free count of visits (#116); section 13 of the Zemp Specification stands as written; the question returns with the paid tiers (#35, #36).
+2. **#37, the trademarks.** The alpha is built and hosted now; its address is announced (the website, colleagues, the article) only once the applications for "Zeff" and "Zemp" are filed in the owner's home jurisdiction, which is his to do.
+3. **The reader test.** One test serves Zemp 0.2 and Zeff 0.9.0: five to eight readers the owner chooses, about ten short scripts each in the hosted alpha, asked what each model does; the scripts and the form are prepared at step 19, the owner runs it, and what is misread is fixed or recorded before "Release 0.2".
+4. **#74, the Help pane.** Yes: a Help panel at the side of the Script place, hidden until asked for (F1, ⌘K, **Explain**), following the function under the cursor unless switched off, showing a code's explained page; the engine's pages, shipped with it (step 11).
+5. **#75, the data viewer.** Option A in the Data place: a grid drawn as scrolled, the first column frozen, a statistics header per column asked of the engine, search with matches marked, a live row count under a filter, copying a range, variables shown and hidden; read-only, with **Copy as Zeff** (#114). Option A's Objects tree is replaced by Data's list of frames, each by its statement (steps 13 and 14).
+6. **#177.** Zemp Lite is not a notebook: no cells; the statement is what is run, shown, folded and marked stale.
+7. **The example.** The Scratch project holds the margin editor's script on `wages` (Appendix A of its document) and a second script, `instruments.zeff`, from Zeff 0.8.0's sample `instruments` on `staff` (step 18).
+8. **R2.** Panes is kept for this release beside the margin editor, as 0.1 built it, and reviewed at 0.3.
+9. **R8.** The keys of the editor's document, section 15: ⌘↵ the statement, ⌘⇧↵ the script, ⌘K everything, ⌥↵ open or fold a result, F1 help, ⌃` the console; every action also in ⌘K.
+10. **R9.** ⌘↵ runs the statement with every statement it reads; at 0.8.0 those run again from the top, since a browser keeps nothing between runs. The Engine Specification's paragraph "Running code interactively" (section 12) is to be amended to match (below).
+11. **R4 (#178).** A section begins with a comment written `// # Title`, `// ## Title` a level below. Only the form is decided here; the outline comes with #178.
+12. **R14 (#183).** The error's trail at this alpha (step 8).
+13. **R15 (#76).** *Run to here* shown on resting over a statement's line number, beside the command in ⌘K (step 7).
+14. **#181.** **Run from here**, in ⌘K, at this alpha (step 7).
+15. **R19 (#187).** Each statement's time and each frame's memory in the run's facts at this alpha (step 8); the times measured by the interface between the engine's messages until the engine reports them.
+16. **R16 to R18 (#184 to #186).** Yes to each, before 1.0, at the Zeff release that gives the engine pieces; not built here.
+17. **The `poly` addendum (#164, #195, #196).** The columns named `poly(exper)=quadratic`; the basis orthogonal on the fit's rows, unweighted; `margins` taking the slope through `exper^2`; Z0103 showing the Zeff form for `I(...)` and `poly(...)`. Zeff's to build, at 0.9.0 and 1.1.
+
+**Where the answers go.** The register is edited in the Zeff repository only. Answers 1, 2, 4 to 6 and 8 to 17 settle entries of it (#27, #37, #74, #75, #164, #176 to #178, #181, #183 to #187, #195, #196), and answer 10 asks for an amendment of the Engine Specification; all are passed, with the amendments of the Zemp Specification, in the note `zemp-lite-0.2-amendments-and-answers-for-zeff.md` in the shared notes folder, for a Zeff session to enter and log in `docs/spec_changes.md`. This copy is refreshed again when they stand there. The build follows the answers meanwhile, as 0.1 followed #146 before section 5 carried it.
+
+**The specification.** `docs/spec/` is brought to the Zeff repository's commit 08a18a4 (20 November 2026): the release 0.8.0 (the tag `v0.8.0`, commit 6bfa6c5), the closing of #18 and the moving of #151 and #31 to 0.11.0 (1614f7c), and the notes of Zemp Lite entered as #174 to #197 (08a18a4). Each file was taken from the commit, not from the working folder, and compared with it byte for byte. Of the Zemp Specification only the counts of section 11 and the 1.1 row of section 15 changed; the 0.2 row and sections 5, 7, 8 and 10 are as the checklist read them, so no step moves.
+
+**The two tags** keep the meaning of 0.1 (15 November 2026): **[engine]** a hard or foundational piece, **[function]** interface work on machinery that exists.
+
+**The version** is `0.2.0-dev` in `package.json`, `package-lock.json`, `worker/Cargo.toml` and `worker/Cargo.lock` until the release sets `0.2.0`; the welcome screen says "Zemp Lite 0.2-dev", and its browser test now looks for "Zemp Lite 0.2". The engine stays 0.7.0 until step 2 moves the worker.
+
+**Reason.** The standing instructions for starting a release; the owner's "go" of 21 November 2026.
+
+## 21 November 2026: what Zeff 0.8.0 gives Zemp's worker (release 0.2, step 1)
+
+**How it was read.** At the tag `v0.8.0` (6bfa6c5) of the Zeff repository, through Git alone (`git show`, `git grep`), so that nothing in `~/dev/zeff`, where another session works, was touched.
+
+**The same as at 0.7.0.** The events of a run (`zeff_engine::control::Event`: a statement started with its first line and its number of *n*; finished, or failed; a pass of a loop by its number, about a hundred passes reported for a long loop, the first and last among them; printed text). The compiler (1.99.1), `wasm-bindgen` (0.2.129) and the release profile. `zeff-web` gains only `explain`, `explained_codes`, `report_bug` and `Host::holds`; it still keeps its project to itself, so Zemp keeps its own host in its worker.
+
+**What the worker will take from `zeff-engine`, by step.**
+
+| Need | At 0.8.0 | Step |
+| --- | --- | --- |
+| Where each statement begins and ends (C1) | `language::outline::statement_at`, `statements_in` (`StatementRange`, a chain one statement); `folding_ranges` for blocks. Not in the run's events, which give the first line: the worker matches the two | 3 |
+| Each statement's print at a width (C6) | `Outcome.output.statements` (line, printed text, what it said) at `RunOptions.width` for the whole run; another width is another run | 3 |
+| What a statement made (C5) | The name and type of each binding from the checked program; a frame's rows, variables and memory (`output.frames`, `output.memory`). No size for a value that is not a frame: the note gives the type and the first line the engine printed | 3 |
+| The check (the **Check** button) | `run::check_in_project`, findings as records with `Diagnostic::to_json` | 4 |
+| What a statement reads and makes (C4) | `dependencies::graph`, `needed_by`; no dependency through a file | 4 |
+| Results kept between runs (C14), identity and reuse (C2, C3), run records (C12) | Absent until 0.11.0. A run of one statement runs what it needs from the top; staleness follows the graph, a statement that reads a file or draws random numbers counted stale whenever anything above it is edited | 7 |
+| The chain of an error inside a function (C22) | In the printed text only (`= in: …, called at …`), which the trail reads | 8 |
+| Each pass of a loop (C23) | Its number and line only | 9 |
+| Language services | `zeff_engine::language`: completion, signature help, hover, diagnostics, formatting, folding, snippets; the protocol server `zeff-lsp` (`Server::handle`), not yet built for WebAssembly in Zeff's jobs. No semantic tokens before 1.1 | 10 |
+| Help pages and explained codes | `help::help_text`; `zeff_web::explain`, `explained_codes` | 6, 11 |
+| A frame's rows in pages, and its variables' metadata | `Column::slice` or `Table::take_rows` and `write_ipc`; labels, value labels, missing codes, measure, unit, question, source, contrast in the Arrow's field metadata | 13 |
+| Report a problem | `bug_report::build`, as `zeff-web`'s `report_bug` calls it | 16 |
+| A plot handed over (C16, #197) | Absent: the `export` route of 0.1 stays, and no dark theme for a plot on screen | — |
+
+**Also found.** Zeff 0.8.0's own worker is 2,782 kB compressed with a cold start of 143 ms (R4). `wage2` is not shipped; the shipped datasets are `wages`, `firms`, `sleep` and `staff`, with nine sample projects. Six functions are renamed at 0.8.0 (`days_between` and `months_between` to `time_between`, `add_days` and `add_months` to `add_time`, `quantile_group` to `bin`, `fill_forward` to `fill_missing`, `running_sum` to `running`, `row_mean` to `row`), and `x == NA` is refused; step 2 holds the examples to them.
+
+**Passed on.** A note for the Zeff 0.9.0 session, which places the items of #175 and #197: `zemp-lite-0.2-what-zeff-0.8.0-gives-an-interface.md` in the shared notes folder.
+
+**Reason.** The checklist's step 1 records the crates, functions and messages each later step rests on, so that no step is planned on an engine feature that is not there.
+
+## 21 November 2026: the browser tests serve the build on a port of their own (release 0.2, step 1)
+
+**What was found.** The routine of step 1 could not start its browser tests: Vite's usual preview port, 4173, was held by the preview of Zemp Lite 0.1 started on 19 November for the owner's own trial, and the tests' server refuses a port in use.
+
+**Choice.** The tests serve the build on 4174 (`playwright.config.ts`); `npm run preview` keeps 4173 for the owner. The owner's preview was left running. Nothing else of the tests changed, and GitHub's runs are unaffected.
+
+**Reason.** A window the owner keeps open must never stop the routine, nor be closed by it.
