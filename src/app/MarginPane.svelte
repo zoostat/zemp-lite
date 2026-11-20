@@ -18,7 +18,8 @@
   import { took } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
   import { held } from "./steady";
-  import { PLOTS, fileTab } from "./views";
+  import { DATA, PLOTS, fileTab } from "./views";
+  import DataViewer from "../data/DataViewer.svelte";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
@@ -226,6 +227,8 @@
 {#if workspace.views.active === PLOTS}
   <!-- The plot viewer, opened from ⌘K, in the script's place; "Script" goes back. -->
   <PlotViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
+{:else if workspace.views.active === DATA}
+  <DataViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
 {:else}
   <div class="place">
     <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>

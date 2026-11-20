@@ -3,7 +3,7 @@
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
 import { Language, type Diagnostic, type Range } from "../engine/language";
-import type { Checked, FrameInfo, Ranged } from "../engine/messages";
+import type { Checked, FrameInfo, Ranged, Rows } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
@@ -21,6 +21,7 @@ import { compared, moved, ordered, toggled } from "../plots/viewer";
 import { Session } from "../project/session";
 import { History, composed, consoleRun, outcomeOf, type Entry } from "./console";
 import {
+  DATA,
   PLOTS,
   fileTab,
   leftWidth,
@@ -1117,6 +1118,30 @@ export class Workspace {
   setPage(page: ViewState["plots"]["page"]): void {
     this.views.plots.page = page;
     this.#keep();
+  }
+
+  /** Open the data viewer, on a frame where one is named. */
+  openData(frame?: string): void {
+    Object.assign(this.views, withTab(this.views, DATA));
+    if (frame !== undefined) this.views.data.frame = frame;
+    this.#keep();
+  }
+
+  /** Show a frame in the data viewer. */
+  showFrame(frame: string): void {
+    this.views.data.frame = frame;
+    this.#keep();
+  }
+
+  /** Show or hide the data viewer's list of frames and variables. */
+  setDataList(shown: boolean): void {
+    this.views.data.list = shown;
+    this.#keep();
+  }
+
+  /** Rows of a frame of the last run, each cell as the engine prints it. */
+  rows(name: string, offset: number, limit: number): Promise<Rows> {
+    return this.engine.rows(name, offset, limit);
   }
 
   /** Show or hide the list of plots at the left of the plot viewer. */

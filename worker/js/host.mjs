@@ -18,6 +18,8 @@
 //   { type: "dependencies", script, text }  what each statement of a text needs
 //   { type: "language", body }          a message of the Language Server Protocol for the
 //                                       engine's language server, over the project
+//   { type: "rows", name, offset, limit } rows of a frame of the last run, each cell as the
+//                                       engine prints it
 //   { type: "help", name }              the help page of a function, as `zeff help` prints it
 //   { type: "explain", code }           the explained page of a code (needs no project)
 //   { type: "codes" }                   every code with an explained page (needs no project)
@@ -36,6 +38,7 @@
 //   { type: "checked", exit_code, said, found, summary, findings }   the answer to `check`
 //   { type: "language", messages }      the answer to `language`: the bodies of the server's
 //                                       messages, in order
+//   { type: "rows", name, header, total, offset, variables, rows }   the answer to `rows`
 //   { type: "help", page, message }     the answer to `help`: the page, or null and why
 //   { type: "explained", page }         the answer to `explain`: the page, as `zeff explain
 //                                       --format json` gives it, its `text` what it prints
@@ -90,9 +93,17 @@ export function serve(engine, port, deviceBytes) {
       return;
     }
     if (
-      !["file", "run", "frame", "read", "check", "dependencies", "language", "help"].includes(
-        said.type,
-      )
+      ![
+        "file",
+        "run",
+        "frame",
+        "read",
+        "check",
+        "dependencies",
+        "language",
+        "help",
+        "rows",
+      ].includes(said.type)
     ) {
       refuse(`no such message: ${String(said.type)}`);
       return;
@@ -107,6 +118,7 @@ export function serve(engine, port, deviceBytes) {
         dependencies: "the dependencies were asked for",
         language: "the language server was asked",
         help: "a help page was asked for",
+        rows: "rows of a frame were asked for",
       }[said.type];
       refuse(`${what} before a project was opened`);
       return;
@@ -127,6 +139,13 @@ export function serve(engine, port, deviceBytes) {
           const only = Array.isArray(said.only) ? new Uint32Array(said.only) : undefined;
           answer(JSON.parse(project.run(said.script, said.text, deviceBytes ?? 0, width, only)));
         }
+        break;
+      }
+      case "rows": {
+        const page = JSON.parse(
+          project.rows(String(said.name), Number(said.offset) || 0, Number(said.limit) || 100),
+        );
+        answer(page);
         break;
       }
       case "help":

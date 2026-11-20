@@ -339,6 +339,58 @@ impl Host {
         )
     }
 
+    /// Rows of a frame of the last run, for the data viewer (#75): the frame's header line as
+    /// the engine prints it (`wages · 18,412 rows × 11 variables`); each variable with its type,
+    /// its label, its count of missing values and how its cells line up; and the rows from
+    /// `offset`, at most `limit` of them, each cell written as the engine prints it (a labelled
+    /// value by its label, a date in ISO form, a missing value `NA`). As a line of JSON of type
+    /// `rows`, or of type `error` where no binding of the last run held a frame of that name.
+    pub fn rows(&self, name: &str, offset: usize, limit: usize) -> String {
+        let frames = self.frames.borrow();
+        let Some((_, frame)) = frames.iter().rev().find(|(bound, _)| bound == name) else {
+            return format!(
+                "{{\"type\": \"error\", \"message\": {}}}",
+                json_string(&format!("no frame called `{name}` in the last run"))
+            );
+        };
+        let table = &frame.table;
+        let total = table.rows();
+        let to = total.min(offset.saturating_add(limit));
+        let mut variables = Vec::new();
+        let mut columns = Vec::new();
+        for (variable, column) in table.columns() {
+            let right = matches!(
+                zeff_core::display::column_alignment(column),
+                zeff_core::value::Align::Right
+            );
+            variables.push(format!(
+                "{{\"name\": {}, \"type\": {}, \"label\": {}, \"missing\": {}, \"right\": {right}}}",
+                json_string(variable),
+                json_string(column.ty().name()),
+                json_string(column.metadata().get(zeff_columns::MetadataKey::Label).unwrap_or("")),
+                column.n_missing(),
+            ));
+            columns.push(column);
+        }
+        let rows: Vec<String> = (offset.min(total)..to)
+            .map(|row| {
+                let cells: Vec<String> = columns
+                    .iter()
+                    .map(|column| json_string(&zeff_core::display::labelled_cell(column, row)))
+                    .collect();
+                format!("[{}]", cells.join(", "))
+            })
+            .collect();
+        format!(
+            "{{\"type\": \"rows\", \"name\": {}, \"header\": {}, \"total\": {total}, \"offset\": {}, \"variables\": [{}], \"rows\": [{}]}}",
+            json_string(name),
+            json_string(&zeff_core::display::frame_header(frame)),
+            offset.min(total),
+            variables.join(", "),
+            rows.join(", ")
+        )
+    }
+
     /// The help page of a function, as `zeff help <name>` prints it inside this project: a
     /// function of the project's modules first, then the engine's own; as a line of JSON of type
     /// `help`, with the page, or the engine's sentence where there is none.

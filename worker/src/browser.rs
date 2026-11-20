@@ -70,6 +70,11 @@ impl Project {
             .run(script, text, &asked, cancelled, &|json| host_event(json))
     }
 
+    /// Rows of a frame of the last run, each cell as the engine prints it, as a line of JSON.
+    pub fn rows(&self, name: &str, offset: u32, limit: u32) -> String {
+        self.host.rows(name, offset as usize, limit as usize)
+    }
+
     /// The help page of a function, as `zeff help` prints it in this project, as a line of JSON.
     pub fn help(&self, name: &str) -> String {
         self.host.help(name)

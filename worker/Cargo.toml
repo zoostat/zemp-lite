@@ -25,6 +25,7 @@ zeff-engine = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e
 zeff-diagnostics = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-columns = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-lsp = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
+zeff-core = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-ir = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 zeff-web = { git = "https://github.com/zoostat/zeff", rev = "6bfa6c55a5584e4e038fc828fef900a30f0856c3" }
 

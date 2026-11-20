@@ -143,3 +143,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 152 unit tests; 236 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 13 `[engine]`: Data, the grid.
+
+## 21 November 2026, release 0.2, step 13 (Data, the grid)
+
+**Done.** Step 13 `[engine]`: the Data place, in the top bar and both layouts: the frames of the run, each by the statement that made it, and the frame chosen as a grid drawn as it is scrolled, its rows fetched a page at a time, every cell written by the engine's own display. Step 11's run on GitHub had failed on two WebKit tests, the completion test (mended in step 12) and a reload half a second after a change; the reloading tests now wait a second and a half.
+
+**Green.** `npm run routine`: 153 unit tests; 242 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 14 `[function]`: Data, the variables.

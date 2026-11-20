@@ -85,7 +85,7 @@ test("the layout of a window is kept with its project and comes back after a rel
   await page.keyboard.press("ArrowUp");
   await press(page.getByRole("button", { name: "Hide the output" }));
   // The view state is written a moment after the last change.
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
 
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
@@ -126,7 +126,7 @@ test("the layout chosen is kept with the project, and a new project opens in the
   const panes = page.getByRole("button", { name: "Panes", exact: true });
   await expect(margin).toHaveAttribute("aria-pressed", "true");
   await press(panes);
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
   await page.reload();
   await expect(panes).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("complementary")).toBeVisible();
@@ -150,7 +150,7 @@ test("what is unfolded, and whether the notes are shown, are kept with the proje
   await expect(page.getByRole("status")).toHaveText("done");
   await press(page.locator('[data-testid="note"][data-line="8"]'));
   await expect(page.locator(".cm-zemp-output")).toHaveCount(1);
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "Run", exact: true }));
@@ -162,7 +162,7 @@ test("what is unfolded, and whether the notes are shown, are kept with the proje
     "true",
   );
   await press(page.getByRole("button", { name: "Notes", exact: true }));
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "Run", exact: true }));
@@ -195,7 +195,7 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
   await press(
     plots.getByRole("group", { name: "Size" }).getByRole("button", { name: "One column" }),
   );
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1500);
 
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);

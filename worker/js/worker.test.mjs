@@ -264,6 +264,32 @@ test("a function's help page is given as `zeff help` prints it, or the engine's 
   assert.match(none.message, /no function or package is called `nosuch`/);
 });
 
+test("rows of a frame of the last run are given a page at a time, as the engine prints them", async (t) => {
+  const { worker, next } = await opened(t, 0);
+  worker.postMessage({
+    type: "run",
+    script: "scripts/main.zeff",
+    text: "let pay = frame(id = [1, 2, 3], wage = [11.5, NA, 26])\n",
+  });
+  await next("done");
+  worker.postMessage({ type: "rows", id: 11, name: "pay", offset: 1, limit: 5 });
+  const page = await next("rows");
+  assert.equal(page.id, 11);
+  assert.equal(page.total, 3);
+  assert.equal(page.offset, 1);
+  assert.deepEqual(
+    page.variables.map((one) => [one.name, one.missing, one.right]),
+    [
+      ["id", 0, true],
+      ["wage", 1, true],
+    ],
+  );
+  assert.deepEqual(page.rows, [
+    ["2", "NA"],
+    ["3", "26"],
+  ]);
+});
+
 test("a file a run wrote is given back, and passed to the interface, not copied", async (t) => {
   const { worker, said, next } = await opened(t, 0);
   const script =

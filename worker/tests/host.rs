@@ -625,3 +625,45 @@ fn a_functions_help_page_is_what_zeff_help_prints() {
         "{none}"
     );
 }
+
+#[test]
+fn a_page_of_a_frames_rows_is_written_as_the_engine_prints_the_frame() {
+    let host = Host::new("demo");
+    let done = run_at(&host, "let wages = dataset(wages)\nwages\n", 0);
+    let printed = done["stdout"].as_str().unwrap().to_string();
+    let page: Value = serde_json::from_str(&host.rows("wages", 0, 3)).unwrap();
+    assert_eq!(page["type"], "rows");
+    // The header is the engine's first line of the frame.
+    assert_eq!(
+        page["header"].as_str().unwrap(),
+        printed.lines().next().unwrap()
+    );
+    assert_eq!(page["total"], 18412);
+    let variables = page["variables"].as_array().unwrap();
+    assert_eq!(variables.len(), 11);
+    assert!(
+        variables
+            .iter()
+            .any(|one| one["name"] == "wage" && one["right"] == true)
+    );
+    // Each row's cells, in order, are the cells of the same row as the engine prints it.
+    for (at, row) in page["rows"].as_array().unwrap().iter().enumerate() {
+        let line = printed
+            .lines()
+            .find(|line| line.trim_start().starts_with(&format!("{} ", at + 1)))
+            .unwrap();
+        let mut rest = line.trim_start()[format!("{} ", at + 1).len()..].to_string();
+        for cell in row.as_array().unwrap() {
+            let cell = cell.as_str().unwrap();
+            let found = rest
+                .find(cell)
+                .unwrap_or_else(|| panic!("{cell} not in {line}"));
+            rest = rest[found + cell.len()..].to_string();
+        }
+    }
+    // A page past the end is empty, and a frame not bound is said to be none.
+    let past: Value = serde_json::from_str(&host.rows("wages", 18412, 50)).unwrap();
+    assert!(past["rows"].as_array().unwrap().is_empty());
+    let none: Value = serde_json::from_str(&host.rows("nosuch", 0, 5)).unwrap();
+    assert_eq!(none["type"], "error");
+}

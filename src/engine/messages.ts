@@ -74,6 +74,20 @@ export interface ExplainedPage {
   text: string;
 }
 
+/**
+ * Rows of a frame of the last run, for the data viewer: the engine's header line of the frame;
+ * each variable with its type, its label, its count of missing values and whether its cells
+ * line up on the right; and rows from `offset`, each cell as the engine prints it.
+ */
+export interface Rows {
+  name: string;
+  header: string;
+  total: number;
+  offset: number;
+  variables: { name: string; type: string; label: string; missing: number; right: boolean }[];
+  rows: string[][];
+}
+
 /** What the worker tells while a run goes. */
 export type RunEvent =
   /** First, before any statement: the statements of the text, as the engine reads them. */
@@ -100,6 +114,7 @@ export type Request =
   | { type: "explain"; code: string }
   | { type: "language"; body: string }
   | { type: "help"; name: string }
+  | { type: "rows"; name: string; offset: number; limit: number }
   | { type: "dependencies"; script: string; text: string }
   /** The statements of a text as the engine reads them, without running it. */
   | { type: "statements"; script: string; text: string }
@@ -132,6 +147,7 @@ export type Reply =
   | { type: "explained"; page: ExplainedPage }
   | { type: "language"; messages: string[] }
   | { type: "help"; page: string | null; message: string }
+  | ({ type: "rows" } & Rows)
   | { type: "frame"; name: string; bytes: Uint8Array }
   | { type: "read"; path: string; bytes: Uint8Array | null }
   | { type: "error"; message: string };

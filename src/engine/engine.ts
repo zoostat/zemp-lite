@@ -4,6 +4,7 @@
 // project closes the worker is ended, which returns its memory to the browser (Engine and
 // Project Specification, section 8.3, point 7), and the next project starts a new one.
 import type {
+  Rows,
   Checked,
   ExplainedPage,
   FromWorker,
@@ -275,6 +276,19 @@ export class Engine {
   async dependencies(script: string, text: string): Promise<Needs[]> {
     return expect(await this.#ask({ type: "dependencies", script, text }), "dependencies")
       .statements;
+  }
+
+  /** Rows of a frame of the last run, from `offset`, at most `limit`, each cell as the engine prints it. */
+  async rows(name: string, offset: number, limit: number): Promise<Rows> {
+    const found = expect(await this.#ask({ type: "rows", name, offset, limit }), "rows");
+    return {
+      name: found.name,
+      header: found.header,
+      total: found.total,
+      offset: found.offset,
+      variables: found.variables,
+      rows: found.rows,
+    };
   }
 
   /** A frame of the last run, by the name of its binding, as the bytes of an Arrow stream. */

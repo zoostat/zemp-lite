@@ -32,6 +32,7 @@ test("the top bar carries its controls in order, Run the one filled, and what is
   expect(names).toEqual([
     "Projects ▾",
     "Script",
+    "Data",
     "Plots",
     "Commands",
     "Smaller code text",

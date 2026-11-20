@@ -9,7 +9,8 @@
   import PlotViewer from "../plots/PlotViewer.svelte";
   import Splitter from "./Splitter.svelte";
   import { held, marked } from "./steady";
-  import { PLOTS, tabPath } from "./views";
+  import { DATA, PLOTS, tabPath } from "./views";
+  import DataViewer from "../data/DataViewer.svelte";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
@@ -21,7 +22,10 @@
   const share = $derived(workspace.views.output.share);
 
   function title(tab: string): string {
-    return tabPath(tab)?.split("/").at(-1) ?? (tab === PLOTS ? "Plots" : tab.slice(5));
+    return (
+      tabPath(tab)?.split("/").at(-1) ??
+      (tab === PLOTS ? "Plots" : tab === DATA ? "Data" : tab.slice(5))
+    );
   }
 
   const run = $derived(workspace.lastRun);
@@ -101,6 +105,8 @@
       <span>{path.split("/").join(" › ")}</span>
     {:else if workspace.views.active === PLOTS}
       <span>The plot viewer: the plots of the last run</span>
+    {:else if workspace.views.active === DATA}
+      <span>The data viewer: the frames of the last run</span>
     {:else}
       <span>No file is open. Choose one in the Project tab.</span>
     {/if}
@@ -176,6 +182,8 @@
     </div>
   {:else if workspace.views.active === PLOTS}
     <PlotViewer {workspace} />
+  {:else if workspace.views.active === DATA}
+    <DataViewer {workspace} />
   {:else}
     <div class="empty"></div>
   {/if}

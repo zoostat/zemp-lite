@@ -1130,6 +1130,7 @@ dependencies = [
  "serde_json",
  "wasm-bindgen",
  "zeff-columns",
+ "zeff-core",
  "zeff-diagnostics",
  "zeff-engine",
  "zeff-ir",

@@ -383,3 +383,22 @@ describe("a function's help page", () => {
     expect(await asked).toEqual({ page: "summary — …\n", message: "" });
   });
 });
+
+describe("rows of a frame", () => {
+  it("are asked for a page at a time, and given as the engine writes them", async () => {
+    const { engine: made, worker } = await opened();
+    const asked = made.rows("pay", 200, 200);
+    await settle();
+    expect(worker.last).toMatchObject({ type: "rows", name: "pay", offset: 200, limit: 200 });
+    const page = {
+      name: "pay",
+      header: "pay · 3 rows × 1 variable",
+      total: 3,
+      offset: 200,
+      variables: [{ name: "id", type: "Int", label: "", missing: 0, right: true }],
+      rows: [],
+    };
+    worker.answer({ type: "rows", ...page });
+    expect(await asked).toEqual(page);
+  });
+});

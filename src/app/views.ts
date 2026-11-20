@@ -25,6 +25,8 @@ export interface ViewState {
     /** For each script, by its path, the lines of the statements whose output is unfolded. */
     unfolded: Record<string, number[]>;
   };
+  /** The data viewer: the frame shown, by the name of its binding, and the list shown or hidden. */
+  data: { frame: string | null; list: boolean };
   /** The parts of the file this build does not know, kept as they were (a later build's). */
   others: Record<string, unknown>;
   left: {
@@ -66,6 +68,8 @@ export const OUTPUT_SHARE = { least: 0.12, most: 0.85, usual: 0.42 } as const;
 
 /** The tab of the plot viewer. */
 export const PLOTS = "view:plots";
+/** The tab of the data viewer. */
+export const DATA = "view:data";
 
 /** The tab of a file of the project. */
 export const fileTab = (path: string) => `file:${path}`;
@@ -78,6 +82,7 @@ export function usual(): ViewState {
     // Zemp Lite opens in the margin editor, every output folded (#174).
     layout: "margin",
     script: { notes: true, unfolded: {} },
+    data: { frame: null, list: true },
     others: {},
     left: { tab: "project", width: LEFT_WIDTH.usual, shown: true },
     output: { share: OUTPUT_SHARE.usual, shown: true },
@@ -131,6 +136,11 @@ export function readViews(text: string | null): ViewState {
         }
       }
     }
+  }
+  const data = from["data"] as Record<string, unknown> | undefined;
+  if (typeof data === "object" && data !== null) {
+    if (typeof data["frame"] === "string") state.data.frame = data["frame"];
+    if (typeof data["list"] === "boolean") state.data.list = data["list"];
   }
   const known = new Set(["version", ...Object.keys(state)]);
   for (const [key, value] of Object.entries(from)) {

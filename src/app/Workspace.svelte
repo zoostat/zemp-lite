@@ -58,6 +58,7 @@
       hint: "the script with its notes",
       run: () => workspace.show(fileTab(workspace.scriptPath)),
     },
+    { name: "Place: Data", hint: "the frames of the run", run: () => workspace.openData() },
     { name: "Place: Plots", hint: "the plots of the run", run: () => workspace.openPlots() },
     {
       name: workspace.views.plots.list ? "Plots: hide the list" : "Plots: show the list",

@@ -780,3 +780,17 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Reason.** The checklist's step 12; the margin editor's design, sections 6 and 10; the owner's ruling of 18 November 2026 on a hideable list of plots.
 
 **A test mended with it.** The run on GitHub of step 10b (fae1247) failed on the completion test: Enter was pressed in the moment between one list of offers and the next, as a later answer of the server replaced the list on GitHub's slower machines, and typed a new line. The list was watched here for a second and a quarter and never closed. The test now takes the offer by pressing it, which waits for the offer itself; its checks are unchanged.
+
+## 21 November 2026: Data, the grid (release 0.2, step 13)
+
+**Choice** (#75, option A as the owner answered it; the margin editor's design, section 8): the **Data** place, beside Script and Plots in the top bar, in both layouts, and in ⌘K. At its left, the frames of the last run, each with its rows and variables and the line of the statement that made it (**‹ Hide** folds the list away; view state). At its right, the frame chosen: the engine's own header line of it (`wages · 18,412 rows × 11 variables · panel worker × year`) and a grid with a row number, numbers to the right, the header row and the row numbers with the first variable held in place as it scrolls.
+
+**Every cell the engine's.** The worker gives the rows of a frame of the last run a page at a time (`rows`, 200 rows), each cell written by the engine's own `zeff_core::display::labelled_cell`, as it prints a frame: a labelled value by its label, a date in ISO form, a missing value `NA`, never blank; each variable with its type, its label, its count of missing values and the alignment the engine gives it. The interface formats no value; a test holds a page to what the engine prints for the same frame, cell by cell. `zeff-core`, a crate of the released engine, is added at the same commit for it.
+
+**Drawn as it is scrolled.** The grid draws only the rows near its window and asks the worker for the pages they fall in; a frame of 18,412 rows keeps fewer than 120 rows on the page, and its last row is reached by scrolling. The pages come from the run engine, which holds the run's frames; while a run goes they wait for it.
+
+**Not here.** The statistics header of each column, the variables shown and hidden, the inspector, sorting, searching, copying a range and **Copy as Zeff** are step 14's. The rate of 60 frames a second while scrolling is measured with the others at step 19.
+
+**Reason.** The checklist's step 13; open decision #75; the margin editor's design, sections 8 and 8.1 (what is always shown).
+
+**A test given more time.** The run on GitHub of step 11 (6e89886) failed in WebKit on "the layout chosen is kept with the project": the test reloaded the page half a second after choosing Panes, and the view state, written a fifth of a second after a change and behind any file still being saved, had not yet reached the browser's storage on that slower runner. The tests that reload the page after a change now wait a second and a half; their checks are unchanged. A reload within half a second of a change can lose that change: a known issue of the notes.

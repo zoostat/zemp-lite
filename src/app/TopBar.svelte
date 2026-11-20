@@ -8,7 +8,7 @@
   import { CODE_SIZES } from "../theme/codesize";
   import Logo from "../theme/Logo.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
-  import { PLOTS, fileTab } from "./views";
+  import { DATA, PLOTS, fileTab } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
   let {
@@ -22,8 +22,14 @@
 
   const path = $derived(workspace.activePath);
   const buffer = $derived(path === null ? undefined : workspace.buffers[path]);
-  // The places (the margin editor's design, section 6): the script, and the plots of the run.
-  const place = $derived(workspace.views.active === PLOTS ? "plots" : "script");
+  // The places (the margin editor's design, section 6): the script, its data and its plots.
+  const place = $derived(
+    workspace.views.active === PLOTS
+      ? "plots"
+      : workspace.views.active === DATA
+        ? "data"
+        : "script",
+  );
   const smallest = CODE_SIZES[0];
   const largest = CODE_SIZES[CODE_SIZES.length - 1];
 </script>
@@ -48,6 +54,11 @@
       class:on={place === "script"}
       aria-current={place === "script" ? "page" : undefined}
       onclick={() => workspace.show(fileTab(workspace.scriptPath))}>Script</button
+    >
+    <button
+      class:on={place === "data"}
+      aria-current={place === "data" ? "page" : undefined}
+      onclick={() => workspace.openData()}>Data</button
     >
     <button
       class:on={place === "plots"}
