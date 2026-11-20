@@ -10,7 +10,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  // These tests are of the Panes layout; a project opens in Inline.
+  // These tests are of the Panes layout; a project opens in the margin editor.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 

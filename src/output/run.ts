@@ -3,7 +3,7 @@
 // a run as events (a statement started, a piece of output, a statement finished) and then its
 // outcome; this file turns them into blocks, one for each line that has something to show.
 // The words are the engine's: nothing here writes a message of its own.
-import type { Outcome, Ranged, RunEvent } from "../engine/messages";
+import type { Outcome, Ranged, RunEvent, StatementInfo } from "../engine/messages";
 
 /** One thing the engine said: a warning, a note or an error. */
 export interface Said {
@@ -103,6 +103,8 @@ export interface Run {
   /** The statements of the text as the engine reads them, once it has said: where each ends. */
   ranges: Ranged[] | null;
   statements: Statement[];
+  /** Each statement as the outcome gives it: what it printed, said and made. Empty until the end. */
+  info: StatementInfo[];
   /** Whether this is a Check alone, which runs nothing, and not a run. */
   checkOnly: boolean;
   /** What the engine said before the first statement started: what its check found. */
@@ -131,6 +133,7 @@ export function begin(script: string, text: string, now: number, clock: string):
     of: null,
     ranges: null,
     checkOnly: false,
+    info: [],
     statements: [],
     beforeRaw: "",
     afterPrinted: "",
@@ -189,6 +192,7 @@ export function hear(run: Run, event: RunEvent, now: number): void {
 
 /** The run is over: how it ended. */
 export function end(run: Run, outcome: Outcome, now: number): void {
+  run.info = outcome.statements;
   // A run whose ranges were not told before it began has them from its outcome.
   if (run.ranges === null && outcome.statements.length > 0) {
     run.ranges = outcome.statements.map(({ line, end, kind }) => ({ line, end, kind }));

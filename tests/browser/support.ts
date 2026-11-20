@@ -117,7 +117,18 @@ export const editor = (page: Page) =>
 
 /** The text the editor holds. (The editor draws the lines near the window; these scripts are short.) */
 export async function scriptText(page: Page): Promise<string> {
-  return (await editor(page).locator(".cm-line").allTextContents()).join("\n");
+  // Each line's code, without the margin's note that stands in it. The function runs in the
+  // page, so it holds nothing from outside itself.
+  const lines = await editor(page)
+    .locator(".cm-line")
+    .evaluateAll((all) =>
+      all.map((line) => {
+        const copy = line.cloneNode(true) as Element;
+        for (const note of copy.querySelectorAll('[data-testid="note"]')) note.remove();
+        return copy.textContent ?? "";
+      }),
+    );
+  return lines.join("\n");
 }
 
 /** Replace all the editor holds by `text`, as typing it would. */

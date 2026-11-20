@@ -1,0 +1,191 @@
+<script lang="ts">
+  // The margin editor (open decision #174; its design, sections 5 to 7), Zemp Lite's editor
+  // from the 0.2 alpha in place of the Inline layout. The script fills the column; a note
+  // beside each statement says what it made and how large it is; the whole output of a
+  // statement unfolds under it when the reader asks, and a script opens with every output
+  // folded. Running never moves the code. Notes · Fold all · Unfold all stand over the script;
+  // all three change only the view. The column is 760 pixels of code at the usual code size,
+  // wider with the code, and the 300 pixels of the notes beside it.
+  import { tick } from "svelte";
+  import Editor from "../editor/Editor.svelte";
+  import { notesOf } from "../margin/notes";
+  import { placed } from "../output/place";
+  import PlotViewer from "../plots/PlotViewer.svelte";
+  import { held } from "./steady";
+  import { PLOTS, fileTab } from "./views";
+  import type { Workspace } from "./workspace-state.svelte";
+
+  let { workspace }: { workspace: Workspace } = $props();
+
+  // The margin editor shows the file of the tab shown, or the script Run runs where no tab is open.
+  const path = $derived(workspace.activePath ?? workspace.scriptPath);
+  const buffer = $derived(workspace.buffers[path]);
+  const run = $derived(workspace.lastRun);
+  // The last run belongs to this script only where it is the one that ran.
+  const ours = $derived(run !== null && run.script === path ? run : null);
+  const notes = $derived(ours === null ? [] : notesOf(ours, workspace.edited));
+  const unfolded = $derived(workspace.views.script.unfolded[path] ?? []);
+  const notesShown = $derived(workspace.views.script.notes);
+  // An output is shown under its statement where the reader unfolded it. What failed, what
+  // belongs to no statement, and the statement running (whose output carries Cancel until the
+  // top bar's Run reads Stop) are always shown.
+  const blocks = $derived(
+    ours === null
+      ? []
+      : placed(ours).filter(
+          (one) =>
+            one.block.line === null ||
+            one.block.state !== "done" ||
+            unfolded.includes(one.block.line),
+        ),
+  );
+  const margin = $derived(
+    notesShown
+      ? {
+          basis: ours === null ? "" : String(ours.startedAt),
+          notes,
+          unfolded,
+          onnote: (line: number) => workspace.toggleUnfolded(path, line),
+        }
+      : null,
+  );
+  /** The statements with an output to unfold. */
+  const opening = $derived(notes.filter((note) => note.opens).map((note) => note.line));
+  // What the check found when it refused the script, shown above the results kept.
+  const refusal = $derived(workspace.refusal);
+  const refused = $derived(
+    refusal !== null && refusal.script === path
+      ? {
+          basis: String(refusal.startedAt),
+          placed: placed(refusal),
+          edited: workspace.refusalEdited,
+        }
+      : null,
+  );
+  const output = $derived({
+    basis: run === null ? "" : `${run.startedAt}:${blocks.map((one) => one.block.line).join(",")}`,
+    placed: blocks,
+    edited: workspace.edited,
+    refused,
+    oncancel: () => workspace.cancel(),
+    workspace,
+  });
+
+  $effect(() => {
+    if (workspace.ready && buffer === undefined) void workspace.open(path);
+  });
+
+  // The page stays where the reader is while a run replaces its output (see `steady.ts`).
+  let pane = $state<HTMLElement | null>(null);
+  let sheet = $state<HTMLElement | null>(null);
+  let editor = $state<ReturnType<typeof Editor> | null>(null);
+  let release: (() => void) | null = null;
+  // Just before a run takes the old results off the page: hold its height, and note the
+  // reader's place in the script, which is the statement, with its output, at the top of
+  // their view. The editor says which, and where it stands when the results are new.
+  $effect(() => {
+    const hold = () => {
+      if (release === null && pane !== null && sheet !== null && editor !== null) {
+        release = held(sheet, pane, editor.place());
+      }
+    };
+    return workspace.beforeRun(hold);
+  });
+  // After the results of a run that has ended are drawn: give the reader's place back.
+  $effect(() => {
+    if (run?.state !== "running" && release !== null) {
+      const done = release;
+      release = null;
+      void tick().then(() => requestAnimationFrame(done));
+    }
+  });
+</script>
+
+{#if workspace.views.active === PLOTS}
+  <!-- The plot viewer, opened from ⌘K, in the script's place; "Script" goes back. -->
+  <PlotViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
+{:else}
+  <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
+    <div class="sheet" bind:this={sheet} style:--zemp-margin={notesShown ? "300px" : "0px"}>
+      <div class="controls" role="toolbar" aria-label="What is shown of the results">
+        <button
+          class="view"
+          aria-pressed={notesShown}
+          onclick={() => workspace.setNotes(!notesShown)}
+          title="Show or hide the notes beside the code">Notes</button
+        >
+        <button
+          class="view"
+          onclick={() => workspace.setUnfolded(path, [])}
+          title="Fold every output; an error stays">Fold all</button
+        >
+        <button
+          class="view"
+          onclick={() => workspace.setUnfolded(path, opening)}
+          disabled={opening.length === 0}
+          title="Unfold every output under its statement">Unfold all</button
+        >
+      </div>
+      {#if buffer?.loaded}
+        {#key path}
+          <Editor
+            bind:this={editor}
+            text={buffer.text}
+            label="The script"
+            onchange={(text) => workspace.edit(path, text)}
+            onrun={() => void workspace.run()}
+            inline={output}
+            notes={margin}
+          />
+        {/key}
+      {/if}
+    </div>
+  </section>
+{/if}
+
+<style>
+  .margin {
+    background: var(--window);
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+  .sheet {
+    margin: 0 auto;
+    max-width: calc(760px * var(--code-scale, 1) + var(--zemp-margin, 0px));
+    padding: 0 18px;
+  }
+  /* The three controls change only the view: words with a dashed underline (the design, 14.2). */
+  .controls {
+    display: flex;
+    gap: 14px;
+    justify-content: flex-end;
+    padding: 10px 0 0;
+  }
+  .view {
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--ink-2);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13.5px;
+    padding: 3px 6px;
+    text-decoration: underline dashed var(--line-strong);
+    text-underline-offset: 4px;
+  }
+  .view:hover {
+    background: var(--soft);
+  }
+  .view[aria-pressed="true"] {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+  }
+  .view:disabled {
+    color: var(--ink-3);
+    cursor: default;
+  }
+  .view:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+</style>

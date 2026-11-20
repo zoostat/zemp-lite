@@ -33,7 +33,7 @@ test("what Check finds stands under its line, and the results of the run before 
   press,
 }) => {
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
   const before = await printed(page);
   const blocks = await page.getByTestId("block").count();

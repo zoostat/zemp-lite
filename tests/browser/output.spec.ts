@@ -12,7 +12,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  // These tests are of the Panes layout; a project opens in Inline.
+  // These tests are of the Panes layout; a project opens in the margin editor.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
@@ -27,7 +27,7 @@ test("each result of the example sits under the line that made it, with its time
   press,
 }) => {
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   // Seven of the nine statements have something to show: the summary, the fit and the two
   // plots print, and the three statements that made the fit and the plots each left a note.
@@ -60,7 +60,7 @@ test("each result of the example sits under the line that made it, with its time
 
 test("the panel's text for the example is the text kept for it", async ({ page, press }) => {
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   // Both plots are drawn before the panel is read.
   await expect(page.locator('[data-testid="figure"] img')).toHaveCount(2);
@@ -74,7 +74,7 @@ for (const name of ["plain", "warning", "error", "refused"]) {
   test(`the script "${name}" is shown as \`zeff run\` 0.8.0 prints it`, async ({ page, press }) => {
     await scratch(page, press);
     await write(page, file(`tests/scripts/${name}.zeff`));
-    await press(page.getByRole("button", { name: "Run" }));
+    await press(page.getByRole("button", { name: "Run", exact: true }));
     const failing = name === "error" || name === "refused";
     await expect(page.getByRole("status")).toHaveText(failing ? "ended with exit code 1" : "done");
     expect(await printed(page)).toBe(file(`tests/scripts/${name}.stdout`));
@@ -88,7 +88,7 @@ test("an error sits under its line, with its excerpt and advice, and the run is 
 }) => {
   await scratch(page, press);
   await write(page, file("tests/scripts/error.zeff"));
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
   // Lines 1 and 2 ran; line 3 failed; line 4 never ran and has no block.
   expect(await lines(page)).toEqual(["1", "2", "3"]);
@@ -115,7 +115,7 @@ test("what the engine's check refuses is shown under the line it names, and noth
 }) => {
   await scratch(page, press);
   await write(page, file("tests/scripts/refused.zeff"));
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
   expect(await lines(page)).toEqual(["2"]);
   expect(await printed(page)).toBe("");
@@ -127,14 +127,14 @@ test("in Panes too, a refused script leaves the results of the run before in the
   press,
 }) => {
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
   const before = await printed(page);
   const summary = await page.getByTestId("run-summary").textContent();
   const blocks = await page.getByTestId("block").count();
 
   await write(page, file("examples/scratch/scripts/main.zeff") + "let z = nosuch(3)\n");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("not run · 1 error found by the check");
   await expect(page.getByTestId("refused")).toContainText("did not start: the check found 1 error");
   // What the check found comes first, and is not faded as the results kept are.
@@ -160,12 +160,14 @@ test("the statement that is running is marked, with Cancel beside the output's t
     page,
     'print("started")\nfor i in 1..200000 {\n    let rows = dataset(wages).where(year == 2015).n_rows()\n}\n',
   );
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   const running = page.locator('[data-testid="block"][data-line="2"]').getByTestId("running");
   await expect(running).toContainText(/running · pass [\d,]+ of 200,000/);
   await expect(page.getByTestId("run-summary")).toContainText("statement 2 of 2");
   // While a run goes it is not run a second time, and its output is not cleared.
-  await expect(page.locator("header.top").getByRole("button", { name: "Run" })).toBeDisabled();
+  await expect(
+    page.locator("header.top").getByRole("button", { name: "Run", exact: true }),
+  ).toBeDisabled();
   await expect(page.getByRole("button", { name: "Clear" })).toBeDisabled();
   await press(page.getByRole("button", { name: "Cancel" }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
@@ -180,7 +182,7 @@ test("when the script is edited the output is marked as not the script's, until 
 }) => {
   await scratch(page, press);
   await write(page, "print(6 * 7)\n");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect.poll(() => printed(page)).toBe("42\n");
   const mark = page.getByTestId("output").getByRole("note");
   await expect(mark).toHaveCount(0);
@@ -194,7 +196,7 @@ test("when the script is edited the output is marked as not the script's, until 
   await write(page, "print(6 * 7)\n");
   await expect(mark).toHaveCount(0);
   await write(page, "print(6 * 8)\n");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect.poll(() => printed(page)).toBe("48\n");
   await expect(mark).toHaveCount(0);
 });
@@ -213,14 +215,14 @@ test("in Panes a run leaves the Output panel where the reader was in it", async 
 }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
   const body = page.getByTestId("output");
   const top = () => body.evaluate((node) => Math.round(node.scrollTop));
   await wheelTo(body, 900);
   await expect.poll(top).toBe(900);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
   await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
   await page.waitForTimeout(600);

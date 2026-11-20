@@ -33,7 +33,9 @@ test("a project is made, and is still there with its script after the page is re
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Returns to schooling");
   await expect.poll(() => scriptText(page)).toBe('// Returns to schooling\nprint("kept")\n');
   await expect(page.getByRole("status")).toHaveText(READY);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   await expect.poll(() => printed(page)).toBe("kept\n");
 
   // Back on the welcome screen it is listed, opened today; and its name is taken.
@@ -69,7 +71,7 @@ test("the layout of a window is kept with its project and comes back after a rel
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  // A project opens in Inline; the layout chosen is kept with the rest.
+  // A project opens in the margin editor; the layout chosen is kept with the rest.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
   const left = page.getByRole("complementary");
   const edge = page.getByRole("separator", { name: "The width of the left panel" });
@@ -109,32 +111,67 @@ test("the layout of a window is kept with its project and comes back after a rel
   );
   // The view state is the interface's own: it is in the project, and the engine is not given it.
   await press(tabs.getByRole("tab", { name: "main.zeff" }));
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
 });
 
-test("the layout chosen is kept with the project, and a new project opens in Inline", async ({
+test("the layout chosen is kept with the project, and a new project opens in the margin editor", async ({
   page,
   press,
 }) => {
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  const inline = page.getByRole("button", { name: "Inline", exact: true });
+  const margin = page.getByRole("button", { name: "Margin", exact: true });
   const panes = page.getByRole("button", { name: "Panes", exact: true });
-  await expect(inline).toHaveAttribute("aria-pressed", "true");
+  await expect(margin).toHaveAttribute("aria-pressed", "true");
   await press(panes);
   await page.waitForTimeout(500);
   await page.reload();
   await expect(panes).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("complementary")).toBeVisible();
-  // The choice is this project's: another project opens in Inline.
+  // The choice is this project's: another project opens in the margin editor.
   await press(page.getByRole("button", { name: "Projects" }));
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Another");
   await press(page.getByRole("button", { name: "Create" }));
-  await expect(inline).toHaveAttribute("aria-pressed", "true");
+  await expect(margin).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("complementary")).toHaveCount(0);
+});
+
+test("what is unfolded, and whether the notes are shown, are kept with the project", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.locator('[data-testid="note"][data-line="8"]'));
+  await expect(page.locator(".cm-zemp-output")).toHaveCount(1);
+  await page.waitForTimeout(500);
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  // The summary's output is unfolded again, and only it.
+  await expect(page.locator(".cm-zemp-output")).toHaveCount(1);
+  await expect(page.locator('[data-testid="note"][data-line="8"]')).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await press(page.getByRole("button", { name: "Notes", exact: true }));
+  await page.waitForTimeout(500);
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByRole("button", { name: "Notes", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  await expect(page.getByTestId("note")).toHaveCount(0);
 });
 
 test("the order of the strip, the plots pinned and the page chosen are kept with the project", async ({
@@ -146,7 +183,7 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "Panes", exact: true }));
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await press(page.getByRole("tab", { name: "Plots" }));
   const plots = page.getByTestId("plots");
@@ -163,7 +200,7 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
   // The Plots tab is the one shown; the run is made again for its plots.
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect
     .poll(() => strip.locator(".name").allTextContents())

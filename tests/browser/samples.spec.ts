@@ -42,7 +42,7 @@ for (const name of ["regression", "simulation", "plots"]) {
     await press(page.getByRole("button", { name: "Panes", exact: true }));
     await write(page, read("scripts/main.zeff"));
     await expect(page.locator("header.top")).toContainText("· saved");
-    await press(page.getByRole("button", { name: "Run" }));
+    await press(page.getByRole("button", { name: "Run", exact: true }));
     await expect(page.getByRole("status")).toHaveText("done", { timeout: 60_000 });
     expect(await printed(page)).toBe(read("expected/stdout.txt"));
     expect(await saidAsWritten(page)).toBe(read("expected/stderr.txt"));
@@ -66,7 +66,7 @@ test("the specification's sample script, written for Zeff 1.0, is refused as `ze
   await press(page.getByRole("button", { name: "Panes", exact: true }));
   await write(page, file("docs/spec/zeff_samples.zeff"));
   await expect(page.locator("header.top")).toContainText("· saved");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
   // Nothing runs, and the engine's finding stands under the line it names, in its words.
   expect(await printed(page)).toBe("");

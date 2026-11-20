@@ -624,3 +624,19 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Not chosen.** Writing a text of the chosen statements alone: the engine would then name the wrong lines. Rendering the check in the interface from the engine's JSON records: the records are kept for later screens, and the text shown is the engine's.
 
 **Reason.** The checklist's step 4; Zemp Specification, section 5 ("**Check** and **Run**"); the margin editor's rule that the interface keeps no dependency rule of its own (section 7.9).
+
+## 21 November 2026: the margin (release 0.2, step 5a)
+
+**Split.** Step 5 of the checklist was split, as too large for one session: 5a, the margin and its notes, what the window shows of the results and its view state, which every later screen stands on (`[engine]`); 5b, the quiet look, the top bar, the results bar and the one-line foot (`[function]`).
+
+**Choice.** The margin editor (#174) replaces the Inline layout. The pane (`src/app/MarginPane.svelte`) is the editor of 0.1's Inline, which already drew each result under its statement, with three things added:
+
+- **Notes** (`src/margin/notes.ts`, drawn by `src/editor/margin.ts`): one on the first row of each statement, in a column of 300 pixels at the right of the code, a widget of the editor and never text of the script. A note's words are the engine's: the name a `let` binds; the type the engine names; for a frame, its rows and variables, written as the engine writes a count, thousands set apart by commas (`18,412`); for a statement that is not a `let`, the head of what it printed (`summary`, and after the type, `by female`); a loop's passes; the codes of what it said. The interface adds the state in words (`running…`, `waiting`, `failed`, `not run`, `edited · not run`) and nothing else. A note with something to unfold is a button whose name is its whole text and whether it unfolds or folds; one with nothing is text. A function and a `use` have none, since the engine does not yet name a function's type to an interface.
+- **Folding.** A script opens with every output folded. A note unfolds its statement's output under the statement's last line, or folds it; **Notes · Fold all · Unfold all** stand over the script, words with a dashed underline, as view state is marked. What failed, and what the check refused, is always shown; so, until step 5b puts **Stop** in the top bar, is the output of the statement that is running, which carries Cancel.
+- **View state.** `.zemp/views.json` gains `version: 2`, whether the notes are shown, and for each script the lines of the statements unfolded; a file of version 1, whose layout is `inline`, is read as the margin editor; and the parts of the file this build does not know are kept as they were and written back. The layout switch reads **Margin | Panes**; Panes stays as built (R2).
+
+**What is unfolded follows the script.** Outputs are unfolded by the line their statement begins on. Before each run, the lines unfolded in the text that ran last are carried to the text that runs now (`src/margin/follow.ts`: the lines the two texts share, in order, by their common start and end and the longest common run of lines between), so that typing a line above a statement keeps its output unfolded. A browser test found this: without it the wrong statement stayed unfolded.
+
+**The tests of Inline** are kept as tests of the margin editor (`tests/browser/margin.spec.ts`): with every output unfolded the page reads as Inline did, so their checks hold after **Unfold all**, the kept text included (`example-unfolded.txt`, the same bytes as 0.1's `example-inline.txt`). The browser tests now name **Run**, **Fold all** and **Unfold all** exactly, since a note's spoken name may hold "not run".
+
+**Reason.** The checklist's step 5a; the margin editor's design, sections 5 to 7.5, 7.10, 11, 16 (a note is a real control, colour never alone) and 18; the owner's rulings of 18 November 2026 (R3).

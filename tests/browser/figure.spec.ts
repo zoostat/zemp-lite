@@ -37,8 +37,10 @@ test("each plot of the example is drawn under the statement that made it, by the
   press,
 }) => {
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  // A script opens folded: its figures are drawn under their statements once unfolded.
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   for (const line of [17, 21]) {
     const drawn = await figure(page, line);
     // An SVG of the engine's, with its text drawn as outlines.
@@ -68,8 +70,10 @@ test("the lines added to draw the figures never show: the script and its output 
   press,
 }) => {
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  // A script opens folded: its figures are drawn under their statements once unfolded.
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   await figure(page, 17);
   await figure(page, 21);
   expect(await scriptText(page)).toBe(file("examples/scratch/scripts/main.zeff"));
@@ -91,7 +95,7 @@ test("in Panes a plot is under its statement in the Output panel and in the Plot
   await press(page.getByRole("button", { name: "Panes", exact: true }));
   const tabs = page.getByRole("tablist", { name: "Open files" });
   await expect(tabs.getByRole("tab")).toHaveText(["main.zeff"]);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   // The Plots tab joins the script's, and the script stays the tab shown.
   await expect(tabs.getByRole("tab")).toHaveText(["main.zeff", "Plots"]);
@@ -127,7 +131,7 @@ test("when its pane is made narrower a plot is laid out afresh, never stretched,
   await page.setViewportSize({ width: 1400, height: 900 });
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Panes", exact: true }));
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await press(page.getByRole("tab", { name: "Plots" }));
   const plots = page.getByTestId("plots");
@@ -179,8 +183,10 @@ test("a plot that is not given a name is drawn too, and a figure stays light in 
     page,
     "dataset(wages)\n    .where(year == 2010)\n    .plot(x: log(wage))\n    .histogram(bins: 20) // the shape\n",
   );
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  // A script opens folded: its figures are drawn under their statements once unfolded.
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   const drawn = await figure(page, 1);
   expect(drawn.svg).toContain("<svg");
   await press(page.getByRole("switch", { name: "Dark" }));
@@ -198,16 +204,22 @@ test("a new run draws its own figures, and a script with no plot has none", asyn
   press,
 }) => {
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  // A script opens folded: its figures are drawn under their statements once unfolded.
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   const first = await figure(page, 17);
   await write(page, "let w = dataset(wages).where(year == 2012)\nw.scatter(educ, log(wage))\n");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   await expect(page.getByTestId("figure")).toHaveCount(1);
   const second = await figure(page, 2);
   expect(second.svg).not.toBe(first.svg);
   await write(page, "print(1)\n");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   await expect.poll(() => printed(page)).toBe("1\n");
   await expect(page.getByTestId("figure")).toHaveCount(0);
 });

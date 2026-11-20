@@ -14,7 +14,7 @@ async function viewer(page: Page, press: (target: Locator) => Promise<void>): Pr
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "Panes", exact: true }));
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await press(page.getByRole("tab", { name: "Plots" }));
   const plots = page.getByTestId("plots");
@@ -215,7 +215,7 @@ test("a plot pops out into a window of its own, which redraws it to fit when res
   await closed;
 });
 
-test("from Inline the viewer is opened with ⌘K, in the script's place, and Script goes back", async ({
+test("from the margin editor the viewer is opened with ⌘K, in the script's place, and Script goes back", async ({
   page,
   press,
 }) => {
@@ -223,7 +223,7 @@ test("from Inline the viewer is opened with ⌘K, in the script's place, and Scr
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByRole("combobox", { name: "Type a command" }).fill("plot viewer");
@@ -233,7 +233,7 @@ test("from Inline the viewer is opened with ⌘K, in the script's place, and Scr
   await expect(
     plots.getByRole("list", { name: "Plots of the last run" }).getByRole("listitem"),
   ).toHaveCount(2);
-  await expect(page.getByRole("button", { name: "Inline", exact: true })).toHaveAttribute(
+  await expect(page.getByRole("button", { name: "Margin", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );

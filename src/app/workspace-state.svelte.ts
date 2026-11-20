@@ -4,6 +4,7 @@
 import type { Engine } from "../engine/engine";
 import type { FrameInfo } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
+import { followed } from "../margin/follow";
 import { begin, blocks, clockOf, end, hear, refused, said, type Run } from "../output/run";
 import {
   keyOf,
@@ -24,6 +25,7 @@ import {
   outputShare,
   readViews,
   tabPath,
+  unfoldToggled,
   usual,
   withTab,
   withoutTab,
@@ -175,6 +177,31 @@ export class Workspace {
     this.#keep();
   }
 
+  /** Unfold, or fold, the output of the statement on `line` of the script at `path`. */
+  toggleUnfolded(path: string, line: number): void {
+    this.views.script.unfolded = {
+      ...this.views.script.unfolded,
+      [path]: unfoldToggled(this.views, path, line),
+    };
+    this.#keep();
+  }
+
+  /** Unfold the outputs of the statements on `lines` of `path`, and fold every other. */
+  setUnfolded(path: string, lines: number[]): void {
+    const others = Object.entries(this.views.script.unfolded).filter(([one]) => one !== path);
+    const kept = lines.filter((line, at) => lines.indexOf(line) === at).sort((a, b) => a - b);
+    this.views.script.unfolded = Object.fromEntries(
+      kept.length === 0 ? others : [...others, [path, kept]],
+    );
+    this.#keep();
+  }
+
+  /** Show or hide the notes beside the code. */
+  setNotes(shown: boolean): void {
+    this.views.script.notes = shown;
+    this.#keep();
+  }
+
   setLeftTab(tab: LeftTab): void {
     this.views.left.tab = tab;
     this.#keep();
@@ -322,6 +349,14 @@ export class Workspace {
       // The run is read through the state, so that what the panel shows follows each event.
       run = this.lastRun;
     };
+    // What is unfolded was unfolded by the lines of the text that ran last: carried through
+    // the edits since to where those statements now stand (`src/margin/follow.ts`).
+    const last = this.lastRun;
+    const unfolded = this.views.script.unfolded[script];
+    if (last !== null && last.script === script && unfolded !== undefined) {
+      const now = followed(last.text, text, unfolded);
+      if (now.join() !== unfolded.join()) this.setUnfolded(script, now);
+    }
     // The engine checks a whole script before it runs any of it. Where there are results on
     // the page, they are left there until a statement of this run starts: if the check
     // refuses the script, nothing has run, and they are still the latest there are.

@@ -13,7 +13,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page).toHaveURL(/#\/p\/scratch$/);
   await expect(page.getByRole("status")).toHaveText(READY);
-  // These tests are of the Panes layout; a project opens in Inline.
+  // These tests are of the Panes layout; a project opens in the margin editor.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
@@ -78,7 +78,7 @@ test("the Scratch project holds the example, which prints what `zeff run` 0.8.0 
   // For the notes of the release, not a limit: from asking for the page to the engine ready.
   test.info().annotations.push({ type: "engine ready", description: `${Date.now() - before} ms` });
   await expect.poll(() => scriptText(page)).toBe(example("scripts/main.zeff"));
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   expect(await printed(page)).toBe(example("expected/stdout.txt"));
   expect(await saidAsWritten(page)).toBe(example("expected/stderr.txt"));
@@ -99,7 +99,7 @@ test("a data file chosen from the computer is added under data/, read by a run, 
   );
   await expect.poll(() => scriptText(page)).toBe(example("scripts/main.zeff"));
   await write(page, 'print(import("data/pay.csv").n_rows())\n');
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect.poll(() => printed(page)).toBe("3\n");
   // The same name a second time is refused, in words.
@@ -120,7 +120,7 @@ test("a long run is cancelled between two steps and the page stays usable", asyn
     page,
     'print("started")\nfor i in 1..200000 {\n    let rows = dataset(wages).where(year == 2015).n_rows()\n}\nprint("never")\n',
   );
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   // The loop is under way, and the page still answers: the engine is in its own worker.
   await expect(page.getByTestId("running")).toContainText("pass");
   await press(page.getByRole("button", { name: "Cancel" }));
@@ -132,7 +132,7 @@ test("a long run is cancelled between two steps and the page stays usable", asyn
   );
   // The project is still open in the worker, and the next run goes to its end.
   await write(page, "print(6 * 7)\n");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect.poll(() => printed(page)).toBe("42\n");
 });
@@ -148,7 +148,8 @@ test("in a private window, where the browser keeps nothing, the screen says so a
   await expect(page.getByText("Not kept.")).toBeVisible();
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   expect(await printed(page)).toBe(example("expected/stdout.txt"));
 });

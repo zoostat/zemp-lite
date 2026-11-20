@@ -17,6 +17,7 @@
   import { onMount } from "svelte";
   import type { Place } from "../app/steady";
   import { inlineOutput, showOutput, type InlineOutput } from "./inline";
+  import { marginNotes, showNotes, type MarginNotes } from "./margin";
   import { zeffLanguage } from "./language";
 
   let {
@@ -25,6 +26,7 @@
     onchange,
     onrun,
     inline = null,
+    notes = null,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -38,6 +40,8 @@
      * these blocks of the last run are drawn under their statements.
      */
     inline?: InlineOutput | null;
+    /** The margin editor's notes, beside their statements; `null` where none are shown. */
+    notes?: MarginNotes | null;
   } = $props();
 
   let host: HTMLDivElement;
@@ -137,8 +141,8 @@
           EditorState.tabSize.of(4),
           zeffLanguage(),
           look,
-          // In the one column of Inline a long line wraps, so that nothing reaches past it.
-          inline === null ? [] : [tall, inlineOutput(), EditorView.lineWrapping],
+          // In the margin editor a long line wraps, so that nothing reaches past it.
+          inline === null ? [] : [tall, inlineOutput(), marginNotes(), EditorView.lineWrapping],
           // Run from the keyboard: ⌘↵ and ⌘⇧↵ (Ctrl on Windows and Linux). Tab indents;
           // Escape and then Tab moves on to the next control, for those who use the keyboard alone.
           keymap.of([
@@ -171,6 +175,14 @@
     const now = text;
     if (view !== null && view.state.doc.toString() !== now) {
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: now } });
+    }
+  });
+
+  // The notes of the margin, beside their statements, each time they change.
+  $effect(() => {
+    const shown = notes;
+    if (view !== null && inline !== null) {
+      view.dispatch({ effects: showNotes.of(shown) });
     }
   });
 

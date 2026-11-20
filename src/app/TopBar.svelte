@@ -1,6 +1,6 @@
 <script lang="ts">
   // The top bar of a project (the design guide, section 9; open decision #146): the logo and
-  // Projects, the project and its file, ⌘K, the size of code text, Inline | Panes, the Dark
+  // Projects, the project and its file, ⌘K, the size of code text, Margin | Panes, the Dark
   // switch, Check and Run. Run is the one filled control.
   import { codeLarger, codeSize, codeSmaller } from "../theme/codesize.svelte";
   import { CODE_SIZES } from "../theme/codesize";
@@ -56,9 +56,9 @@
   </span>
   <span class="layouts" role="group" aria-label="Layout">
     <button
-      class:on={workspace.views.layout === "inline"}
-      aria-pressed={workspace.views.layout === "inline"}
-      onclick={() => workspace.setLayout("inline")}>Inline</button
+      class:on={workspace.views.layout === "margin"}
+      aria-pressed={workspace.views.layout === "margin"}
+      onclick={() => workspace.setLayout("margin")}>Margin</button
     >
     <button
       class:on={workspace.views.layout === "panes"}

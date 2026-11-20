@@ -5,6 +5,7 @@ import {
   outputShare,
   readViews,
   tabPath,
+  unfoldToggled,
   usual,
   withTab,
   withoutTab,
@@ -14,7 +15,8 @@ import {
 describe("the view state of a project", () => {
   it("is written and read back as it was", () => {
     const state = usual();
-    state.layout = "inline";
+    state.layout = "panes";
+    state.script = { notes: false, unfolded: { "scripts/main.zeff": [8, 13] } };
     state.left = { tab: "objects", width: 312, shown: false };
     state.output = { share: 0.3, shown: false };
     state.tabs = [fileTab("scripts/main.zeff"), fileTab("scripts/second.zeff"), "view:plots"];
@@ -51,7 +53,49 @@ describe("the view state of a project", () => {
       ...usual(),
       left: { tab: "project", width: 268, shown: false },
       output: { share: 0.5, shown: true },
+      others: { later: { anything: true } },
     });
+  });
+
+  it("opens a project in the margin editor with every output folded and the notes shown", () => {
+    expect(usual().layout).toBe("margin");
+    expect(usual().script).toEqual({ notes: true, unfolded: {} });
+  });
+
+  it("reads a file of version 1, whose layout is Inline, as the margin editor", () => {
+    expect(readViews(JSON.stringify({ layout: "inline" })).layout).toBe("margin");
+    expect(readViews(JSON.stringify({ layout: "panes" })).layout).toBe("panes");
+  });
+
+  it("writes its version, and keeps what a later build wrote that this one does not know", () => {
+    const read = readViews(
+      JSON.stringify({ version: 3, paper: { file: "p.zmd" }, layout: "panes" }),
+    );
+    const written = JSON.parse(writeViews(read)) as Record<string, unknown>;
+    expect(written["version"]).toBe(2);
+    expect(written["paper"]).toEqual({ file: "p.zmd" });
+    expect(written["layout"]).toBe("panes");
+    expect(Object.keys(written)).not.toContain("others");
+  });
+
+  it("reads what is unfolded, each script's lines whole numbers, once each and in order", () => {
+    const read = readViews(
+      JSON.stringify({
+        script: {
+          notes: "no",
+          unfolded: { "a.zeff": [13, 8, 8, 0, 2.5, "x"], "b.zeff": "all", c: [] },
+        },
+      }),
+    );
+    expect(read.script).toEqual({ notes: true, unfolded: { "a.zeff": [8, 13] } });
+  });
+
+  it("unfolds and folds one output", () => {
+    const state = usual();
+    state.script.unfolded["s.zeff"] = [8];
+    expect(unfoldToggled(state, "s.zeff", 13)).toEqual([8, 13]);
+    expect(unfoldToggled(state, "s.zeff", 8)).toEqual([]);
+    expect(unfoldToggled(state, "t.zeff", 4)).toEqual([4]);
   });
 
   it("holds the panel's width and the output's share inside their limits", () => {

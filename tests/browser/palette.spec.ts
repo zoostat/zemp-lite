@@ -59,7 +59,7 @@ test("⌘K opens the palette, typing narrows it, the arrows choose, Escape close
 test("each command does what it says", async ({ page, press }) => {
   await scratch(page, press);
   const panes = page.getByRole("button", { name: "Panes", exact: true });
-  const inline = page.getByRole("button", { name: "Inline", exact: true });
+  const margin = page.getByRole("button", { name: "Margin", exact: true });
   await command(page, "layout panes");
   await expect(panes).toHaveAttribute("aria-pressed", "true");
   await command(page, "left panel hide");
@@ -70,8 +70,8 @@ test("each command does what it says", async ({ page, press }) => {
   await expect(page.getByRole("button", { name: "Show the output" })).toBeVisible();
   await command(page, "output show");
   await expect(page.getByRole("button", { name: "Hide the output" })).toBeVisible();
-  await command(page, "layout inline");
-  await expect(inline).toHaveAttribute("aria-pressed", "true");
+  await command(page, "layout margin");
+  await expect(margin).toHaveAttribute("aria-pressed", "true");
 
   await command(page, "theme dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -89,11 +89,13 @@ test("each command does what it says", async ({ page, press }) => {
 
   await write(page, "print(6 * 7)\n");
   await command(page, "run the script");
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   await expect.poll(() => printed(page)).toBe("42\n");
   await command(page, "output clear");
   await expect.poll(() => printed(page)).toBe("");
 
-  // A file is opened from the palette, which is how Inline reaches a second file.
+  // A file is opened from the palette, which is how the margin editor reaches a second file.
   await command(page, "open file zeff.toml");
   await expect.poll(() => scriptText(page)).toMatch(/^\[project\]\nname = "Scratch"/);
   await command(page, "open file main.zeff");
@@ -202,7 +204,7 @@ test("the last line says how the output stands to the script, and names the engi
   await scratch(page, press);
   const sync = page.getByTestId("sync");
   await expect(sync).toHaveText("not run yet");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(sync).toHaveText("in sync · 1 warning");
   await editor(page).focus();
   await page.keyboard.press("ControlOrMeta+End");
@@ -214,7 +216,7 @@ test("the last line says how the output stands to the script, and names the engi
 test("every control of the window can be reached from the keyboard", async ({ page, press }) => {
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Panes", exact: true }));
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   // Every control is one the Tab key stops at, and has a name a screen reader can say.
   const controls = await page

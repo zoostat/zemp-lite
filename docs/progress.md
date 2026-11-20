@@ -55,3 +55,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 15 native and 12 message tests of the worker; the nine samples identical; 2,794.3 kB, cold start 54.1 ms; 120 unit tests; 171 browser tests passed and 1 skipped by design.
 
 **Next.** Step 5 `[engine]`: the margin.
+
+## 21 November 2026, release 0.2, step 5a (the margin)
+
+**Done.** Step 5 split into 5a and 5b. Step 5a `[engine]`: the margin editor replaces Inline. A note beside each statement in the engine's words (`wages Frame · 18,412 × 11`, `summary Table · by female W0201`); a script opens folded; a note unfolds its output; **Notes · Fold all · Unfold all**; what is unfolded and the notes kept with the project and following the script's edits; the switch reads **Margin | Panes**. The Inline tests are kept, after **Unfold all**.
+
+**Green.** `npm run routine`: 137 unit tests; 181 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 5b `[function]`: the quiet look.

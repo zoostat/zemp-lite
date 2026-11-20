@@ -9,7 +9,7 @@
   import { switchTheme, theme } from "../theme/theme.svelte";
   import type { Command } from "./commands";
   import ConsoleLine from "./ConsoleLine.svelte";
-  import InlinePane from "./InlinePane.svelte";
+  import MarginPane from "./MarginPane.svelte";
   import LeftPanel from "./LeftPanel.svelte";
   import MainPane from "./MainPane.svelte";
   import Palette from "./Palette.svelte";
@@ -49,9 +49,9 @@
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
     { name: "Check the script", hint: "nothing is run", run: () => void workspace.check() },
     {
-      name: workspace.views.layout === "inline" ? "Layout: Panes" : "Layout: Inline",
-      hint: `now ${workspace.views.layout === "inline" ? "Inline" : "Panes"}`,
-      run: () => workspace.setLayout(workspace.views.layout === "inline" ? "panes" : "inline"),
+      name: workspace.views.layout === "margin" ? "Layout: Panes" : "Layout: Margin",
+      hint: `now ${workspace.views.layout === "margin" ? "Margin" : "Panes"}`,
+      run: () => workspace.setLayout(workspace.views.layout === "margin" ? "panes" : "margin"),
     },
     {
       name: theme.name === "dark" ? "Theme: light" : "Theme: dark",
@@ -111,8 +111,8 @@
   </p>
 {/if}
 
-{#if workspace.views.layout === "inline"}
-  <InlinePane {workspace} />
+{#if workspace.views.layout === "margin"}
+  <MarginPane {workspace} />
 {:else}
   <div class="panes" bind:this={body}>
     {#if workspace.views.left.shown}

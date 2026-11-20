@@ -9,7 +9,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  // These tests are of the Panes layout; a project opens in Inline.
+  // These tests are of the Panes layout; a project opens in the margin editor.
   await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
@@ -34,7 +34,7 @@ test("the top bar carries its controls in order, Run the one filled, and what is
     "Commands",
     "Smaller code text",
     "Larger code text",
-    "Inline",
+    "Margin",
     "Panes",
     "Check",
     "Run",
@@ -43,7 +43,7 @@ test("the top bar carries its controls in order, Run the one filled, and what is
   await expect(bar.getByRole("button", { name: "Check" })).toBeEnabled();
   await expect(bar.getByRole("button", { name: "Panes" })).toHaveAttribute("aria-pressed", "true");
   // Run is filled with the logo's violet; the others are outlined words.
-  const run = bar.getByRole("button", { name: "Run" });
+  const run = bar.getByRole("button", { name: "Run", exact: true });
   expect(await run.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe(
     "rgb(91, 58, 158)",
   );
@@ -71,7 +71,7 @@ test("the left panel has two tabs, Project with the files and Objects with what 
   await press(left.getByRole("tab", { name: "Objects" }));
   await expect(left.getByText("Run the script to see what it leaves in memory.")).toBeVisible();
   await expect(left.getByText("Zeff 0.8.0 in this browser")).toBeVisible();
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(left.getByText("18,412 rows × ")).toBeVisible();
   await expect(left.getByText("wages", { exact: true })).toBeVisible();
@@ -135,7 +135,7 @@ test("the Output panel sits under the script, folds away, is resized and is clea
   await scratch(page, press);
   const script = page.locator(".cm-editor");
   const output = page.getByTestId("output");
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(output).toContainText("summary · by female");
   // Under the script, in the same pane.
@@ -206,7 +206,7 @@ test("the code size control changes the code and its output together, and is rem
   const size = (target: ReturnType<Page["locator"]>) =>
     target.evaluate((node) => getComputedStyle(node).fontSize);
   const script = editor(page);
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   const output = page.getByTestId("printed").first();
   expect(await size(script)).toBe("14px");
@@ -269,6 +269,6 @@ test("a project is closed and another opened, each with an engine of its own", a
     await press(page.getByRole("button", { name: "Scratch project" }));
     await expect(page.getByRole("status")).toHaveText(READY);
   }
-  await press(page.getByRole("button", { name: "Run" }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
 });

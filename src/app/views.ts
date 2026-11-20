@@ -5,12 +5,28 @@
 // file holds that is not understood is passed over, and the default is used in its place, so
 // a file written by a later version, or damaged, never keeps a project from opening.
 
-export type Layout = "inline" | "panes";
+export type Layout = "margin" | "panes";
+
+/** The version of the view state this build writes; a file without one is of version 1. */
+export const VIEWS_VERSION = 2;
 export type LeftTab = "project" | "objects";
 
 export interface ViewState {
-  /** Inline, one column with each output under its statement, or Panes (section 5). */
+  /**
+   * The margin editor, a note beside each statement and its output unfolded under it at the
+   * reader's asking (open decision #174), or Panes (section 5). A file of version 1 says
+   * "inline", the layout the margin editor replaces, and is read as the margin editor.
+   */
   layout: Layout;
+  /** The margin editor's view of the scripts. */
+  script: {
+    /** Whether the notes beside the code are shown. */
+    notes: boolean;
+    /** For each script, by its path, the lines of the statements whose output is unfolded. */
+    unfolded: Record<string, number[]>;
+  };
+  /** The parts of the file this build does not know, kept as they were (a later build's). */
+  others: Record<string, unknown>;
   left: {
     tab: LeftTab;
     /** The panel's width, in pixels. */
@@ -57,8 +73,10 @@ export const tabPath = (tab: string) => (tab.startsWith("file:") ? tab.slice(5) 
 /** A project opened for the first time: its main script in a tab. */
 export function usual(): ViewState {
   return {
-    // Zemp Lite opens in Inline (section 5).
-    layout: "inline",
+    // Zemp Lite opens in the margin editor, every output folded (#174).
+    layout: "margin",
+    script: { notes: true, unfolded: {} },
+    others: {},
     left: { tab: "project", width: LEFT_WIDTH.usual, shown: true },
     output: { share: OUTPUT_SHARE.usual, shown: true },
     tabs: [fileTab("scripts/main.zeff")],
@@ -91,8 +109,30 @@ export function readViews(text: string | null): ViewState {
     return state;
   }
   const from = held as Record<string, unknown>;
-  if (from["layout"] === "inline" || from["layout"] === "panes") {
+  if (from["layout"] === "margin" || from["layout"] === "panes") {
     state.layout = from["layout"];
+  } else if (from["layout"] === "inline") {
+    state.layout = "margin";
+  }
+  const script = from["script"] as Record<string, unknown> | undefined;
+  if (typeof script === "object" && script !== null) {
+    if (typeof script["notes"] === "boolean") state.script.notes = script["notes"];
+    const unfolded = script["unfolded"];
+    if (typeof unfolded === "object" && unfolded !== null && !Array.isArray(unfolded)) {
+      for (const [path, lines] of Object.entries(unfolded as Record<string, unknown>)) {
+        if (Array.isArray(lines)) {
+          const kept = lines.filter(
+            (line): line is number => Number.isInteger(line) && (line as number) >= 1,
+          );
+          if (kept.length > 0)
+            state.script.unfolded[path] = [...new Set(kept)].sort((a, b) => a - b);
+        }
+      }
+    }
+  }
+  const known = new Set(["version", ...Object.keys(state)]);
+  for (const [key, value] of Object.entries(from)) {
+    if (!known.has(key)) state.others[key] = value;
   }
   const left = from["left"] as Record<string, unknown> | undefined;
   if (typeof left === "object" && left !== null) {
@@ -134,9 +174,18 @@ export function readViews(text: string | null): ViewState {
   return state;
 }
 
-/** The view state as the file holds it. */
+/** The view state as the file holds it: its version first, and the parts not known kept. */
 export function writeViews(state: ViewState): string {
-  return `${JSON.stringify(state, null, 2)}\n`;
+  const { others, ...known } = state;
+  return `${JSON.stringify({ ...others, version: VIEWS_VERSION, ...known }, null, 2)}\n`;
+}
+
+/** The lines unfolded in `path` with the output of the statement at `line` unfolded or folded. */
+export function unfoldToggled(state: ViewState, path: string, line: number): number[] {
+  const now = state.script.unfolded[path] ?? [];
+  return now.includes(line)
+    ? now.filter((one) => one !== line)
+    : [...now, line].sort((a, b) => a - b);
 }
 
 /** The tabs with `tab` open and shown; a tab already open is shown, not opened twice. */
