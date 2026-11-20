@@ -504,3 +504,11 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **A correction found on the way.** Section 22 of the document, version 0.8, had left the loop inspector out of the 0.2 alpha's step 2, although #76 places it at the 0.2 alpha; version 0.9 puts it back.
 
 **Reason.** The owner's word of 18 November 2026. Nothing in this repository's code or specification was changed; none of the six belongs to release 0.1, and each is the owner's to decide when it stands in the register.
+
+## 20 November 2026: polynomial terms, an addendum to open decision #164 written for the register
+
+**The owner's question and word.** Whether Zeff has R's `I(x^2)`, `poly(x, 2)` and orthogonal polynomials, and how it fits a polynomial regression; then: "Write up poly(x, k) for the register."
+
+**What was found.** The register already holds the entry, #164 (17 November 2026): `poly(x, degree:, raw:)` in `regress` at 1.2, recommended, deadline 1.1. So it was not proposed again; the note `zeff-poly-addendum-to-164-for-the-register.md` in the shared notes folder adds what #164 leaves open: (1) the names of a `poly` term's columns, which #164 gives as R's although the owner's ruling of 23 October 2026 names the `poly` contrast's columns `var=linear`, `var=quadratic` (recommended `poly(exper)=quadratic`, the degree left out so that fits of different degrees line up in `report`); (2) the rows and weights the basis is orthogonal on (the estimation rows, unweighted; R differs when rows are dropped); (3) for `margins` at 0.9.0, the slope taken through `exper` and `exper^2` together, as Stata's `margins` and R's `marginaleffects` do; (4) two messages an R user meets today, `I(exper^2)` answered "did you mean `PI`?" and `poly(exper, 2)` given no route, with Z0103's help to show the Zeff form at 0.9.0.
+
+**Reason.** The owner's word of 20 November 2026. The register is edited in the Zeff repository, never from here; nothing in this repository's code or specification was changed.

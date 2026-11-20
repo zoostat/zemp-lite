@@ -165,3 +165,13 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** Zemp 0.2 alpha, once Zeff 0.8.0 is released ("Start release 0.2"); before it, a Zeff session enters the shared notes in the register.
 
 **For the owner to decide.** Once they stand in the register: the six proposals (R14 to R19 of the document), besides the questions of the entry above.
+
+## 20 November 2026: polynomial terms for the register
+
+**Done.** On the owner's questions about `I(x^2)`, `poly(x, 2)` and polynomial regression, and his word "Write up poly(x, k) for the register": the register already has #164, so an addendum to it was written in the shared notes folder (the names of the columns, the rows and weights of the basis, slopes through `margins` at 0.9.0, and two misleading messages for R users). Before it, Zeff 0.8.0 (not yet released) was rated against SPSS at the owner's request, in conversation only, and Zemp Lite 0.1 was built and opened for his own trial.
+
+**Green.** Nothing to run: documents only.
+
+**Next.** Zemp 0.2 alpha, once Zeff 0.8.0 is released ("Start release 0.2"); before it, a Zeff session enters the shared notes in the register.
+
+**For the owner to decide.** Once they stand in the register: the four points of the addendum to #164, besides the questions of the entries above.
