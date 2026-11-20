@@ -11,6 +11,7 @@
   import { counted, notesOf } from "../margin/notes";
   import { marks } from "../margin/stale";
   import { trailOf } from "../margin/trail";
+  import HelpPanel from "../margin/HelpPanel.svelte";
   import type { Note } from "../margin/notes";
   import { said } from "../output/run";
   import { placed } from "../output/place";
@@ -226,71 +227,83 @@
   <!-- The plot viewer, opened from ⌘K, in the script's place; "Script" goes back. -->
   <PlotViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
 {:else}
-  <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
-    <div
-      class="sheet"
-      bind:this={sheet}
-      style:--zemp-margin={notesShown ? "300px" : "0px"}
-      data-width={workspace.printWidth}
-    >
-      <span class="probe mono" aria-hidden="true" bind:this={probe}>{"0".repeat(100)}</span>
-      <div class="results" role="toolbar" aria-label="The run, and what is shown of its results">
-        <button
-          class="facts"
-          data-testid="run-facts"
-          disabled={ours === null}
-          aria-haspopup="dialog"
-          title="The run's facts: the engine, the seed, where the time and the memory went"
-          onclick={() => (workspace.panel = workspace.panel === "facts" ? null : "facts")}
-          >{facts}</button
-        >
-        <span class="copied" aria-live="polite" data-testid="copied">{workspace.copied}</span>
-        <span class="gap"></span>
-        <button
-          class="view"
-          aria-pressed={notesShown}
-          onclick={() => workspace.setNotes(!notesShown)}
-          title="Show or hide the notes beside the code">Notes</button
-        >
-        <button
-          class="view"
-          onclick={() => workspace.setUnfolded(path, [])}
-          title="Fold every output; an error stays">Fold all</button
-        >
-        <button
-          class="view"
-          onclick={() => workspace.setUnfolded(path, opening)}
-          disabled={opening.length === 0}
-          title="Unfold every output under its statement">Unfold all</button
-        >
+  <div class="place">
+    <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
+      <div
+        class="sheet"
+        bind:this={sheet}
+        style:--zemp-margin={notesShown ? "300px" : "0px"}
+        data-width={workspace.printWidth}
+      >
+        <span class="probe mono" aria-hidden="true" bind:this={probe}>{"0".repeat(100)}</span>
+        <div class="results" role="toolbar" aria-label="The run, and what is shown of its results">
+          <button
+            class="facts"
+            data-testid="run-facts"
+            disabled={ours === null}
+            aria-haspopup="dialog"
+            title="The run's facts: the engine, the seed, where the time and the memory went"
+            onclick={() => (workspace.panel = workspace.panel === "facts" ? null : "facts")}
+            >{facts}</button
+          >
+          <span class="copied" aria-live="polite" data-testid="copied">{workspace.copied}</span>
+          <span class="gap"></span>
+          <button
+            class="view"
+            aria-pressed={notesShown}
+            onclick={() => workspace.setNotes(!notesShown)}
+            title="Show or hide the notes beside the code">Notes</button
+          >
+          <button
+            class="view"
+            onclick={() => workspace.setUnfolded(path, [])}
+            title="Fold every output; an error stays">Fold all</button
+          >
+          <button
+            class="view"
+            onclick={() => workspace.setUnfolded(path, opening)}
+            disabled={opening.length === 0}
+            title="Unfold every output under its statement">Unfold all</button
+          >
+        </div>
+        {#if buffer?.loaded}
+          {#key path}
+            <Editor
+              bind:this={editor}
+              text={buffer.text}
+              label="The script"
+              onchange={(text) => workspace.edit(path, text)}
+              onrun={() => void workspace.run()}
+              inline={output}
+              notes={margin}
+              onunfold={unfoldAt}
+              onstatement={(line) => void workspace.runPart("statement", line)}
+              {runto}
+              oncursor={(line) => (workspace.cursor = { path, line })}
+              reveal={workspace.reveal?.path === path ? workspace.reveal : null}
+              diagnostics={workspace.diagnostics[path] ?? []}
+              onhover={(line, character) => workspace.hover(path, line, character)}
+              oncomplete={(line, character) => workspace.complete(path, line, character)}
+              onusage={(line, character) => workspace.signature(path, line, character)}
+              onfunction={(name) => workspace.atFunction(name)}
+              onhelp={(name) => void workspace.showHelp(name)}
+            />
+          {/key}
+        {/if}
       </div>
-      {#if buffer?.loaded}
-        {#key path}
-          <Editor
-            bind:this={editor}
-            text={buffer.text}
-            label="The script"
-            onchange={(text) => workspace.edit(path, text)}
-            onrun={() => void workspace.run()}
-            inline={output}
-            notes={margin}
-            onunfold={unfoldAt}
-            onstatement={(line) => void workspace.runPart("statement", line)}
-            {runto}
-            oncursor={(line) => (workspace.cursor = { path, line })}
-            reveal={workspace.reveal?.path === path ? workspace.reveal : null}
-            diagnostics={workspace.diagnostics[path] ?? []}
-            onhover={(line, character) => workspace.hover(path, line, character)}
-            oncomplete={(line, character) => workspace.complete(path, line, character)}
-            onusage={(line, character) => workspace.signature(path, line, character)}
-          />
-        {/key}
-      {/if}
-    </div>
-  </section>
+    </section>
+    {#if workspace.help.shown}
+      <HelpPanel {workspace} />
+    {/if}
+  </div>
 {/if}
 
 <style>
+  .place {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
   .margin {
     background: var(--window);
     flex: 1;

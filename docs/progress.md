@@ -127,3 +127,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 148 unit tests; 226 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 11 `[function]`: Help.
+
+## 21 November 2026, release 0.2, step 11 (Help)
+
+**Done.** Step 11 `[function]`: the Help panel beside the script, opened by F1, ⌘K or Explain from what the run said; it shows a function's page as `zeff help` prints it, or a code's as `zeff explain` does, and follows the function under the cursor unless switched off; `:help name` in the console line. Steps 9 and 10a are green on GitHub (by the run of fefee70, whose tree holds them).
+
+**Green.** `npm run routine`: 151 unit tests; 234 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 12 `[function]`: the places, and Plots with its list.

@@ -106,6 +106,19 @@ export class Language {
     await this.#send({ jsonrpc: "2.0", method, params });
   }
 
+  /** The help page of a function, from the language worker, which a run never holds up. */
+  async help(name: string): Promise<{ page: string | null; message: string }> {
+    await this.start();
+    await this.#session.sync();
+    return this.#engine.help(name);
+  }
+
+  /** A code's explained page, from the language worker. */
+  async explain(code: string): Promise<string> {
+    await this.start();
+    return (await this.#engine.explain(code)).text;
+  }
+
   /** End the language worker. */
   close(): void {
     this.#engine.close();

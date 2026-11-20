@@ -1,0 +1,127 @@
+summary — Table of N, missing, mean, SD, min and max                   data · tier 1 · since 0.1.0 · 1.0 · closed form
+
+USAGE
+    data.summary(vars: Vars, stats: List<n | missing | mean | sd | min | max>, by: Vars, weights: Var,
+                 weight_type: frequency | analytic | sampling = sampling)
+
+DESCRIPTION
+    One row per variable with its count of non-missing values (`N`), its count of missing values, and its
+    mean, sample standard deviation (n − 1), minimum and maximum, computed as `mean` and `sd` compute them:
+    missing values are skipped and the rows skipped are counted in one warning under the table. Without
+    `vars`, every Bool, Int or Float variable is summarised, in the frame's order; a Bool variable counts
+    `true` as 1. `stats:` chooses the statistics and their order from the six words `n`, `missing`, `mean`,
+    `sd`, `min` and `max`; any other word is refused.
+
+    Statistics print with three decimals, as section 10.2 of the Language Reference prints tables; `mean`
+    and `sd` on their own print six significant digits. A variable whose values are all missing shows `NA`
+    throughout, with a warning; one value alone has an `NA` standard deviation, and so has a variable
+    holding `Inf`.
+
+    Like R's `summary` on numeric columns and Stata's `summarize`, with the count of missing values beside
+    the count of observations.
+
+ARGUMENTS
+    data          Frame. The frame.
+    vars:         Vars. The variables to summarise, in a list, as in `[wage, hours]`; one may be written
+                  alone. Omitted, every Bool, Int or Float variable.
+    stats:        List<n | missing | mean | sd | min | max>. The statistics to show, as words in a list, in
+                  the order wanted: `stats: [mean, sd]`. Omitted, all six in the order N, missing, mean, sd,
+                  min, max.
+    by:           Vars. Repeat the computation within each group; plots draw one panel per group.             (shared)
+    weights:      Var. Weight variable.                                                                       (shared)
+    weight_type:  frequency | analytic | sampling = sampling. Stata's fweight, aweight and pweight. In 1.0
+                  the tests refuse `weights:` with `weight_type: sampling` (Z0411) and point to regression
+                  with robust errors.                                                                         (shared)
+
+VALUE
+    A `Table`, with the `by:` variables as its first columns when groups are asked for, which prints as
+    shown and can be passed to `print`.
+
+DETAILS
+    The mean is a compensated sum corrected once; the standard deviation is the corrected two-pass algorithm
+    with the deviations scaled before squaring; see `mean` and `sd`. Minimum and maximum are taken over the
+    non-missing values, so `Inf` and `-Inf` appear as themselves.
+
+WARNINGS AND NOTES
+    W0201   missing values skipped, with the count for each variable in one line; a variable with all values
+            missing, or no rows at all
+    W0204   Inf and -Inf both present, so a mean is NA
+    W0205   one value only or an infinite value, so a sd is NA
+    Z0101   no such variable in the frame
+    Z0102   a variable that differs only in case from the name written
+    Z0401   a variable that is not Bool, Int or Float; stats: with an empty list or a value that is not one
+            of the six words
+    Z0402   stats: names a word that is not a statistic
+
+ACCURACY
+    Closed form.
+
+REFERENCES
+    Chan, Golub and LeVeque (1983), Algorithms for computing the sample variance: analysis and
+    recommendations, The American Statistician 37, 242–247.
+
+SEE ALSO
+    mean, sd, describe
+
+EXAMPLES
+    > let wages = import("data/wages.csv")
+    note: data/wages.csv read as CSV: 3 rows × 3 variables, types guessed; CSV carries no labels, value labels or categories (line 1)
+    > wages.summary([wage, hours])
+    summary · wages
+
+      variable   N   missing     mean      sd      min      max
+      wage       3         0   24.533   6.178   19.000   31.200
+      hours      2         1   37.500   3.536   35.000   40.000
+    warning[W0201]: 1 row with NA in hours was skipped (line 2)
+    > wages.summary(stats: [n, mean])
+    summary · wages
+
+      variable   N     mean
+      id         3    2.000
+      wage       3   24.533
+      hours      2   37.500
+    warning[W0201]: 1 row with NA in hours was skipped (line 3)
+
+summary — The printed summary of a result as a table                      results · tier 1 · since 0.4.0 · 1.0 · exact
+
+USAGE
+    fit.summary(standardized: Bool = false, fit_measures: Bool = false)
+
+DESCRIPTION
+    Gives the summary a result prints, as a `Table` that can be exported: for a fitted model the title, the
+    lines on the rows used and the standard errors, the table of estimates and the fit measures; for a
+    test's result its title, its table if it has one, and its statistic line. `standardized: true` adds a
+    column `beta` after the estimates, each estimate times the standard deviation of its regressor over that
+    of the outcome, blank for the intercept and for an omitted term; `fit_measures: true` adds a line with
+    the log-likelihood, AIC and BIC under the fit measures, which count the variance as a parameter as R's
+    `AIC` and `BIC` do. Like R's `summary` on a fit and Stata's `regress, beta`.
+
+ARGUMENTS
+    fit            Result. The result.
+    standardized:  Bool = false. Whether to add the standardized coefficients.
+    fit_measures:  Bool = false. Whether to add the line of fit measures.
+
+VALUE
+    A `Table`.
+
+ACCURACY
+    Exact.
+
+SEE ALSO
+    estimates, export, reg
+
+EXAMPLES
+    > let m = dataset(wages).reg(log(wage) ~ educ + exper + female)
+    > m.summary(standardized: true, fit_measures: true)
+    reg · log(wage) ~ educ + exper + female
+    N = 18,179 (233 rows dropped for NA in model variables)
+    standard errors: classical
+
+      term          estimate      beta   std.error   t value   p value   95% CI
+      (intercept)     1.8998                0.0221     86.05    <0.001   [1.8565, 1.9431]
+      educ            0.0760    0.3899      0.0014     55.69    <0.001   [0.0733, 0.0787]
+      exper           0.0220    0.3417      0.0005     48.78    <0.001   [0.0211, 0.0229]
+      female         -0.1329   -0.1371      0.0064    -20.69    <0.001   [-0.1455, -0.1203]
+
+    R² 0.203 · adjusted R² 0.203
+    log-likelihood -10,563.8 · AIC 21,137.5 · BIC 21,176.5

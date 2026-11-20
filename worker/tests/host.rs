@@ -608,3 +608,20 @@ fn the_engines_language_server_answers_an_editor_over_the_project_in_memory() {
         offered[0]
     );
 }
+
+#[test]
+fn a_functions_help_page_is_what_zeff_help_prints() {
+    let host = Host::new("demo");
+    let found: Value = serde_json::from_str(&host.help("summary")).unwrap();
+    assert_eq!(found["type"], "help");
+    assert_eq!(
+        found["page"].as_str().unwrap(),
+        read("tests/scripts/help-summary.txt")
+    );
+    let none: Value = serde_json::from_str(&host.help("nosuch")).unwrap();
+    assert_eq!(none["page"], Value::Null);
+    assert!(
+        read("tests/scripts/help-nosuch.stderr").contains(none["message"].as_str().unwrap()),
+        "{none}"
+    );
+}

@@ -339,6 +339,34 @@ impl Host {
         )
     }
 
+    /// The help page of a function, as `zeff help <name>` prints it inside this project: a
+    /// function of the project's modules first, then the engine's own; as a line of JSON of type
+    /// `help`, with the page, or the engine's sentence where there is none.
+    pub fn help(&self, name: &str) -> String {
+        let Ok(registry) = zeff_engine::registry::registry() else {
+            return "{\"type\": \"help\", \"page\": null, \"message\": \"\"}".to_string();
+        };
+        let own = Project::open(&self.fs, Path::new(ROOT))
+            .ok()
+            .and_then(|project| {
+                zeff_engine::help::project_help(&self.fs, &project, registry, name)
+            });
+        let found = match own {
+            Some(page) => Ok(page),
+            None => zeff_engine::help::help_text(registry, name),
+        };
+        match found {
+            Ok(page) => format!(
+                "{{\"type\": \"help\", \"page\": {}, \"message\": \"\"}}",
+                json_string(&page)
+            ),
+            Err(message) => format!(
+                "{{\"type\": \"help\", \"page\": null, \"message\": {}}}",
+                json_string(&message)
+            ),
+        }
+    }
+
     /// One message of the Language Server Protocol (its body, a JSON object) given to the
     /// engine's own language server, as `zeff lsp` serves an editor; what it answers, the bodies
     /// of the messages to send back in order, as a JSON array of texts. A document is named by

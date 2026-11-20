@@ -372,3 +372,14 @@ describe("a code's explained page", () => {
     await expect(none).rejects.toThrow("no code `Q9999` has an explained page");
   });
 });
+
+describe("a function's help page", () => {
+  it("is asked for by its name, and given with the engine's reason where there is none", async () => {
+    const { engine: made, worker } = await opened();
+    const asked = made.help("summary");
+    await settle();
+    expect(worker.last).toMatchObject({ type: "help", name: "summary" });
+    worker.answer({ type: "help", page: "summary — …\n", message: "" });
+    expect(await asked).toEqual({ page: "summary — …\n", message: "" });
+  });
+});

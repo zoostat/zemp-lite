@@ -26,6 +26,7 @@
   import type { CompletionItem } from "../app/workspace-state.svelte";
   import type { Diagnostic } from "../engine/language";
   import { usageOfCalls, type Usage } from "./signature";
+  import { functionAt, wordAt } from "./at";
   import { inlineOutput, showOutput, type InlineOutput } from "./inline";
   import { marginNotes, showNotes, showRunTo, type MarginNotes, type RunTo } from "./margin";
   import { zeffLanguage } from "./language";
@@ -46,6 +47,8 @@
     onhover,
     oncomplete,
     onusage,
+    onfunction,
+    onhelp,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -79,6 +82,10 @@
     oncomplete?: (line: number, character: number) => Promise<CompletionItem[]>;
     /** The usage of the call at a place, from the language server. */
     onusage?: (line: number, character: number) => Promise<Omit<Usage, "pos"> | null>;
+    /** The cursor is on a function's name, or on none. */
+    onfunction?: (name: string | null) => void;
+    /** F1: the help page of the name at the cursor. */
+    onhelp?: (name: string) => void;
   } = $props();
 
   let host: HTMLDivElement;
@@ -285,6 +292,18 @@
               },
             },
             {
+              key: "F1",
+              run: (target) => {
+                if (onhelp === undefined) return false;
+                const head = target.state.selection.main.head;
+                const line = target.state.doc.lineAt(head);
+                const name =
+                  functionAt(line.text, head - line.from) ?? wordAt(line.text, head - line.from);
+                if (name !== null) onhelp(name);
+                return true;
+              },
+            },
+            {
               key: "Alt-Enter",
               run: (target) => {
                 if (onunfold === undefined) return false;
@@ -306,7 +325,10 @@
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onchange(update.state.doc.toString());
             if (update.selectionSet || update.docChanged) {
-              oncursor?.(update.state.doc.lineAt(update.state.selection.main.head).number);
+              const head = update.state.selection.main.head;
+              const line = update.state.doc.lineAt(head);
+              oncursor?.(line.number);
+              onfunction?.(functionAt(line.text, head - line.from));
             }
           }),
         ],

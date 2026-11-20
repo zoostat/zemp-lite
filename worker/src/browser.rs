@@ -70,6 +70,11 @@ impl Project {
             .run(script, text, &asked, cancelled, &|json| host_event(json))
     }
 
+    /// The help page of a function, as `zeff help` prints it in this project, as a line of JSON.
+    pub fn help(&self, name: &str) -> String {
+        self.host.help(name)
+    }
+
     /// One message of the Language Server Protocol given to the engine's language server;
     /// the bodies of the messages it answers with, as a JSON array of texts.
     pub fn language(&self, body: &str) -> String {

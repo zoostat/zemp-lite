@@ -248,6 +248,22 @@ test("the engine's language server is spoken to through the worker, over the pro
   assert.equal(published.params.diagnostics[0].code, "Z0103");
 });
 
+test("a function's help page is given as `zeff help` prints it, or the engine's reason", async (t) => {
+  const root = path.resolve(here, "..", "..");
+  const { worker, next } = await opened(t, 0);
+  worker.postMessage({ type: "help", id: 8, name: "summary" });
+  const found = await next("help");
+  assert.equal(found.id, 8);
+  assert.equal(
+    found.page,
+    fs.readFileSync(path.join(root, "tests/scripts/help-summary.txt"), "utf8"),
+  );
+  worker.postMessage({ type: "help", id: 9, name: "nosuch" });
+  const none = await next("help");
+  assert.equal(none.page, null);
+  assert.match(none.message, /no function or package is called `nosuch`/);
+});
+
 test("a file a run wrote is given back, and passed to the interface, not copied", async (t) => {
   const { worker, said, next } = await opened(t, 0);
   const script =

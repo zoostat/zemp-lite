@@ -165,6 +165,16 @@
               <span class="kind">{one.kind}</span>
               {#if one.code !== null}<span class="mono code">{one.code}</span>{/if}
               <span class="what">{one.sentence}</span>
+              {#if one.code !== null}
+                {@const code = one.code}
+                <button
+                  class="act"
+                  onclick={() => {
+                    void workspace.showCode(code);
+                    onclose();
+                  }}>Explain</button
+                >
+              {/if}
               {#if one.line !== null}
                 {@const line = one.line}
                 <button class="act" onclick={() => go(line)}>line {line}</button>

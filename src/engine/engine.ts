@@ -257,6 +257,15 @@ export class Engine {
     return expect(await this.#ask({ type: "language", body }), "language").messages;
   }
 
+  /**
+   * The help page of a function, as `zeff help <name>` prints it in the project this engine
+   * holds; `page` is null where there is none, and `message` says why in the engine's words.
+   */
+  async help(name: string): Promise<{ page: string | null; message: string }> {
+    const found = expect(await this.#ask({ type: "help", name }), "help");
+    return { page: found.page, message: found.message };
+  }
+
   /** A code's explained page, as `zeff explain` gives it. It needs no project. */
   async explain(code: string): Promise<ExplainedPage> {
     return expect(await this.#ask({ type: "explain", code }), "explained").page;

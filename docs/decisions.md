@@ -760,3 +760,11 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **A fault found and mended.** In WebKit the editor's own Escape takes the key before a handler inside the editor sees it, so the usage did not close; Escape is now heard on the editor's element as it comes in, and goes on to do what it does in the editor.
 
 **Reason.** The checklist's step 10b; Zemp Specification, section 5.
+
+## 21 November 2026: Help (release 0.2, step 11)
+
+**Choice** (#74, as the owner answered it): a **Help panel** at the side of the script, hidden until asked for, with **‹ Hide**. It shows a function's page as `zeff help <name>` prints it inside the project (the project's own module functions first, then the engine's; `help::project_help` and `help::help_text`, held byte for byte to the released command), or a code's explained page as `zeff explain` prints it. It opens by **F1** on a name in the script, by ⌘K (*Help: show*), and by **Explain** on a code in the list of what the run said; Explain under a warning in an unfolded output keeps opening the page in place (step 6). While shown it **follows the function under the cursor**, a moment after the cursor stops, unless *Follows the cursor* is switched off; a name with no page leaves the page as it is. Which name the cursor is on is read from the line's shape (a name followed by an opening bracket, `src/editor/at.ts`); the page is always the engine's. The pages are asked of the language worker, so that a run never holds them up.
+
+**`:help name`** in the console line prints the function's page into the console's drawer, as `zeff repl` does, or the engine's sentence where it has none. `:vars` and `:save` are step 15's.
+
+**Reason.** The checklist's step 11; open decision #74; Zemp Specification, section 5 (the Help row of the table of panels).

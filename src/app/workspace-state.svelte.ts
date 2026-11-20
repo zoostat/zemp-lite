@@ -129,6 +129,17 @@ export class Workspace {
    * each edit: what marks the results on the page against the script (`src/margin/stale.ts`).
    */
   now = $state<{ path: string; text: string; ranges: Ranged[] } | null>(null);
+  /**
+   * The Help panel (#74): shown or not; whether it follows the function under the cursor; and
+   * the page it shows, a function's as `zeff help` prints it or a code's as `zeff explain` does.
+   */
+  help = $state<{
+    shown: boolean;
+    follow: boolean;
+    title: string;
+    page: string;
+  }>({ shown: false, follow: true, title: "", page: "" });
+  #following: ReturnType<typeof setTimeout> | null = null;
   /** What floats over the window about the last run: its facts, or what it said. */
   panel = $state<"facts" | "said" | null>(null);
   /** A line to be brought into view, with the cursor on it (`goTo`). */
@@ -849,7 +860,56 @@ export class Workspace {
 
   /** A code's explained page, as `zeff explain` prints it. */
   async explain(code: string): Promise<string> {
+    if (this.language !== null) return this.language.explain(code);
     return (await this.engine.explain(code)).text;
+  }
+
+  /** A function's help page, as `zeff help` prints it, or the engine's sentence where it has none. */
+  async helpPage(name: string): Promise<{ page: string | null; message: string }> {
+    if (this.language !== null) return this.language.help(name);
+    return this.engine.help(name);
+  }
+
+  /** Show the Help panel on a function's page (F1, ⌘K). */
+  async showHelp(name: string): Promise<void> {
+    const found = await this.helpPage(name);
+    this.help = {
+      ...this.help,
+      shown: true,
+      title: found.page === null ? name : name,
+      page: found.page ?? found.message,
+    };
+  }
+
+  /** Show the Help panel on a code's explained page. */
+  async showCode(code: string): Promise<void> {
+    const page = await this.explain(code).catch((error: Error) => error.message);
+    this.help = { ...this.help, shown: true, title: code, page };
+  }
+
+  /** Show or hide the Help panel. */
+  setHelpShown(shown: boolean): void {
+    this.help = { ...this.help, shown };
+  }
+
+  /** Whether the Help panel follows the function under the cursor. */
+  setHelpFollow(follow: boolean): void {
+    this.help = { ...this.help, follow };
+  }
+
+  /** The cursor is on a function's name: the Help panel, where shown and following, turns to it. */
+  atFunction(name: string | null): void {
+    if (name === null || !this.help.shown || !this.help.follow || name === this.help.title) return;
+    if (this.#following !== null) clearTimeout(this.#following);
+    this.#following = setTimeout(() => {
+      this.#following = null;
+      void this.helpPage(name).then((found) => {
+        // A word with no page leaves the page shown as it is.
+        if (found.page !== null && this.help.follow) {
+          this.help = { ...this.help, title: name, page: found.page };
+        }
+      });
+    }, 200);
   }
 
   /**
@@ -1119,9 +1179,31 @@ export class Workspace {
     this.history.add(line);
     this.consoleOpen = true;
     if (statement.startsWith(":")) {
+      const help = /^:help(?:\s+(\S+))?$/.exec(statement);
       if (statement === ":clear") {
         this.entries = [];
         this.#kept = [];
+      } else if (help !== null) {
+        // `:help name` prints the page as `zeff repl` does; `:help` alone names how.
+        const name = help[1];
+        if (name === undefined) {
+          this.entries.push({
+            statement,
+            state: "done",
+            printed: "",
+            said: [],
+            told: "`:help name` gives a function's page; F1 opens it beside the script.",
+          });
+        } else {
+          const found = await this.helpPage(name);
+          this.entries.push({
+            statement,
+            state: "done",
+            printed: found.page ?? "",
+            said: [],
+            told: found.page === null ? found.message : "",
+          });
+        }
       } else {
         this.entries.push({
           statement,
