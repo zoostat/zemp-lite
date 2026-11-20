@@ -19,12 +19,16 @@
   import { LEFT_WIDTH } from "./views";
   import { Workspace, editable } from "./workspace-state.svelte";
 
-  let { project, engine, onclose }: { project: Project; engine: Engine; onclose: () => void } =
-    $props();
+  let {
+    project,
+    engine,
+    language = null,
+    onclose,
+  }: { project: Project; engine: Engine; language?: Engine | null; onclose: () => void } = $props();
 
   // One project to a window: this component is made anew for each project it shows.
   // svelte-ignore state_referenced_locally
-  const workspace = new Workspace(project, engine);
+  const workspace = new Workspace(project, engine, language);
 
   let width = $state(window.innerWidth);
   let body = $state<HTMLElement | null>(null);

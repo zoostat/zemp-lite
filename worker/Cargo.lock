@@ -997,6 +997,15 @@ version = "0.8.0"
 source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
 
 [[package]]
+name = "zeff-lsp"
+version = "0.8.0"
+source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
+dependencies = [
+ "serde_json",
+ "zeff-engine",
+]
+
+[[package]]
 name = "zeff-numeric"
 version = "0.8.0"
 source = "git+https://github.com/zoostat/zeff?rev=6bfa6c55a5584e4e038fc828fef900a30f0856c3#6bfa6c55a5584e4e038fc828fef900a30f0856c3"
@@ -1124,6 +1133,7 @@ dependencies = [
  "zeff-diagnostics",
  "zeff-engine",
  "zeff-ir",
+ "zeff-lsp",
  "zeff-web",
 ]
 

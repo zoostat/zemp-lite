@@ -279,6 +279,8 @@
             {runto}
             oncursor={(line) => (workspace.cursor = { path, line })}
             reveal={workspace.reveal?.path === path ? workspace.reveal : null}
+            diagnostics={workspace.diagnostics[path] ?? []}
+            onhover={(line, character) => workspace.hover(path, line, character)}
           />
         {/key}
       {/if}

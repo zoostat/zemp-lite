@@ -203,6 +203,8 @@ pub struct Asked<'a> {
 /// A project in memory, and the runs made in it.
 pub struct Host {
     fs: MemoryFileSystem,
+    /// The engine's language server (`zeff-lsp`), over the project as this host holds it.
+    language: RefCell<zeff_lsp::Server>,
     /// The frames the bindings of the last run held when it ended, for the interface to show.
     frames: RefCell<Frames>,
 }
@@ -221,6 +223,7 @@ impl Host {
         );
         Host {
             fs,
+            language: RefCell::new(zeff_lsp::Server::new()),
             frames: RefCell::default(),
         }
     }
@@ -334,6 +337,16 @@ impl Host {
             &outcome.output.stderr,
             &each,
         )
+    }
+
+    /// One message of the Language Server Protocol (its body, a JSON object) given to the
+    /// engine's own language server, as `zeff lsp` serves an editor; what it answers, the bodies
+    /// of the messages to send back in order, as a JSON array of texts. A document is named by
+    /// a `file:///project/…` address, where this host keeps the project.
+    pub fn language(&self, body: &str) -> String {
+        let answer = self.language.borrow_mut().handle(&self.fs, body.as_bytes());
+        let messages: Vec<String> = answer.messages.iter().map(|one| json_string(one)).collect();
+        format!("[{}]", messages.join(", "))
     }
 
     /// The engine's check of the text of `script`, as `zeff check` makes it, as a line of

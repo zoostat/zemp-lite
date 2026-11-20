@@ -14,6 +14,8 @@
   let lasting = $state(true);
   let projects = $state<Projects | null>(null);
   const engine = browserEngine();
+  // The engine's language server runs in a worker of its own, so that typing never waits on a run.
+  const language = browserEngine();
 
   /** The folder the address names, or `null`. */
   function named(): string | null {
@@ -35,8 +37,9 @@
     naming = window.location.hash === "#/new";
     const folder = named();
     if (project !== null && project.info.folder !== folder) {
-      // The project closes: its worker is ended, which returns its memory to the browser.
+      // The project closes: its workers are ended, which returns their memory to the browser.
       engine.close();
+      language.close();
     }
     project = folder === null ? null : await projects.open(folder);
     if (folder !== null && project === null) {
@@ -62,7 +65,7 @@
   {/key}
 {:else}
   {#key project.info.folder}
-    <Workspace {project} {engine} onclose={() => (window.location.hash = "")} />
+    <Workspace {project} {engine} {language} onclose={() => (window.location.hash = "")} />
   {/key}
 {/if}
 

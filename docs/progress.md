@@ -111,3 +111,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 148 unit tests; 213 browser tests passed and 1 skipped by design; the worker's tests, the nine samples identical.
 
 **Next.** Step 10 `[engine]`: language services in the browser.
+
+## 21 November 2026, release 0.2, step 10a (the language server in the browser)
+
+**Done.** Step 10 split into 10a and 10b. Step 10a `[engine]`: the engine's own language server in a second worker, its diagnostics underlined as one types and what it knows of a word shown on resting over it, with no wait while a run goes. Step 8 is green on GitHub.
+
+**Green.** `npm run routine`: 148 unit tests; 218 browser tests passed and 2 skipped by design; 2,901.9 kB, cold start 53.9 ms; the worker's tests, the nine samples identical.
+
+**Next.** The copy of the specification refreshed from Zeff c6d55e7, where the owner's answers now stand; then step 10b `[function]`.

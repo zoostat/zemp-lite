@@ -5,10 +5,12 @@
   // the alpha.
   import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
   import { bracketMatching, indentUnit } from "@codemirror/language";
+  import { setDiagnostics, type Diagnostic as Marked } from "@codemirror/lint";
   import { EditorState } from "@codemirror/state";
   import {
     EditorView,
     drawSelection,
+    hoverTooltip,
     highlightActiveLine,
     highlightActiveLineGutter,
     keymap,
@@ -16,6 +18,7 @@
   } from "@codemirror/view";
   import { onMount } from "svelte";
   import type { Place } from "../app/steady";
+  import type { Diagnostic } from "../engine/language";
   import { inlineOutput, showOutput, type InlineOutput } from "./inline";
   import { marginNotes, showNotes, showRunTo, type MarginNotes, type RunTo } from "./margin";
   import { zeffLanguage } from "./language";
@@ -32,6 +35,8 @@
     runto = null,
     oncursor,
     reveal = null,
+    diagnostics = [],
+    onhover,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -57,6 +62,10 @@
     oncursor?: (line: number) => void;
     /** A line to bring into view with the cursor on it; a new `count` asks again. */
     reveal?: { line: number; count: number } | null;
+    /** What the language server says of the text, as it says it: underlined where it says. */
+    diagnostics?: Diagnostic[];
+    /** What the language server knows of the word at a place (lines and columns from 0). */
+    onhover?: (line: number, character: number) => Promise<string | null>;
   } = $props();
 
   let host: HTMLDivElement;
@@ -118,6 +127,22 @@
       fontWeight: "600",
     },
     ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--ink)" },
+    ".cm-tooltip": {
+      background: "var(--window)",
+      border: "1px solid var(--line)",
+      borderRadius: "8px",
+      color: "var(--ink)",
+    },
+    ".cm-zemp-hover pre": {
+      fontFamily: '"JetBrains Mono", ui-monospace, Menlo, monospace',
+      fontSize: "12.5px",
+      margin: "0",
+      maxHeight: "320px",
+      maxWidth: "640px",
+      overflow: "auto",
+      padding: "8px 10px",
+      whiteSpace: "pre-wrap",
+    },
     "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground":
       { backgroundColor: "color-mix(in srgb, var(--accent) 22%, transparent)" },
     "&.cm-focused .cm-matchingBracket": {
@@ -156,6 +181,26 @@
           EditorState.tabSize.of(4),
           zeffLanguage(),
           look,
+          // What the language server knows of the word under the pointer, in its own words.
+          hoverTooltip(async (target, pos) => {
+            if (onhover === undefined) return null;
+            const line = target.state.doc.lineAt(pos);
+            const text = await onhover(line.number - 1, pos - line.from);
+            if (text === null || text.trim() === "") return null;
+            return {
+              pos,
+              above: true,
+              create: () => {
+                const dom = document.createElement("div");
+                dom.className = "cm-zemp-hover";
+                dom.dataset["testid"] = "hover";
+                const page = document.createElement("pre");
+                page.textContent = text;
+                dom.append(page);
+                return { dom };
+              },
+            };
+          }),
           // In the margin editor a long line wraps, so that nothing reaches past it.
           inline === null ? [] : [tall, inlineOutput(), marginNotes(), EditorView.lineWrapping],
           // Run from the keyboard: ⌘↵ and ⌘⇧↵ (Ctrl on Windows and Linux). Tab indents;
@@ -217,6 +262,28 @@
     if (view !== null && inline !== null) {
       view.dispatch({ effects: showNotes.of(shown) });
     }
+  });
+
+  // The language server's diagnostics, underlined where it places them, each with its code.
+  $effect(() => {
+    const told = diagnostics;
+    if (view === null) return;
+    const doc = view.state.doc;
+    const at = (line: number, character: number) =>
+      line + 1 > doc.lines
+        ? doc.length
+        : Math.min(doc.line(line + 1).from + character, doc.line(line + 1).to);
+    const marked: Marked[] = told.map((one) => {
+      const from = at(one.range.start.line, one.range.start.character);
+      const to = Math.max(at(one.range.end.line, one.range.end.character), from);
+      return {
+        from,
+        to: to === from ? Math.min(from + 1, doc.length) : to,
+        severity: one.severity === 1 ? "error" : one.severity === 2 ? "warning" : "info",
+        message: one.code === undefined ? one.message : `${one.code}: ${one.message}`,
+      };
+    });
+    view.dispatch(setDiagnostics(view.state, marked));
   });
 
   // A line asked for (the error's trail): the cursor put on it, and it brought into view.

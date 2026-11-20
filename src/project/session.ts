@@ -57,24 +57,24 @@ export class Session {
     width = 0,
     only?: number[],
   ): Promise<Outcome> {
-    await this.#sync();
+    await this.sync();
     return this.#engine.run(script, text, listener, width, only);
   }
 
   /** The engine's check of a text, the engine first brought in step with the project's files. */
   async check(script: string, text: string): Promise<Checked> {
-    await this.#sync();
+    await this.sync();
     return this.#engine.check(script, text);
   }
 
   /** What each statement of a text needs, from the engine's dependency graph. */
   async dependencies(script: string, text: string): Promise<Needs[]> {
-    await this.#sync();
+    await this.sync();
     return this.#engine.dependencies(script, text);
   }
 
   /** Bring the engine in step with the project's files. */
-  async #sync(): Promise<void> {
+  async sync(): Promise<void> {
     // A worker that was ended and started again holds no project.
     if (this.#refill || this.#engine.project === null) {
       await this.#engine.open(this.project.info.name);

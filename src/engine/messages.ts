@@ -98,6 +98,7 @@ export type Request =
   | { type: "run"; script: string; text: string; width?: number; only?: number[] }
   | { type: "check"; script: string; text: string }
   | { type: "explain"; code: string }
+  | { type: "language"; body: string }
   | { type: "dependencies"; script: string; text: string }
   /** The statements of a text as the engine reads them, without running it. */
   | { type: "statements"; script: string; text: string }
@@ -128,6 +129,7 @@ export type Reply =
     }
   | { type: "dependencies"; statements: Needs[] }
   | { type: "explained"; page: ExplainedPage }
+  | { type: "language"; messages: string[] }
   | { type: "frame"; name: string; bytes: Uint8Array }
   | { type: "read"; path: string; bytes: Uint8Array | null }
   | { type: "error"; message: string };

@@ -70,6 +70,12 @@ impl Project {
             .run(script, text, &asked, cancelled, &|json| host_event(json))
     }
 
+    /// One message of the Language Server Protocol given to the engine's language server;
+    /// the bodies of the messages it answers with, as a JSON array of texts.
+    pub fn language(&self, body: &str) -> String {
+        self.host.language(body)
+    }
+
     /// The engine's check of a text, as `zeff check` makes it, as a line of JSON.
     pub fn check(&self, script: &str, text: &str) -> String {
         self.host.check(script, text)

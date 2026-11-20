@@ -16,6 +16,8 @@
 //   { type: "statements", script, text } the statements of a text, without running it
 //   { type: "check", script, text }     the engine's check of a text, as `zeff check` makes it
 //   { type: "dependencies", script, text }  what each statement of a text needs
+//   { type: "language", body }          a message of the Language Server Protocol for the
+//                                       engine's language server, over the project
 //   { type: "explain", code }           the explained page of a code (needs no project)
 //   { type: "codes" }                   every code with an explained page (needs no project)
 //   { type: "frame", name }             a frame of the last run, by the name of its binding
@@ -31,6 +33,8 @@
 //                                       the frames its bindings hold: [{ name, rows, variables }]
 //   { type: "statements", statements }  the answer to `statements`: [{ line, end, kind }]
 //   { type: "checked", exit_code, said, found, summary, findings }   the answer to `check`
+//   { type: "language", messages }      the answer to `language`: the bodies of the server's
+//                                       messages, in order
 //   { type: "explained", page }         the answer to `explain`: the page, as `zeff explain
 //                                       --format json` gives it, its `text` what it prints
 //   { type: "codes", families }         the answer to `codes`
@@ -83,7 +87,9 @@ export function serve(engine, port, deviceBytes) {
       answer(JSON.parse(engine.statements(String(said.script), String(said.text))));
       return;
     }
-    if (!["file", "run", "frame", "read", "check", "dependencies"].includes(said.type)) {
+    if (
+      !["file", "run", "frame", "read", "check", "dependencies", "language"].includes(said.type)
+    ) {
       refuse(`no such message: ${String(said.type)}`);
       return;
     }
@@ -95,6 +101,7 @@ export function serve(engine, port, deviceBytes) {
         read: "a file was asked for",
         check: "a check was asked for",
         dependencies: "the dependencies were asked for",
+        language: "the language server was asked",
       }[said.type];
       refuse(`${what} before a project was opened`);
       return;
@@ -117,6 +124,9 @@ export function serve(engine, port, deviceBytes) {
         }
         break;
       }
+      case "language":
+        answer({ type: "language", messages: JSON.parse(project.language(String(said.body))) });
+        break;
       case "check":
         answer(JSON.parse(project.check(String(said.script), String(said.text))));
         break;

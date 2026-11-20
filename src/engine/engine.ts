@@ -249,6 +249,14 @@ export class Engine {
     };
   }
 
+  /**
+   * One message of the Language Server Protocol for the engine's language server, over the
+   * project this engine holds; the bodies of the messages it answers with, in order.
+   */
+  async language(body: string): Promise<string[]> {
+    return expect(await this.#ask({ type: "language", body }), "language").messages;
+  }
+
   /** A code's explained page, as `zeff explain` gives it. It needs no project. */
   async explain(code: string): Promise<ExplainedPage> {
     return expect(await this.#ask({ type: "explain", code }), "explained").page;

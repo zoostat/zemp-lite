@@ -512,3 +512,99 @@ fn a_codes_explained_page_is_what_zeff_explain_prints() {
             .any(|code| code["code"] == "W0201")
     );
 }
+
+/// A message of the Language Server Protocol, as an editor sends it.
+fn rpc(id: Option<u64>, method: &str, params: Value) -> String {
+    let mut message = serde_json::json!({ "jsonrpc": "2.0", "method": method, "params": params });
+    if let Some(id) = id {
+        message["id"] = serde_json::json!(id);
+    }
+    message.to_string()
+}
+
+/// What the language server answers a message with, each message read as JSON.
+fn ask(host: &Host, message: &str) -> Vec<Value> {
+    let answered: Vec<String> = serde_json::from_str(&host.language(message)).unwrap();
+    answered
+        .iter()
+        .map(|one| serde_json::from_str(one).unwrap())
+        .collect()
+}
+
+#[test]
+fn the_engines_language_server_answers_an_editor_over_the_project_in_memory() {
+    let host = Host::new("demo");
+    let uri = "file:///project/scripts/main.zeff";
+    let started = ask(
+        &host,
+        &rpc(
+            Some(1),
+            "initialize",
+            serde_json::json!({ "capabilities": {} }),
+        ),
+    );
+    assert_eq!(started[0]["id"], 1);
+    assert!(started[0]["result"]["capabilities"]["hoverProvider"] != Value::Null);
+    ask(&host, &rpc(None, "initialized", serde_json::json!({})));
+    // A document opened with a mistake: the checker's diagnostics come straight back.
+    let text = "let w = dataset(wages)\nlet z = nosuch(3)\nw.summary([wage])\n";
+    let told = ask(
+        &host,
+        &rpc(
+            None,
+            "textDocument/didOpen",
+            serde_json::json!({ "textDocument": { "uri": uri, "languageId": "zeff", "version": 1, "text": text } }),
+        ),
+    );
+    let published = told
+        .iter()
+        .find(|one| one["method"] == "textDocument/publishDiagnostics")
+        .unwrap();
+    let diagnostics = published["params"]["diagnostics"].as_array().unwrap();
+    assert!(diagnostics.iter().any(|one| one["code"] == "Z0103"));
+    // What is known of the word under the cursor: `summary`, a function with its page.
+    let hover = ask(
+        &host,
+        &rpc(
+            Some(2),
+            "textDocument/hover",
+            serde_json::json!({ "textDocument": { "uri": uri }, "position": { "line": 2, "character": 4 } }),
+        ),
+    );
+    assert_eq!(hover[0]["id"], 2);
+    assert!(
+        hover[0]["result"]["contents"]
+            .to_string()
+            .contains("summary"),
+        "{}",
+        hover[0]
+    );
+    // Completion after `w.`: the methods of a frame.
+    let changed = "let w = dataset(wages)\nw.\n";
+    ask(
+        &host,
+        &rpc(
+            None,
+            "textDocument/didChange",
+            serde_json::json!({ "textDocument": { "uri": uri, "version": 2 }, "contentChanges": [{ "text": changed }] }),
+        ),
+    );
+    let offered = ask(
+        &host,
+        &rpc(
+            Some(3),
+            "textDocument/completion",
+            serde_json::json!({ "textDocument": { "uri": uri }, "position": { "line": 1, "character": 2 } }),
+        ),
+    );
+    let items = offered[0]["result"]["items"]
+        .as_array()
+        .or_else(|| offered[0]["result"].as_array())
+        .unwrap()
+        .clone();
+    assert!(
+        items.iter().any(|one| one["label"] == "summary"),
+        "{}",
+        offered[0]
+    );
+}

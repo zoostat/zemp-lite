@@ -2,6 +2,7 @@
 // left panel and the tabs show, the scripts being edited, and the last run. Every screen of
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
+import { Language, type Diagnostic } from "../engine/language";
 import type { Checked, FrameInfo, Ranged } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
@@ -133,11 +134,46 @@ export class Workspace {
   #saving: Promise<void> = Promise.resolve();
   #keeping: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(project: Project, engine: Engine) {
+  /** The engine's language server, in a worker of its own; `null` where the window has none. */
+  readonly language: Language | null;
+  /** What the language server says of each file, as it says it, by path. */
+  diagnostics = $state<Record<string, Diagnostic[]>>({});
+  #telling: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(project: Project, engine: Engine, language: Engine | null = null) {
     this.project = project;
     this.engine = engine;
     this.session = new Session(project, engine);
+    this.language = language === null ? null : new Language(project, language);
+    if (this.language !== null) {
+      this.language.ondiagnostics = (path, found) => {
+        this.diagnostics = { ...this.diagnostics, [path]: found };
+      };
+    }
     void this.#begin();
+  }
+
+  /** Tell the language server the text of a script as it stands. */
+  #tell(path: string, text: string): void {
+    if (this.language === null || !path.endsWith(".zeff")) return;
+    this.language.update(path, text).catch(() => {
+      // The language worker is not there: the editor works on without its help.
+    });
+  }
+
+  /** What the language server knows of the word at a place of a script, as plain text. */
+  async hover(path: string, line: number, character: number): Promise<string | null> {
+    if (this.language === null) return null;
+    const found = (await this.language.request("textDocument/hover", {
+      textDocument: { uri: `file:///project/${path}` },
+      position: { line, character },
+    })) as { contents?: unknown } | null;
+    const contents = found?.contents;
+    if (typeof contents === "string") return contents;
+    if (contents !== null && typeof contents === "object" && "value" in contents) {
+      return String((contents as { value: unknown }).value);
+    }
+    return null;
   }
 
   async #begin(): Promise<void> {
@@ -179,6 +215,8 @@ export class Workspace {
     this.buffers[path] = { text: "", loaded: false, saved: true };
     const text = await this.project.readText(path);
     this.buffers[path] = { text: text ?? "", loaded: true, saved: true };
+    // The language server is told each script once it is read, and checks it at once.
+    this.#tell(path, text ?? "");
   }
 
   /** The path of the file in the tab shown, or `null`. */
@@ -318,6 +356,12 @@ export class Workspace {
       return;
     }
     buffer.text = text;
+    // The language server is told the script as it now stands, a moment after the last key.
+    if (this.#telling !== null) clearTimeout(this.#telling);
+    this.#telling = setTimeout(() => {
+      this.#telling = null;
+      this.#tell(path, text);
+    }, 150);
     // The engine reads the script as it now stands, a moment after the last keystroke.
     if (this.#reading !== null) clearTimeout(this.#reading);
     this.#reading = setTimeout(() => {
@@ -329,6 +373,7 @@ export class Workspace {
       .then(() => this.project.writeText(path, text))
       .then(() => {
         this.session.changed(path);
+        this.language?.changed(path);
         const now = this.buffers[path];
         if (now !== undefined && now.text === text) {
           now.saved = true;
@@ -1016,6 +1061,7 @@ export class Workspace {
           new Uint8Array(await file.arrayBuffer()),
         );
         this.session.changed(path);
+        this.language?.changed(path);
       } catch (error) {
         this.problem = error instanceof ProjectError ? error.message : String(error);
       }

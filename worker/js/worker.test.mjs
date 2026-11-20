@@ -224,6 +224,30 @@ test("a code's explained page is given without a project, as `zeff explain` prin
   assert.match((await next("error")).message, /no code `Q9999` has an explained page/);
 });
 
+test("the engine's language server is spoken to through the worker, over the project", async (t) => {
+  const { worker, next } = await opened(t, 0);
+  const send = (id, body) =>
+    worker.postMessage({ type: "language", id, body: JSON.stringify(body) });
+  send(1, { jsonrpc: "2.0", id: 1, method: "initialize", params: { capabilities: {} } });
+  const started = await next("language");
+  assert.equal(JSON.parse(started.messages[0]).id, 1);
+  send(2, {
+    jsonrpc: "2.0",
+    method: "textDocument/didOpen",
+    params: {
+      textDocument: {
+        uri: "file:///project/scripts/main.zeff",
+        languageId: "zeff",
+        version: 1,
+        text: "let z = nosuch(3)\n",
+      },
+    },
+  });
+  const told = (await next("language")).messages.map((one) => JSON.parse(one));
+  const published = told.find((one) => one.method === "textDocument/publishDiagnostics");
+  assert.equal(published.params.diagnostics[0].code, "Z0103");
+});
+
 test("a file a run wrote is given back, and passed to the interface, not copied", async (t) => {
   const { worker, said, next } = await opened(t, 0);
   const script =

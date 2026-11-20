@@ -116,6 +116,8 @@
               label="The script"
               onchange={(text) => workspace.edit(path, text)}
               onrun={() => void workspace.run()}
+              diagnostics={workspace.diagnostics[path] ?? []}
+              onhover={(line, character) => workspace.hover(path, line, character)}
             />
           {/key}
         {/if}

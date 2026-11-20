@@ -722,3 +722,17 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **What 0.8.0 tells, and what it does not.** The engine reports a loop's passes by their number alone, about a hundred of a long loop, the first and the last among them (the head of the list says how many were reported); the time of each is the interface's, between the engine's messages. It tells what a statement printed and said once, at the statement's end, so nothing is shown pass by pass; the loop variable, the rows after each step, the result's type and dimensions and what each pass said wait for the engine (C23), and a sentence under the list says so. *Find the first pass that* and a field drawn across the passes (#184) are not built: they are before 1.0, at the Zeff release that gives C23 and C27.
 
 **Reason.** The checklist's step 9; open decision #76 (the loop inspector at the 0.2 alpha).
+
+## 21 November 2026: the language server in the browser (release 0.2, step 10a)
+
+**Split.** Step 10 was split, as too large for one session: 10a, the engine's language server hosted in the browser with its diagnostics and hover (`[engine]`); 10b, completion, signature help and formatting on it (`[function]`).
+
+**Choice.** The worker hosts the engine's own protocol server, `zeff-lsp` at the commit of `v0.8.0` (its `Server::handle`, which takes one message of the Language Server Protocol and gives the messages to send, as `zeff lsp` serves an editor), over the project the worker holds: a document is named `file:///project/…`. Of the two ways the planning left open, this one keeps the protocol's wording the engine's own, and the engine's language functions are not called one by one here.
+
+**A second worker.** The window has two engines of the same build: the one that runs, and a language engine whose project is a second copy kept in step with the browser's files as the first is (`src/engine/language.ts`), so that completion, diagnostics and hover never wait on a run; a browser test types a mistake during a run of 200,000 passes and sees it underlined at once. Both are ended when the project closes. The price is a second copy of the project's data in memory, which the alpha accepts.
+
+**In the editor.** Each script is opened as a document when it is read and sent whole a moment (150 ms) after the last keystroke; the server's diagnostics, which it publishes after each, are underlined where it places them, with their code, in the margin editor and in Panes (`@codemirror/lint`); resting on a word shows what the server knows of it, as plain text (a function's page, a binding's type and size).
+
+**Dependencies.** `zeff-lsp`, a crate of the released engine; `serde_json` 1.0.154, which it brings, now linked (MIT or Apache-2.0). In the app, `@codemirror/lint` 6.9.8 and `@codemirror/autocomplete` 6.20.4 (for step 10b), both MIT, everything they need already installed. The worker is 2,901.9 kB compressed (2,792.2 kB before), its cold start 53.9 ms (risk R4: 5 MB and a second).
+
+**Reason.** The checklist's step 10a; Zemp Specification, section 5 ("Completion, signature help, hover, live diagnostics and formatting from the Zeff language server"); Engine Specification, section 12.
