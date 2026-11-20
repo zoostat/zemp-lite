@@ -5,6 +5,11 @@
   // the alpha.
   import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
   import { bracketMatching, indentUnit } from "@codemirror/language";
+  import {
+    autocompletion,
+    type Completion,
+    type CompletionContext,
+  } from "@codemirror/autocomplete";
   import { setDiagnostics, type Diagnostic as Marked } from "@codemirror/lint";
   import { EditorState } from "@codemirror/state";
   import {
@@ -18,7 +23,9 @@
   } from "@codemirror/view";
   import { onMount } from "svelte";
   import type { Place } from "../app/steady";
+  import type { CompletionItem } from "../app/workspace-state.svelte";
   import type { Diagnostic } from "../engine/language";
+  import { usageOfCalls, type Usage } from "./signature";
   import { inlineOutput, showOutput, type InlineOutput } from "./inline";
   import { marginNotes, showNotes, showRunTo, type MarginNotes, type RunTo } from "./margin";
   import { zeffLanguage } from "./language";
@@ -37,6 +44,8 @@
     reveal = null,
     diagnostics = [],
     onhover,
+    oncomplete,
+    onusage,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -66,6 +75,10 @@
     diagnostics?: Diagnostic[];
     /** What the language server knows of the word at a place (lines and columns from 0). */
     onhover?: (line: number, character: number) => Promise<string | null>;
+    /** What the language server offers at a place (lines and columns from 0). */
+    oncomplete?: (line: number, character: number) => Promise<CompletionItem[]>;
+    /** The usage of the call at a place, from the language server. */
+    onusage?: (line: number, character: number) => Promise<Omit<Usage, "pos"> | null>;
   } = $props();
 
   let host: HTMLDivElement;
@@ -181,6 +194,63 @@
           EditorState.tabSize.of(4),
           zeffLanguage(),
           look,
+          // Completion from the language server: each item makes the edit the server names.
+          autocompletion({
+            activateOnTyping: true,
+            override: [
+              async (context: CompletionContext) => {
+                if (oncomplete === undefined) return null;
+                const word = context.matchBefore(/[\p{L}\p{N}_]*/u);
+                const before = context.state.sliceDoc(Math.max(0, context.pos - 1), context.pos);
+                if (
+                  !context.explicit &&
+                  (word === null || word.from === word.to) &&
+                  before !== "."
+                ) {
+                  return null;
+                }
+                const line = context.state.doc.lineAt(context.pos);
+                const items = await oncomplete(line.number - 1, context.pos - line.from);
+                if (items.length === 0) return null;
+                const at = (place: { line: number; character: number }) =>
+                  context.state.doc.line(place.line + 1).from + place.character;
+                const first = items[0]?.textEdit?.range;
+                const from = first === undefined ? (word?.from ?? context.pos) : at(first.start);
+                const kinds: Record<number, string> = {
+                  2: "method",
+                  3: "function",
+                  5: "property",
+                  6: "variable",
+                  10: "property",
+                  12: "constant",
+                  15: "text",
+                  20: "keyword",
+                };
+                const options: Completion[] = items.map((item) => ({
+                  label: item.filterText ?? item.label,
+                  displayLabel: item.label,
+                  ...(item.detail === undefined ? {} : { detail: item.detail }),
+                  ...(item.documentation === undefined ? {} : { info: item.documentation }),
+                  type: kinds[item.kind ?? 0] ?? "text",
+                  apply: (target, _completion, start, end) => {
+                    const edit = item.textEdit;
+                    const change =
+                      edit === undefined
+                        ? { from: start, to: end, insert: item.label }
+                        : { from: at(edit.range.start), to: end, insert: edit.newText };
+                    target.dispatch({
+                      changes: change,
+                      selection: { anchor: change.from + change.insert.length },
+                    });
+                  },
+                }));
+                return { from, options, validFor: /^[\p{L}\p{N}_]*$/u };
+              },
+            ],
+          }),
+          usageOfCalls(async (line, character) =>
+            onusage === undefined ? null : onusage(line, character),
+          ),
           // What the language server knows of the word under the pointer, in its own words.
           hoverTooltip(async (target, pos) => {
             if (onhover === undefined) return null;

@@ -119,3 +119,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** `npm run routine`: 148 unit tests; 218 browser tests passed and 2 skipped by design; 2,901.9 kB, cold start 53.9 ms; the worker's tests, the nine samples identical.
 
 **Next.** The copy of the specification refreshed from Zeff c6d55e7, where the owner's answers now stand; then step 10b `[function]`.
+
+## 21 November 2026, release 0.2, step 10b (completion, the usage of a call, formatting)
+
+**Done.** Step 10b `[function]`: completion from the engine's language server as one types, each offer making the server's own edit; the usage of a call shown as it is opened, its parameter at the cursor in bold; **Format the script** in ⌘K; Tab completes in the console line. The copy of the specification was brought to Zeff c6d55e7, where the owner's answers and the amendments of step 1 now stand.
+
+**Green.** `npm run routine`: 148 unit tests; 226 browser tests passed and 2 skipped by design; the worker's tests, the nine samples identical.
+
+**Next.** Step 11 `[function]`: Help.

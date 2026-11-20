@@ -744,3 +744,19 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **What else the copy now carries.** The commit stands on the first steps of Zeff 0.9.0 (among them `glm` and `curve` in the place of `logistic`, `probit` and `roc` in the catalogue and the sample script). They are plans of the engine's next release; this alpha runs the released 0.8.0, which still refuses the specification's sample script with the same words (`tests/scripts/specification-sample.stderr`, re-made by the released command line and unchanged), and the colouring test of that script holds.
 
 **Reason.** Step 1 of the checklist: the copy is refreshed again once the amendments stand in Zeff's copy, which is the normative one.
+
+## 21 November 2026: completion, the usage of a call, formatting (release 0.2, step 10b)
+
+**Choice.** On the language server of step 10a, every offer and every word the server's:
+
+- **Completion** (`@codemirror/autocomplete`) asks the server at the cursor as a word is typed or after a dot: the methods of a value, the options of a call, the names of the script, the variables of a frame, the shipped datasets and the server's templates; each offer makes exactly the edit the server names (its range and new text), shows what the server says it is, and is found by the word the server gives.
+- **The usage of a call** is shown over the cursor when a call is opened or an argument begun, from the server's signature help, the parameter at the cursor in bold; it goes when the call is closed, the cursor leaves its line, or Escape is pressed. The server is asked once the edit has been passed on to it, which a browser test found missing at first.
+- **Format the script**, in ⌘K, lays the script out by the server's edits, as `zeff fmt` does, as one edit that undo takes back.
+- **Tab in the console line** asks the server at the end of the statement being typed, read as if it followed the script; one offer is taken, of several the text they all begin with.
+- The server is told the script as it stands before each question, so that it never answers about an older text.
+
+**Not done here.** The colours of code stay those of 0.1's reader until the server gives semantic tokens (Zeff 1.1); quick fixes, going to a definition and renaming are 1.1's (Zemp Specification, section 5). Folding of code, which the server offers, is left for when a script's sections come (#178).
+
+**A fault found and mended.** In WebKit the editor's own Escape takes the key before a handler inside the editor sees it, so the usage did not close; Escape is now heard on the editor's element as it comes in, and goes on to do what it does in the editor.
+
+**Reason.** The checklist's step 10b; Zemp Specification, section 5.

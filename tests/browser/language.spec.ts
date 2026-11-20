@@ -62,3 +62,62 @@ test("the language server answers while a long run goes", async ({ page, press }
   await expect(page.locator('[data-testid="note"][data-line="1"]')).toContainText("running…");
   await press(page.locator("header.top").getByRole("button", { name: "Stop", exact: true }));
 });
+
+test("completion after a dot offers the methods of a frame, and Enter takes one", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await write(page, "let w = dataset(wages)\nw.summ");
+  const list = page.locator(".cm-tooltip-autocomplete");
+  await expect(list).toBeVisible();
+  await expect(list).toContainText("summary");
+  // Enter takes the offer chosen, once the list has settled on it.
+  await expect(list.locator('[aria-selected="true"]')).toContainText("summary");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => editor(page).locator(".cm-line").nth(1).textContent()).toBe("w.summary");
+});
+
+test("the usage of a call is shown as it is opened, the parameter at the cursor in bold", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await write(page, "let w = dataset(wages)\nw.reg");
+  await page.keyboard.press("Escape");
+  await page.keyboard.type("(");
+  const usage = page.getByTestId("usage");
+  await expect(usage).toBeVisible();
+  await expect(usage).toContainText("reg(");
+  await page.keyboard.press("Escape");
+  await expect(usage).toHaveCount(0);
+});
+
+test("Format the script, from ⌘K, lays the script out as zeff fmt does", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await write(page, "let  a=1\nprint( a )\n");
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.keyboard.type("format the script");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("formatted");
+  await expect
+    .poll(async () =>
+      (await editor(page).locator(".cm-line").allTextContents()).slice(0, 2).join("\n"),
+    )
+    .toBe("let a = 1\nprint(a)");
+});
+
+test("Tab completes a statement in the console line, as if it followed the script", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  const line = page.getByRole("textbox", { name: /Console/ });
+  await line.click();
+  await page.keyboard.type("w2010.summ");
+  await page.keyboard.press("Tab");
+  await expect(line).toHaveValue("w2010.summary");
+});

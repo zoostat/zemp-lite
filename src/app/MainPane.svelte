@@ -118,6 +118,8 @@
               onrun={() => void workspace.run()}
               diagnostics={workspace.diagnostics[path] ?? []}
               onhover={(line, character) => workspace.hover(path, line, character)}
+              oncomplete={(line, character) => workspace.complete(path, line, character)}
+              onusage={(line, character) => workspace.signature(path, line, character)}
             />
           {/key}
         {/if}

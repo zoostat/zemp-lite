@@ -53,6 +53,11 @@
   const commands = $derived<Command[]>([
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
     { name: "Check the script", hint: "nothing is run", run: () => void workspace.check() },
+    {
+      name: "Format the script",
+      hint: "as zeff fmt does",
+      run: () => void workspace.format(workspace.activePath ?? workspace.scriptPath),
+    },
     ...(workspace.views.layout === "margin" && workspace.cursor !== null
       ? [
           {

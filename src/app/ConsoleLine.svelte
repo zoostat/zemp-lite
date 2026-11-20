@@ -39,6 +39,13 @@
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
       typing = workspace.history.down(typing);
+    } else if (event.key === "Tab" && typing.trim() !== "") {
+      // Tab completes from the language server, as if the statement followed the script.
+      event.preventDefault();
+      const asked = typing;
+      void workspace.completeConsole(asked).then((done) => {
+        if (typing === asked) typing = done;
+      });
     } else if (event.key === "Escape") {
       event.preventDefault();
       workspace.consoleOpen = false;

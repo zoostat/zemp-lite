@@ -2,7 +2,7 @@
 // left panel and the tabs show, the scripts being edited, and the last run. Every screen of
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
-import { Language, type Diagnostic } from "../engine/language";
+import { Language, type Diagnostic, type Range } from "../engine/language";
 import type { Checked, FrameInfo, Ranged } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
@@ -52,6 +52,39 @@ export interface Buffer {
 /** Whether the editor opens a file of this name: scripts and the plain text beside them. */
 export function editable(path: string): boolean {
   return /\.(zeff|toml|txt|md)$/i.test(path);
+}
+
+/** A completion the language server offers, as it gives it. */
+export interface CompletionItem {
+  label: string;
+  kind?: number;
+  detail?: string;
+  documentation?: string;
+  filterText?: string;
+  sortText?: string;
+  textEdit?: { range: Range; newText: string };
+}
+
+/** A text with the language server's edits made, from the last to the first. */
+export function applied(text: string, edits: { range: Range; newText: string }[]): string {
+  const lines = text.split("\n");
+  const offset = (line: number, character: number) => {
+    let at = 0;
+    for (let index = 0; index < line && index < lines.length; index++) {
+      at += (lines[index] as string).length + 1;
+    }
+    return Math.min(at + character, text.length);
+  };
+  const ordered = edits
+    .map((edit) => ({
+      from: offset(edit.range.start.line, edit.range.start.character),
+      to: offset(edit.range.end.line, edit.range.end.character),
+      text: edit.newText,
+    }))
+    .sort((a, b) => b.from - a.from);
+  let out = text;
+  for (const edit of ordered) out = out.slice(0, edit.from) + edit.text + out.slice(edit.to);
+  return out;
 }
 
 export class Workspace {
@@ -154,11 +187,117 @@ export class Workspace {
   }
 
   /** Tell the language server the text of a script as it stands. */
-  #tell(path: string, text: string): void {
-    if (this.language === null || !path.endsWith(".zeff")) return;
-    this.language.update(path, text).catch(() => {
+  #tell(path: string, text: string): Promise<void> {
+    if (this.language === null || !path.endsWith(".zeff")) return Promise.resolve();
+    this.#told = { ...this.#told, [path]: text };
+    return this.language.update(path, text).catch(() => {
       // The language worker is not there: the editor works on without its help.
     });
+  }
+  /** The text of each script the language server was last told. */
+  #told: Record<string, string> = {};
+
+  /** Before a question to the language server: it is told the script as it now stands. */
+  async #inStep(path: string): Promise<void> {
+    const text = this.buffers[path]?.text;
+    if (text === undefined || this.#told[path] === text) return;
+    if (this.#telling !== null) {
+      clearTimeout(this.#telling);
+      this.#telling = null;
+    }
+    await this.#tell(path, text);
+  }
+
+  /** Ask the language server, about a script as it stands; `null` where it cannot answer. */
+  async #ask(path: string, method: string, params: Record<string, unknown>): Promise<unknown> {
+    if (this.language === null) return null;
+    await this.#inStep(path);
+    return this.language.request(method, {
+      textDocument: { uri: `file:///project/${path}` },
+      ...params,
+    });
+  }
+
+  /**
+   * What the language server offers at a place of a script: each item with its label, its
+   * kind, what it is, and the edit it makes (its range and new text), as the server gives them.
+   */
+  async complete(path: string, line: number, character: number): Promise<CompletionItem[]> {
+    const found = (await this.#ask(path, "textDocument/completion", {
+      position: { line, character },
+    })) as { items?: CompletionItem[] } | CompletionItem[] | null;
+    return Array.isArray(found) ? found : (found?.items ?? []);
+  }
+
+  /**
+   * Tab in the console line: what the language server offers at the end of the statement being
+   * typed, read as if it followed the script, made into the console's text. One offer is
+   * taken; of several, the text they all begin with; none leaves the text as it is.
+   */
+  async completeConsole(typed: string): Promise<string> {
+    const script = this.scriptPath;
+    await this.#load(script);
+    const base = this.buffers[script]?.text ?? "";
+    const before = base.endsWith("\n") || base === "" ? base : `${base}\n`;
+    const path = ".zemp/console.zeff";
+    const line = before.split("\n").length - 1;
+    await this.#tell(path, `${before}${typed}\n`);
+    const edits = (await this.complete(path, line, typed.length)).flatMap((item) =>
+      item.textEdit === undefined ? [] : [item.textEdit],
+    );
+    const first = edits[0];
+    if (first === undefined) return typed;
+    const start = first.range.start.character;
+    const word = typed.slice(start);
+    const fitting = edits.map((edit) => edit.newText).filter((text) => text.startsWith(word));
+    if (fitting.length === 0) return typed;
+    let common = fitting[0] as string;
+    for (const text of fitting) {
+      while (!text.startsWith(common)) common = common.slice(0, -1);
+    }
+    return typed.slice(0, start) + (fitting.length === 1 ? (fitting[0] as string) : common);
+  }
+
+  /** The usage of the call at a place of a script, and the parameter the place is in. */
+  async signature(
+    path: string,
+    line: number,
+    character: number,
+  ): Promise<{ usage: string; active: [number, number] | null; summary: string } | null> {
+    const found = (await this.#ask(path, "textDocument/signatureHelp", {
+      position: { line, character },
+    })) as {
+      signatures?: {
+        label: string;
+        documentation?: string;
+        parameters?: { label: [number, number] }[];
+        activeParameter?: number;
+      }[];
+    } | null;
+    const one = found?.signatures?.[0];
+    if (one === undefined) return null;
+    const active =
+      one.activeParameter === undefined
+        ? null
+        : (one.parameters?.[one.activeParameter]?.label ?? null);
+    return { usage: one.label, active, summary: one.documentation ?? "" };
+  }
+
+  /**
+   * Format a script as `zeff fmt` does, by the language server's edits: the editor's text
+   * replaced, as a paste would, and saved. Nothing changes where the server makes no edit.
+   */
+  async format(path: string): Promise<void> {
+    const edits = (await this.#ask(path, "textDocument/formatting", {
+      options: { tabSize: 4, insertSpaces: true },
+    })) as { range: Range; newText: string }[] | null;
+    const text = this.buffers[path]?.text;
+    if (edits === null || edits.length === 0 || text === undefined) {
+      this.status = "nothing to format";
+      return;
+    }
+    this.edit(path, applied(text, edits));
+    this.status = "formatted";
   }
 
   /** What the language server knows of the word at a place of a script, as plain text. */
