@@ -239,3 +239,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** As at step 8 here. On GitHub: 33f8950 (step 7b) green and deployed; 09698a5 (step 8) failed by the WebKit page load alone.
 
 **Next.** Step 11 `[function]`: the pre-release routine on the hosted 0.2.1, which waits for the owner: the reader test, the checks by hand, his trial, and "Release 0.2.1".
+
+## 22 November 2026, release 0.2.1, step 11 begun: the hosted alpha read, and a fault of the Plots place mended
+
+**Done.** Steps 8, 9 and 10 are green on GitHub in both browsers and deployed (5f6f369; first start 1.1 s in Chromium and 1.4 s in WebKit, ⌘↵ on the last statement 55 and 34 ms). Reading the hosted alpha found the plot shown in the Plots place of the showcase saying "The engine wrote no figure": a plot of twelve panels refused at a thumbnail's size ended the run that drew every figure, and files left from an earlier drawing were read as the new ones. Mended: a figure counts only where its own statement ended in the run, and the figures after a refused one are asked for again. Seen too, and left: a statement that is not a loop (`dataset(...).drop_missing(...).add(...)`) shows a list "Passes · 1 pass" under it, as the engine reports passes for it.
+
+**Green.** As at step 8 here (the five WebKit tests of the mouse on this Mac apart).
+
+**Next.** The mend checked on GitHub and at the address, the examples read by eye again there; then the owner's part of step 11: the reader test, the checks by hand, his trial, "Release 0.2.1".

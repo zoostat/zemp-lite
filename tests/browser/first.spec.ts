@@ -55,6 +55,8 @@ test("the showcase of plots prints what `zeff run` prints, and its 21 plots are 
   page,
   press,
 }) => {
+  // 35 statements, 21 figures at the place's size and again as thumbnails: given the time.
+  test.setTimeout(120_000);
   await opened(page, press);
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByRole("combobox", { name: "Type a command" }).fill("plots.zeff");
@@ -77,6 +79,9 @@ test("the showcase of plots prints what `zeff run` prints, and its 21 plots are 
     .toEqual(heads(scratch("expected/plots.stdout")));
   await expect.poll(() => saidAsWritten(page)).toBe(scratch("expected/plots.stderr"));
   // Every plot the script prints is one of the plots of the run, each drawn by the engine.
+  // (In a window of a reader's height again, for a plot drawn to fit takes the height of its
+  // place; the width as it was, so that nothing printed is laid out afresh.)
+  await page.setViewportSize({ width: page.viewportSize()!.width, height: 900 });
   await press(
     page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
   );
@@ -85,6 +90,20 @@ test("the showcase of plots prints what `zeff run` prints, and its 21 plots are 
     plots.getByRole("list", { name: "Plots of the last run" }).getByRole("listitem"),
   ).toHaveCount(21);
   await expect(plots.locator('[data-testid="figure"] img').first()).toBeVisible();
+  // Each is drawn, the one shown at its full size among them: found at 0.2.1, a plot of
+  // twelve panels, which the engine will not draw as small as a thumbnail, ended the run that
+  // drew the thumbnails, and every figure after it was never written, the one shown too. A
+  // figure the engine refuses now costs itself alone, and says what the engine said.
+  const thumbs = plots.getByRole("list", { name: "Plots of the last run" }).getByRole("listitem");
+  await expect(plots.locator(".stage img")).toBeVisible({ timeout: 30_000 });
+  await expect(thumbs.locator("img")).toHaveCount(20, { timeout: 30_000 });
+  const refused = thumbs.filter({ hasText: "too small for the 12 panels" });
+  await expect(refused).toHaveCount(1);
+  await expect(plots).not.toContainText("The engine wrote no figure.");
+  // At the size of the Plots place the same plot has room, and is drawn.
+  await press(refused.getByRole("button", { name: /^Show the plot/ }));
+  await expect(plots.locator(".stage img")).toBeVisible({ timeout: 30_000 });
+  await expect(plots.locator(".stage")).not.toContainText("too small");
 });
 
 test("each statement of the returns to schooling has its note beside it once it has run", async ({

@@ -1064,33 +1064,57 @@ export class Workspace {
         return;
       }
       for (const one of wanted) this.figures[keyOf(one)] = { svg: null, problem: "" };
-      const sent = withExports(run.text, plotsOf(run), wanted);
-      const told = consoleRun(run.script, sent.text);
       const started = performance.now();
-      try {
-        const outcome = await this.session.run(run.script, sent.text, told.hear);
-        told.end(outcome);
-        // What the engine said of the lines the interface added, each under its own figure.
-        const said = blocks(told.run).flatMap((block) => block.said);
-        for (const [index, figure] of sent.figures.entries()) {
-          const next = sent.figures[index + 1]?.line ?? Infinity;
-          const bytes = outcome.stopped ? null : await this.engine.read(figure.file);
-          const problem = said
-            .filter((one) => one.line !== null && one.line >= figure.line && one.line < next)
-            .filter((one) => one.kind === "error")
-            .map((one) => one.sentence)
-            .join(" ");
-          this.figures[figure.key] = {
-            svg: bytes === null ? null : new TextDecoder().decode(bytes),
-            problem: bytes === null ? problem || "The engine wrote no figure." : "",
-          };
+      // The engine ends a run at its first error. A figure it refuses (a plot of twelve panels
+      // on a page as small as a thumbnail's) would so take with it every figure asked for
+      // after it in the same run, the one a reader is looking at among them. So where a
+      // figure is refused, those after it are asked for again, without it: a refused figure
+      // costs itself and one more run of the script, never its neighbours.
+      let asking = wanted;
+      for (let rounds = 0; asking.length > 0 && rounds <= wanted.length; rounds += 1) {
+        const sent = withExports(run.text, plotsOf(run), asking);
+        const told = consoleRun(run.script, sent.text);
+        const again: Wanted[] = [];
+        try {
+          const outcome = await this.session.run(run.script, sent.text, told.hear);
+          told.end(outcome);
+          // What the engine said of the lines the interface added, each under its own figure.
+          const said = blocks(told.run).flatMap((block) => block.said);
+          let refused = false;
+          for (const [index, figure] of sent.figures.entries()) {
+            const next = sent.figures[index + 1]?.line ?? Infinity;
+            // A figure is this run's only where its own statement ended in this run: a file
+            // of its name may be left from a drawing before, and a run that ended earlier
+            // never wrote this one.
+            const wrote = told.run.statements.some(
+              (one) => one.line === figure.line && one.state === "done",
+            );
+            const bytes = outcome.stopped || !wrote ? null : await this.engine.read(figure.file);
+            const problem = said
+              .filter((one) => one.line !== null && one.line >= figure.line && one.line < next)
+              .filter((one) => one.kind === "error")
+              .map((one) => one.sentence)
+              .join(" ");
+            const one = asking.find((candidate) => keyOf(candidate) === figure.key);
+            if (bytes === null && problem === "" && refused && one !== undefined) {
+              // Not reached: the run had ended at a figure before it.
+              again.push(one);
+              continue;
+            }
+            if (bytes === null && problem !== "") refused = true;
+            this.figures[figure.key] = {
+              svg: bytes === null ? null : new TextDecoder().decode(bytes),
+              problem: bytes === null ? problem || "The engine wrote no figure." : "",
+            };
+          }
+        } catch (error) {
+          for (const figure of sent.figures) {
+            this.figures[figure.key] = { svg: null, problem: (error as Error).message };
+          }
         }
-        this.drawMs = performance.now() - started;
-      } catch (error) {
-        for (const figure of sent.figures) {
-          this.figures[figure.key] = { svg: null, problem: (error as Error).message };
-        }
+        asking = again;
       }
+      this.drawMs = performance.now() - started;
     })();
     this.#busy = work;
     await work;

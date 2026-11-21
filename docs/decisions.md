@@ -1149,3 +1149,13 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **A page's load is tried once more.** On GitHub's Linux machines WebKit at times never ends the load of a page at the start of a test (twice before 0.1's release, once at 0.2, and twice in the one run of step 8's commit, in tests of the editor's colours and of a pane's edge, neither of which that commit touched). The remedy named at 0.1's release is taken: in the tests' own `page`, a load that has not ended in twelve seconds is asked for once more. Only the load is tried again, never a test; no assertion is changed, and a page that loads and then fails still fails.
 
 **Reason.** The checklist's step 10; the testing handbook's rule that a release's notes say what was validated.
+
+## 22 November 2026: A figure the engine refuses costs itself alone (found reading the hosted alpha, step 11)
+
+**What was found.** Reading the showcase of plots in the hosted alpha, the plot shown in the Plots place said "The engine wrote no figure." The Plots place asks for the thumbnails of every plot of the run and for the plot shown in one run of the script with an `export` for each. One plot of the showcase has twelve panels, which the engine will not draw on a page as small as a thumbnail's (Z0401, rightly); the engine ends a run at its first error; so every figure asked for after that one was never written, the plot shown among them. And where files of the same names were left from a drawing before, they were read as this run's: thumbnails of another size shown as drawn, and the refusal not seen at all. It has been so since the showcase was added at 0.2 (step 18c), whose test asked only that the list had 21 entries and that a figure was to be seen.
+
+**Choice.** (1) A figure is this run's only where its own `export` statement ended in this run, by the run's own record of its statements; a file of its name left from before is not read. (2) Where a figure is refused, those asked for after it are asked for again without it, until none is left: a refused figure costs itself and one more run of the script. The refused thumbnail says what the engine said; chosen, the same plot is drawn at the size of the Plots place, where it has room. (`Workspace.#draw`.)
+
+**Tests.** Browser (`first.spec`, the showcase): the plot shown is drawn, twenty thumbnails are drawn and the one refused says the engine's sentence, nothing says "The engine wrote no figure.", and the refused plot chosen is drawn at the place's size.
+
+**Reason.** The checklist's step 11 (the examples read by eye in the hosted alpha); a fault of the app, mended where it lies.
