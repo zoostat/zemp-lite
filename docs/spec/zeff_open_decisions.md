@@ -116,6 +116,18 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 
 **Status (21 November 2026, the owner's answers from Zemp Lite 0.2).** At step 1 of Zemp Lite's release 0.2 the owner answered the seventeen questions of its checklist, "Go, as recommended"; the Zemp Lite session, which may not edit this repository, wrote them up in the shared notes, and they are entered here from the Zeff session: #27 (its server part closed until the paid tiers), #37 (open until the trademark applications are filed), #74 and #75 (option A, in the margin editor's form), #76 (the reading of 20 November confirmed), #164 (the addendum's two points), #176 (R2, R8, R9), #177, #178 (the form of the comment), #181, #183, #184 to #186 (option A each, placed at 0.11.0 by the opening of Zeff 0.9.0), #187, #195 and #196 (confirmed). Each entry carries a dated paragraph. Also recorded from the same answer: the reader test is one test for Zemp 0.2 and Zeff 0.9.0, run on the hosted alpha with five to eight readers the owner chooses (step 45 of Zeff 0.9.0); and the alpha's example is the margin editor's `wages` script with Zeff's sample `instruments` on `staff`. The amendments of the Zemp Specification that follow from #146, #174 and these answers (sections 2, 5, 7, 8, 15 and 17) and of section 12 of the Engine Specification (R9) are made with them and logged in `docs/spec_changes.md`.
 
+**Status (21 November 2026, release 0.9.0, step 7b).** #198 is new: the small-sample factor of robust and clustered errors on a `glm` fit, where R's `sandwich` left to itself, Stata, and the variance layer differ. Taken as recommended (A, the variance layer's factors for every model) under the owner's standing instruction of 12 November 2026, his to overturn before 1.0.
+
+**Status (21 November 2026, release 0.9.0, step 7c).** #199 is new: what `weight_type: analytic` means on a binary model. Taken as recommended (A, refused) under the owner's standing instruction, his to overturn before 1.0.
+
+**Status (21 November 2026, release 0.9.0, step 8a).** #200 is new: what `predict` and `residuals` give a `glm` fit when `type:` is left out, where R and Stata differ. Taken as recommended (A, the scale of the outcome) under the owner's standing instruction, his to overturn before 1.0.
+
+**Status (21 November 2026, release 0.9.0, step 8c).** #201 is new, in two parts: what the `R²` row of `report` shows for a `glm` fit (McFadden's, marked; taken as recommended under the standing instruction), and which standardization `summary(standardized: true)` gives a `glm` fit (refused until the owner chooses; open, deadline 1.0).
+
+**Status (21 November 2026, release 0.9.0, step 11a).** #202 is new: five things the three definitions of `margins` in #88 leave unsaid, met when it was built for `reg`. Each is taken as recommended under the owner's standing instruction of 12 November 2026 and is his to overturn before 1.0: the average over the rows is weighted by the fit's weights; with no variable named `margins` gives the adjusted prediction (built at step 11b); after `reg` the p-values and intervals are from Student's t on the fit's degrees of freedom; the printed table, shown to him at this step; under `type: mem` a category is held at the shares of its levels (built at step 11b). Rows Z0414 and Z0417 of section 11.1 of the Language Reference are extended to `margins` (`docs/spec_changes.md`).
+
+**Status (22 November 2026, a ruling of the owner's from Zemp Lite).** #203 is new and decided: on 21 November 2026, trying the hosted alpha, the owner proposed one layout of three panes for every place of Zemp Lite in the place of the margin editor's two layouts, approved a mockup drawn twice to his corrections ("looks fine") and placed it in a release of its own: "Yes, record it as 0.2.1 and reader test, your checks by hand etc will move to 0.2.1". The Zemp Lite session, which may not edit this repository, wrote it up in the shared notes; asked in the Zeff session on 22 November 2026 whether to enter it, the owner answered "Yes, enter it", and it is entered here, his words of the 21st as that note gives them. It revises #174 (the margin becomes the Notes pane; a run unfolds every output) and #176, R2 (Panes is removed as a layout), and brings #178's outline and **Run section** to Zemp Lite 0.2.1 in the interface's own reading of the comment. With it the reader test (one test for Zemp and Zeff 0.9.0; step 45 of Zeff 0.9.0) and the acceptance checks left for the hand at Zemp Lite 0.2 move to the hosted 0.2.1; the test's scripts are unchanged. Section 15 of the Zemp Specification gains the row of 0.2.1, and sections 5, 7 and 8 a sentence each (`docs/spec_changes.md`).
+
 ## Summary
 
 | # | Decision | Recommendation | Decide by |
@@ -207,6 +219,12 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 85 | The Games–Howell comparison in `posthoc` | Add `games_howell` to `method:` in the first release after 0.7.0 with room; until then Tukey's HSD after Welch's ANOVA prints a note | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 29 |
 | 86 | Folding, snippets and the statement ranges behind **Run** in the language server | At 0.8.0, with Zemp's alpha; formatting through the server is built at 0.7.0 | decided 15 November 2026 (option A); built at 0.8.0, step 8b |
 | 87 | A variable name in an option record | Accept a `Vars` of exactly one variable where a parameter takes a `Var`, so that `{ se: robust, cluster: vars(firm) }` can be named once and spread | decided 15 November 2026 (option A); built at 0.8.0, step 4 |
+| 203 | One layout of three panes on every page (Zemp Lite) | Every place (Script, Data, Plots, Help) has a left pane, the place in the middle and a right pane, each pane opened and closed by its own link; the Panes layout, the Margin link and the Objects panel are removed; Run unfolds every output; revises #174 and #176 (R2) | decided 21 November 2026 (the owner's ruling, given in the Zemp Lite session, passed on in the shared notes and confirmed by him in the Zeff session on 22 November 2026); Zemp Lite 0.2.1, on Zeff 0.8.0 |
+| 202 | `margins`: the average under weights, the call with no variable, the reference distribution, the printed table, a category under `type: mem` | Recommended A for each: the average weighted by the fit's weights; with no variable named, the adjusted prediction; Student's t on the fit's degrees of freedom after `reg`; the table of step 11a; a category held at the shares of its levels | (a), (c) and (d) decided at 0.9.0, step 11a, under the standing instruction (A), (d) shown to the owner; (b) and (e) built at step 11b; the owner's to overturn before 1.0 |
+| 201 | A `glm` fit in `report` and under `summary(standardized:)` | Recommended A for each: the `R²` row of `report` shows McFadden's R² marked `(McFadden)`; `standardized: true` is refused on a `glm` fit until a standardization is chosen | the first decided at 0.9.0, step 8c, under the standing instruction (A); the second open, deadline 1.0 |
+| 200 | What `predict` and `residuals` give a `glm` fit unless told | Recommended A: the scale of the outcome for both, `type: response`: a probability from `predict`, the outcome less the fitted probability from `residuals`; R's defaults (`link`, `deviance`) one word away | decided at 0.9.0, step 8a, under the standing instruction (A); the owner's to overturn before 1.0 |
+| 199 | Analytic weights on a binary model | Recommended A: `weight_type: analytic` is refused on `glm` with `family: binomial` (Z0410), as Stata refuses `aweight` on `logit`; frequency and sampling weights are taken | decided at 0.9.0, step 7c, under the standing instruction (A); the owner's to overturn before 1.0 |
+| 198 | The small-sample factor of robust and clustered errors on a likelihood fit | Recommended A: the factors of the variance layer for every model, HC1 N/(N − k) and CR1 G/(G − 1) · (N − 1)/(N − k), as section 8.3, point 2, of the Engine Specification says | decided at 0.9.0, step 7b, under the standing instruction (A); the owner's to overturn before 1.0 |
 | 197 | The plots of a run handed to an interface | Recommended A: an engine step at 0.9.0 by which the browser build keeps the plots of a run, lays one out at a size and theme without a new run, and hands over the scene (C16 of #175) | decided 21 November 2026 (option A, the owner's priority as recommended); built at 0.9.0, step 25 |
 | 196 | Two messages R users meet: `I()` and `poly` in a formula, and a function of a later release | Recommended A: inside a formula, the help of Z0103 for `I(...)` shows the term without it and for `poly(x, k)` writes the powers out; a catalogued name of a later release says its release | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 35 |
 | 195 | Slopes and turning points: `margins` through a transformed term | Recommended A: `margins` differentiates through every term that is a function of the variable asked for (`exper` and `exper^2` today; `poly` and `spline` when they arrive) | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, steps 10 to 12 |
@@ -228,9 +246,9 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 179 | The last run's output shown when a project is opened | Recommended A: on opening, the last run's output from the run record and the cache, each block labelled with when it ran, the stale rules applying at once | open; deadline 0.11.0 |
 | 178 | Sections in a script | Recommended A: a comment written as a heading (`// # Data`) starts a section, reported by the language server as outline and folding, with **Run section**; the form of the comment is the owner's choice | decided 21 November 2026 (option A, the comment `// # Title`, on the recommendation); built at 0.9.0, step 28 |
 | 177 | Zemp Lite is not a notebook: the statement is the cell | Recommended A: no cells; the script stays one plain text file and the statement is the unit that is run, shown, folded and marked stale | decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session) (option A) |
-| 176 | Six questions the margin editor leaves open | Recommended per item: Panes kept one release (R2); the keys as the document has them (R8); ⌘↵ runs the statement with the stale statements it reads (R9); tables as cells when the engine can (R10); the HTML article until the PDF (R12); a paper's chunks in its own session (R13) | R2, R8 and R9 decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session); R10 with C7; R12 and R13 with the documents of #141 |
+| 176 | Six questions the margin editor leaves open | Recommended per item: Panes kept one release (R2); the keys as the document has them (R8); ⌘↵ runs the statement with the stale statements it reads (R9); tables as cells when the engine can (R10); the HTML article until the PDF (R12); a paper's chunks in its own session (R13) | R2, R8 and R9 decided 21 November 2026, as recommended (the owner's "Go, as recommended" in the Zemp Lite session); R10 with C7; R12 and R13 with the documents of #141; R2 revised on 21 November 2026 by #203: Panes is removed as a layout at Zemp Lite 0.2.1 |
 | 175 | What the margin editor asks of the engine: the contract, C1 to C27 | Recommended A: each of the 27 items placed at an engine release as a step with its tests; C5 and C6 (a result's type and dimensions, its print at a width) first, for the 0.2 alpha | decided 21 November 2026 (option A): C5, C6 and C22 built at 0.9.0 (steps 26 and 27), C16 with #197 (step 25), C23 to C27 placed at 0.11.0, the rest at the releases they rest on |
-| 174 | The editor of Zemp Lite: the margin editor | The margin editor replaces the Inline layout of section 5 as the editor of Zemp Lite, from the 0.2 alpha: a note beside every statement, the full result unfolded under it at the reader's asking; places Script, Data, Plots and Paper; the quiet look | decided 18 November 2026 (option A; the owner's ruling, recorded from the Zemp Lite repository); built from the Zemp 0.2 alpha |
+| 174 | The editor of Zemp Lite: the margin editor | The margin editor replaces the Inline layout of section 5 as the editor of Zemp Lite, from the 0.2 alpha: a note beside every statement, the full result unfolded under it at the reader's asking; places Script, Data, Plots and Paper; the quiet look | decided 18 November 2026 (option A; the owner's ruling, recorded from the Zemp Lite repository); built from the Zemp 0.2 alpha; revised on 21 November 2026 by #203 (its margin becomes the Notes pane of one layout of three panes, from Zemp Lite 0.2.1) |
 | 173 | Probabilities below the smallest double: a log scale for the tails | Recommended A now and C after 1.0: the limit is stated on the page of `dist.truncated` and in the known issues; `log: true` on `pdf` and `cdf`, used inside a truncation, is an addition placed in the plan of releases after 1.0 | decided 20 November 2026 (A, on the recommendation under the standing instruction); C open, deadline: the plan of releases after 1.0 |
 | 172 | Typst inside Zemp, for the PDF of a script with its output | Recommended A: a module of its own, fetched the first time a PDF is asked for, built with the hyphenation patterns under permissive licences only; until then the `.typ` export and the Typst the user has installed | open; deadline: the Zemp release that builds **Export script with output** |
 | 171 | Six printed layouts the review found | Recommended A for each: small coefficients in `report` by significant digits, sign kept; `labels:` applied to the parts of an interaction; thousands separators in every df column; facet titles "kids = 0"; long group names wrapped in the proportion test's hypotheses; the standard error of a t-test's difference in its estimates | decided 21 November 2026 (each layout as recommended); built at 0.9.0, step 34 |
@@ -3505,6 +3523,8 @@ The Inline layout of the Zemp Specification, section 5, puts each result under i
 
 *What it asks of the engine* is #175; what it leaves open is #176.
 
+**Revised (21 November 2026, the owner's ruling; #203).** From Zemp Lite 0.2.1 the margin editor and Panes are one layout of three panes on every place: the margin of notes is the **Notes** pane at the right of the Script place, open at first, and **Run** unfolds every output under its statement, where the ruling of 18 November 2026 left them folded; a script opened is folded as before. The 0.2 alpha is as this entry describes it.
+
 ### 175. What the margin editor asks of the engine: the contract, C1 to C27
 
 Raised on 18 November 2026 with #174; entered on 20 November 2026. The interface is only as exact as what the engine tells it. The editor's design lists what it asks as twenty-seven items (its section 12), each a question the interface asks and the form of the answer, none a rule the interface keeps for itself. They are to be agreed with the Zeff side item by item, each placed at a release, and each tested in the Zeff repository. The section numbers in the third column are the design document's.
@@ -3565,6 +3585,8 @@ Raised on 18 November 2026 with #174; entered on 20 November 2026. Each is the o
 
 **The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." R2: Panes kept beside the margin editor for the 0.2 alpha, reviewed at Zemp 0.3. R8: the keys of the editor's document, section 15 (⌘↵ the statement, ⌘⇧↵ the script, ⌘K everything, ⌥↵ open or fold, F1 help, ⌃` the console; every action in ⌘K). R9: ⌘↵ runs the statement with every statement it reads that is out of date or not yet run; the paragraph "Running code interactively" of section 12 of the Engine Specification is amended to match, logged. R10, R12 and R13 stay open at their deadlines.
 
+**R2 revised (21 November 2026, the owner's ruling; #203).** Panes was kept beside the margin editor for one release and reviewed at Zemp 0.3; the review is settled sooner: at Zemp Lite 0.2.1 the **Panes** button and the **Margin** link are removed, and both layouts become the one layout of three panes.
+
 ### 177. Zemp Lite is not a notebook: the statement is the cell
 
 Raised on 16 November 2026 from the owner's review of notebook features. A notebook keeps code in cells inside a file of its own format, runs them in any order against a state that changes, and numbers each run so that the reader can reconstruct the order. The Inline layout already gives a notebook's main convenience, the result under the code that made it.
@@ -3595,6 +3617,8 @@ Raised on 16 November 2026. A long script has no visible structure: nothing to o
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A, with the comment `// # Title` (and `// ## Title` a level below) as recommended; the language server reports sections as outline and folding at step 28, and the formatter keeps them. The form is due at the Zemp 0.2 alpha and is decided here because the outline is built now; the owner may still change it before the alpha.
 
 **The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." The form of the comment (R4): `// # Title`, with `// ## Title` a level below, as the opening of Zeff 0.9.0 had taken it on the recommendation.
+
+**In Zemp Lite 0.2.1 (21 November 2026, the owner's ruling; #203).** The outline and **Run section** come at Zemp Lite 0.2.1, on Zeff 0.8.0, in the interface's own reading of the comments `// # Title` and `// ## Title`; the interface takes the engine's sections (step 28 of Zeff 0.9.0) once Zemp moves to 0.9.0.
 
 ### 179. The last run's output shown when a project is opened
 
@@ -3870,3 +3894,152 @@ What an interface needs: the browser build keeping the plots of a run as it keep
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: an engine step at 0.9.0 (step 25) by which the browser build keeps the plots of a run, lays one out at a size and theme without a new run, and hands over the scene (C16 of #175); the owner's priority, as recommended.
 
+### 198. The small-sample factor of robust and clustered errors on a likelihood fit
+
+Raised on 21 November 2026 at release 0.9.0, step 7b, when `glm` took `se:` and `cluster:`. The sandwich itself is not in question: the scores summed, or summed within clusters, between the inverse of the information. What multiplies it differs between the packages on a model fitted by maximum likelihood. With N observations, k estimates and G clusters:
+
+| | Robust | Clustered |
+| --- | --- | --- |
+| The variance layer, as for `reg` (HC1, CR1) | N/(N − k) | G/(G − 1) · (N − 1)/(N − k) |
+| R `sandwich`, `type = "HC1"`; `fixest::feglm`; Python `statsmodels` | N/(N − k) | G/(G − 1) · (N − 1)/(N − k) |
+| R `sandwich::vcovCL` left to itself on a `glm` fit (`type = "HC0"`) | none (`sandwich()`) | G/(G − 1) |
+| Stata `logit` and `probit`, `vce(robust)` and `vce(cluster id)` | N/(N − 1) | G/(G − 1) |
+
+On the wages (N = 18,390, k = 4) the standard errors differ in their fifth digit; in a sample of 100 with 10 estimates, by five per cent.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. The variance layer's factors for every model: `se: robust` is HC1 and `cluster:` is CR1 on a `glm` fit as on a `reg` fit | What section 8.3, point 2, of the Engine Specification says: "`se:`, `cluster:` and `weights:` work identically for every model"; the labels the summary prints, HC1 and CR1, mean these factors; the larger, more cautious errors; `fixest` and `statsmodels` do the same | A user who copies `logit y x, vce(cluster id)` from Stata, or `vcovCL(m, ~id)` from R, sees standard errors larger by √((N − 1)/(N − k)) |
+| B. Stata's factors on a likelihood fit, N/(N − 1) and G/(G − 1) | Equal to Stata's `logit`, and to R's `vcovCL` left to itself when clustered | Two rules in the variance layer, by the kind of model; "HC1" and "CR1" would not mean on a `glm` fit what they mean on a `reg` fit; no degrees-of-freedom correction where the sample is small, which is where it matters |
+| C. A, with Stata's factors offered as a word of an option after 1.0 | Every package's number can be had (the owner's rule of #98 and #99) | A new option, not in the catalogue; after the freeze |
+
+*Recommendation.* A now, as the specification says, with the difference and its size written in the help page of `glm` under "Coming from R or Stata" and held by a test (the clustered variance times (N − k)/(N − 1) equals R's `vcovCL` left to itself, within 1e-8). C can be raised when the catalogue next opens. Deadline: 1.0, since changing a default after 1.0 would change published numbers.
+
+**Decided (21 November 2026, release 0.9.0, step 7b).** A, taken as recommended under the owner's standing instruction of 12 November 2026 ("decisions can be taken as per your recommendations"), and announced to him with the step; his to overturn before 1.0.
+
+### 199. Analytic weights on a binary model
+
+Raised on 21 November 2026 at release 0.9.0, step 7c, when `glm` took `weights:` and `weight_type:`. Section 6 of the Language Reference gives three kinds of weight to regression-type models. Frequency weights (a row stands for several identical observations) and sampling weights (probability weights of a survey) mean on a binary model what they mean on a linear one. Analytic weights say how precisely each outcome was measured: in a linear model they scale the error variance, σ²/w, and the estimate of σ² makes their scale immaterial. A 0 or 1 has no σ²: its variance is fixed by its mean, so there is nothing for an analytic weight to scale, and a classical variance computed with such weights would change with their scale (doubling every weight would halve every variance).
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. Refuse `weight_type: analytic` on `glm` with `family: binomial` (Z0410), the message naming `frequency` and `sampling` | No number that depends on an arbitrary scale; Stata does the same (`logit` takes `fweight`, `pweight` and `iweight`, not `aweight`) | A user with weights that are neither counts nor survey weights must say which they are nearest to |
+| B. Take them as R's `weights =`: the likelihood weighted, the classical variance the inverse of the weighted information, the weights as given | Equal to R's `glm(weights = w)` for any w | R itself warns of weights that are not whole numbers on a binomial; the standard errors depend on the scale of the weights; three kinds of weight would be two computations |
+| C. Take them as sampling weights with a note | Something is fitted | Silently another kind than was written |
+
+*Recommendation.* A. A family with a dispersion to estimate (the gamma, the quasi-families of release 1.7) takes analytic weights when it arrives; the refusal names the family. Deadline: 1.0.
+
+**Decided (21 November 2026, release 0.9.0, step 7c).** A, taken as recommended under the owner's standing instruction of 12 November 2026, and announced to him with the step; his to overturn before 1.0.
+
+### 200. What `predict` and `residuals` give a `glm` fit unless told
+
+Raised on 21 November 2026 at release 0.9.0, step 8a. A model fitted by maximum likelihood has two scales of prediction, the linear predictor and the mean of the outcome, and four kinds of residual. Both methods take `type:` (one function with an option, #97; every kind R gives, #98 and #99): `predict(newdata:, type: response | link)` and `residuals(type: response | pearson | deviance | working)`. The question is the default.
+
+| | `predict` unless told | `residuals` unless told |
+| --- | --- | --- |
+| R (`predict.glm`, `residuals.glm`) | the linear predictor | the deviance residuals |
+| Stata (`predict` after `logit`) | the probability | none: the kind is always named |
+| Python `statsmodels` | the mean | none: one attribute for each kind |
+| R `marginaleffects::predictions` | the response | not applicable |
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. The scale of the outcome for both: `response` | `fitted()`, `predict()` and `residuals()` agree on every model: a prediction is what `fitted` would give that row, and the outcome is the fitted value plus the residual, for `reg` and `glm` alike; a probability is what a reader of `predict` expects, and R's default is a known trap; `margins` works on this scale too | An R user's `residuals(m)` gives deviance residuals, and here gives the response's; `predict(m)` in R gives log-odds |
+| B. R's defaults: `link` and `deviance` | What an R script prints | `predict` and `fitted` on different scales; the identity outcome = fitted + residual lost for `glm` |
+| C. No default for `residuals` on a `glm` fit: the kind must be named | Nothing silent | A required option on one kind of fit and not another |
+
+*Recommendation.* A, with the page of each method saying what R gives and which word gives it here. Deadline: 1.0.
+
+**Decided (21 November 2026, release 0.9.0, step 8a).** A, taken as recommended under the owner's standing instruction of 12 November 2026, and announced to him with the step; his to overturn before 1.0. On a least-squares fit `predict` takes either word (it has one scale) and `residuals` takes `response` alone, another word being refused (Z0401): the weighted kinds of a regression's residuals are not built.
+
+### 201. A `glm` fit in `report` and under `summary(standardized:)`
+
+Raised on 21 November 2026 at release 0.9.0, step 8c, when the tables of the result interface took a `glm` fit. Two questions of what is printed.
+
+**(a) The `R²` row of `report`.** The row is among the default statistics, and a binary model has no R² of least squares.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. McFadden's R², marked: `0.007 (McFadden)` | The row is not blank in a table of binary models, and says which R² it is, as `(within)` does for a model with fixed effects; Stata's tables print it as "Pseudo R2" | A reader may still set it beside a regression's R² in a mixed table |
+| B. Blank for a `glm` fit, as for a fit by instrumental variables | No number that might be misread | A table of two logits has an empty row by default |
+| C. A row of its own, with a new word in `stats:` | The cleanest table | A new option word, after the freeze |
+
+*Recommendation.* A. **Decided (21 November 2026, step 8c):** A, under the owner's standing instruction; his to overturn before 1.0.
+
+**(b) `summary(standardized: true)` on a `glm` fit.** For a regression the column `beta` is the estimate times the standard deviation of its regressor over that of the outcome. For a binary model that quotient is not a standard quantity: the outcome's standard deviation is that of a 0 or 1, not of what the coefficients are on the scale of.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. Standardized by the regressor alone: the estimate times the standard deviation of its regressor, the change in the log-odds (or the normal score) for one standard deviation | Simple, and what Stata's `listcoef` calls bStdX (Long and Freese); needs no assumption about a latent outcome | Not what `beta` means for a regression; the column needs a heading of its own |
+| B. Fully standardized through the latent outcome, whose variance is that of the linear predictor plus π²/3 (logit) or 1 (probit) | The nearest thing to a regression's beta; `listcoef`'s bStdXY | Rests on the latent-variable reading of the model; changes with the link |
+| C. Refused on a `glm` fit, the help saying to standardize the regressors before fitting | No number whose meaning is unsettled | An option that one kind of fit does not take |
+
+*Recommendation.* A, with the heading `beta (x)`, when the catalogue next opens; until the owner chooses, C is what the engine does (a refusal settles nothing). Deadline: 1.0.
+
+**Status (21 November 2026).** (b) is open: `standardized: true` is refused on a `glm` fit (Z0401).
+
+### 202. `margins`: what the definitions of #88 leave unsaid
+
+Raised on 21 November 2026 at release 0.9.0, step 11a, when `margins` was built for `reg`. The definitions decided at the opening of the release (#88, (a) to (d)) say what an effect is, that the regressors are held fixed, and what `type:` and `at:` mean. Five further points had to be settled to print a table.
+
+**(a) The average under weights.** A weighted fit stands for a population, or for more rows than the frame holds.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. The average over the rows is weighted by the fit's weights, of whatever kind | The average effect in the population the weights describe; with frequency weights, the average over the observations the rows stand for; what Stata's `margins` does | `marginaleffects` weights only when `wts = TRUE` is given, so its default differs |
+| B. Unweighted always | `marginaleffects`' default | After frequency weights the average is over the rows of the file, not over the observations; after sampling weights it describes the sample, not the population the fit describes |
+
+*Recommendation.* A. **Decided (21 November 2026, step 11a):** A, under the standing instruction.
+
+**(b) `margins` with no variable named.** The catalogue's row 260 says "marginal effects and adjusted predictions", and its usage has only `vars`, `at:` and `type:`.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. The adjusted prediction: the average of the predictions (`type: ame`) or the prediction at the means (`type: mem`), the variables of `at:` set to its values | Gives the catalogue's adjusted predictions a home without a new argument; Stata's reading (`margins` alone, `margins, at(...)`), where `dydx()` asks for effects | The effects of every variable need the variables listed |
+| B. The effects of every variable of the model | `marginaleffects::avg_slopes(m)`; one call for the whole table | Adjusted predictions then need an argument the catalogue does not have |
+| C. Refused: `vars` is required | Nothing to explain | The row's description promises adjusted predictions, and nothing gives them |
+
+*Recommendation.* A, built at step 11b with `at:`. Until then `vars` is required. **Decided (21 November 2026, step 11a):** A, under the standing instruction; built at step 11b.
+
+**(c) The reference distribution after `reg`.**
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. Student's t on the fit's degrees of freedom (N − k, or G − 1 when clustered), as the fit's own table and `derive` | An effect that is one coefficient has the coefficient's own p-value and interval; Stata's `margins` after `regress` | `marginaleffects` uses the normal distribution unless `df =` is given |
+| B. The normal distribution | `marginaleffects`' default | The effect of `educ` in `y ~ educ` would have another interval than the coefficient of `educ` |
+
+*Recommendation.* A. After `glm` the reference is the normal distribution, as the fit's own table has it (step 12). **Decided (21 November 2026, step 11a):** A, under the standing instruction.
+
+**(d) The printed table.** One row for each effect: the variable; what is compared (`dy/dx` for a slope, `female − male` for a 0/1 variable with value labels, `true − false` for a Bool, `1 − 0` otherwise, `Mining − Agriculture` for a level against the first); then the columns of a fit's own table. Above it, the model, what the average is over, and the kind of standard error; under it, a line for each slope taken through more than the variable's own term (`the slope of exper is taken through exper and exper^2`). The result is a `TestResult`, read by `estimates`, `ci` and `p_values`; a row is named as the fit names the term (`exper`, `industry=Mining`), so that the names of a level's coefficient and of its effect are one. Alternatives: the term's name in the first column (wider by the length of the longest level, which wraps the table of a category of twelve levels); `effect` for the heading `contrast`. *Recommendation.* As built. **Shown to the owner at step 11a**, his to change.
+
+**(e) A category under `type: mem`.** Definition (c) of #88 says "at the means of the regressors"; a category has no mean.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. Each level's indicator at its mean, the share of the rows at that level; a 0/1 variable and a Bool at their means | "At the means" taken as written; Stata's `atmeans`; no row of the data need look like the point | The point is no observable case: 46 per cent female |
+| B. A category at its commonest level, numbers at their means | `marginaleffects`' `newdata = "mean"`; an observable case | Not the means; changes with a tie between levels; a 0/1 number is treated otherwise than a Bool |
+
+*Recommendation.* A, built at step 11b. **Decided (21 November 2026, step 11a):** A, under the standing instruction; built at step 11b.
+
+**Status (21 November 2026).** (a), (c) and (d) are built; (b) and (e) are built at step 11b. Deadline for the owner to overturn any: 1.0.
+
+### 203. One layout of three panes on every page (Zemp Lite)
+
+Raised and decided by the owner on 21 November 2026, in the Zemp Lite session, while trying the hosted alpha of Zemp Lite 0.2; written up by that session in the shared notes and entered here on 22 November 2026 from a Zeff session, which alone edits this register, on the owner's word in that session ("Yes, enter it"). His words of the 21st are given as the note gives them. The mockup he approved (its second draft) is kept outside the repositories; Zemp Lite records the same decision in its own `docs/decisions.md` of that day.
+
+*The ruling.* The owner proposed one layout for every page in the place of the margin editor's two layouts (the margin and Panes). A mockup was drawn twice to his corrections; he answered "looks fine", asked that it be "0.2 (patch 1)", and then: "Yes, record it as 0.2.1 and reader test, your checks by hand etc will move to 0.2.1".
+
+**Decided (21 November 2026).** Every place (Script, Data, Plots, Help) has a left pane, the place itself in the middle, and a right pane. A bar under the top bar carries one link for each pane, above that pane, which opens and closes it; a pane also closes by its own ×. The **Panes** button and the **Margin** link are removed: the margin editor and the Panes layout become this one layout. Each place remembers which of its panes are open.
+
+- **Script.** Left: **Project** (the project's files) and **Outline** (the sections `// # Title` and subsections `// ## Title`, each going to its line, with **Run section**), each with its own link, both closed at first, open together one above the other. Right: **Notes**, open at first: the note beside each statement, which says what it made, so the **Objects** panel is removed. **Run** unfolds every output under its statement (as **Unfold all**); a script opened is folded as before.
+- **Data.** Left: **Frames of the run**, open at first. Middle: the grid as in 0.2. Right: **Variables**, closed at first, showing either the list of variables (each with its box to show or hide it in the grid) or one variable: clicking a column's header or a name in the list opens the pane at that variable's properties in the place of the list (label, type, missing count and share, histogram; for a number N, mean, sd, min, first quartile, median, third quartile, max and the number of distinct values; for a category each level's count and share), with "‹ All variables" back to the list. The pane is read-only: the type, contrast and label changes and their **Copy as Zeff** buttons are removed from it.
+- **Plots.** Left: **Plots of the run**; right: **The plot** (its statement, line, kind and export size); both open at first, both closable.
+- **Help.** Left: the outline of the help page (its sections, each going to its place); right: **Related functions**, the page's See also with each function's one-line title, opening its page; both open at first.
+
+*When.* Zemp Lite 0.2.1, on Zeff 0.8.0, after 0.2 is released. It needs no engine release (the Zemp Specification, section 15: a Zemp fix never needs an engine release): the quartiles and the median are the engine's `quantile` and `median` of 0.8.0; the related functions are the help pages' See also; until the language server reports sections (#178, built at Zeff 0.9.0, step 28), the interface reads the comments `// # Title` and `// ## Title` itself, and takes the engine's sections once Zemp moves to 0.9.0.
+
+*What it revises.* #174 (the margin editor: its margin becomes the Notes pane, and a run now unfolds every output, where the ruling of 18 November 2026 left them folded) and #176, R2 (Panes kept beside the margin editor for one release: settled by removing Panes as a layout). #178's outline and **Run section** come at Zemp Lite 0.2.1 in the interface's reading of the comment, ahead of the engine's.
+
+*Also moved to 0.2.1 by the same ruling.* The reader test (one test for Zemp and Zeff 0.9.0, run on the hosted alpha with five to eight readers the owner chooses; step 45 of Zeff 0.9.0) is run on the hosted 0.2.1, not 0.2; the test still serves Zeff 0.9.0 and its scripts are unchanged. So are the acceptance tests left for the hand at Zemp Lite 0.2 (the keyboard alone, VoiceOver, the print at every size and in the dark theme) and the check by hand of the timing of ⌘↵ in Safari.
+
+**Status (22 November 2026).** Decided; nothing in Zeff waits on it. The Zemp Specification is amended with this entry (section 15, the rows of 0.2 and 0.2.1; sections 5, 7 and 8), logged in `docs/spec_changes.md`.

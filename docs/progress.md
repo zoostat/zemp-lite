@@ -145,3 +145,9 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** GitHub green on 6c354f6, deployed and checked at both addresses (first start 1.3 s in Chromium, 2.5 s in WebKit); the release at `https://github.com/zoostat/zemp-lite/releases/tag/v0.2.0`. To watch: the browser test of resting on a function's name failed once in Chromium on GitHub (on 2624b75) and passed on the next run.
 
 **Next.** "Start release 0.2.1": the layout of three panes, the reader test and the checks by hand. The owner's: the trademarks before the address is announced (#37).
+
+## 22 November 2026, release 0.2.1 planned
+
+**Done.** "Start release 0.2.1": v0.2.0 tagged; the tree made clean (a generated copy of the reader test's sheet, never committed, moved to the shared notes on the owner's word); `docs/spec/` brought to Zeff 1beefc7, where #203 and the 0.2.1 row stand, byte for byte; the row, #203, the sections it amends and the code as it stands read; the checklist written (`docs/releases/0.2.1.md`: 12 steps, five questions). No code written.
+
+**Next.** The owner's "go" and his answers to the five questions; then step 1 `[engine]`, opening the release.
