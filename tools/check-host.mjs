@@ -2,11 +2,11 @@
 // Lite as the headers file says it must. The page, every file it names, the engine's worker
 // and its WebAssembly are fetched; each answer must carry the isolation headers of
 // `public/_headers` (a page without them is not given the shared memory a run is cancelled
-// through), a built file must be kept as never changing, and the page asked for again with
-// what the host said of it must be answered "not modified" with the same headers, since a
-// browser that has the page asks for it that way. What it finds is said in plain words.
+// through), a built file must be kept as never changing, and every answer that carries a tag,
+// asked for again with it, must be answered "not modified" with the same headers, since a
+// browser that has the file asks for it that way. What it finds is said in plain words.
 //
-// Usage: node tools/check-host.mjs <address>      (as https://lite.zeff-lang.dev)
+// Usage: node tools/check-host.mjs <address>      (as https://zemp-lite.pages.dev)
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -53,6 +53,15 @@ function holds(what, answer) {
   }
 }
 
+/** The answers a browser can ask for again with what the host said of them. */
+const tags = [];
+function tagged(what, url, answer) {
+  const tag = answer.headers.get("etag");
+  const modified = answer.headers.get("last-modified");
+  if (tag !== null) tags.push({ what, url, ask: { "if-none-match": tag } });
+  else if (modified !== null) tags.push({ what, url, ask: { "if-modified-since": modified } });
+}
+
 async function fetched(url, init) {
   const answer = await fetch(url, { redirect: "follow", ...init });
   return answer;
@@ -64,6 +73,7 @@ if (page.status !== 200) {
   process.exit(1);
 }
 holds("the page", page);
+tagged("the page", base, page);
 const html = await page.text();
 
 // Every file the page names, and the files they name in turn: the worker and its WebAssembly.
@@ -87,6 +97,7 @@ while (named.size > 0) {
     continue;
   }
   holds(file, answer);
+  tagged(file, new URL(file, base), answer);
   const kept = answer.headers.get("cache-control") ?? "";
   if (!kept.includes("immutable")) {
     problems.push(`${file}: is not kept as never changing (\`cache-control\` is \`${kept}\`)`);
@@ -108,23 +119,22 @@ if (wasm.length === 0) problems.push("no WebAssembly file of the engine was foun
 const worker = [...seen].filter((file) => /worker/.test(file) && file.endsWith(".js"));
 if (worker.length === 0) problems.push("no worker script was found from the page");
 
-// The page asked for again as a browser that has it asks: answered "not modified", with the headers.
-const tag = page.headers.get("etag");
-const modified = page.headers.get("last-modified");
-if (tag === null && modified === null) {
-  problems.push(
-    "the page carries neither `etag` nor `last-modified`: a browser cannot ask whether it changed",
-  );
-} else {
-  const again = await fetched(base, {
-    headers: tag !== null ? { "if-none-match": tag } : { "if-modified-since": modified },
-  });
+// Every answer that carries a tag (`etag` or `last-modified`), asked for again as a browser
+// that has it asks: it must be answered "not modified", and that answer too must carry the
+// isolation headers, which is what a host can get wrong. An answer with no tag is fetched
+// whole each time, with its headers, as Cloudflare Pages does for the page itself.
+let revalidated = 0;
+for (const { what, url, ask } of tags) {
+  const again = await fetched(url, { headers: ask });
+  await again.arrayBuffer();
   if (again.status !== 304) {
-    problems.push(`the page asked for again answered ${again.status}, not 304 ("not modified")`);
+    problems.push(`${what} asked for again answered ${again.status}, not 304 ("not modified")`);
   } else {
-    holds('the page answered "not modified"', again);
+    holds(`${what}, answered "not modified"`, again);
+    revalidated += 1;
   }
 }
+const pageTagged = tags.some(({ what }) => what === "the page");
 
 if (problems.length > 0) {
   console.error(`The host at ${base} does not serve Zemp Lite as it must (${problems.length}):`);
@@ -132,5 +142,5 @@ if (problems.length > 0) {
   process.exit(1);
 }
 console.log(
-  `The host at ${base} serves Zemp Lite as it must: ${checked} answers, the page, ${seen.size} files (the worker and the engine's WebAssembly among them) and a "not modified", each with the isolation headers.`,
+  `The host at ${base} serves Zemp Lite as it must: ${checked} answers, the page, ${seen.size} files (the worker and the engine's WebAssembly among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers.`,
 );

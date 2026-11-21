@@ -26,6 +26,9 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     env:
+      # The project's own address, there from the first deployment, and the alpha's address,
+      # there once the owner has linked it to the project in Cloudflare (step 17b).
+      PROJECT_ADDRESS: https://zemp-lite.pages.dev
       ADDRESS: https://lite.zeff-lang.dev
       PROJECT: zemp-lite
     steps:
@@ -80,8 +83,17 @@ jobs:
           npx --yes wrangler@4.158.0 pages deploy dist --project-name "${PROJECT}" --branch main --commit-hash "${{ github.event.workflow_run.head_sha }}" --commit-dirty=false
 
       - name: Check the headers of every answer at the address
+        id: checked
         if: steps.given.outputs.given == 'true'
-        run: node tools/check-host.mjs "${ADDRESS}"
+        run: |
+          node tools/check-host.mjs "${PROJECT_ADDRESS}"
+          if getent hosts "${ADDRESS#https://}" > /dev/null; then
+            node tools/check-host.mjs "${ADDRESS}"
+            echo "address=${ADDRESS}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::${ADDRESS} is not linked to the project yet; the checks are made at ${PROJECT_ADDRESS}."
+            echo "address=${PROJECT_ADDRESS}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install the test browsers (Chromium and WebKit)
         if: steps.given.outputs.given == 'true'
@@ -90,5 +102,5 @@ jobs:
       - name: Check that the engine starts there, and measure its first start
         if: steps.given.outputs.given == 'true'
         env:
-          ZEMP_ADDRESS: ${{ env.ADDRESS }}
+          ZEMP_ADDRESS: ${{ steps.checked.outputs.address }}
         run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright test --config playwright.host.config.ts

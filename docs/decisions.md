@@ -902,3 +902,15 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **The notes** (`docs/releases/0.2-notes.md`) drafted: what shipped, breaking changes (none), reference versions (the released command line alone), what is left out and why, known issues, the acceptance tests as they stand, the measures, the validation suite; the parts that need the hosted alpha are marked "at the close".
 
 **Reason.** The checklist's step 19; the testing handbook, section 2.4; the design's section 21.
+
+## 21 November 2026: The first deployment (release 0.2, step 17b, first half)
+
+**What happened.** The owner put the two secrets in (a token with *Cloudflare Pages · Edit* alone, made by him; the account's ID). The deployment job, run again on the last green commit, made the Pages project `zemp-lite` and sent the tested build to `https://zemp-lite.pages.dev`. Its check then failed, for two faults of the check, not of the host, both mended in this step.
+
+**The check looks at the project's own address until the alpha's is linked.** The job checked `lite.zeff-lang.dev` alone, which does not exist until the owner links it to the project. It now checks `zemp-lite.pages.dev` on every deployment, and also `lite.zeff-lang.dev` once that name is found, running the browser checks at the alpha's address when there is one and at the project's otherwise, with a notice saying which.
+
+**"Not modified" is asked of every answer that carries a tag.** Cloudflare Pages gives the page itself neither `etag` nor `last-modified`, so a browser fetches the page whole each time (391 bytes), with its headers; the built files carry an `etag`. The check demanded a tag on the page. What it is for (the decision of release 0.1 on WebKit and the worker's script) is that a "not modified" answer, where the host gives one, still carries the isolation headers. It now asks again for every answer that carries a tag and requires each to be answered "not modified" with the isolation headers; an answer without a tag needs none.
+
+**The measures at the project's address** (from this machine, on its own network, through Cloudflare's Mumbai edge): every answer with the isolation headers; the engine sent compressed with brotli, 4.07 MB as it travels (Cloudflare compresses less tightly than the build's own measure of 2.92 MB; risk R4's limit is 5 MB), fetched in 1.1 s; the first start, from the first request to the engine ready, 2.3 s in Chromium and 2.9 s in WebKit against section 14's 2 seconds. It is reported, not failed on, as decided at step 17a: the owner's trial at the address is the measure of record. A next visit fetches only the 391-byte page, the rest being kept as never changing.
+
+**Reason.** The checklist's step 17b; decision #27; the Zemp Specification, section 14.

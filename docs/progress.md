@@ -99,3 +99,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 164 unit tests; 282 browser tests passed and 2 skipped by design; 28 native tests.
 
 **Next.** Step 17b waits for the owner: a Cloudflare account, the token and account ID in the repository's secrets, then the address `lite.zeff-lang.dev` and the visit count switched on in the Pages project. Then 19b `[function]`: the routine on the hosted alpha, the reader test the owner runs, his trial, and "Release 0.2".
+
+## 21 November 2026, release 0.2, step 17b (first half: deployed at the project's address)
+
+**Done.** The owner made the token (*Cloudflare Pages · Edit* alone) and put both secrets in; `zeff-lang.dev`, registered by him through Cloudflare on 6 November, is locked, private, auto-renewing, with DNSSEC switched on (pending). The deployment job made the Pages project `zemp-lite` and sent the tested build to `https://zemp-lite.pages.dev`. Its check failed on two faults of the check, mended: it now checks the project's own address on every deployment and the alpha's once it is linked, and asks "not modified" of every answer that carries a tag (Cloudflare gives the page none). At the project's address: every header right, the engine 4.07 MB with brotli, the first start 2.3 s in Chromium and 2.9 s in WebKit from this machine.
+
+**Green.** `npm run routine`: 164 unit tests; 282 browser tests passed and 2 skipped by design; 28 native tests; the after-deployment checks at `zemp-lite.pages.dev` in both browsers.
+
+**Next.** The owner links `lite.zeff-lang.dev` to the project and switches on Web Analytics; then the alpha is checked at its address and step 17b is ticked; then 19b `[function]`.
