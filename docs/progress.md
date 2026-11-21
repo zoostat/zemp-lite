@@ -114,4 +114,10 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 
 **Green.** `npm run routine`: 165 unit tests; 284 browser tests passed and 2 skipped by design; 28 native tests.
 
-**Next.** Step 17b ticked once the owner has opened the alpha at its address in his own browsers; then 19b `[function]`: the routine on the hosted alpha, the reader test he runs, his trial, the notes finished, and "Release 0.2".
+**Next.** 19b `[function]`: the routine on the hosted alpha, the reader test he runs, his trial, the notes finished, and "Release 0.2".
+
+## 21 November 2026, release 0.2, step 17b closed
+
+**Done.** The owner opened the alpha at `https://lite.zeff-lang.dev` in his own browsers and ran it ("it opens"), with `plots.zeff` in his Scratch project after the mend of 0cb1005; step 17b ticked. GitHub green on 92f2794, deployed and checked at both addresses.
+
+**Next.** 19b `[function]`: the measures at the address, the samples read in the hosted alpha, the checks by hand (keyboard alone, VoiceOver, the print at every size), the reader test the owner runs, the notes finished; then "Release 0.2".
