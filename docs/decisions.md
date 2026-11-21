@@ -1060,3 +1060,13 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Two things noted on the way, left as they are.** The words *Run to here* over a line number are not Tab stops, by the decision of 0.2 (the keyboard has the command in ⌘K); the test of the keyboard now meets them, excepts them by name and holds that ⌘K has the command. A plot drawn to fit is at most 1,100 pixels wide, so in a window wider than about 1,330 it no longer fills the Plots place, which lost the left panel beside it; the test of the fit runs at 1,280.
 
 **Reason.** The checklist's step 4; open decision #203 (which settles #176, R2).
+
+## 22 November 2026: Plots on the frame (release 0.2.1, step 6)
+
+**The place.** The Plots place stands on the frame of step 2. Its bar holds the link **Plots of the run** at the left, the viewer's own controls in the middle (the size, **Pop out**, **Save as**), and the link **The plot** at the right; both panes are open at first (#203). The list of plots is the left pane as it was (each plot's small picture, name, line and kind, clicked to show, dragged or moved by the keyboard to reorder, ticked to compare); its own **‹ Hide** and "Show the list of plots ›" are gone with the links in their place. **‹ Script** is gone too: the place is left by the top bar's places, as every place is.
+
+**The plot.** The right pane says of the plot shown: its statement, coloured as the editor colours code (`src/editor/Code.svelte`, on the window's ground, the ground the code's colours are held to); its line, a link to the statement in the script; its kind, as the engine's table of what it drew names it (not said for a plot bound with `let` and never printed, of which the engine printed no table); and the size it is saved at, a page's or, drawn to fit, the size it is shown at. Where the plot's statement is a name alone (`schooling`, printing a plot bound before it), the statement that bound the name stands over it, since that is where the plot is written. While plots are compared the pane says so; with no plot it says that none is shown.
+
+**Tests.** Browser (`viewer.spec`): both panes open at first, each closed and opened by its link and by its ×; the right pane names the statement, line, kind and size of the plot shown, follows the plot chosen and the page chosen, and its line goes to the statement in the script. The tests that hid the list by **‹ Hide** to give a plot the whole place now close both panes by their links; the tests of the plot's own heading read it in the stage, the panes having headings too.
+
+**Reason.** The checklist's step 6; open decision #203; the Zemp Specification, section 7 (the list of plots, from 0.2.1).

@@ -50,7 +50,7 @@ test("the viewer shows a plot drawn to fit, and the strip holds every plot of th
   // A window whose place for the plot is narrower than the 1,100 pixels a figure is drawn at
   // most, so that the figure drawn to fit fills it.
   const plots = await viewer(page, press, 1280);
-  await expect(plots.getByRole("heading", { level: 2 })).toHaveText(
+  await expect(plots.locator(".stage").getByRole("heading", { level: 2 })).toHaveText(
     /line 17\s+w2010 · log\(wage\) against educ/,
   );
   const stage = (await plots.locator(".stage").boundingBox())!;
@@ -69,7 +69,7 @@ test("the viewer shows a plot drawn to fit, and the strip holds every plot of th
   await expect(thumbs.nth(1).locator("img")).toBeVisible();
   // A click on a thumbnail shows its plot.
   await press(strip.getByRole("button", { name: "Show the plot w2010 · log(wage)", exact: true }));
-  await expect(plots.getByRole("heading", { level: 2 })).toHaveText(
+  await expect(plots.locator(".stage").getByRole("heading", { level: 2 })).toHaveText(
     /line 21\s+w2010 · log\(wage\)$/,
   );
   await expect(thumbs.nth(1)).toHaveClass(/on/);
@@ -118,7 +118,10 @@ test("two plots are pinned side by side, each drawn to fit its half", async ({ p
   const half = await sizes(images.nth(0));
   expect(half.shown[0]).toBeLessThan(single.shown[0] * 0.6);
   expect(Math.abs(half.own[0] - half.shown[0])).toBeLessThan(1);
-  await expect(plots.getByRole("heading", { level: 2 })).toHaveText([/line 17/, /line 21/]);
+  await expect(plots.locator(".stage").getByRole("heading", { level: 2 })).toHaveText([
+    /line 17/,
+    /line 21/,
+  ]);
   await press(plots.getByRole("button", { name: "Unpin all" }));
   await expect(images).toHaveCount(1);
   await expect(pins.nth(0)).not.toBeChecked();
@@ -129,8 +132,9 @@ test("a plot is previewed at the sizes of a journal column, a page's width and a
   press,
 }) => {
   const plots = await viewer(page, press);
-  // The list of plots hidden, so that a slide has room at its true size.
-  await press(plots.getByRole("button", { name: "‹ Hide" }));
+  // Both panes of the Plots place closed, so that a slide has room at its true size.
+  await press(plots.getByRole("button", { name: "Plots of the run", exact: true }));
+  await press(plots.getByRole("button", { name: "The plot", exact: true }));
   const image = plots.locator(".stage img");
   const group = plots.getByRole("group", { name: "Size" });
   for (const [name, mm, px, pt] of [
@@ -250,7 +254,7 @@ test("the viewer is opened with ⌘K too, as the Plots place, and Script goes ba
     "aria-current",
     "page",
   );
-  await press(plots.getByRole("button", { name: "‹ Script" }));
+  await press(places.getByRole("button", { name: "Script" }));
   await expect(page.getByRole("textbox", { name: "The script", exact: true })).toBeVisible();
   await expect(plots).toHaveCount(0);
   await expect(places.getByRole("button", { name: "Script" })).toHaveAttribute(
@@ -269,7 +273,7 @@ test("the viewer says so where the last run drew no plot", async ({ page, press 
   await expect(page.getByTestId("plots")).toContainText("Run the script to see its plots here.");
 });
 
-test("the places: Script and Plots in the top bar, and the list of plots at the left, which hides", async ({
+test("the Plots place: the plots of the run at its left and the plot's facts at its right, each closed by its link", async ({
   page,
   press,
 }) => {
@@ -289,16 +293,62 @@ test("the places: Script and Plots in the top bar, and the list of plots at the 
     "aria-current",
     "page",
   );
-  const list = page.getByRole("complementary", { name: "The list of plots" });
+  // Both panes are open at first (open decision #203), each with its link pressed.
+  const bar = page.getByRole("toolbar", { name: "Plots: its panes and its controls" });
+  const listLink = bar.getByRole("button", { name: "Plots of the run", exact: true });
+  const aboutLink = bar.getByRole("button", { name: "The plot", exact: true });
+  await expect(listLink).toHaveAttribute("aria-pressed", "true");
+  await expect(aboutLink).toHaveAttribute("aria-pressed", "true");
+  const list = page
+    .getByRole("complementary", { name: "Plots: the left pane" })
+    .getByRole("region", { name: "Plots of the run" });
   await expect(list).toBeVisible();
   // Each plot by its name, its line and its kind, as the engine's table of what it drew names it.
   await expect(list).toContainText("w2010 · log(wage) against educ");
   await expect(list).toContainText("line 17 · fit band, points, fit line");
   await expect(list).toContainText("line 21 · histogram");
-  await press(list.getByRole("button", { name: "‹ Hide" }));
+  // The plot's own pane: its statement as the script has it, its line, its kind and the size
+  // it is saved at, which is the size it is shown at while it is drawn to fit.
+  const about = page
+    .getByRole("complementary", { name: "Plots: the right pane" })
+    .getByRole("region", { name: "The plot" });
+  // The plot was printed by its name: the statement that bound the name stands over it.
+  await expect(about.getByTestId("code")).toHaveText(
+    "let schooling = w2010.scatter(educ, log(wage), fit: linear) schooling",
+  );
+  const facts = about.getByTestId("plot-facts");
+  await expect(facts).toContainText("line 17");
+  await expect(facts).toContainText(/Kind\s*fit band, points, fit line/);
+  await expect(facts).toContainText(/Export size\s*[\d.]+ × [\d.]+ mm, to fit/);
+  // It follows the plot chosen, and the page chosen for its size.
+  await press(list.getByRole("button", { name: /^Show the plot/ }).last());
+  await expect(about.getByTestId("code")).toHaveText(
+    "let shape = w2010.plot(x: log(wage)).histogram(bins: 30) shape",
+  );
+  await expect(facts).toContainText("line 21");
+  await press(bar.getByRole("button", { name: "One column", exact: true }));
+  await expect(facts).toContainText(/Export size\s*[\d.]+ × [\d.]+ mm, one column/);
+  await press(bar.getByRole("button", { name: "Fit", exact: true }));
+  // The line is a link to the statement in the script, and Plots comes back as it was left.
+  await press(facts.getByRole("button", { name: "line 21" }));
+  await expect(places.getByRole("button", { name: "Script" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("21");
+  await press(places.getByRole("button", { name: "Plots" }));
+  await expect(about.getByTestId("code")).toContainText("let shape");
+  // Each link closes and opens its pane, and the pane's own × closes it too.
+  await press(listLink);
   await expect(list).toHaveCount(0);
-  await press(page.getByRole("button", { name: "Show the list of plots ›" }));
-  await expect(page.getByRole("complementary", { name: "The list of plots" })).toBeVisible();
+  await expect(listLink).toHaveAttribute("aria-pressed", "false");
+  await press(listLink);
+  await expect(list).toBeVisible();
+  await press(about.getByRole("button", { name: "Close The plot" }));
+  await expect(about).toHaveCount(0);
+  await expect(aboutLink).toHaveAttribute("aria-pressed", "false");
+  await press(aboutLink);
+  await expect(about).toBeVisible();
   // Back to the script, where it was.
   await press(places.getByRole("button", { name: "Script" }));
   await expect(page.getByTestId("note").first()).toBeVisible();

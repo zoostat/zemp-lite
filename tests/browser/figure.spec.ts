@@ -139,11 +139,12 @@ test("a plot is under its statement in the script and in the Plots place, laid o
     "page",
   );
   const plots = page.getByTestId("plots");
-  await expect(plots.getByRole("heading", { level: 2 })).toHaveText(
+  await expect(plots.locator(".stage").getByRole("heading", { level: 2 })).toHaveText(
     /line 17\s+w2010 · log\(wage\) against educ/,
   );
-  // The list of plots hidden, so that the plot has the place's width.
-  await press(plots.getByRole("button", { name: "‹ Hide" }));
+  // Both panes of the Plots place closed, so that the plot has the place's whole width.
+  await press(plots.getByRole("button", { name: "Plots of the run", exact: true }));
+  await press(plots.getByRole("button", { name: "The plot", exact: true }));
   await expect(plots.getByRole("list", { name: "Plots of the last run" })).toBeHidden();
   // The plot is laid out again for the wider place, by a run at the new width: it is read
   // once the place has widened and the drawing shown is the one made for it, the same at two

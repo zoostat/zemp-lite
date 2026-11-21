@@ -160,7 +160,10 @@ test("an unfolded output's header gives its lines, its time and its actions", as
       .locator('[data-testid="block"][data-line="17"]')
       .getByRole("button", { name: "Open in Plots ↗" }),
   );
-  await expect(page.getByRole("button", { name: "‹ Script" })).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
+  ).toHaveAttribute("aria-current", "page");
+  await expect(page.getByTestId("plots").locator(".stage img")).toBeVisible();
 });
 
 test("the example with every output unfolded is the text kept for it", async ({ page, press }) => {

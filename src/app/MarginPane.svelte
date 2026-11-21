@@ -231,8 +231,8 @@
 </script>
 
 {#if workspace.views.active === PLOTS}
-  <!-- The plot viewer, opened from ⌘K, in the script's place; "Script" goes back. -->
-  <PlotViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
+  <!-- The Plots place, on its own frame of panes. -->
+  <PlotViewer {workspace} />
 {:else if workspace.views.active === DATA}
   <DataViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
 {:else}

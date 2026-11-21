@@ -191,3 +191,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 176 unit tests; 306 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
 
 **Next.** Step 6 `[function]`: Plots on the frame, its list as the left pane and **The plot** at the right.
+
+## 22 November 2026, release 0.2.1, step 6
+
+**Done.** Step 6 `[function]`: the Plots place on the frame, with **Plots of the run** at its left and **The plot** at its right (the plot's statement coloured as code, its line as a link to the script, its kind and the size it is saved at), both open at first; the list's own **‹ Hide** and **‹ Script** gone with the links and the places in their stead.
+
+**Green.** `npm run routine`: 176 unit tests; 306 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
+
+**Next.** Step 7a `[function]`: Data on the frame, the frames at the left and the list of variables at the right.
