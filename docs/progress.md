@@ -142,4 +142,6 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 
 **Done.** The owner said "Release 0.2". The routine run again in full, green on this Mac in both browsers (166 unit tests; 288 browser tests, 2 skipped by design; 28 native tests; the nine samples identical) and on GitHub; the three examples run at `https://lite.zeff-lang.dev` in Chromium and WebKit as a first visitor and read by eye; the notes completed (one finding: WebKit refuses the visit counter's report, so visits from Safari may go uncounted); step 19b ticked; version 0.2.0, tag `v0.2.0`, a GitHub release marked a pre-release. The review of the registers is left for a Zeff session (`zemp-lite-0.2-release-review-for-zeff.md`), with the entry of 0.2.1's layout.
 
+**Green.** GitHub green on 6c354f6, deployed and checked at both addresses (first start 1.3 s in Chromium, 2.5 s in WebKit); the release at `https://github.com/zoostat/zemp-lite/releases/tag/v0.2.0`. To watch: the browser test of resting on a function's name failed once in Chromium on GitHub (on 2624b75) and passed on the next run.
+
 **Next.** "Start release 0.2.1": the layout of three panes, the reader test and the checks by hand. The owner's: the trademarks before the address is announced (#37).
