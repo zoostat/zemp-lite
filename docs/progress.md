@@ -137,3 +137,9 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Done.** The owner decided one layout of three panes on every place, each pane with its own link (the mockup in the shared notes), for a release 0.2.1 on Zeff 0.8.0, and moved the reader test and the checks by hand there. Recorded in `docs/decisions.md`, step 19b and the draft notes; the register's entry and the Zemp Specification's 0.2.1 row are left for a Zeff session (`zemp-lite-0.2.1-three-panes-for-the-register.md`).
 
 **Next.** The owner's "Release 0.2": the samples read by eye in the hosted alpha, the notes finished, the version, the tag and the GitHub release. Then "Start release 0.2.1".
+
+## 22 November 2026, release 0.2 closed
+
+**Done.** The owner said "Release 0.2". The routine run again in full, green on this Mac in both browsers (166 unit tests; 288 browser tests, 2 skipped by design; 28 native tests; the nine samples identical) and on GitHub; the three examples run at `https://lite.zeff-lang.dev` in Chromium and WebKit as a first visitor and read by eye; the notes completed (one finding: WebKit refuses the visit counter's report, so visits from Safari may go uncounted); step 19b ticked; version 0.2.0, tag `v0.2.0`, a GitHub release marked a pre-release. The review of the registers is left for a Zeff session (`zemp-lite-0.2-release-review-for-zeff.md`), with the entry of 0.2.1's layout.
+
+**Next.** "Start release 0.2.1": the layout of three panes, the reader test and the checks by hand. The owner's: the trademarks before the address is announced (#37).
