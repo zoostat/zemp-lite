@@ -103,6 +103,8 @@ function viewOf(from: unknown): View | null {
 
 /** The tab of the data viewer. */
 export const DATA = "view:data";
+/** The tab of the Help place. */
+export const HELP = "view:help";
 
 /** The tab of a file of the project. */
 export const fileTab = (path: string) => `file:${path}`;

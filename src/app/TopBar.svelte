@@ -8,7 +8,7 @@
   import { CODE_SIZES } from "../theme/codesize";
   import Logo from "../theme/Logo.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
-  import { DATA, PLOTS, fileTab } from "./views";
+  import { DATA, HELP, PLOTS, fileTab } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
   let {
@@ -28,7 +28,9 @@
       ? "plots"
       : workspace.views.active === DATA
         ? "data"
-        : "script",
+        : workspace.views.active === HELP
+          ? "help"
+          : "script",
   );
   const smallest = CODE_SIZES[0];
   const largest = CODE_SIZES[CODE_SIZES.length - 1];
@@ -64,6 +66,11 @@
       class:on={place === "plots"}
       aria-current={place === "plots" ? "page" : undefined}
       onclick={() => workspace.openPlots()}>Plots</button
+    >
+    <button
+      class:on={place === "help"}
+      aria-current={place === "help" ? "page" : undefined}
+      onclick={() => workspace.openHelp()}>Help</button
     >
   </nav>
   <span class="gap"></span>

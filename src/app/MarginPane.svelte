@@ -12,7 +12,6 @@
   import { counted, notesOf } from "../margin/notes";
   import { marks } from "../margin/stale";
   import { trailOf } from "../margin/trail";
-  import HelpPanel from "../margin/HelpPanel.svelte";
   import type { Note } from "../margin/notes";
   import { said } from "../output/run";
   import { placed } from "../output/place";
@@ -24,7 +23,8 @@
   import Place from "./Place.svelte";
   import ProjectTree from "./ProjectTree.svelte";
   import { held } from "./steady";
-  import { DATA, PLOTS } from "./views";
+  import HelpPlace from "./HelpPlace.svelte";
+  import { DATA, HELP, PLOTS } from "./views";
   import DataViewer from "../data/DataViewer.svelte";
   import type { Workspace } from "./workspace-state.svelte";
 
@@ -235,6 +235,8 @@
   <PlotViewer {workspace} />
 {:else if workspace.views.active === DATA}
   <DataViewer {workspace} />
+{:else if workspace.views.active === HELP}
+  <HelpPlace {workspace} />
 {:else}
   {#snippet project()}
     <ProjectTree {workspace} />
@@ -314,16 +316,12 @@
                 onhover={(line, character) => workspace.hover(path, line, character)}
                 oncomplete={(line, character) => workspace.complete(path, line, character)}
                 onusage={(line, character) => workspace.signature(path, line, character)}
-                onfunction={(name) => workspace.atFunction(name)}
                 onhelp={(name) => void workspace.showHelp(name)}
               />
             {/key}
           {/if}
         </div>
       </section>
-      {#if workspace.help.shown}
-        <HelpPanel {workspace} />
-      {/if}
     </div>
   </Place>
 {/if}

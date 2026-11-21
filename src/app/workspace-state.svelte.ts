@@ -23,6 +23,7 @@ import { CONSOLE_HELP, History, composed, consoleRun, outcomeOf, type Entry } fr
 import { parts } from "../project/folder";
 import {
   DATA,
+  HELP,
   PLOTS,
   fileTab,
   leftWidth,
@@ -140,16 +141,10 @@ export class Workspace {
    */
   now = $state<{ path: string; text: string; ranges: Ranged[] } | null>(null);
   /**
-   * The Help panel (#74): shown or not; whether it follows the function under the cursor; and
-   * the page it shows, a function's as `zeff help` prints it or a code's as `zeff explain` does.
+   * The page the Help place shows (#74, #203): a function's as `zeff help` prints it, or a
+   * code's as `zeff explain` does, with the name it is known by; none until one is asked for.
    */
-  help = $state<{
-    shown: boolean;
-    follow: boolean;
-    title: string;
-    page: string;
-  }>({ shown: false, follow: true, title: "", page: "" });
-  #following: ReturnType<typeof setTimeout> | null = null;
+  help = $state<{ title: string; page: string }>({ title: "", page: "" });
   /** What floats over the window about the last run: its facts, or what it said. */
   panel = $state<"facts" | "said" | null>(null);
   /** A line to be brought into view, with the cursor on it (`goTo`). */
@@ -959,46 +954,24 @@ export class Workspace {
     return this.engine.help(name);
   }
 
-  /** Show the Help panel on a function's page (F1, ⌘K). */
+  /** Open the Help place on a function's page (F1 in the script, a related function, the field). */
   async showHelp(name: string): Promise<void> {
     const found = await this.helpPage(name);
-    this.help = {
-      ...this.help,
-      shown: true,
-      title: found.page === null ? name : name,
-      page: found.page ?? found.message,
-    };
+    this.help = { title: name, page: found.page ?? found.message };
+    this.openHelp();
   }
 
-  /** Show the Help panel on a code's explained page. */
+  /** Open the Help place on a code's explained page (Explain, in what a run said). */
   async showCode(code: string): Promise<void> {
     const page = await this.explain(code).catch((error: Error) => error.message);
-    this.help = { ...this.help, shown: true, title: code, page };
+    this.help = { title: code, page };
+    this.openHelp();
   }
 
-  /** Show or hide the Help panel. */
-  setHelpShown(shown: boolean): void {
-    this.help = { ...this.help, shown };
-  }
-
-  /** Whether the Help panel follows the function under the cursor. */
-  setHelpFollow(follow: boolean): void {
-    this.help = { ...this.help, follow };
-  }
-
-  /** The cursor is on a function's name: the Help panel, where shown and following, turns to it. */
-  atFunction(name: string | null): void {
-    if (name === null || !this.help.shown || !this.help.follow || name === this.help.title) return;
-    if (this.#following !== null) clearTimeout(this.#following);
-    this.#following = setTimeout(() => {
-      this.#following = null;
-      void this.helpPage(name).then((found) => {
-        // A word with no page leaves the page shown as it is.
-        if (found.page !== null && this.help.follow) {
-          this.help = { ...this.help, title: name, page: found.page };
-        }
-      });
-    }, 200);
+  /** Show the Help place, on the page it last showed. */
+  openHelp(): void {
+    Object.assign(this.views, withTab(this.views, HELP));
+    this.#keep();
   }
 
   /**

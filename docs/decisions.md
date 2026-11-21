@@ -1102,3 +1102,19 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Tests.** Script (the native test above); unit (`properties.node.test`: the statements by kind, the cells of each print, a name that is not an identifier; `engine.test`: the rows asked again); browser (`data.spec`: a number, a category, a whole number of many values and one of few labelled values, a date, and a number under a condition asked again when the condition changes).
 
 **Reason.** The checklist's step 7b; open decision #203; the owner's answer of 22 November 2026.
+
+## 22 November 2026: Help, a place (release 0.2.1, step 8)
+
+**The place.** **Help** is the fourth place of the top bar, beside Plots, and "Place: Help" in ⌘K (#203; the owner's answer to question 1: a place only). In its middle is the engine's page, a function's as `zeff help` prints it or a code's as `zeff explain` does, whole and unchanged: the place divides the text into its sections so that each can be gone to, and the divided text is still the page, character for character. Its bar holds the link **Outline** at the left, the name of what is open and a field that opens a function's page or a code's by its name, and the link **Related functions** at the right; both panes are open at first.
+
+**The outline** is the page's sections, read from the engine's text (`src/margin/helppage.ts`): a heading is a line of capitals begun at the first column (USAGE, WARNINGS AND NOTES), shown in the outline's case (Usage, Warnings and notes). A click brings the section to the top of the page's own pane; the section in view is marked. A page can hold more than one function of a name (`summary` of a frame and `summary` of a result): the outline then names each by its package over its own sections.
+
+**The related functions** are those the page names under SEE ALSO, in its order and once each, each with what the first line of its own page says it does and its package, asked of the engine as they are listed; a click opens that page. A code's page names none.
+
+**What opens it.** F1 on a name in the script, **Explain** in the list of what a run said, a related function, and the field. The page stays the one open when the reader goes to another place and comes back. **Explain** on a warning under its statement still opens the page in place, there, as 0.2 had it; `:help` in the console line still prints in the console.
+
+**What is gone.** The Help panel beside the script (`HelpPanel.svelte`), its **‹ Hide**, and its switch "Follows the cursor" with what watched the function under the cursor (the owner's answer to question 1); the command "Help: show/hide".
+
+**Tests.** Removed with the thing it held: `help.spec`, "the Help panel follows the function under the cursor, unless switched off". Rewritten: F1 opens the Help place at the page, the text the engine's whole (compared character for character with the kept page, where before it was compared with space collapsed); a code's page from what the run said, and from the field. New: the outline of a page of two functions, a section gone to and marked, the pane closed by its link and its ×; the related functions each with what it does, one opened with its own outline and related functions, a name the engine has no page for. Unit (`helppage.node.test`): the sections, the functions of a page of several, the related functions, the first line, a code's page. `workspace.spec`: the top bar's four places.
+
+**Reason.** The checklist's step 8; open decisions #74 and #203; the owner's answer of 22 November 2026.

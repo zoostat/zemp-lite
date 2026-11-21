@@ -215,3 +215,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** Format, lint, types, the edition check, the worker's checks and 29 native tests, the nine samples identical, 180 unit tests; the browser tests all green in Chromium, and in WebKit all but the same six that need a real click of the mouse, which this Mac's headless WebKit is not delivering today (see step 7a).
 
 **Next.** Step 8 `[function]`: Help, a place, with the page's outline at its left and its related functions at its right.
+
+## 22 November 2026, release 0.2.1, step 8
+
+**Done.** Step 8 `[function]`: Help is the fourth place, with the engine's page in the middle, the page's outline at its left (each section gone to, the one in view marked; a page of two functions of a name named by each) and its related functions at its right (the page's SEE ALSO, each with what it does, a click opening it); F1, **Explain** in what a run said and a field open a page. The Help panel beside the script and its switch that followed the cursor are gone. Steps 4, 6 and 7a are green on GitHub in both browsers and deployed; a deployment's check of the address failed once between two deployments four minutes apart and passed on the next.
+
+**Green.** Format, lint, types, the edition check, the worker's checks and 29 native tests, the nine samples identical, 185 unit tests; the browser tests all green in Chromium, and in WebKit all but the five that need a real click of the mouse on this Mac (see step 7a; all of them pass on GitHub).
+
+**Next.** Step 9 `[function]`: the first visit in the new layout, the reader test's sheet, the draft notes.

@@ -48,6 +48,7 @@ test("the top bar carries its controls in order, Run the one filled, and Script 
     "Script",
     "Data",
     "Plots",
+    "Help",
     "Commands",
     "Smaller code text",
     "Larger code text",
@@ -56,7 +57,7 @@ test("the top bar carries its controls in order, Run the one filled, and Script 
   ]);
   await expect(top.getByRole("switch", { name: "Dark" })).toBeVisible();
   await expect(top.getByRole("button", { name: "Check" })).toBeEnabled();
-  // Of the three places, the script's is the one shown, and the only one marked.
+  // Of the four places, the script's is the one shown, and the only one marked.
   const places = top.getByRole("navigation", { name: "Places" });
   await expect(places.getByRole("button", { name: "Script" })).toHaveClass(/\bon\b/);
   await expect(places.locator("button.on")).toHaveCount(1);

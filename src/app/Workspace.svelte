@@ -75,10 +75,12 @@
     paneCommand(workspace, "data", "variables"),
     paneCommand(workspace, "plots", "list"),
     paneCommand(workspace, "plots", "about"),
+    paneCommand(workspace, "help", "outline"),
+    paneCommand(workspace, "help", "related"),
     {
-      name: workspace.help.shown ? "Help: hide" : "Help: show",
+      name: "Place: Help",
       hint: "F1 in the script opens the page of the name at the cursor",
-      run: () => workspace.setHelpShown(!workspace.help.shown),
+      run: () => workspace.openHelp(),
     },
     {
       name: "Format the script",
