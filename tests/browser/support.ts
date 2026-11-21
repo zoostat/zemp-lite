@@ -181,7 +181,9 @@ export async function scriptText(page: Page): Promise<string> {
 export async function write(page: Page, text: string): Promise<void> {
   await editor(page).focus();
   await page.keyboard.press("ControlOrMeta+a");
-  await page.keyboard.insertText(text);
+  // Inserting no text does not always take the selection away: an empty script is deleted.
+  if (text === "") await page.keyboard.press("Backspace");
+  else await page.keyboard.insertText(text);
 }
 
 /**

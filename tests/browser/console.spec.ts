@@ -27,6 +27,7 @@ test(":vars and :save answer as zeff repl does, and :save writes the console's s
 }) => {
   await scratch(page, press);
   await write(page, "");
+  await expect.poll(() => scriptText(page)).toBe("");
   const line = page.getByRole("textbox", { name: /^Console/ });
   const entries = page.getByRole("log", { name: "Console output" }).getByTestId("entry");
   const lines = typed("console.txt").filter((one) => one !== ":quit" && one !== ":clear");
