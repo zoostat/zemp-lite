@@ -17,6 +17,12 @@ adds to draw its two plots at 567 by 352 pixels (150.02 by 93.13 mm); the two SV
 what the released command line wrote for that text. A unit test holds the text the interface composes
 to this file, and the engine's worker build to these bytes.
 
+`figures/plots-with-exports.zeff` is the Scratch project's third script, the showcase of plots
+(`examples/scratch/scripts/plots.zeff`), with the 21 `export` lines the interface adds to draw its
+plots at the same size; `figures/plots-figures.sha256` holds the SHA-256 of each file the released
+command line wrote for that text (2.2 MB in all, so their digests are kept in place of the files). A
+unit test holds the engine's worker build to these digests.
+
 `figures/schooling-one-column.svg`, `.pdf` and `.png` are what the released command line wrote for the
 example with `(schooling).export("zemp-export.<format>", size: one_column)` added: the file the plot
 viewer's **Save…** must give for the same plot, format and page, byte for byte.

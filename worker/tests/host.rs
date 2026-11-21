@@ -181,13 +181,13 @@ fn the_example_prints_what_zeff_run_prints() {
     );
 }
 
-/// The two scripts of the Scratch project a first visitor opens (`examples/scratch/`): the
-/// returns to schooling, and the engine's own sample on instrumental variables, each printing
-/// what `zeff run` of the released 0.8.0 printed for it.
+/// The three scripts of the Scratch project a first visitor opens (`examples/scratch/`): the
+/// returns to schooling, the engine's own sample on instrumental variables, and the showcase of
+/// plots, each printing what `zeff run` of the released 0.8.0 printed for it.
 #[test]
 fn the_scratch_projects_scripts_print_what_zeff_run_prints() {
     let host = Host::new("scratch");
-    for name in ["main", "instruments"] {
+    for name in ["main", "instruments", "plots"] {
         prints_as_zeff_run(
             &host,
             &format!("scripts/{name}.zeff"),

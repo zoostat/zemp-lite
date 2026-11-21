@@ -914,3 +914,21 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **The measures at the project's address** (from this machine, on its own network, through Cloudflare's Mumbai edge): every answer with the isolation headers; the engine sent compressed with brotli, 4.07 MB as it travels (Cloudflare compresses less tightly than the build's own measure of 2.92 MB; risk R4's limit is 5 MB), fetched in 1.1 s; the first start, from the first request to the engine ready, 2.3 s in Chromium and 2.9 s in WebKit against section 14's 2 seconds. It is reported, not failed on, as decided at step 17a: the owner's trial at the address is the measure of record. A next visit fetches only the 391-byte page, the rest being kept as never changing.
 
 **Reason.** The checklist's step 17b; decision #27; the Zemp Specification, section 14.
+
+## 21 November 2026: The showcase of plots (release 0.2, step 18c)
+
+**The owner's answer.** Asked whether a showcase of plots should join the Scratch project in 0.2, before the freeze of step 19b, the owner answered: "yes in 0.2 but it should showcase more complex plots as well." Step 18c was added to the checklist for it.
+
+**The script** (`examples/scratch/scripts/plots.zeff`, 151 lines, 21 plots) uses only the plot functions released by Zeff 0.8.0, each option read from its help page in the released command line: four sections, *Data*, *Basic* (nine quick plots and a line of yearly means: histogram, density by sex, boxes by industry, bars, a scatter with its fitted line, a normal quantile plot, a heat map of correlations, lines by sex, the coefficients of a regression), *Layered* (means with error bars over the years; the rows jittered, the mean by schooling and its 95% band, from a frame of the layer's own; densities with a rug) and *Complex* (facets by industry with free scales on a log axis and the Okabe–Ito colours; tiles on viridis; industries placed by schooling and wage, sized by workers, named by a text layer of their own, with reference lines at the averages and an annotation; a direct legend; boxes without outliers and jittered rows faceted by region; flipped bars; bars in polar coordinates; a step over its area), and *Publication* (a ribbon, lines and points, set breaks, the colours, a title, subtitle, caption and every label, the legend below and the journal theme). A seed is set at the top, since jitter draws at random. The text is the engine's own formatting (`zeff fmt`), so **Format the script** leaves it as it is.
+
+**Each plot stands as a statement of its own**, not bound with `let`: the interface draws the plots a run prints, and a binding prints nothing. The frames the plots are drawn from are bound.
+
+**Three of the industries are left unnamed** in the plot of industries: they sit on the average wage, one over another, and their names cannot be read there; the names are a layer with a frame of its own, which is itself one of the things shown.
+
+**The figures held byte for byte by their digests.** The 21 figures, at the size the interface asks for (567 by 352 pixels), are what the released command line writes for the same text, checked by a unit test that runs the engine's worker build; since the files come to 2.2 MB, their SHA-256 digests are kept (`tests/scripts/figures/plots-figures.sha256`) in place of the files, which holds them as strictly.
+
+**What the browser test holds.** The Output panel prints at its own width, and two of the plots' tables are wider than the 80 columns at which `expected/plots.stdout` was written, so they are laid out otherwise there. The native test holds the whole text at 80 columns and the width tests hold printing at a place's width; the browser test holds what does not depend on the width: the head of each of the 21 plots in order, and every message as the engine words it.
+
+**A browser that already has a Scratch project** keeps it as it is, as at step 18a; the showcase is in every new browser's Scratch project.
+
+**Reason.** The owner's answer of 21 November 2026; the checklist's step 18c; the Zemp Specification, section 15 (the release's examples).

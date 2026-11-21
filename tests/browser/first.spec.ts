@@ -1,7 +1,7 @@
 // The first visit (release 0.2, step 18): the Scratch project a visitor opens holds the
-// returns to schooling on `wages`, the script the margin editor's design is drawn on, and
-// the engine's own sample of 0.8.0 on instrumental variables (the owner's answer to question 7
-// of the release); each prints what the released `zeff run` 0.8.0 prints for it, kept in
+// returns to schooling on `wages`, the script the margin editor's design is drawn on, the
+// engine's own sample of 0.8.0 on instrumental variables (the owner's answer to question 7
+// of the release), and the showcase of plots (his answer of 21 November 2026); each prints what the released `zeff run` 0.8.0 prints for it, kept in
 // `examples/scratch/expected/`.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
@@ -41,6 +41,39 @@ test("the Scratch project opens on the returns to schooling, and both its script
   await expect(page.getByRole("status")).toHaveText("done");
   await expect.poll(() => printed(page)).toBe(scratch("expected/instruments.stdout"));
   await expect.poll(() => saidAsWritten(page)).toBe(scratch("expected/instruments.stderr"));
+});
+
+test("the showcase of plots prints what `zeff run` prints, and its 21 plots are listed in Plots", async ({
+  page,
+  press,
+}) => {
+  await opened(page, press);
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("plots.zeff");
+  await page.keyboard.press("Enter");
+  await expect
+    .poll(() => scriptText(page))
+    .toMatch(/^\/\/ Plots in Zeff, from one line to a figure ready for a journal/);
+  await press(page.getByRole("button", { name: "Panes", exact: true }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  // Printed at the width of the Output panel, a wide table is laid out otherwise than at the
+  // 80 columns of `expected/plots.stdout`, which the native test holds the whole text to; what
+  // does not depend on the width is held here: the head of each plot, in order, and every
+  // message as the engine words it.
+  const heads = (text: string) => text.split("\n").filter((line) => line.startsWith("plot · "));
+  await expect
+    .poll(async () => heads(await printed(page)))
+    .toEqual(heads(scratch("expected/plots.stdout")));
+  await expect.poll(() => saidAsWritten(page)).toBe(scratch("expected/plots.stderr"));
+  // Every plot the script prints is one of the plots of the run, each drawn by the engine.
+  const tabs = page.getByRole("tablist", { name: "Open files" });
+  await press(tabs.getByRole("tab", { name: "Plots", exact: true }));
+  const plots = page.getByTestId("plots");
+  await expect(
+    plots.getByRole("list", { name: "Plots of the last run" }).getByRole("listitem"),
+  ).toHaveCount(21);
+  await expect(plots.locator('[data-testid="figure"] img').first()).toBeVisible();
 });
 
 test("each statement of the returns to schooling has its note beside it once it has run", async ({

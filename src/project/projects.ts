@@ -4,6 +4,7 @@
 // file system, under `projects/`.
 import example from "../../examples/scratch/scripts/main.zeff?raw";
 import instruments from "../../examples/scratch/scripts/instruments.zeff?raw";
+import plots from "../../examples/scratch/scripts/plots.zeff?raw";
 import { ENGINE } from "../app/version";
 import type { Kept } from "../theme/theme";
 import { Inside, type Entry, type Folder } from "./folder";
@@ -142,9 +143,10 @@ export class Projects {
   }
 
   /**
-   * The Scratch project, made the first time it is asked for with its two examples: the
-   * returns to schooling on `wages`, which opens, and instrumental variables on `staff`, the
-   * engine's own sample of 0.8.0 (the owner's answer to question 7 of release 0.2).
+   * The Scratch project, made the first time it is asked for with its three examples: the
+   * returns to schooling on `wages`, which opens; instrumental variables on `staff`, the
+   * engine's own sample of 0.8.0 (the owner's answer to question 7 of release 0.2); and the
+   * showcase of plots, from one line to a finished figure (his answer of 21 November 2026).
    */
   async scratch(): Promise<ProjectInfo> {
     if ((await this.#root.read(`${ROOT}/${SCRATCH}/zeff.toml`)) === null) {
@@ -153,6 +155,7 @@ export class Projects {
         `${ROOT}/${SCRATCH}/scripts/instruments.zeff`,
         encoder.encode(instruments),
       );
+      await this.#root.write(`${ROOT}/${SCRATCH}/scripts/plots.zeff`, encoder.encode(plots));
     }
     return { folder: SCRATCH, name: "Scratch", opened: this.#opened()[SCRATCH] ?? null };
   }

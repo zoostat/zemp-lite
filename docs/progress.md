@@ -107,3 +107,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 164 unit tests; 282 browser tests passed and 2 skipped by design; 28 native tests; the after-deployment checks at `zemp-lite.pages.dev` in both browsers.
 
 **Next.** The owner links `lite.zeff-lang.dev` to the project and switches on Web Analytics; then the alpha is checked at its address and step 17b is ticked; then 19b `[function]`.
+
+## 21 November 2026, release 0.2, step 18c (the showcase of plots) and step 17b (the address)
+
+**Done.** The owner linked `lite.zeff-lang.dev` and switched on Web Analytics: the alpha answers there with every header right, the engine starting in both browsers, DNSSEC active and the count's script in the page; the deployment of 2ceb14d checked both addresses. Step 18c `[function]`, the owner's answer of this day: a third Scratch script, `plots.zeff`, 21 plots of the 0.8.0 grammar on `wages`, `firms` and `staff`, from one line to a finished figure for a journal; its figures held byte for byte to the released command line by their digests; shown to the owner from the Plots tab, who said to commit it.
+
+**Green.** `npm run routine`: 165 unit tests; 284 browser tests passed and 2 skipped by design; 28 native tests.
+
+**Next.** Step 17b ticked once the owner has opened the alpha at its address in his own browsers; then 19b `[function]`: the routine on the hosted alpha, the reader test he runs, his trial, the notes finished, and "Release 0.2".

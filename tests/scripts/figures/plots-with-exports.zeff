@@ -1,0 +1,264 @@
+// Plots in Zeff, from one line to a figure ready for a journal, on the data that ship with
+// the engine. Each statement that ends in a plot is drawn by the engine itself, at the size
+// of its place: press Run, unfold a note to see its figure, or open Plots to see them all.
+
+// # Data
+seed(2026)
+let wages = dataset(wages).drop_missing(wage).add(lwage = log(wage))
+let y2019 = wages.where(year == 2019)
+let firms = dataset(firms)
+let staff = dataset(staff)
+
+// # Basic: one line, one plot
+y2019.histogram(lwage, bins: 30)
+y2019.density(lwage, color: female)
+y2019.boxplot(lwage, group: industry)
+firms.bar(industry)
+y2019.scatter(educ, lwage, fit: linear)
+y2019.qq_plot(lwage)
+y2019.heatmap([lwage, educ, exper, age, hours])
+let yearly = wages.aggregate(mean_lwage = mean(lwage), by: [year, female])
+yearly.line(year, mean_lwage, color: female)
+let fit = wages.reg(lwage ~ educ + exper + female + union, fe: year, cluster: worker)
+fit.coef_plot()
+
+// # Layered: several marks in one plot
+// Group means over the years, with their 95% intervals as error bars.
+let means = wages
+    .aggregate(m = mean(lwage), se = sd(lwage) / sqrt(n()), by: [year, union])
+    .add(low = m - 1.96 * se, high = m + 1.96 * se)
+means
+    .plot(x: year, y: m, color: union)
+    .lines()
+    .errorbars(low: low, high: high, width: 0.3)
+    .points()
+    .labels(y: "Mean log hourly wage")
+
+// The rows themselves, the mean at each year of schooling, and its 95% band.
+let by_educ = y2019
+    .aggregate(m = mean(lwage), se = sd(lwage) / sqrt(n()), by: educ)
+    .add(low = m - 1.96 * se, high = m + 1.96 * se)
+y2019
+    .plot(x: educ, y: lwage)
+    .points(alpha: 0.08, jitter: 0.3)
+    .ribbon(data: by_educ, low: low, high: high, fill: "steelblue")
+    .lines(data: by_educ, y: m, color: "steelblue", width: 1.5)
+    .labels(y: "Log hourly wage")
+
+// The density of each group, with a tick for each row along the axis.
+staff
+    .plot(x: productivity, color: training)
+    .density()
+    .rug(alpha: 0.15)
+
+// # Complex: facets, scales, coordinates and annotations
+// One panel for each industry, each with its own range, on a log axis of wages.
+y2019
+    .plot(x: exper, y: wage, color: female)
+    .points(alpha: 0.25, size: 2)
+    .facet(by: industry, scales: free_y)
+    .scale_y(type: log)
+    .scale(color: okabe_ito)
+
+// A heat map of the mean wage by industry and year, on the viridis ramp.
+wages
+    .aggregate(m = mean(wage), by: [industry, year])
+    .plot(x: year, y: industry, fill: m)
+    .tile()
+    .scale(fill: viridis)
+    .labels(fill: "Mean hourly wage")
+
+// Each industry at its mean schooling and wage, with the averages of all as reference lines
+// and a note where the best paid stand. The names are a layer with a frame of its own: the
+// three that sit on the average wage, one over another, are left unnamed.
+let industries = y2019.aggregate(educ = mean(educ), wage = mean(wage), workers = n(), by: industry)
+let average_educ = y2019.mean(educ)
+let average_wage = y2019.mean(wage)
+industries
+    .plot(x: educ, y: wage, size: workers)
+    .points(color: "steelblue", alpha: 0.7)
+    .text(data: industries.where(abs(wage - average_wage) > 0.3),
+          label: industry,
+          nudge: [0, 11],
+          size: 7)
+    .hline(at: average_wage, style: dashed)
+    .vline(at: average_educ, style: dotted)
+    .annotate(text: "the best paid →", x: 13.2, y: 34.6)
+    .scale_y(limits: [25, 36])
+    .labels(x: "Mean years of schooling", y: "Mean hourly wage", size: "Workers")
+
+// A line for each of four industries, named at its end in place of a legend.
+let four = wages
+    .where(industry == "Finance" || industry == "Health" || industry == "Retail" ||
+        industry == "Agriculture")
+    .aggregate(m = mean(wage), by: [industry, year])
+four
+    .plot(x: year, y: m, color: industry)
+    .lines(width: 1.2)
+    .points(size: 2.5)
+    .legend(position: direct)
+    .labels(y: "Mean hourly wage")
+
+// Productivity by the course in each region: boxes without their outliers, and the rows
+// themselves spread a little sideways so that they do not hide one another.
+staff
+    .plot(x: training, y: productivity, color: training)
+    .boxplot(outliers: false)
+    .points(alpha: 0.15, jitter: 0.25, size: 2)
+    .facet(by: region)
+    .legend(position: none)
+
+// Bars turned on their side, and bars bent round a centre.
+industries
+    .plot(x: industry, y: wage)
+    .bars(fill: "steelblue")
+    .coord(type: flip)
+    .labels(y: "Mean hourly wage")
+staff
+    .plot(x: region, fill: region)
+    .bars()
+    .coord(type: polar)
+    .legend(position: none)
+
+// The firms founded so far: a step for each year, over the area it encloses.
+let so_far = firms
+    .add(founded_in = year(founded))
+    .aggregate(count = n(), by: founded_in)
+    .sort(founded_in)
+    .add(total = running(count, stat: sum))
+so_far
+    .plot(x: founded_in, y: total)
+    .area(fill: "steelblue", alpha: 0.25)
+    .step(width: 1.2)
+    .labels(x: "Year founded", y: "Firms founded so far")
+
+// # Publication: a finished figure
+means
+    .plot(x: year, y: m, color: union)
+    .ribbon(low: low, high: high, fill: union)
+    .lines(width: 1.2)
+    .points(size: 3)
+    .scale_x(breaks: [2010, 2012, 2014, 2016, 2018, 2020])
+    .scale(color: okabe_ito, fill: okabe_ito)
+    .labels(title: "The union wage premium, 2010 to 2021",
+            subtitle: "Mean log hourly wage by union membership, with 95% intervals",
+            x: "Year",
+            y: "Mean log hourly wage",
+            color: "Union member",
+            fill: "Union member",
+            caption: "Source: the wages panel that ships with Zeff.")
+    .legend(position: bottom)
+    .theme(name: journal)
+(y2019.histogram(lwage, bins: 30)
+).export("zemp-figure-1.svg", size: [150.02, 93.13])
+(y2019.density(lwage, color: female)
+).export("zemp-figure-2.svg", size: [150.02, 93.13])
+(y2019.boxplot(lwage, group: industry)
+).export("zemp-figure-3.svg", size: [150.02, 93.13])
+(firms.bar(industry)
+).export("zemp-figure-4.svg", size: [150.02, 93.13])
+(y2019.scatter(educ, lwage, fit: linear)
+).export("zemp-figure-5.svg", size: [150.02, 93.13])
+(y2019.qq_plot(lwage)
+).export("zemp-figure-6.svg", size: [150.02, 93.13])
+(y2019.heatmap([lwage, educ, exper, age, hours])
+).export("zemp-figure-7.svg", size: [150.02, 93.13])
+(yearly.line(year, mean_lwage, color: female)
+).export("zemp-figure-8.svg", size: [150.02, 93.13])
+(fit.coef_plot()
+).export("zemp-figure-9.svg", size: [150.02, 93.13])
+(means
+    .plot(x: year, y: m, color: union)
+    .lines()
+    .errorbars(low: low, high: high, width: 0.3)
+    .points()
+    .labels(y: "Mean log hourly wage")
+).export("zemp-figure-10.svg", size: [150.02, 93.13])
+(y2019
+    .plot(x: educ, y: lwage)
+    .points(alpha: 0.08, jitter: 0.3)
+    .ribbon(data: by_educ, low: low, high: high, fill: "steelblue")
+    .lines(data: by_educ, y: m, color: "steelblue", width: 1.5)
+    .labels(y: "Log hourly wage")
+).export("zemp-figure-11.svg", size: [150.02, 93.13])
+(staff
+    .plot(x: productivity, color: training)
+    .density()
+    .rug(alpha: 0.15)
+).export("zemp-figure-12.svg", size: [150.02, 93.13])
+(y2019
+    .plot(x: exper, y: wage, color: female)
+    .points(alpha: 0.25, size: 2)
+    .facet(by: industry, scales: free_y)
+    .scale_y(type: log)
+    .scale(color: okabe_ito)
+).export("zemp-figure-13.svg", size: [150.02, 93.13])
+(wages
+    .aggregate(m = mean(wage), by: [industry, year])
+    .plot(x: year, y: industry, fill: m)
+    .tile()
+    .scale(fill: viridis)
+    .labels(fill: "Mean hourly wage")
+).export("zemp-figure-14.svg", size: [150.02, 93.13])
+(industries
+    .plot(x: educ, y: wage, size: workers)
+    .points(color: "steelblue", alpha: 0.7)
+    .text(data: industries.where(abs(wage - average_wage) > 0.3),
+          label: industry,
+          nudge: [0, 11],
+          size: 7)
+    .hline(at: average_wage, style: dashed)
+    .vline(at: average_educ, style: dotted)
+    .annotate(text: "the best paid →", x: 13.2, y: 34.6)
+    .scale_y(limits: [25, 36])
+    .labels(x: "Mean years of schooling", y: "Mean hourly wage", size: "Workers")
+).export("zemp-figure-15.svg", size: [150.02, 93.13])
+(four
+    .plot(x: year, y: m, color: industry)
+    .lines(width: 1.2)
+    .points(size: 2.5)
+    .legend(position: direct)
+    .labels(y: "Mean hourly wage")
+).export("zemp-figure-16.svg", size: [150.02, 93.13])
+(staff
+    .plot(x: training, y: productivity, color: training)
+    .boxplot(outliers: false)
+    .points(alpha: 0.15, jitter: 0.25, size: 2)
+    .facet(by: region)
+    .legend(position: none)
+).export("zemp-figure-17.svg", size: [150.02, 93.13])
+(industries
+    .plot(x: industry, y: wage)
+    .bars(fill: "steelblue")
+    .coord(type: flip)
+    .labels(y: "Mean hourly wage")
+).export("zemp-figure-18.svg", size: [150.02, 93.13])
+(staff
+    .plot(x: region, fill: region)
+    .bars()
+    .coord(type: polar)
+    .legend(position: none)
+).export("zemp-figure-19.svg", size: [150.02, 93.13])
+(so_far
+    .plot(x: founded_in, y: total)
+    .area(fill: "steelblue", alpha: 0.25)
+    .step(width: 1.2)
+    .labels(x: "Year founded", y: "Firms founded so far")
+).export("zemp-figure-20.svg", size: [150.02, 93.13])
+(means
+    .plot(x: year, y: m, color: union)
+    .ribbon(low: low, high: high, fill: union)
+    .lines(width: 1.2)
+    .points(size: 3)
+    .scale_x(breaks: [2010, 2012, 2014, 2016, 2018, 2020])
+    .scale(color: okabe_ito, fill: okabe_ito)
+    .labels(title: "The union wage premium, 2010 to 2021",
+            subtitle: "Mean log hourly wage by union membership, with 95% intervals",
+            x: "Year",
+            y: "Mean log hourly wage",
+            color: "Union member",
+            fill: "Union member",
+            caption: "Source: the wages panel that ships with Zeff.")
+    .legend(position: bottom)
+    .theme(name: journal)
+).export("zemp-figure-21.svg", size: [150.02, 93.13])
