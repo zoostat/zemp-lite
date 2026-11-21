@@ -175,9 +175,17 @@ export class OpfsFolder implements Folder {
       for await (const [name, handle] of folder.entries()) {
         if (handle.kind === "directory") {
           entries.push({ name, kind: "folder", size: 0 });
-        } else {
-          const file = await (handle as FileSystemFileHandle).getFile();
-          entries.push({ name, kind: "file", size: file.size });
+        } else if (!name.endsWith(".crswap")) {
+          // A file being written has, for that moment, a swap file beside it in Chromium
+          // (`name.crswap`): no file of the project. And any file listed may be gone before
+          // it is asked for its size (a write that ended, a file removed): it is then passed
+          // over, where an error here would fail whatever was reading the project.
+          try {
+            const file = await (handle as FileSystemFileHandle).getFile();
+            entries.push({ name, kind: "file", size: file.size });
+          } catch {
+            // Gone since it was listed.
+          }
         }
       }
     }

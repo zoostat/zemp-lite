@@ -57,7 +57,8 @@ export class Language {
 
   /** Start the worker, give it the project, and open the conversation. */
   start(): Promise<void> {
-    this.#started ??= (async () => {
+    if (this.#started !== null) return this.#started;
+    const starting = (async () => {
       await this.#engine.start();
       await this.#session.sync();
       await this.request("initialize", {
@@ -72,7 +73,14 @@ export class Language {
       });
       await this.notify("initialized", {});
     })();
-    return this.#started;
+    // A start that failed (a file of the project gone while it was read) is tried again by
+    // the next call: kept as failed, it would leave the window without hover, completion,
+    // help and explained pages for as long as it is open.
+    starting.catch(() => {
+      if (this.#started === starting) this.#started = null;
+    });
+    this.#started = starting;
+    return starting;
   }
 
   /** The text of a script, as it stands: opened the first time, then sent whole. */
