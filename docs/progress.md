@@ -167,3 +167,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 169 unit tests; 302 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
 
 **Next.** Step 3 `[function]`: the Outline from the comments `// # Title` and `// ## Title`, with **Run section**.
+
+## 22 November 2026, release 0.2.1, step 3
+
+**Done.** Step 3 `[function]`: the sections of a script read from the comments `// # Title` and `// ## Title` (`src/editor/sections.ts`, until the engine reports them at Zeff 0.9.0); the **Outline** pane under Project, each section with its line, gone to by a click and marked where the cursor is; **Run section** on each entry and in ⌘K, running the section's statements with what they need.
+
+**Green.** `npm run routine`: 176 unit tests; 312 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
+
+**Next.** Step 4 `[engine]`: one layout, the Panes layout removed with its tests rewritten or removed, each named.

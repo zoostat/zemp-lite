@@ -75,7 +75,7 @@
     /** The cursor moved to this line. */
     oncursor?: (line: number) => void;
     /** A line to bring into view with the cursor on it; a new `count` asks again. */
-    reveal?: { line: number; count: number } | null;
+    reveal?: { line: number; count: number; top?: boolean } | null;
     /**
      * A statement to put into the script at the cursor (⌘↵ on the console line): on the
      * cursor's line where it is blank, else on a line of its own after it, as one edit that
@@ -390,7 +390,8 @@
     view.dispatch(setDiagnostics(view.state, marked));
   });
 
-  // A line asked for (the error's trail): the cursor put on it, and it brought into view.
+  // A line asked for (the error's trail, a section of the outline): the cursor put on it, and
+  // it brought into view, a section's heading to the top.
   let revealed = 0;
   $effect(() => {
     const asked = reveal;
@@ -399,7 +400,7 @@
     const line = view.state.doc.line(Math.min(Math.max(asked.line, 1), view.state.doc.lines));
     view.dispatch({
       selection: { anchor: line.from },
-      effects: EditorView.scrollIntoView(line.from, { y: "center" }),
+      effects: EditorView.scrollIntoView(line.from, { y: asked.top ? "start" : "center" }),
     });
     view.focus();
   });

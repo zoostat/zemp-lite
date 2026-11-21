@@ -41,6 +41,7 @@ import {
   type PlaceName,
   type ViewState,
 } from "./views";
+import { sectionsOf, type Section } from "../editor/sections";
 
 const VIEWS = ".zemp/views.json";
 const MAIN = "scripts/main.zeff";
@@ -148,7 +149,7 @@ export class Workspace {
   /** What floats over the window about the last run: its facts, or what it said. */
   panel = $state<"facts" | "said" | null>(null);
   /** A line to be brought into view, with the cursor on it (`goTo`). */
-  reveal = $state<{ path: string; line: number; count: number } | null>(null);
+  reveal = $state<{ path: string; line: number; count: number; top?: boolean } | null>(null);
   /** The line of the cursor in the margin editor, for the commands that run from it. */
   cursor = $state<{ path: string; line: number } | null>(null);
   #reading: ReturnType<typeof setTimeout> | null = null;
@@ -387,6 +388,26 @@ export class Workspace {
     return scripts[0] ?? MAIN;
   }
 
+  /**
+   * The sections of the script shown, read from its comments (`src/editor/sections.ts`), with
+   * the engine's reading of its statements where that is of the text as it stands.
+   */
+  get sections(): Section[] {
+    const path = this.activePath ?? this.scriptPath;
+    const text = this.buffers[path]?.text;
+    if (text === undefined || !path.endsWith(".zeff")) return [];
+    const now = this.now;
+    return sectionsOf(
+      text,
+      now !== null && now.path === path && now.text === text ? now.ranges : [],
+    );
+  }
+
+  /** Run a section: its statements, from its heading to its last line, with what they need. */
+  async runSection(section: Section): Promise<void> {
+    await this.runPart("section", section.line, section.end);
+  }
+
   // What is shown. Each change is kept with the project.
 
   setLayout(layout: Layout): void {
@@ -529,9 +550,10 @@ export class Workspace {
     if (this.inserting?.count === count) this.inserting = null;
   }
 
-  async goTo(path: string, line: number): Promise<void> {
+  /** Show a line of a file: in the middle of the view, or at its top (a section's heading). */
+  async goTo(path: string, line: number, top = false): Promise<void> {
     await this.open(path);
-    this.reveal = { path, line, count: (this.reveal?.count ?? 0) + 1 };
+    this.reveal = { path, line, count: (this.reveal?.count ?? 0) + 1, top };
   }
 
   show(tab: string): void {
@@ -767,18 +789,23 @@ export class Workspace {
    * the other results on the page stay, marked where they are no longer the script's. The
    * whole script is checked first, as Zeff checks before it runs.
    */
-  async runPart(kind: "statement" | "to" | "from", line: number): Promise<void> {
+  async runPart(
+    kind: "statement" | "to" | "from" | "section",
+    line: number,
+    last = line,
+  ): Promise<void> {
     if (this.running) return;
     this.running = true;
-    const work = this.#runPart(this.#busy, kind, line);
+    const work = this.#runPart(this.#busy, kind, line, last);
     this.#busy = work;
     await work;
   }
 
   async #runPart(
     before: Promise<void>,
-    kind: "statement" | "to" | "from",
+    kind: "statement" | "to" | "from" | "section",
     line: number,
+    last: number,
   ): Promise<void> {
     await before;
     const script = this.scriptPath;
@@ -800,11 +827,14 @@ export class Workspace {
         .filter((one) => one.line <= line)
         .reduce<number | null>((at, one) => Math.max(at ?? 0, one.line), null);
       const wanted =
-        kind === "statement"
-          ? graph.filter((one) => one.line === target)
-          : kind === "to"
-            ? graph.filter((one) => target !== null && one.line < target)
-            : graph.filter((one) => one.line >= (target ?? graph[0]?.line ?? 1));
+        kind === "section"
+          ? // The statements of a section, from its heading to its last line (#178).
+            graph.filter((one) => one.line >= line && one.line <= last)
+          : kind === "statement"
+            ? graph.filter((one) => one.line === target)
+            : kind === "to"
+              ? graph.filter((one) => target !== null && one.line < target)
+              : graph.filter((one) => one.line >= (target ?? graph[0]?.line ?? 1));
       const lines = wanted
         .flatMap((one) => one.needs)
         .filter((one, at, all) => all.indexOf(one) === at)

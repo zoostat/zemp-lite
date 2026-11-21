@@ -7,6 +7,7 @@
   import type { TreeNode } from "../project/projects";
   import { codeLarger, codeSize, codeSmaller, codeUsual } from "../theme/codesize.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
+  import { sectionAt } from "../editor/sections";
   import type { Command } from "./commands";
   import ConsoleLine from "./ConsoleLine.svelte";
   import MarginPane from "./MarginPane.svelte";
@@ -51,6 +52,11 @@
     );
   }
 
+  // The section the cursor is in, which ⌘K offers to run.
+  const atSection = $derived(
+    workspace.cursor === null ? null : sectionAt(workspace.sections, workspace.cursor.line),
+  );
+
   // The commands of ⌘K: every control of the window, and what has no button of its own.
   const commands = $derived<Command[]>([
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
@@ -68,6 +74,7 @@
     { name: "Place: Data", hint: "the frames of the run", run: () => workspace.openData() },
     { name: "Place: Plots", hint: "the plots of the run", run: () => workspace.openPlots() },
     paneCommand(workspace, "script", "project"),
+    paneCommand(workspace, "script", "outline"),
     paneCommand(workspace, "script", "notes"),
     paneCommand(workspace, "plots", "list"),
     {
@@ -87,6 +94,15 @@
             hint: "⌘↵ in the script",
             run: () => void workspace.runPart("statement", workspace.cursor?.line ?? 1),
           },
+          ...(atSection === null
+            ? []
+            : [
+                {
+                  name: "Run section",
+                  hint: `${atSection.title}, lines ${atSection.line} to ${atSection.end}`,
+                  run: () => void workspace.runSection(atSection),
+                },
+              ]),
           {
             name: "Run to here",
             hint: `the statements before line ${workspace.cursor.line}`,

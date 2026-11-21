@@ -18,6 +18,8 @@
   import { placed } from "../output/place";
   import { took } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
+  import { sectionAt } from "../editor/sections";
+  import OutlinePane from "./OutlinePane.svelte";
   import { paneOf } from "./panes";
   import Place from "./Place.svelte";
   import ProjectTree from "./ProjectTree.svelte";
@@ -237,6 +239,17 @@
   {#snippet project()}
     <ProjectTree {workspace} />
   {/snippet}
+  {#snippet outline()}
+    <OutlinePane
+      sections={workspace.sections}
+      current={workspace.cursor?.path === path
+        ? (sectionAt(workspace.sections, workspace.cursor.line)?.line ?? null)
+        : null}
+      running={workspace.running}
+      ongo={(section) => void workspace.goTo(path, section.line, true)}
+      onrun={(section) => void workspace.runSection(section)}
+    />
+  {/snippet}
   {#snippet controls()}
     <button
       class="facts"
@@ -264,7 +277,10 @@
   <Place
     {workspace}
     name="Script"
-    left={[paneOf(workspace, "script", "project", project)]}
+    left={[
+      paneOf(workspace, "script", "project", project),
+      paneOf(workspace, "script", "outline", outline),
+    ]}
     right={[paneOf(workspace, "script", "notes", null)]}
     bar={controls}
   >
