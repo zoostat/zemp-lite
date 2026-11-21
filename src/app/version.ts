@@ -1,7 +1,7 @@
 // The version of Zemp Lite and of the Zeff engine it runs on (Zemp Specification,
 // section 15: each Zemp release names the engine versions it supports).
 
-/** The version of this build, as `package.json` has it: `0.2.0` or, between releases, `0.2.0-dev`. */
+/** The version of this build, as `package.json` has it: `0.2.1` or, between releases, `0.2.1-dev`. */
 export const VERSION: string = __ZEMP_VERSION__;
 
 /** The Zeff engine this release runs on. */

@@ -966,3 +966,19 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **The register and the specification.** They are edited in the Zeff repository, so the entry, its revision of #174 and #176 R2, the moved reader test (Zeff 0.9.0, step 45) and the amendments of the Zemp Specification's section 15 (a 0.2.1 row) are left as a note for a session opened there: `zemp-lite-0.2.1-three-panes-for-the-register.md` in the shared notes. The checklist `docs/releases/0.2.1.md` is written at "Start release 0.2.1". **Entered on 22 November 2026** as register entry **#203** (Zeff commit `1beefc7`, on the owner's word there), with dated paragraphs in #174, #176 and #178; the Zemp Specification gains the 0.2.1 row of section 15 (the reader test moved to it) and a sentence each in sections 5, 7 and 8; Zeff 0.9.0's step 45 names the hosted 0.2.1. This repository's copy of `docs/spec/` gains them at the next refresh.
 
 **Reason.** The owner's ruling of 21 November 2026.
+
+## 22 November 2026: Release 0.2.1 opened (step 1)
+
+**The owner's answers.** "Go, as recommended", to the plan of `docs/releases/0.2.1.md` and its questions:
+1. Help is a place only: F1, `:help`, ⌘K and **Explain** open the Help place at their page; the panel beside the script goes, with the switch that follows the cursor.
+2. A run of part of the script (⌘↵, **Run to here**, **Run from here**, **Run section**) unfolds the outputs of the statements it ran and leaves the others as they were; **Run** unfolds every output (#203).
+3. A variable's statistics are the engine's own, by its type: for a number N, missing with its share, mean, sd, min, first quartile, median, third quartile, max and the count of distinct values, the quartiles by the engine's default (type 7); for a category, a truth value, or a text or whole number of few values, each value's count and share; for a date or a time N, missing, min, max and distinct values; for a text of many values N, missing and distinct values.
+4. The example's opening comment becomes "Press Run: each statement's result opens under it, and a note beside it says what it made."; the reader test's sheet follows the new layout, its scripts unchanged.
+
+**The specification.** `docs/spec/` is a copy of the Zeff repository's at commit 1beefc7 (made when the release was planned, each file from the commit and compared byte for byte), where #203 and the 0.2.1 row of the Zemp Specification's section 15 stand.
+
+**The version** is `0.2.1-dev` in `package.json` and the worker's `Cargo.toml`. The engine stays the released Zeff 0.8.0; none of its crates moves.
+
+**Engineering choices of the plan**, each for the step that builds it: the view state goes to version 3 and reads versions 1 and 2 (step 2); the sections of a script are read by the interface from the comments until the engine reports them at Zeff 0.9.0 (step 3, #178); a test of the Panes layout is rewritten to hold the same behaviour in the one layout or removed with the thing it held, each named here when it is done, none weakened (step 4); the Variables pane's numbers are cells of the engine's print of `summary`, `quantile`, `n_distinct` and `tabulate`, run after the script as the inspector's summary is in 0.2 (step 7b).
+
+**Reason.** The checklist's step 1; the owner's word of 22 November 2026.

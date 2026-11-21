@@ -151,3 +151,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Done.** "Start release 0.2.1": v0.2.0 tagged; the tree made clean (a generated copy of the reader test's sheet, never committed, moved to the shared notes on the owner's word); `docs/spec/` brought to Zeff 1beefc7, where #203 and the 0.2.1 row stand, byte for byte; the row, #203, the sections it amends and the code as it stands read; the checklist written (`docs/releases/0.2.1.md`: 12 steps, five questions). No code written.
 
 **Next.** The owner's "go" and his answers to the five questions; then step 1 `[engine]`, opening the release.
+
+## 22 November 2026, release 0.2.1, step 1
+
+**Done.** The owner's "Go, as recommended": Help a place only, a run of part unfolding what it ran, the statistics of a variable by its type, the example's opening comment. Step 1 `[engine]`: version `0.2.1-dev`, the answers and the plan's engineering choices in `docs/decisions.md`.
+
+**Green.** `npm run routine`: 166 unit tests; 288 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
+
+**Next.** Step 2 `[engine]`: the view state at version 3 and the frame of a place, the Script place on it with Project and Notes.
