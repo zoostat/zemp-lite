@@ -3,18 +3,14 @@
 // hold to what the view showed. So a statement written here is one the engine was seen to run.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { contrastAsZeff, labelsAsZeff, named, typeAsZeff, viewAsZeff } from "./zeff";
+import { named, viewAsZeff } from "./zeff";
 
 interface Case {
-  kind: "view" | "type" | "contrast" | "labels";
+  kind: "view";
   frame: string;
   statement: string;
   where?: string;
   sort?: { variable: string; desc: boolean } | null;
-  variable?: string;
-  type?: string;
-  contrast?: string;
-  labels?: { code: number; label: string }[];
 }
 
 const cases = JSON.parse(
@@ -23,19 +19,13 @@ const cases = JSON.parse(
 
 describe("Copy as Zeff", () => {
   it.each(cases.map((one) => [one.statement, one] as const))("writes %s", (_, one) => {
-    const v = one.variable ?? "";
-    const made = {
-      view: () => viewAsZeff(one.frame, { where: one.where ?? "", sort: one.sort ?? null }),
-      type: () => typeAsZeff(one.frame, v, one.type ?? ""),
-      contrast: () => contrastAsZeff(one.frame, v, one.contrast ?? ""),
-      labels: () => labelsAsZeff(one.frame, v, one.labels ?? []),
-    }[one.kind]();
+    expect(one.kind).toBe("view");
+    const made = viewAsZeff(one.frame, { where: one.where ?? "", sort: one.sort ?? null });
     expect(made).toBe(one.statement);
   });
 
-  it("copies nothing for a view that is the frame, or labels none given", () => {
+  it("copies nothing for a view that is the frame", () => {
     expect(viewAsZeff("wages", { where: "  ", sort: null })).toBeNull();
-    expect(labelsAsZeff("wages", "union", [{ code: 0, label: " " }])).toBeNull();
   });
 
   it("writes a name that is not an identifier in backticks", () => {

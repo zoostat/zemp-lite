@@ -1232,8 +1232,14 @@ export class Workspace {
   }
 
   /** Choose a variable for the data viewer's inspector. */
+  /**
+   * Choose a variable of the frame shown, or none. A variable chosen (a column's header
+   * clicked, a name in the list) opens the Variables pane on it in place of the list (open
+   * decision #203); none chosen leaves the pane as it is, on the list.
+   */
   chooseVariable(variable: string | null): void {
     this.views.data.variable = variable;
+    if (variable !== null) this.views.panes.data = { ...this.views.panes.data, variables: true };
     this.#keep();
   }
 

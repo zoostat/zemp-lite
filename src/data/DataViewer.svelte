@@ -13,10 +13,11 @@
   import type { Workspace } from "../app/workspace-state.svelte";
   import type { Bars, Rows } from "../engine/messages";
   import { counted } from "../margin/notes";
-  import { CONTRASTS, TYPES, contrastAsZeff, labelsAsZeff, typeAsZeff, viewAsZeff } from "./zeff";
+  import { paneOf } from "../app/panes";
+  import Place from "../app/Place.svelte";
+  import { viewAsZeff } from "./zeff";
 
-  let { workspace, onback = null }: { workspace: Workspace; onback?: (() => void) | null } =
-    $props();
+  let { workspace }: { workspace: Workspace } = $props();
 
   /** Rows fetched at a time, the height of a row and of the header, in pixels. */
   const PAGE = 200;
@@ -256,25 +257,6 @@
   }
   const most = (bars: Bars) => Math.max(1, ...bars.counts);
 
-  // The inspector's Copy as Zeff: another type, another contrast, labels for the codes.
-  let toType = $state("");
-  let toContrast = $state("");
-  let labels = $state<Record<number, string>>({});
-  $effect(() => {
-    const variable = inspected;
-    toType = TYPES.find((one) => one !== variable?.type) ?? "Float";
-    toContrast = CONTRASTS.find((one) => one !== variable?.contrast) ?? "sum";
-    labels = Object.fromEntries(
-      (variable?.codes ?? []).map((one) => [
-        one.code,
-        one.shown === String(one.code) ? "" : one.shown,
-      ]),
-    );
-  });
-  function copyStatement(text: string | null): void {
-    if (text !== null) void copy(text, `copied ${text}`);
-  }
-
   // Each column as wide as its header or its widest cell of the first page, within bounds. The
   // header holds the name (in the code face) over the type and the count of NA (in the text
   // face), beside the sort and hide buttons, which take about 34 pixels with the padding.
@@ -296,284 +278,86 @@
 
 <svelte:window onmouseup={() => (dragging = false)} />
 
-<div class="data" data-testid="data">
-  {#if workspace.views.panes.data.frames}
-    <aside class="side" aria-label="The frames of the run">
-      <div class="side-head">
-        <span>Frames of the run</span>
-        <button class="word" onclick={() => workspace.setDataList(false)}>‹ Hide</button>
-      </div>
-      {#if frames.length === 0}
-        <p class="quiet">The last run made no frame.</p>
-      {/if}
-      <ul class="frames">
-        {#each frames as frame (frame.name)}
-          {@const line = lineOf(frame.name)}
-          <li>
-            <button
-              class="frame"
-              aria-current={frame.name === chosen}
-              onclick={() => workspace.showFrame(frame.name)}
-            >
-              <span class="mono name">{frame.name}</span>
-              <span class="about"
-                >{counted(frame.rows)} × {counted(frame.variables)}{line === null
-                  ? ""
-                  : ` · line ${line}`}</span
-              >
-            </button>
-          </li>
-        {/each}
-      </ul>
-      {#if first !== null}
-        <div class="vars-head">
-          <span>Variables</span>
-          <span class="about" data-testid="shown-count"
-            >{counted(shown.length)} of {counted(first.variables.length)} shown</span
-          >
-        </div>
-        <div class="vars-tools">
-          <input
-            class="find"
-            type="search"
-            placeholder="Find a variable"
-            aria-label="Find a variable"
-            bind:value={finding}
-          />
-          <button class="word" onclick={() => chosen !== null && workspace.setHidden(chosen, [])}
-            >Show all</button
-          >
-          <button
-            class="word"
-            onclick={() =>
-              chosen !== null &&
-              workspace.setHidden(
-                chosen,
-                (first?.variables ?? []).map((one) => one.name),
-              )}>Hide all</button
-          >
-        </div>
-        <ul class="vars">
-          {#each listed as variable (variable.name)}
-            <li>
-              <input
-                type="checkbox"
-                checked={!hidden.includes(variable.name)}
-                aria-label="Show {variable.name} in the grid"
-                onchange={(event) => hide(variable.name, !event.currentTarget.checked)}
-              />
-              <button class="vpick" onclick={() => workspace.chooseVariable(variable.name)}
-                ><span class="mono">{variable.name}</span>
-                <span class="about">{variable.type}</span></button
-              >
-            </li>
-          {/each}
-        </ul>
-      {/if}
-    </aside>
+{#snippet framesOfTheRun()}
+  {#if frames.length === 0}
+    <p class="quiet">The last run made no frame.</p>
   {/if}
-  <div class="main">
-    <div class="bar">
-      {#if onback}<button class="word" onclick={onback}>‹ Script</button>{/if}
-      {#if !workspace.views.panes.data.frames}
-        <button class="word" onclick={() => workspace.setDataList(true)}
-          >Show frames and variables ›</button
-        >
-      {/if}
-      <h2 class="mono" data-testid="frame-header">{first?.header ?? chosen ?? "No frame"}</h2>
-      {#if first !== null && (view.where !== "" || view.search !== "" || first.kept !== first.total)}
-        <span class="count" data-testid="kept-count"
-          >{counted(first.kept)} of {counted(first.total)} rows</span
-        >
-      {/if}
-      {#if hidden.length > 0}
-        <span class="about"
-          >{counted(hidden.length)} hidden ·
-          <button class="word" onclick={() => chosen !== null && workspace.setHidden(chosen, [])}
-            >show all</button
-          ></span
-        >
-      {/if}
-    </div>
-    {#if chosen !== null}
-      <div class="tools">
-        <label class="where">
-          <span>Keep rows where</span>
-          <input
-            class="mono"
-            type="text"
-            spellcheck="false"
-            placeholder="year >= 2010"
-            aria-label="Keep rows where"
-            bind:value={condition}
-            onkeydown={(event) => {
-              if (event.key === "Enter") keep();
-              else if (event.key === "Escape") {
-                condition = "";
-                keep();
-              }
-            }}
-          />
-        </label>
-        <button class="word" onclick={keep}>Keep</button>
-        <input
-          class="find search"
-          type="search"
-          placeholder="Search the cells"
-          aria-label="Search the cells"
-          value={searching}
-          oninput={(event) => search(event.currentTarget.value)}
-        />
-        {#if span !== null}
-          <button class="word" onclick={() => void copyCells()}
-            >Copy {counted(span.bottom - span.top + 1)} × {counted(span.right - span.left + 1)} cells</button
-          >
-        {/if}
+  <ul class="frames">
+    {#each frames as frame (frame.name)}
+      {@const line = lineOf(frame.name)}
+      <li>
         <button
-          class="word"
-          disabled={statement === null}
-          title="The statement that gives what the view shows, put on the clipboard"
-          onclick={copyView}>Copy as Zeff</button
+          class="frame"
+          aria-current={frame.name === chosen}
+          onclick={() => workspace.showFrame(frame.name)}
         >
-        {#if view.where !== "" || view.sort !== null || view.search !== ""}
-          <button class="word" onclick={clearView}>Clear</button>
-        {/if}
-      </div>
-      {#if first?.filter && first.filter.said !== ""}
-        <p
-          class="said mono"
-          class:problem={!first.filter.ok}
-          role={first.filter.ok ? undefined : "alert"}
-          data-testid="filter-said"
-        >
-          {first.filter.said}
-        </p>
-      {/if}
-      {#if copied}<p class="said" data-testid="data-copied">{copied}</p>{/if}
-    {/if}
-    {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
-    {#if first !== null}
-      <div
-        class="grid mono"
-        role="grid"
-        aria-label="The rows of {first.name}"
-        aria-rowcount={total + 1}
-        tabindex="0"
-        onkeydown={keydown}
-        bind:this={grid}
-        bind:clientHeight={height}
-        onscroll={() => (top = grid?.scrollTop ?? 0)}
+          <span class="mono name">{frame.name}</span>
+          <span class="about"
+            >{counted(frame.rows)} × {counted(frame.variables)}{line === null
+              ? ""
+              : ` · line ${line}`}</span
+          >
+        </button>
+      </li>
+    {/each}
+  </ul>
+{/snippet}
+
+{#snippet variables()}
+  {#if first === null}
+    <p class="quiet">No frame is shown.</p>
+  {:else if inspected === null}
+    <!-- The list of the frame's variables: each shown in the grid or hidden, and chosen by its name. -->
+    <div class="vars-head">
+      <span>Variables</span>
+      <span class="about" data-testid="shown-count"
+        >{counted(shown.length)} of {counted(first.variables.length)} shown</span
       >
-        <div
-          class="sheet"
-          style:height="{HEAD + total * ROW}px"
-          style:width="{numberWidth + shown.reduce((sum, one) => sum + (widths[one.at] ?? 0), 0)}px"
-        >
-          <div class="row head" role="row" aria-rowindex={1} style:top="0px">
-            <span class="cell num frozen" style:width="{numberWidth}px" role="columnheader"></span>
-            {#each shown as { variable, at }, index (variable.name)}
-              <span
-                class="cell headcell"
-                class:frozen-2={index === 0}
-                class:right={variable.right}
-                class:chosen={variable.name === inspected?.name}
-                style:width="{widths[at]}px"
-                style:left={index === 0 ? `${numberWidth}px` : undefined}
-                role="columnheader"
-                aria-label={variable.name}
-              >
-                <button class="pick" onclick={() => workspace.chooseVariable(variable.name)}
-                  ><span class="vname" title={variable.name}>{variable.name}</span><span
-                    class="vfacts"
-                    >{variable.type}{#if variable.missing > 0}<span class="miss">
-                        · {counted(variable.missing)} NA</span
-                      >{/if}</span
-                  >{#if variable.bars !== null}{@const bars = variable.bars}<svg
-                      class="spark"
-                      viewBox="0 0 {bars.counts.length} 12"
-                      preserveAspectRatio="none"
-                      role="img"
-                      aria-label={described(bars)}
-                      data-testid="spark"
-                      ><title>{described(bars)}</title>{#each bars.counts as count, bin (bin)}<rect
-                          x={bin + 0.08}
-                          width="0.84"
-                          y={12 - (12 * count) / most(bars)}
-                          height={(12 * count) / most(bars)}
-                        />{/each}</svg
-                    >{/if}</button
-                ><button
-                  class="sort"
-                  class:on={view.sort?.variable === variable.name}
-                  aria-label="Sort by {variable.name}"
-                  title={view.sort?.variable === variable.name
-                    ? view.sort.desc
-                      ? "Sorted down: press to stop sorting"
-                      : "Sorted up: press to sort down"
-                    : "Sort up"}
-                  onclick={() => sortBy(variable.name)}
-                  >{view.sort?.variable === variable.name
-                    ? view.sort.desc
-                      ? "↓"
-                      : "↑"
-                    : "↕"}</button
-                ><button
-                  class="hide"
-                  aria-label="Hide {variable.name}"
-                  title="Hide from the grid"
-                  onclick={() => hide(variable.name, true)}>×</button
-                >
-              </span>
-            {/each}
-          </div>
-          {#each visible as row (row)}
-            {@const cells = rowAt(row)}
-            <div
-              class="row"
-              role="row"
-              aria-rowindex={row + 2}
-              style:top="{HEAD + row * ROW}px"
-              data-testid="data-row"
-            >
-              <span class="cell num frozen" style:width="{numberWidth}px" role="rowheader"
-                >{row + 1}</span
-              >
-              {#if cells === null}
-                <span class="cell quiet">…</span>
-              {:else}
-                {#each shown as { variable, at }, index (variable.name)}
-                  {@const cell = cells[at] ?? ""}
-                  <span
-                    class="cell"
-                    class:frozen-2={index === 0}
-                    class:right={variable.right}
-                    class:na={cell === "NA"}
-                    class:match={matches(cell)}
-                    class:selected={inRange(row, index)}
-                    style:width="{widths[at]}px"
-                    style:left={index === 0 ? `${numberWidth}px` : undefined}
-                    role="gridcell"
-                    tabindex="-1"
-                    aria-selected={inRange(row, index)}
-                    onmousedown={(event) => press(event, row, index)}
-                    onmouseenter={() => over(row, index)}>{cell}</span
-                  >
-                {/each}
-              {/if}
-            </div>
-          {/each}
-        </div>
-      </div>
-    {:else if chosen === null}
-      <p class="quiet">Run the script: the frames it makes are shown here.</p>
-    {/if}
-  </div>
-  {#if inspected !== null}
-    <aside class="inspector" aria-label="The variable chosen" data-testid="inspector">
-      <div class="side-head">
-        <span class="mono">{inspected.name}</span>
-        <button class="word" onclick={() => workspace.chooseVariable(null)}>Close</button>
-      </div>
+    </div>
+    <div class="vars-tools">
+      <input
+        class="find"
+        type="search"
+        placeholder="Find a variable"
+        aria-label="Find a variable"
+        bind:value={finding}
+      />
+      <button class="word" onclick={() => chosen !== null && workspace.setHidden(chosen, [])}
+        >Show all</button
+      >
+      <button
+        class="word"
+        onclick={() =>
+          chosen !== null &&
+          workspace.setHidden(
+            chosen,
+            (first?.variables ?? []).map((one) => one.name),
+          )}>Hide all</button
+      >
+    </div>
+    <ul class="vars">
+      {#each listed as variable (variable.name)}
+        <li>
+          <input
+            type="checkbox"
+            checked={!hidden.includes(variable.name)}
+            aria-label="Show {variable.name} in the grid"
+            onchange={(event) => hide(variable.name, !event.currentTarget.checked)}
+          />
+          <button class="vpick" onclick={() => workspace.chooseVariable(variable.name)}
+            ><span class="mono">{variable.name}</span>
+            <span class="about">{variable.type}</span></button
+          >
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <!-- One variable, in place of the list (open decision #203): looked at, never changed here. -->
+    <div class="one" data-testid="inspector">
+      <button class="word back" onclick={() => workspace.chooseVariable(null)}
+        >‹ All variables</button
+      >
+      <h3 class="mono">{inspected.name}</h3>
       <p class="facts">
         {inspected.type}{inspected.label === "" ? "" : ` · ${inspected.label}`} · {counted(
           inspected.missing,
@@ -582,71 +366,216 @@
       <button class="word" onclick={() => hide(inspected.name, !hidden.includes(inspected.name))}
         >{hidden.includes(inspected.name) ? "Show in the grid" : "Hide from the grid"}</button
       >
-      <div class="as-zeff" data-testid="copy-as-zeff">
-        <span class="as-head">Copy as Zeff</span>
-        <div class="as-row">
-          <select aria-label="Another type for {inspected.name}" bind:value={toType}>
-            {#each TYPES.filter((one) => one !== inspected.type) as type (type)}
-              <option value={type}>{type}</option>
-            {/each}
-          </select>
-          <button
-            class="word"
-            onclick={() =>
-              chosen !== null && copyStatement(typeAsZeff(chosen, inspected.name, toType))}
-            >Copy the change of type</button
-          >
-        </div>
-        {#if inspected.type === "Category"}
-          <div class="as-row">
-            <select aria-label="Another contrast for {inspected.name}" bind:value={toContrast}>
-              {#each CONTRASTS as contrast (contrast)}
-                <option value={contrast}>{contrast}</option>
-              {/each}
-            </select>
-            <button
-              class="word"
-              onclick={() =>
-                chosen !== null &&
-                copyStatement(contrastAsZeff(chosen, inspected.name, toContrast))}
-              >Copy the contrast</button
-            >
-          </div>
-        {/if}
-        {#if inspected.codes !== null}
-          <div class="labels">
-            {#each inspected.codes as one (one.code)}
-              <label class="as-row"
-                ><span class="mono code">{one.code}</span><input
-                  type="text"
-                  aria-label="The label of {one.code}"
-                  bind:value={labels[one.code]}
-                /></label
-              >
-            {/each}
-            <button
-              class="word"
-              onclick={() =>
-                chosen !== null &&
-                copyStatement(
-                  labelsAsZeff(
-                    chosen,
-                    inspected.name,
-                    (inspected.codes ?? []).map((one) => ({
-                      code: one.code,
-                      label: labels[one.code] ?? "",
-                    })),
-                  ),
-                )}>Copy the labels</button
-            >
-          </div>
-        {/if}
-      </div>
       <pre class="mono summary" data-testid="variable-summary">{summary === ""
           ? "…"
           : summary}</pre>
-    </aside>
+    </div>
   {/if}
+{/snippet}
+
+{#snippet facts()}
+  <h2 class="mono" data-testid="frame-header">{first?.header ?? chosen ?? "No frame"}</h2>
+  {#if first !== null && (view.where !== "" || view.search !== "" || first.kept !== first.total)}
+    <span class="count" data-testid="kept-count"
+      >{counted(first.kept)} of {counted(first.total)} rows</span
+    >
+  {/if}
+  {#if hidden.length > 0}
+    <span class="about"
+      >{counted(hidden.length)} hidden ·
+      <button class="word" onclick={() => chosen !== null && workspace.setHidden(chosen, [])}
+        >show all</button
+      ></span
+    >
+  {/if}
+{/snippet}
+
+<div class="data" data-testid="data">
+  <Place
+    {workspace}
+    name="Data"
+    left={[paneOf(workspace, "data", "frames", framesOfTheRun)]}
+    right={[paneOf(workspace, "data", "variables", variables)]}
+    bar={facts}
+  >
+    <div class="main">
+      {#if chosen !== null}
+        <div class="tools">
+          <label class="where">
+            <span>Keep rows where</span>
+            <input
+              class="mono"
+              type="text"
+              spellcheck="false"
+              placeholder="year >= 2010"
+              aria-label="Keep rows where"
+              bind:value={condition}
+              onkeydown={(event) => {
+                if (event.key === "Enter") keep();
+                else if (event.key === "Escape") {
+                  condition = "";
+                  keep();
+                }
+              }}
+            />
+          </label>
+          <button class="word" onclick={keep}>Keep</button>
+          <input
+            class="find search"
+            type="search"
+            placeholder="Search the cells"
+            aria-label="Search the cells"
+            value={searching}
+            oninput={(event) => search(event.currentTarget.value)}
+          />
+          {#if span !== null}
+            <button class="word" onclick={() => void copyCells()}
+              >Copy {counted(span.bottom - span.top + 1)} × {counted(span.right - span.left + 1)} cells</button
+            >
+          {/if}
+          <button
+            class="word"
+            disabled={statement === null}
+            title="The statement that gives what the view shows, put on the clipboard"
+            onclick={copyView}>Copy as Zeff</button
+          >
+          {#if view.where !== "" || view.sort !== null || view.search !== ""}
+            <button class="word" onclick={clearView}>Clear</button>
+          {/if}
+        </div>
+        {#if first?.filter && first.filter.said !== ""}
+          <p
+            class="said mono"
+            class:problem={!first.filter.ok}
+            role={first.filter.ok ? undefined : "alert"}
+            data-testid="filter-said"
+          >
+            {first.filter.said}
+          </p>
+        {/if}
+        {#if copied}<p class="said" data-testid="data-copied">{copied}</p>{/if}
+      {/if}
+      {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
+      {#if first !== null}
+        <div
+          class="grid mono"
+          role="grid"
+          aria-label="The rows of {first.name}"
+          aria-rowcount={total + 1}
+          tabindex="0"
+          onkeydown={keydown}
+          bind:this={grid}
+          bind:clientHeight={height}
+          onscroll={() => (top = grid?.scrollTop ?? 0)}
+        >
+          <div
+            class="sheet"
+            style:height="{HEAD + total * ROW}px"
+            style:width="{numberWidth +
+              shown.reduce((sum, one) => sum + (widths[one.at] ?? 0), 0)}px"
+          >
+            <div class="row head" role="row" aria-rowindex={1} style:top="0px">
+              <span class="cell num frozen" style:width="{numberWidth}px" role="columnheader"
+              ></span>
+              {#each shown as { variable, at }, index (variable.name)}
+                <span
+                  class="cell headcell"
+                  class:frozen-2={index === 0}
+                  class:right={variable.right}
+                  class:chosen={variable.name === inspected?.name}
+                  style:width="{widths[at]}px"
+                  style:left={index === 0 ? `${numberWidth}px` : undefined}
+                  role="columnheader"
+                  aria-label={variable.name}
+                >
+                  <button class="pick" onclick={() => workspace.chooseVariable(variable.name)}
+                    ><span class="vname" title={variable.name}>{variable.name}</span><span
+                      class="vfacts"
+                      >{variable.type}{#if variable.missing > 0}<span class="miss">
+                          · {counted(variable.missing)} NA</span
+                        >{/if}</span
+                    >{#if variable.bars !== null}{@const bars = variable.bars}<svg
+                        class="spark"
+                        viewBox="0 0 {bars.counts.length} 12"
+                        preserveAspectRatio="none"
+                        role="img"
+                        aria-label={described(bars)}
+                        data-testid="spark"
+                        ><title>{described(bars)}</title
+                        >{#each bars.counts as count, bin (bin)}<rect
+                            x={bin + 0.08}
+                            width="0.84"
+                            y={12 - (12 * count) / most(bars)}
+                            height={(12 * count) / most(bars)}
+                          />{/each}</svg
+                      >{/if}</button
+                  ><button
+                    class="sort"
+                    class:on={view.sort?.variable === variable.name}
+                    aria-label="Sort by {variable.name}"
+                    title={view.sort?.variable === variable.name
+                      ? view.sort.desc
+                        ? "Sorted down: press to stop sorting"
+                        : "Sorted up: press to sort down"
+                      : "Sort up"}
+                    onclick={() => sortBy(variable.name)}
+                    >{view.sort?.variable === variable.name
+                      ? view.sort.desc
+                        ? "↓"
+                        : "↑"
+                      : "↕"}</button
+                  ><button
+                    class="hide"
+                    aria-label="Hide {variable.name}"
+                    title="Hide from the grid"
+                    onclick={() => hide(variable.name, true)}>×</button
+                  >
+                </span>
+              {/each}
+            </div>
+            {#each visible as row (row)}
+              {@const cells = rowAt(row)}
+              <div
+                class="row"
+                role="row"
+                aria-rowindex={row + 2}
+                style:top="{HEAD + row * ROW}px"
+                data-testid="data-row"
+              >
+                <span class="cell num frozen" style:width="{numberWidth}px" role="rowheader"
+                  >{row + 1}</span
+                >
+                {#if cells === null}
+                  <span class="cell quiet">…</span>
+                {:else}
+                  {#each shown as { variable, at }, index (variable.name)}
+                    {@const cell = cells[at] ?? ""}
+                    <span
+                      class="cell"
+                      class:frozen-2={index === 0}
+                      class:right={variable.right}
+                      class:na={cell === "NA"}
+                      class:match={matches(cell)}
+                      class:selected={inRange(row, index)}
+                      style:width="{widths[at]}px"
+                      style:left={index === 0 ? `${numberWidth}px` : undefined}
+                      role="gridcell"
+                      tabindex="-1"
+                      aria-selected={inRange(row, index)}
+                      onmousedown={(event) => press(event, row, index)}
+                      onmouseenter={() => over(row, index)}>{cell}</span
+                    >
+                  {/each}
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </div>
+      {:else if chosen === null}
+        <p class="quiet">Run the script: the frames it makes are shown here.</p>
+      {/if}
+    </div>
+  </Place>
 </div>
 
 <style>
@@ -654,24 +583,24 @@
     background: var(--window);
     display: flex;
     flex: 1;
+    flex-direction: column;
     min-height: 0;
     min-width: 0;
   }
-  .side {
-    border-right: 1px solid var(--line);
+  /* One variable, in the Variables pane. */
+  .one {
     display: flex;
-    flex: none;
     flex-direction: column;
     min-height: 0;
-    width: 230px;
   }
-  .side-head {
-    align-items: center;
-    color: var(--ink-2);
-    display: flex;
-    font-size: 13px;
-    justify-content: space-between;
-    padding: 8px 10px 4px 14px;
+  .one h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 4px 14px 0;
+  }
+  .one .word {
+    align-self: flex-start;
+    margin: 0 8px;
   }
   .frames {
     list-style: none;
@@ -710,14 +639,6 @@
     flex-direction: column;
     min-height: 0;
     min-width: 0;
-  }
-  .bar {
-    align-items: center;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    gap: 14px;
-    min-height: 40px;
-    padding: 0 14px;
   }
   h2 {
     font-size: 13.5px;
@@ -901,23 +822,11 @@
     padding: 2px 0;
     text-align: left;
   }
-  .inspector {
-    border-left: 1px solid var(--line);
-    display: flex;
-    flex: none;
-    flex-direction: column;
-    min-height: 0;
-    width: 300px;
-  }
   .facts {
     color: var(--ink-2);
     font-size: 13px;
     margin: 0;
     padding: 2px 14px 6px;
-  }
-  .inspector .word {
-    align-self: flex-start;
-    margin: 0 8px;
   }
   .summary {
     flex: 1;
@@ -1017,46 +926,6 @@
   }
   .grid {
     user-select: none;
-  }
-  .as-zeff {
-    border-top: 1px solid var(--line);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 8px;
-    padding: 8px 14px 4px;
-  }
-  .as-head {
-    color: var(--ink-2);
-    font-size: 13px;
-  }
-  .as-row {
-    align-items: center;
-    display: flex;
-    gap: 6px;
-  }
-  .as-zeff .word {
-    margin: 0;
-  }
-  .as-zeff select,
-  .as-zeff input {
-    background: var(--soft);
-    border: 0;
-    border-radius: 6px;
-    color: var(--ink);
-    font: inherit;
-    font-size: 13px;
-    padding: 3px 6px;
-  }
-  .labels {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-  }
-  .code {
-    color: var(--ink-3);
-    min-width: 3ch;
-    text-align: right;
   }
   .problem {
     color: var(--error);

@@ -24,7 +24,7 @@
   import Place from "./Place.svelte";
   import ProjectTree from "./ProjectTree.svelte";
   import { held } from "./steady";
-  import { DATA, PLOTS, fileTab } from "./views";
+  import { DATA, PLOTS } from "./views";
   import DataViewer from "../data/DataViewer.svelte";
   import type { Workspace } from "./workspace-state.svelte";
 
@@ -234,7 +234,7 @@
   <!-- The Plots place, on its own frame of panes. -->
   <PlotViewer {workspace} />
 {:else if workspace.views.active === DATA}
-  <DataViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
+  <DataViewer {workspace} />
 {:else}
   {#snippet project()}
     <ProjectTree {workspace} />

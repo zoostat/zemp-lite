@@ -873,39 +873,8 @@ fn each_statement_copy_as_zeff_writes_gives_what_the_view_showed() {
                 let (_, made) = every_row(&host, "copied", &Shown::default());
                 assert_eq!(viewed, made, "{statement}");
             }
-            kind => {
-                let done = run_at(
-                    &host,
-                    &format!("let wages = dataset(wages)\n{statement}\n"),
-                    0,
-                );
-                assert_eq!(done["exit_code"], 0, "{statement}: {done}");
-                let (page, _) = every_row(&host, "wages", &Shown::default());
-                let name = case["variable"].as_str().unwrap();
-                let variable = page["variables"]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .find(|one| one["name"] == name)
-                    .unwrap()
-                    .clone();
-                match kind {
-                    "type" => assert_eq!(variable["type"], case["type"], "{statement}"),
-                    "contrast" => {
-                        assert_eq!(variable["contrast"], case["contrast"], "{statement}")
-                    }
-                    "labels" => {
-                        let shown: Vec<&str> = variable["codes"]
-                            .as_array()
-                            .unwrap()
-                            .iter()
-                            .map(|one| one["shown"].as_str().unwrap())
-                            .collect();
-                        assert_eq!(shown, ["not a member", "member"], "{statement}");
-                    }
-                    other => panic!("no such case: {other}"),
-                }
-            }
+            // The viewer copies a view alone: a variable is not changed from it (#203).
+            other => panic!("no such case: {other}"),
         }
     }
 }

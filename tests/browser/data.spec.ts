@@ -2,7 +2,7 @@
 // statement that made it, and the frame chosen as a grid drawn as it is scrolled, every cell
 // as the engine prints it.
 import type { Page } from "@playwright/test";
-import { expect, test, useExample } from "./support";
+import { EXAMPLE, expect, scriptText, test, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -25,13 +25,34 @@ async function ran(page: Page, press: (target: ReturnType<Page["locator"]>) => P
   );
 }
 
-test("the frames of the run are listed by the statement that made them", async ({
+// The panes of the Data place (release 0.2.1, step 7a; open decision #203): the frames of the
+// run at the left, open at first, and the variables at the right, closed at first.
+const bar = (page: Page) => page.getByRole("toolbar", { name: "Data: its panes and its controls" });
+const framesPane = (page: Page) =>
+  page
+    .getByRole("complementary", { name: "Data: the left pane" })
+    .getByRole("region", { name: "Frames of the run" });
+const variablesPane = (page: Page) =>
+  page
+    .getByRole("complementary", { name: "Data: the right pane" })
+    .getByRole("region", { name: "Variables" });
+const variablesLink = (page: Page) =>
+  bar(page).getByRole("button", { name: "Variables", exact: true });
+
+test("the frames of the run are listed by the statement that made them, in the left pane", async ({
   page,
   press,
 }) => {
   await ran(page, press);
-  const list = page.getByRole("complementary", { name: "The frames of the run" });
-  await expect(list.getByRole("button", { name: "‹ Hide" })).toBeVisible();
+  const list = framesPane(page);
+  const link = bar(page).getByRole("button", { name: "Frames of the run", exact: true });
+  await expect(link).toHaveAttribute("aria-pressed", "true");
+  // The variables are the right pane, closed until asked for or until a variable is chosen.
+  await expect(variablesLink(page)).toHaveAttribute("aria-pressed", "false");
+  await expect(variablesPane(page)).toHaveCount(0);
+  await press(link);
+  await expect(list).toHaveCount(0);
+  await press(link);
   await expect(list.locator("ul.frames").getByRole("button")).toHaveText([
     /wages\s*18,412 × 11 · line 4/,
     /w2010/,
@@ -87,10 +108,11 @@ test("a variable is hidden and shown by its box, by the keyboard, and from its h
   press,
 }) => {
   await ran(page, press);
+  await press(variablesLink(page));
   const grid = page.getByRole("grid");
   const educ = grid.getByRole("columnheader", { name: "educ", exact: true });
   await expect(educ).toBeVisible();
-  const box = page.getByRole("checkbox", { name: "Show educ in the grid" });
+  const box = variablesPane(page).getByRole("checkbox", { name: "Show educ in the grid" });
   await box.uncheck();
   await expect(educ).toHaveCount(0);
   await expect(page.getByTestId("shown-count")).toHaveText("10 of 11 shown");
@@ -112,11 +134,12 @@ test("Hide all and Show all act on every variable, and hiding is kept for each f
   press,
 }) => {
   await ran(page, press);
-  await press(page.getByRole("button", { name: "Hide all" }));
+  await press(variablesLink(page));
+  await press(variablesPane(page).getByRole("button", { name: "Hide all" }));
   await expect(page.getByTestId("shown-count")).toHaveText("0 of 11 shown");
   await expect(page.getByRole("grid").getByRole("columnheader")).toHaveCount(1);
   // Another frame keeps its own: every variable of w2010 is shown.
-  const frames = page.getByRole("complementary", { name: "The frames of the run" });
+  const frames = framesPane(page);
   await press(frames.getByRole("button", { name: /^w2010/ }));
   await expect(page.getByTestId("shown-count")).toHaveText("11 of 11 shown");
   await press(frames.getByRole("button", { name: /^wages/ }));
@@ -125,31 +148,52 @@ test("Hide all and Show all act on every variable, and hiding is kept for each f
   await expect(page.getByTestId("shown-count")).toHaveText("11 of 11 shown");
 });
 
-test("Find a variable narrows the list, and the inspector gives the engine's summary of one", async ({
+test("the Variables pane shows the list, or one variable in its place once a variable is chosen", async ({
   page,
   press,
 }) => {
   await ran(page, press);
-  await page.getByRole("searchbox", { name: "Find a variable" }).fill("ex");
-  await expect(page.getByRole("checkbox", { name: /^Show .* in the grid$/ })).toHaveCount(1);
-  await expect(page.getByRole("checkbox", { name: "Show exper in the grid" })).toBeVisible();
-  await page.getByRole("searchbox", { name: "Find a variable" }).fill("");
-  // Choosing a variable opens the inspector with what the engine says of it.
   const grid = page.getByRole("grid");
+  const pane = variablesPane(page);
+  const find = pane.getByRole("searchbox", { name: "Find a variable" });
+  // A column's header opens the pane, closed until now, at that variable: no list.
+  await expect(pane).toHaveCount(0);
   await press(
     grid.getByRole("columnheader", { name: "wage", exact: true }).getByRole("button").first(),
   );
-  const inspector = page.getByTestId("inspector");
+  await expect(variablesLink(page)).toHaveAttribute("aria-pressed", "true");
+  const inspector = pane.getByTestId("inspector");
+  await expect(inspector.getByRole("heading", { name: "wage", exact: true })).toBeVisible();
+  await expect(find).toHaveCount(0);
+  await expect(pane.getByRole("checkbox")).toHaveCount(0);
+  // With what the engine says of it.
   await expect(inspector).toContainText("Float");
   await expect(inspector).toContainText("missing");
   const summary = inspector.getByTestId("variable-summary");
   await expect(summary).toContainText("summary");
   await expect(summary).toContainText("wage");
   await expect(summary).not.toHaveText("…");
-  // Hidden from the inspector, the variable leaves the grid and stays inspected.
+  // Hidden from here, the variable leaves the grid and stays the one shown.
   await press(inspector.getByRole("button", { name: "Hide from the grid" }));
   await expect(grid.getByRole("columnheader", { name: "wage", exact: true })).toHaveCount(0);
-  await expect(inspector.getByRole("button", { name: "Show in the grid" })).toBeVisible();
+  await press(inspector.getByRole("button", { name: "Show in the grid" }));
+  await expect(grid.getByRole("columnheader", { name: "wage", exact: true })).toBeVisible();
+  // Back to the list, which Find narrows; a name in it opens that variable in the list's place.
+  await press(pane.getByRole("button", { name: "‹ All variables" }));
+  await expect(inspector).toHaveCount(0);
+  await expect(pane.getByRole("checkbox", { name: /^Show .* in the grid$/ })).toHaveCount(11);
+  await find.fill("ex");
+  await expect(pane.getByRole("checkbox", { name: /^Show .* in the grid$/ })).toHaveCount(1);
+  await expect(pane.getByRole("checkbox", { name: "Show exper in the grid" })).toBeVisible();
+  await press(pane.getByRole("button", { name: /^exper/ }));
+  await expect(inspector.getByRole("heading", { name: "exper", exact: true })).toBeVisible();
+  await expect(find).toHaveCount(0);
+  // The pane's own × closes it; its link opens it again on the variable it showed.
+  await press(pane.getByRole("button", { name: "Close Variables" }));
+  await expect(pane).toHaveCount(0);
+  await expect(variablesLink(page)).toHaveAttribute("aria-pressed", "false");
+  await press(variablesLink(page));
+  await expect(inspector.getByRole("heading", { name: "exper", exact: true })).toBeVisible();
 });
 
 // Step 14b: the view kept to a condition, sorted and searched by the engine; the headers'
@@ -285,42 +329,35 @@ test("a range of cells is copied as the engine wrote them", async ({
   }
 });
 
-test("the inspector copies a change of type, of contrast and of labels as Zeff", async ({
+test("the Variables pane is for looking: nothing in it changes a variable or offers the statement that would", async ({
   page,
   press,
 }) => {
   await ran(page, press);
   const grid = page.getByRole("grid");
-  const inspector = page.getByTestId("inspector");
+  const pane = variablesPane(page);
+  // A category, a whole number and a variable with labelled codes: in 0.2 each offered a
+  // change (of contrast, of type, of labels) to copy as a statement. None does now (#203).
+  for (const name of ["industry", "educ", "union"]) {
+    await press(grid.getByRole("columnheader", { name, exact: true }).getByRole("button").first());
+    await expect(pane.getByRole("heading", { name, exact: true })).toBeVisible();
+    await expect(pane.getByRole("combobox")).toHaveCount(0);
+    await expect(pane.getByRole("textbox")).toHaveCount(0);
+    await expect(pane.getByRole("button", { name: /copy/i })).toHaveCount(0);
+    // What it does offer: the way back to the list, the grid's column, and its own ×.
+    await expect(pane.getByRole("button")).toHaveText([
+      "×",
+      "‹ All variables",
+      "Hide from the grid",
+    ]);
+  }
+  // The script is as it was: the place wrote nothing into it.
   await press(
-    grid.getByRole("columnheader", { name: "industry", exact: true }).getByRole("button").first(),
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Script" }),
   );
-  await inspector
-    .getByRole("combobox", { name: "Another contrast for industry" })
-    .selectOption("sum");
-  await press(inspector.getByRole("button", { name: "Copy the contrast" }));
-  await expect(page.getByTestId("data-copied")).toHaveText(
-    "copied let wages = wages.add(industry = category(industry, contrast: sum))",
-  );
-  await press(
-    grid.getByRole("columnheader", { name: "educ", exact: true }).getByRole("button").first(),
-  );
-  await inspector.getByRole("combobox", { name: "Another type for educ" }).selectOption("Float");
-  await press(inspector.getByRole("button", { name: "Copy the change of type" }));
-  await expect(page.getByTestId("data-copied")).toHaveText(
-    "copied let wages = wages.add(educ = to(educ, Float))",
-  );
-  await press(
-    grid.getByRole("columnheader", { name: "union", exact: true }).getByRole("button").first(),
-  );
-  // The codes come with the labels they have.
-  await expect(inspector.getByRole("textbox", { name: "The label of 0" })).toHaveValue("no");
-  await inspector.getByRole("textbox", { name: "The label of 0" }).fill("not a member");
-  await inspector.getByRole("textbox", { name: "The label of 1" }).fill("member");
-  await press(inspector.getByRole("button", { name: "Copy the labels" }));
-  await expect(page.getByTestId("data-copied")).toHaveText(
-    'copied let wages = wages.label(union, [0 => "not a member", 1 => "member"])',
-  );
+  // (Folded, so that the editor draws the whole script and not only the lines near its window.)
+  await press(page.getByRole("button", { name: "Fold all", exact: true }));
+  await expect.poll(() => scriptText(page)).toBe(EXAMPLE);
 });
 
 test("every header shows its variable's whole name, its type and its count of NA", async ({
