@@ -140,7 +140,10 @@ test("a note stands inside the page, in the 300 pixels at the right of its state
     }
     await press(page.getByRole("button", { name: "Run", exact: true }));
     await expect(page.getByRole("status")).toHaveText("done");
-    await expect(page.getByTestId("note").first()).toBeVisible();
+    // Folded, the whole script and its nine notes are on the page (the editor draws only
+    // what is near the window, and Run unfolds every output).
+    await press(page.getByRole("button", { name: "Fold all", exact: true }));
+    await expect(page.getByTestId("note")).toHaveCount(9);
     const at = await page.evaluate(() => {
       const box = (one: Element) => one.getBoundingClientRect();
       const sheet = box(document.querySelector(".sheet")!);

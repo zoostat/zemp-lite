@@ -1018,3 +1018,23 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Tests.** Unit: the reader (headings, levels, ends, what is not a heading, a line inside a statement, the section a line is in). Browser (`outline.spec`): the sections of the returns to schooling and of the showcase of plots with their lines, and the engine's `instruments` sample, written in numbered paragraphs, with none; a heading gone to and marked; Run section on a section and on a subsection, each running exactly its statements and what they read; the command of ⌘K; the outline following the script as it is typed.
 
 **Reason.** The checklist's step 3; open decisions #178 and #203.
+
+## 22 November 2026: Run unfolds every output (release 0.2.1, step 5, done before step 4)
+
+**The order.** Step 5 is done before step 4. The tests of the Panes layout hold, nearly all of them, that everything a run printed and said is on the page after **Run**; the one layout shows that only once Run unfolds every output. Done first, step 5 lets those tests move in step 4 by losing the press of **Panes** alone, each still holding what it held.
+
+**Run.** When a run's first statement starts, every line of the script is unfolded, so each output opens under its statement as that statement ends, the running statement's among them (with its passes and **Cancel**, as an unfolded block always showed them); when the run ends, what is kept is the lines of the statements that have an output to open. A script the check refuses changes nothing, as before. A script opened shows no output until it is run: a reload keeps what was unfolded, and a run of part of the script then leaves it as it was.
+
+**A run of part** (⌘↵, **Run to here**, **Run from here**, **Run section**; the owner's answer to question 2) unfolds the outputs of the statements asked for and leaves every other as it was: not those of the statements run only because the ones asked for read them, which at Zeff 0.8.0 run again from the top (a later engine keeps their results and will not run them at all).
+
+**The tests moved, none weakened.** Ten browser tests began from a run that left every output folded. Six now press **Fold all** after the run, or read the notes folded, and hold what they held (a note unfolds and folds; ⌥↵; each statement's note; where a note stands; the showcase's first visit; the loop's passes, which are open already). Three hold more than before: a script opens with no output and **Run** puts a note beside each statement and opens all seven outputs in order; an error stays open through **Fold all**; the statement that has ended has its output open while the loop still runs. One is rewritten: what is unfolded is kept with the project, shown after a reload by a run of one statement, which leaves the kept output open and opens its own. The helper that pressed **Unfold all** after every run no longer presses it, so the tests that hold the page to `zeff run`'s text (statement by statement, at each width) now hold it for Run alone. New: a run of part unfolds what was asked for and no other (⌘↵, Run to here, then Run again); Run section opens its section's outputs.
+
+**Reason.** The checklist's step 5; open decision #203; the owner's answer of 22 November 2026.
+
+## 22 November 2026: A file gone while the project is read no longer leaves the window without its language services
+
+**What was found.** On GitHub a test of **Explain** showed, where the engine's page should be, the browser's own sentence "A requested file or directory could not be found at the time an operation was processed"; a test of resting on a function's name had failed there once before (the close of 0.2). Both ask the language worker, which on its first use is given every file of the project. Listing a folder asked each file for its size, and a file listed can be gone before it is asked: while a file is written, Chromium keeps a swap file beside it for a moment (`name.crswap`). The reading then failed, the language worker's start failed with it, and the failed start was kept: hover, completion, help and explained pages were gone for as long as the window stayed open.
+
+**Choice.** Listing a folder passes over a swap file and any file gone since it was listed (`OpfsFolder.list`). A start of the language worker that fails is tried again by the next thing asked of it, not kept (`Language.start`). Tests: unit (the language worker starts again after a failed start, once).
+
+**Reason.** A fault of the app seen in a test of record; mended where it lies, not by a second try of the test.

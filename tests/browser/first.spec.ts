@@ -83,6 +83,9 @@ test("each statement of the returns to schooling has its note beside it once it 
   await opened(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  // Run unfolds every output, and the editor draws only what is near the window: folded, the
+  // whole script and its nine notes are on the page.
+  await press(page.getByRole("button", { name: "Fold all", exact: true }));
   const note = (line: number) => page.locator(`[data-testid="note"][data-line="${line}"]`);
   for (const [line, words] of [
     [5, /^wages\s*Frame · [\d,]+ × 13/],
@@ -168,13 +171,17 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
     await expect(page.getByTestId("start")).toHaveCount(0);
 
-    // And a stranger runs the example and reads its results, untold: Run, then a note.
+    // And a stranger runs the example and reads its results, untold: Run, and each result is
+    // open under its statement, with its note beside it.
     await press(page.getByRole("button", { name: "Scratch project" }));
     await expect(page.getByRole("status")).toHaveText(READY);
     await press(page.getByRole("button", { name: "Run", exact: true }));
     await expect(page.getByRole("status")).toHaveText("done");
-    await press(page.locator('[data-testid="note"][data-line="10"]'));
     await expect(page.locator(".cm-zemp-output").first()).toContainText("summary · by female");
+    await expect(page.locator('[data-testid="note"][data-line="10"]')).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 
   test("a window narrower than 1,200 pixels says so on the Start and welcome screens", async ({

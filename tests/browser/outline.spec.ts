@@ -121,6 +121,12 @@ test("Run section runs the statements of the section, with what they read, and n
     await expect(note(page, line)).toContainText("not run");
   }
   await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · .* · 3 statements/);
+  // The outputs of the section's own statements are open under them (a run of part unfolds
+  // what was asked for); `wages`, run because they read it, has none to open.
+  const open = page.locator('.cm-zemp-output [data-testid="block"]');
+  await expect(open).toHaveCount(2);
+  await expect(open.nth(0)).toHaveAttribute("data-line", "10");
+  await expect(open.nth(1)).toHaveAttribute("data-line", "11");
 });
 
 test("⌘K offers to run the section the cursor is in, naming it and its lines", async ({

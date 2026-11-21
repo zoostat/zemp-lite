@@ -1,7 +1,7 @@
 // Projects that are kept: made, closed, and found again. In WebKit these tests have a browser
 // profile on disk, whose private file system is one place shared by every test (see
 // `support.ts`), so they run one after another and nowhere else is that storage used.
-import { expect, printed, scriptText, test, write, useExample } from "./support";
+import { cursorTo, expect, printed, scriptText, test, write, useExample } from "./support";
 
 test.use({ keptProfile: true });
 test.describe.configure({ mode: "serial" });
@@ -151,19 +151,23 @@ test("what is unfolded, and whether the notes are shown, are kept with the proje
   await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await press(page.locator('[data-testid="note"][data-line="8"]'));
+  // Every output folded, then one unfolded: the fit's, on line 12.
+  await press(page.getByRole("button", { name: "Fold all", exact: true }));
+  await press(page.locator('[data-testid="note"][data-line="12"]'));
   await expect(page.locator(".cm-zemp-output")).toHaveCount(1);
   await page.waitForTimeout(1500);
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
-  await press(page.getByRole("button", { name: "Run", exact: true }));
+  // A run of one statement leaves what it did not ask for as it was. ⌘↵ on line 13, which
+  // prints the fit, runs line 12 as well, because line 13 reads it: line 13's output opens,
+  // as asked for, and line 12's is open because it was kept so; no other is.
+  await cursorTo(page, 13);
+  await page.keyboard.press("ControlOrMeta+Enter");
   await expect(page.getByRole("status")).toHaveText("done");
-  // The summary's output is unfolded again, and only it.
-  await expect(page.locator(".cm-zemp-output")).toHaveCount(1);
-  await expect(page.locator('[data-testid="note"][data-line="8"]')).toHaveAttribute(
-    "aria-expanded",
-    "true",
-  );
+  const open = page.locator('.cm-zemp-output [data-testid="block"]');
+  await expect(open).toHaveCount(2);
+  await expect(open.nth(0)).toHaveAttribute("data-line", "12");
+  await expect(open.nth(1)).toHaveAttribute("data-line", "13");
   await press(page.getByRole("button", { name: "Notes", exact: true }));
   await page.waitForTimeout(1500);
   await page.reload();

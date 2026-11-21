@@ -175,3 +175,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 176 unit tests; 312 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
 
 **Next.** Step 4 `[engine]`: one layout, the Panes layout removed with its tests rewritten or removed, each named.
+
+## 22 November 2026, release 0.2.1, step 5 (before step 4), and two mends
+
+**Done.** Step 5 `[function]`, done before step 4 so that the tests of Panes can move by losing one press: **Run** unfolds every output, each as its statement ends; a run of part unfolds what was asked for and leaves the rest as it was; ten tests moved, none weakened. **Mended:** the test of the samples finds the window at which the place is 118 characters by measuring (a character is wider in Chromium on GitHub's machines); a file gone while the project is read no longer leaves the window without hover, help and explained pages (seen on GitHub as a failed Explain). Steps 2 and 3 failed on GitHub by the first of these, a fault of the test; the head is checked again with this push.
+
+**Green.** Here: 177 unit tests; 314 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical. Once, with the machine under load, seven WebKit tests of typing failed together and passed when run again, as at the close of 0.2.
+
+**Next.** Step 4 `[engine]`: one layout, the Panes layout removed (its removal is already written and set aside).

@@ -42,6 +42,14 @@ import {
   type ViewState,
 } from "./views";
 import { sectionsOf, type Section } from "../editor/sections";
+import { notesOf } from "../margin/notes";
+
+/** The lines of the statements of a run that have an output to unfold. */
+function openable(run: Run): number[] {
+  return notesOf(run)
+    .filter((note) => note.opens)
+    .map((note) => note.line);
+}
 
 const VIEWS = ".zemp/views.json";
 const MAIN = "scripts/main.zeff";
@@ -675,6 +683,13 @@ export class Workspace {
       this.lastRun = fresh;
       // The run is read through the state, so that what the panel shows follows each event.
       run = this.lastRun;
+      // Run unfolds every output under its statement (open decision #203): each as its
+      // statement ends, so every line of the script is unfolded while the run goes, and what
+      // is kept at its end is the lines of the statements that have an output.
+      this.setUnfolded(
+        script,
+        text.split("\n").map((_, at) => at + 1),
+      );
     };
     // What is unfolded was unfolded by the lines of the text that ran last: carried through
     // the edits since to where those statements now stand (`src/margin/follow.ts`).
@@ -710,6 +725,7 @@ export class Workspace {
       }
       // A script that was refused made no frames: those of the results kept are kept too.
       if (shown) this.frames = outcome.frames;
+      if (shown) this.setUnfolded(script, openable(run));
       // A run that drew a plot puts the Plots tab beside the script's, without leaving the script.
       if (shown && plotsOf(run).length > 0 && !this.views.tabs.includes(PLOTS)) {
         this.views.tabs = [...this.views.tabs, PLOTS];
@@ -869,6 +885,14 @@ export class Workspace {
       this.lastRun =
         previous !== null && previous.script === script ? merged(previous, fresh) : fresh;
       this.frames = outcome.frames;
+      // A run of part of the script unfolds the outputs of the statements asked for, and
+      // leaves the others as they were (the owner's answer of 22 November 2026): not those
+      // of the statements run only because the ones asked for read them.
+      const asked = wanted.map((one) => one.line);
+      this.setUnfolded(script, [
+        ...(this.views.script.unfolded[script] ?? []),
+        ...openable(this.lastRun).filter((line) => asked.includes(line)),
+      ]);
       this.status = outcome.stopped
         ? "stopped"
         : outcome.exitCode === 0

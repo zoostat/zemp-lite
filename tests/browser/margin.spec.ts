@@ -51,7 +51,7 @@ async function scratch(page: Page, press: Press, reopened = false) {
 async function runUnfolded(page: Page, press: Press) {
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
+  // Run unfolds every output under its statement (open decision #203); nothing more is pressed.
   // Every output is unfolded before the page is read: no note on the page is folded, and
   // the outputs near the window are drawn (the editor draws only what is near the window).
   await expect(page.locator('[data-testid="note"][aria-expanded="false"]')).toHaveCount(0);
@@ -205,7 +205,7 @@ test("the example with every output unfolded is the text kept for it", async ({ 
   expect(`${text}\n`).toMatchSnapshot("example-unfolded.txt");
 });
 
-test("an error and a refused script are shown under their lines, unfolded without asking", async ({
+test("an error and a refused script are shown under their lines, and Fold all leaves an error open", async ({
   page,
   press,
 }) => {
@@ -219,7 +219,14 @@ test("an error and a refused script are shown under their lines, unfolded withou
   await write(page, file("tests/scripts/error.zeff"));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.locator('[data-testid="block"][data-line="3"]')).toContainText("failed");
-  // What failed is unfolded without asking; the rest is unfolded by the reader.
+  // The run unfolded every output, the one that failed among them.
+  await expect
+    .poll(() => under(page))
+    .toEqual(['print("a")', "print(1 / 0)", 'let w = import("data/none.csv")']);
+  expect(await printed(page)).toBe(file("tests/scripts/error.stdout"));
+  expect(await saidAsWritten(page)).toBe(file("tests/scripts/error.stderr"));
+  // What failed is never folded: Fold all leaves it open, and Unfold all brings the rest back.
+  await press(page.getByRole("button", { name: "Fold all", exact: true }));
   expect(await under(page)).toEqual(['let w = import("data/none.csv")']);
   await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   expect(await under(page)).toEqual([
@@ -227,8 +234,6 @@ test("an error and a refused script are shown under their lines, unfolded withou
     "print(1 / 0)",
     'let w = import("data/none.csv")',
   ]);
-  expect(await printed(page)).toBe(file("tests/scripts/error.stdout"));
-  expect(await saidAsWritten(page)).toBe(file("tests/scripts/error.stderr"));
 });
 
 test("when the check refuses a script, the results of the run before stay on the page", async ({
@@ -291,9 +296,11 @@ test("the running statement's note says so, Run reads Stop, and Stop ends the ru
   await expect(loop).toContainText("running…");
   await expect(loop).toContainText(/[\d,]+ passes/);
   await expect(page.getByTestId("run-facts")).toContainText(/run 1 · \d+:\d\d · statement 2 of 2/);
-  // The statement that has finished keeps its note, saying what it printed; nothing is unfolded.
+  // The statement that has finished keeps its note, saying what it printed, and its output is
+  // open under it already, while the loop still runs: Run unfolds each output as it comes.
   await expect(page.locator('[data-testid="note"][data-line="1"]')).toContainText("started");
-  await expect(page.locator(".cm-zemp-output")).toHaveCount(0);
+  await expect(page.locator('[data-testid="block"][data-line="1"]')).toContainText("started");
+  await expect(page.locator('[data-testid="block"][data-line="2"]')).toContainText("running");
   const top = page.locator("header.top");
   await expect(top.getByRole("button", { name: "Run", exact: true })).toHaveCount(0);
   await press(top.getByRole("button", { name: "Stop", exact: true }));
@@ -522,14 +529,31 @@ test("a reader who scrolls as a run ends is left where they went", async ({ page
   expect(await top()).toBe(400);
 });
 
-test("a script opens folded: a note on the first line of each statement, and no output", async ({
+test("a script opens with no output; Run puts a note beside each statement and unfolds every output", async ({
   page,
   press,
 }) => {
+  // A tall window, so that the editor draws the whole page.
+  await page.setViewportSize({ width: 1280, height: 3600 });
   await scratch(page, press);
+  await expect(page.locator(".cm-zemp-output")).toHaveCount(0);
+  await expect(page.getByTestId("note")).toHaveCount(0);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await expect(page.locator(".cm-zemp-output")).toHaveCount(0);
+  // Every output is open under its statement, in the script's order, with nothing pressed.
+  await expect
+    .poll(() => under(page))
+    .toEqual([
+      "w2010.summary([wage, educ, exper, hours], by: female)",
+      "let fit = wages.reg(log(wage) ~ educ + exper + female + union, cluster: worker)",
+      "fit",
+      "let schooling = w2010.scatter(educ, log(wage), fit: linear)",
+      "schooling",
+      "let shape = w2010.plot(x: log(wage)).histogram(bins: 30)",
+      "shape",
+    ]);
+  await expect(page.locator('[data-testid="note"][aria-expanded="false"]')).toHaveCount(0);
+  await expect(page.locator('[data-testid="note"][aria-expanded="true"]')).toHaveCount(7);
   const shown = await notes(page);
   expect(shown.map(([line]) => line)).toEqual([
     "let wages = dataset(wages)",
@@ -560,6 +584,8 @@ test("a note unfolds its statement's output under the statement, and folds it ag
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  // From every output folded.
+  await press(page.getByRole("button", { name: "Fold all", exact: true }));
   const summary = page.locator('[data-testid="note"][data-line="8"]');
   await expect(summary).toHaveAttribute("aria-expanded", "false");
   await press(summary);
@@ -578,6 +604,41 @@ test("a note unfolds its statement's output under the statement, and folds it ag
   await expect(page.locator('[data-testid="note"][data-line="4"]')).not.toHaveAttribute(
     "aria-expanded",
   );
+});
+
+test("a run of part of the script unfolds the outputs of the statements asked for, and no others", async ({
+  page,
+  press,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 3600 });
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Fold all", exact: true }));
+  await expect(page.locator(".cm-zemp-output")).toHaveCount(0);
+  // ⌘↵ on line 13, `fit`: it runs with line 12, which it reads, and opens its own output alone.
+  await cursorTo(page, 13);
+  await page.keyboard.press("ControlOrMeta+Enter");
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect.poll(() => under(page)).toEqual(["fit"]);
+  // Run to here, from line 13: the statements before it are asked for, and theirs open;
+  // `fit` stays open, as it was.
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.keyboard.type("run to here");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect
+    .poll(() => under(page))
+    .toEqual([
+      "w2010.summary([wage, educ, exper, hours], by: female)",
+      "let fit = wages.reg(log(wage) ~ educ + exper + female + union, cluster: worker)",
+      "fit",
+    ]);
+  // Run, the whole script: every output, whatever was folded.
+  await press(page.getByRole("button", { name: "Fold all", exact: true }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect.poll(async () => (await under(page)).length).toBe(7);
 });
 
 test("Unfold all is every output under its statement; Fold all folds all but an error", async ({
@@ -684,6 +745,7 @@ test("⌥↵ unfolds and folds the output of the statement at the cursor", async
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Fold all", exact: true }));
   // To line 8, the summary.
   await cursorTo(page, 8);
   await page.keyboard.press("Alt+Enter");
@@ -842,7 +904,7 @@ test("a loop's output carries its passes, a long list folded to its ends until S
   await expect(page.getByRole("status")).toHaveText("done");
   const loop = page.locator('[data-testid="note"][data-line="1"]');
   await expect(loop).toContainText("20,000 passes");
-  await press(loop);
+  // The loop's output is open under it, as every output is after Run.
   const passes = page.getByTestId("passes");
   await expect(passes).toContainText("20,000 passes");
   // More than 20 reported: the first three and the last three, with Show all.
