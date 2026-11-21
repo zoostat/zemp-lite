@@ -1118,3 +1118,19 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Tests.** Removed with the thing it held: `help.spec`, "the Help panel follows the function under the cursor, unless switched off". Rewritten: F1 opens the Help place at the page, the text the engine's whole (compared character for character with the kept page, where before it was compared with space collapsed); a code's page from what the run said, and from the field. New: the outline of a page of two functions, a section gone to and marked, the pane closed by its link and its ×; the related functions each with what it does, one opened with its own outline and related functions, a name the engine has no page for. Unit (`helppage.node.test`): the sections, the functions of a page of several, the related functions, the first line, a code's page. `workspace.spec`: the top bar's four places.
 
 **Reason.** The checklist's step 8; open decisions #74 and #203; the owner's answer of 22 November 2026.
+
+## 22 November 2026: The first visit in the new layout (release 0.2.1, step 9)
+
+**The examples' opening comments** (the owner's answer to question 4). `main.zeff` said "click a note to open its result", which Run unfolding every output made untrue; it now reads "Press Run: each statement's result opens under it, and a note beside it says what it made." The showcase of plots said "unfold a note to see its figure"; it now reads "press Run and each figure opens under its statement; Plots shows them all." Each change is of a comment on its own line, so no line of either script moves and what `zeff run` prints and says for them is as it was (held again against the kept outputs); the composed text of the showcase with its exports (`tests/scripts/figures/plots-with-exports.zeff`) carries the same line. A Scratch project made before keeps its own text: an example is given once and never written over. The engine's `instruments` sample is as the engine ships it.
+
+**The Start and welcome screens and "What is counted"** were read again: none speaks of the margin, of Panes, of notes or of a panel, so none is changed.
+
+**A narrow window.** The line shown under 1,200 pixels stands as it is, and a narrow window opens with the same panes as any other (in Script, the notes alone): no smaller layout exists before 1.0 (#33), and a reader in a narrow window closes a pane by its link.
+
+**The visit counter and WebKit.** The report WebKit refuses is made by Cloudflare's own Web Analytics script, added to the page by the host, to Cloudflare's own address; the page's isolation headers are as the host test holds them, and Chromium sends the report under the same headers. There is nothing of this repository's to mend, so it is recorded as it stands: visits from Safari may go uncounted (the notes' known issues; risk R10's measure).
+
+**The reader test** keeps its folder (`docs/releases/0.2-reader-test/`, which a native test reads) and its ten scripts. Its README says that it was made ready at 0.2 and is run on the hosted 0.2.1, and its sheet tells a reader how a script is run there: the Scratch project, the script pasted in place of the one there, **Run**, each result under its statement.
+
+**The draft notes** are `docs/releases/0.2.1-notes.md`.
+
+**Reason.** The checklist's step 9; the owner's answer of 22 November 2026.

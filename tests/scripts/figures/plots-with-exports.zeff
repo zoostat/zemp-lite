@@ -1,6 +1,6 @@
 // Plots in Zeff, from one line to a figure ready for a journal, on the data that ship with
 // the engine. Each statement that ends in a plot is drawn by the engine itself, at the size
-// of its place: press Run, unfold a note to see its figure, or open Plots to see them all.
+// of its place: press Run and each figure opens under its statement; Plots shows them all.
 
 // # Data
 seed(2026)

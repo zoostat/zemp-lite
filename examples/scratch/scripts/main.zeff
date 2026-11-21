@@ -1,5 +1,5 @@
 // Returns to schooling, in the wages panel that ships with Zeff.
-// Press Run: each statement's note stands beside it; click a note to open its result.
+// Press Run: each statement's result opens under it, and a note beside it says what it made.
 
 // # Sample
 let wages = dataset(wages)

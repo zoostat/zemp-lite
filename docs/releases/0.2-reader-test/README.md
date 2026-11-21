@@ -1,8 +1,10 @@
-# The reader test of Zeff's syntax, on the Zemp Lite 0.2 alpha
+# The reader test of Zeff's syntax, on the Zemp Lite alpha
 
 The testing handbook, section 2.4, item 4: give students and referees short scripts and ask
-what each model does; fix what they misread. One test serves Zemp Lite 0.2 and Zeff 0.9.0
-(question 3 of release 0.2, answered "as recommended").
+what each model does; fix what they misread. One test serves Zemp Lite and Zeff 0.9.0
+(question 3 of release 0.2, answered "as recommended"). It was made ready at 0.2 and, by the
+owner's decision of 21 November 2026, is run on the hosted 0.2.1, in the layout of three panes;
+its ten scripts are as they were.
 
 ## What it is for
 
@@ -17,8 +19,9 @@ of writing), never about the reader.
 2. Give each reader `sheet.md` (printed or as a file) and the address of the alpha. Not the
    key.
 3. Each reader reads each script on the sheet, writes the answers, and only then may paste the
-   script into the alpha's Scratch project and press **Run** to look at the output. What they
-   wrote before running is the finding.
+   script into the alpha's Scratch project, in place of the script there, and press **Run**:
+   each result opens under its statement, with a note beside it. What they wrote before
+   running is the finding.
 4. Ask them to write down anything they had to guess, even when they guessed right.
 5. Collect the sheets. Compare each answer with `key.md`; for each script, count the readers who
    read it as meant, and copy every misreading and every guess, word for word.
@@ -29,7 +32,7 @@ About forty minutes for a reader. Nothing is collected by the alpha; the sheets 
 
 Each misreading or guess shared by two readers or more is a finding. Bring the findings back to
 the session ("the reader test's results are in"): each is either fixed (in Zemp, or put to the
-Zeff session for 0.9.0) or recorded with the reason it stays, before "Release 0.2".
+Zeff session for 0.9.0) or recorded with the reason it stays, before "Release 0.2.1".
 
 ## The scripts
 

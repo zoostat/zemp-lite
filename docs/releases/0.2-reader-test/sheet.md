@@ -5,7 +5,8 @@ read the script and answer the three questions in your own words **before** you 
 is no wrong answer from you: if a script can be misread, that is the language's fault, and it
 is what we want to find. Write down anything you had to guess.
 
-After answering, you may paste a script into the Scratch project of the alpha and press **Run**.
+After answering, you may open the alpha, choose **Scratch project**, paste a script in place of
+the one there and press **Run**: each result opens under its statement.
 
 **About you.** Which of R, Stata, SPSS or Python do you use? ___________________________
 

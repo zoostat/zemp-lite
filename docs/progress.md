@@ -223,3 +223,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** Format, lint, types, the edition check, the worker's checks and 29 native tests, the nine samples identical, 185 unit tests; the browser tests all green in Chromium, and in WebKit all but the five that need a real click of the mouse on this Mac (see step 7a; all of them pass on GitHub).
 
 **Next.** Step 9 `[function]`: the first visit in the new layout, the reader test's sheet, the draft notes.
+
+## 22 November 2026, release 0.2.1, step 9
+
+**Done.** Step 9 `[function]`: the opening comments of `main.zeff` and of the showcase of plots say what Run now does (their lines and outputs as they were); the Start and welcome screens and "What is counted" read again and left; a narrow window as before; the visit counter's report that WebKit refuses found to be the host's own script, and recorded as it stands; the reader test's README and sheet brought to the hosted 0.2.1 and its layout; the notes drafted (`docs/releases/0.2.1-notes.md`). Step 7b is green on GitHub in both browsers and deployed (33f8950).
+
+**Green.** As at step 8: all but the five WebKit tests that need a real click of the mouse on this Mac, which pass on GitHub.
+
+**Next.** Step 10 `[function]`: the design's acceptance tests gone through again, and the measures at the address.
