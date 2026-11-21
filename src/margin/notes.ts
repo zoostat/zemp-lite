@@ -3,7 +3,7 @@
 // number in a note is the engine's: the name a `let` binds, the type the engine names, a
 // frame's rows and variables, the head of what the statement printed, the codes of what it
 // said. The interface adds the state of the result (running, waiting, edited, failed) in words.
-import { said, type Run } from "../output/run";
+import { boundPlots, said, type Run } from "../output/run";
 import type { Mark } from "./stale";
 
 /** A word on a note: a warning's or an error's code, or the state of the result. */
@@ -49,12 +49,15 @@ const PLOT = "plot · ";
 export function notesOf(run: Run, marked: ReadonlyMap<number, { mark: Mark }> = new Map()): Note[] {
   const ranges = (run.ranges ?? []).filter((range) => range.kind === "statement");
   const ended = run.state !== "running";
+  // The plots bound with `let` that are drawn where they are bound.
+  const drawn = boundPlots(run);
   return ranges.map((range) => {
     const event = run.statements.find((one) => one.line === range.line);
     const info = run.info.find((one) => one.line === range.line);
     const printed = info?.stdout ?? event?.printed ?? "";
     const spoken = info?.stderr ?? event?.saidRaw ?? "";
     const type = info?.type ?? null;
+    const bound = printed === "" && drawn.has(range.line);
 
     let state: Note["state"] = "fresh";
     if (event?.state === "running") state = "running";
@@ -132,8 +135,9 @@ export function notesOf(run: Run, marked: ReadonlyMap<number, { mark: Mark }> = 
       sub,
       tags,
       state,
-      opens: printed !== "" || spoken !== "" || (event?.passes.length ?? 0) > 0,
-      place: printed.startsWith(PLOT) ? "plots" : null,
+      // A plot bound with `let` prints nothing, and opens to its figure.
+      opens: printed !== "" || spoken !== "" || (event?.passes.length ?? 0) > 0 || bound,
+      place: printed.startsWith(PLOT) || bound ? "plots" : null,
     };
   });
 }

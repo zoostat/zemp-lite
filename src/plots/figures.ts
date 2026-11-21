@@ -7,14 +7,20 @@
 // reads the file the engine wrote. The script the user sees is never changed
 // (docs/decisions.md, 15 November 2026).
 import { endOf, linesOf } from "../output/place";
-import type { Run } from "../output/run";
+import { boundPlots, type Run } from "../output/run";
 
-/** A statement of a run whose value is a plot: the engine printed a plot's summary for it. */
+/**
+ * A statement of a run whose value is a plot: the engine printed a plot's summary for it, or
+ * it binds a name to a plot, which prints nothing.
+ */
 export interface PlotStatement {
   /** The lines it begins and ends on, counted from 1. */
   line: number;
   last: number;
-  /** Its text, as the script has it. */
+  /**
+   * What gives the plot again after the script: its text, as the script has it, or for a
+   * plot bound with `let` the name it is bound to.
+   */
   source: string;
   /** What the plot is, as the engine's summary heads it: "w2010 · log(wage) against educ". */
   title: string;
@@ -50,17 +56,27 @@ const HEAD = "plot · ";
 /** The statements of a run that ended in a plot, in the order of the script. */
 export function plotsOf(run: Run): PlotStatement[] {
   const lines = linesOf(run);
+  const bound = boundPlots(run);
   return run.statements
-    .filter((statement) => statement.state === "done" && statement.printed.startsWith(HEAD))
-    .map((statement) => {
+    .filter((statement) => statement.state === "done")
+    .flatMap((statement) => {
       const last = Math.min(endOf(run.ranges, statement.line), Math.max(lines.length, 1));
-      return {
-        line: statement.line,
-        last,
-        source: lines.slice(statement.line - 1, last).join("\n"),
-        title: (statement.printed.split("\n")[0] ?? "").slice(HEAD.length),
-        kind: kindOf(statement.printed),
-      };
+      if (statement.printed.startsWith(HEAD)) {
+        return [
+          {
+            line: statement.line,
+            last,
+            source: lines.slice(statement.line - 1, last).join("\n"),
+            title: (statement.printed.split("\n")[0] ?? "").slice(HEAD.length),
+            kind: kindOf(statement.printed),
+          },
+        ];
+      }
+      // A plot bound with `let`, drawn by its name and named by it (`boundPlots`).
+      const name = bound.get(statement.line);
+      return name === undefined
+        ? []
+        : [{ line: statement.line, last, source: name, title: name, kind: "" }];
     });
 }
 

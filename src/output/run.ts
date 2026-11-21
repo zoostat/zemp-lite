@@ -300,6 +300,7 @@ export interface Block {
  */
 export function blocks(run: Run): Block[] {
   const found: Block[] = [];
+  const bound = boundPlots(run);
   // What the check found: the run did not start, so these stand for the whole of it.
   const before = new Map<number | null, Said[]>();
   for (const one of said(run.beforeRaw)) {
@@ -318,11 +319,15 @@ export function blocks(run: Run): Block[] {
   }
   for (const statement of run.statements) {
     const messages = said(statement.saidRaw);
+    // A statement that made nothing to show has no block; a plot bound with `let` and drawn
+    // there has one, for its figure, though it printed nothing.
+    const plot = bound.has(statement.line);
     if (
       statement.printed === "" &&
       messages.length === 0 &&
       statement.passes.length === 0 &&
-      statement.state === "done"
+      statement.state === "done" &&
+      !plot
     ) {
       continue;
     }
@@ -361,4 +366,41 @@ export function took(ms: number): string {
   }
   const seconds = Math.round(ms / 1000);
   return `${Math.floor(seconds / 60)} min ${String(seconds % 60).padStart(2, "0")} s`;
+}
+
+/** The first words the engine prints for a statement that ends in a plot. */
+const PLOT_HEAD = "plot · ";
+
+/**
+ * The plots bound with `let` that are drawn where they are bound, by the line each statement
+ * begins on, with the name: a statement whose value the engine names `Plot`, which binds a name
+ * and printed nothing. Left out are a name bound again later, which at the end of the script
+ * holds another value, and a plot printed later by a statement that is its name alone, which is
+ * drawn there, as it was printed.
+ */
+export function boundPlots(run: Run): Map<number, string> {
+  const found = new Map<number, string>();
+  if (run.state === "running") return found;
+  const lines = run.text.split("\n");
+  const textOf = (line: number) => {
+    const end = run.ranges?.find((range) => range.line === line)?.end ?? line;
+    return lines
+      .slice(line - 1, end)
+      .join("\n")
+      .trim();
+  };
+  for (const info of run.info) {
+    const name = info.name;
+    const statement = run.statements.find((one) => one.line === info.line);
+    if (name === null || info.type !== "Plot" || info.stdout !== "") continue;
+    if (statement?.state !== "done" || statement.printed !== "") continue;
+    const later = (line: number) => line > info.line;
+    if (run.info.some((one) => later(one.line) && one.name === name)) continue;
+    const printedLater = run.statements.some(
+      (other) =>
+        later(other.line) && other.printed.startsWith(PLOT_HEAD) && textOf(other.line) === name,
+    );
+    if (!printedLater) found.set(info.line, name);
+  }
+  return found;
 }

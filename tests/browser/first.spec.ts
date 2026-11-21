@@ -100,6 +100,34 @@ test("each statement of the returns to schooling has its note beside it once it 
   }
 });
 
+test("the two plots the returns to schooling binds with `let` are drawn under their statements and listed in Plots", async ({
+  page,
+  press,
+}) => {
+  // A window tall enough for the whole script with its outputs unfolded: the editor draws
+  // only the lines near its window.
+  await page.setViewportSize({ width: 1280, height: 3200 });
+  await opened(page, press);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  // A plot bound with `let` prints nothing; its note opens to the figure the engine draws.
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
+  for (const line of [11, 23]) {
+    const image = page.locator(`[data-testid="figure"][data-line="${line}"] img`);
+    await expect(image).toBeVisible({ timeout: 15_000 });
+    expect(await image.getAttribute("src")).toMatch(/^data:image\/svg\+xml/);
+  }
+  await expect(page.locator('[data-testid="figure"][data-line="11"] img')).toHaveAttribute(
+    "alt",
+    "Plot: shape",
+  );
+  const places = page.getByRole("navigation", { name: "Places" });
+  await press(places.getByRole("button", { name: "Plots" }));
+  const list = page.getByRole("complementary", { name: "The list of plots" });
+  await expect(list).toContainText("shape");
+  await expect(list).toContainText("schooling");
+});
+
 test.describe("a first visit, in a browser that has never opened Zemp Lite", () => {
   test.use({ firstVisit: true });
 
