@@ -121,22 +121,3 @@ test("⌘↵ copies the console line into the script at the cursor, an edit undo
   await expect(line).toHaveValue(":vars");
   await expect.poll(() => scriptText(page)).toBe("let a = 6\nlet b = a + 1\nprint(a)\n");
 });
-
-test("Panes keeps the engine's help, F1 opening the Help panel beside the script", async ({
-  page,
-  press,
-}) => {
-  await scratch(page, press);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
-  await write(page, "let wages = dataset(wages)\nwages.summary()\n");
-  await expect.poll(() => scriptText(page)).toBe("let wages = dataset(wages)\nwages.summary()\n");
-  await editor(page).locator(".cm-line").nth(1).click();
-  await page.keyboard.press("End");
-  await page.keyboard.press("ArrowLeft");
-  await page.keyboard.press("ArrowLeft");
-  await page.keyboard.press("ArrowLeft");
-  await page.keyboard.press("F1");
-  // The page is the engine's, asked for after what is already running: a slow machine is
-  // given time for it.
-  await expect(page.getByTestId("help")).toContainText("summary", { timeout: 15_000 });
-});

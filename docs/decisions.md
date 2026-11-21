@@ -1038,3 +1038,25 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Choice.** Listing a folder passes over a swap file and any file gone since it was listed (`OpfsFolder.list`). A start of the language worker that fails is tried again by the next thing asked of it, not kept (`Language.start`). Tests: unit (the language worker starts again after a failed start, once).
 
 **Reason.** A fault of the app seen in a test of record; mended where it lies, not by a second try of the test.
+
+## 22 November 2026: One layout (release 0.2.1, step 4)
+
+**What is removed.** The Panes layout and what only it held: `MainPane` (the editor's tabs and the Output panel under the script), `LeftPanel` (the tabs Project and Objects; the tree of files lives on as the Project pane, `ProjectTree`), `OutputPanel`; the **Margin** and **Panes** links of the top bar; the commands "Layout: …", "Output: hide/show" and "Left panel: hide/show"; from the view state, `layout`, the left panel's tab and whether it was shown, and the output's share (a file of version 1 or 2 that says them is read, and they are passed over, not kept). A block of output has one form, the output unfolded under its statement; the option that drew it as a card of the panel is gone. What was opened is still kept as `tabs` with the one shown as `active`, which is what makes a place the place shown; nothing draws tabs.
+
+**The Objects panel** is gone with the left panel (#203): what a statement made is in its note. Its line on the engine and the memory budget is not shown elsewhere; the foot keeps "engine Zeff 0.8.0 · in this browser".
+
+**The tests, each named.** Removed with the thing it held:
+- `margin.spec`, "the same run reads the same unfolded in the margin editor and in Panes, and one click switches": there is one layout.
+- `workspace.spec`, "the Output panel sits under the script, folds away, is resized and is cleared": the panel is gone; its clearing is kept as a new test, "Output: clear, from ⌘K, takes the run's outputs and its notes off the page".
+- `workspace.spec`, "the left panel has two tabs, Project with the files and Objects with what a run left": the tree's half is a new test of the Project pane ("the Project pane lists the files with their sizes, and a folder folds away and comes back"); the Objects half is gone with the tab.
+
+Removed because another test holds the same:
+- `output.spec`, "in Panes a run leaves the Output panel where the reader was in it": `margin.spec`, "a run leaves the reader where they were in the script, not at the top of the page".
+- `workspace.spec`, "the left panel is resized with the keyboard, inside its limits, and folds away": `panes.spec`, "the edge of the left pane is moved with the keyboard, inside its limits" and "a link opens and closes its pane, and so does the pane's own ×".
+- `console.spec`, "Panes keeps the engine's help, F1 opening the Help panel beside the script": `help.spec`, "F1 on a function's name opens its page beside the script, as zeff help prints it".
+
+Rewritten to hold the same behaviour in the one layout: the tests of `output.spec` (each result under its line with its time; the kept text of the example; the four short scripts as `zeff run` prints them; an error with its excerpt and advice; a refused script leaving the results before; the running statement with Cancel; edited output marked; ⌘↵ wherever the focus is), of `check.spec`, `page.spec`, `first.spec`, `samples.spec`, `figure.spec` and `viewer.spec` (Plots reached as a place, not a tab), of `kept.spec` (the file shown and a folded folder come back after a reload; a new project opens with Project closed and Notes open), of `palette.spec` (the commands of the panes in place of those of the layout; every control a Tab stop with the left pane open) and of `workspace.spec` (the top bar without the two links; the left pane's edge dragged; a file opened from Project or ⌘K shown in the Script place). Each now reads the outputs Run unfolds, in a window tall enough for the editor to draw them all (`wholeScript` for the long scripts), and at 118 characters where it is compared with `zeff run`'s text (`placeOf`). Three things the panel alone said are not said elsewhere and left their tests with it: the sentences "found 1 error; nothing was run" and "did not start", which the foot's "not run · 1 error found by the check" stands for, and the fading of results kept under a refusal.
+
+**Two things noted on the way, left as they are.** The words *Run to here* over a line number are not Tab stops, by the decision of 0.2 (the keyboard has the command in ⌘K); the test of the keyboard now meets them, excepts them by name and holds that ⌘K has the command. A plot drawn to fit is at most 1,100 pixels wide, so in a window wider than about 1,330 it no longer fills the Plots place, which lost the left panel beside it; the test of the fit runs at 1,280.
+
+**Reason.** The checklist's step 4; open decision #203 (which settles #176, R2).

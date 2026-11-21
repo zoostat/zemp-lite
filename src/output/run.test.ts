@@ -93,7 +93,7 @@ describe("what a run said", () => {
   });
 });
 
-describe("a run, as the Output panel shows it", () => {
+describe("a run, as the page shows it", () => {
   it("puts what each statement printed and said under the line that made it", () => {
     const run = told(
       [

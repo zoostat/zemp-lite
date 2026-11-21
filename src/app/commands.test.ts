@@ -6,8 +6,8 @@ const commands: Command[] = [
   "Code text: larger",
   "Code text: smaller",
   "Code text: default size",
-  "Layout: Inline",
-  "Layout: Panes",
+  "Script: show Project",
+  "Script: hide Notes",
   "Open file: scripts/main.zeff",
 ].map((name) => ({ name, run: () => undefined }));
 
@@ -27,7 +27,7 @@ describe("the command palette", () => {
     ]);
     expect(names("LARGER")).toEqual(["Code text: larger"]);
     expect(names("size default")).toEqual(["Code text: default size"]);
-    expect(names("pan")).toEqual(["Layout: Panes"]);
+    expect(names("notes")).toEqual(["Script: hide Notes"]);
     expect(names("main")).toEqual(["Open file: scripts/main.zeff"]);
     expect(names("nothing like it")).toEqual([]);
   });

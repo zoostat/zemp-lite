@@ -91,7 +91,6 @@ class BlockWidget extends WidgetType {
         block: this.#placed.block,
         edited: this.#edited !== null,
         ...(this.#edited === "stale" ? { word: "stale" } : {}),
-        inline: true,
         oncancel: this.#oncancel,
         workspace: this.#workspace,
         last: this.#placed.after,

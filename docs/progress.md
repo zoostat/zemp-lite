@@ -183,3 +183,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** Here: 177 unit tests; 314 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical. Once, with the machine under load, seven WebKit tests of typing failed together and passed when run again, as at the close of 0.2.
 
 **Next.** Step 4 `[engine]`: one layout, the Panes layout removed (its removal is already written and set aside).
+
+## 22 November 2026, release 0.2.1, step 4
+
+**Done.** Step 4 `[engine]`: one layout. The Panes layout, its Output panel and editor tabs, the left panel with Objects, and the **Margin** and **Panes** links are removed; the view state no longer says a layout. Six tests removed, each named in `docs/decisions.md` (three with the thing they held, three held by another test), two added (the Project pane's tree; "Output: clear"), the rest rewritten to read the outputs Run unfolds. Steps 2, 3 and 5 are green on GitHub and deployed (10339f9).
+
+**Green.** `npm run routine`: 176 unit tests; 306 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
+
+**Next.** Step 6 `[function]`: Plots on the frame, its list as the left pane and **The plot** at the right.

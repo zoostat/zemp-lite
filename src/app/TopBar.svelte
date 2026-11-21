@@ -1,8 +1,8 @@
 <script lang="ts">
   // The top bar of a project (the design guide, section 9; open decision #146), in the quiet
   // look of the margin editor (#174; its design, sections 5 and 14): the logo and Projects, the
-  // project and its file, a search field for ⌘K, the size of code text, Margin | Panes, the
-  // Dark switch, Check and Run. Every control is a word with a soft ground when pointed at;
+  // project and its file, a search field for ⌘K, the size of code text, the Dark switch,
+  // Check and Run. Every control is a word with a soft ground when pointed at;
   // Run is the one filled control, and reads Stop while the engine runs.
   import { codeLarger, codeSize, codeSmaller } from "../theme/codesize.svelte";
   import { CODE_SIZES } from "../theme/codesize";
@@ -81,18 +81,6 @@
     <span aria-live="polite">{codeSize.px}</span>
     <button onclick={codeLarger} disabled={codeSize.px === largest} aria-label="Larger code text"
       >A+</button
-    >
-  </span>
-  <span class="layouts" role="group" aria-label="Layout">
-    <button
-      class:on={workspace.views.layout === "margin"}
-      aria-pressed={workspace.views.layout === "margin"}
-      onclick={() => workspace.setLayout("margin")}>Margin</button
-    >
-    <button
-      class:on={workspace.views.layout === "panes"}
-      aria-pressed={workspace.views.layout === "panes"}
-      onclick={() => workspace.setLayout("panes")}>Panes</button
     >
   </span>
   <button class="switch" role="switch" aria-checked={theme.name === "dark"} onclick={switchTheme}>
@@ -185,31 +173,27 @@
   .search:focus-visible {
     color: var(--ink-2);
   }
-  .sizes,
-  .layouts {
+  .sizes {
     display: inline-flex;
     gap: 2px;
   }
   .sizes {
     align-items: center;
   }
-  .sizes button,
-  .layouts button {
+  .sizes button {
     background: transparent;
     border: 0;
     border-radius: 6px;
     color: var(--ink-2);
     padding: 3px 8px;
   }
-  .sizes button:hover:not(:disabled),
-  .layouts button:hover {
+  .sizes button:hover:not(:disabled) {
     background: var(--soft);
   }
   .sizes button {
     min-width: 30px;
   }
-  .sizes button:disabled,
-  .layouts button:disabled {
+  .sizes button:disabled {
     opacity: 0.45;
   }
   .sizes span {
@@ -219,10 +203,6 @@
     min-width: 22px;
     padding: 3px 4px;
     text-align: center;
-  }
-  .layouts button {
-    font-size: 12.5px;
-    padding: 3px 11px;
   }
   .places {
     display: inline-flex;
@@ -239,12 +219,6 @@
     background: var(--soft);
   }
   .places button.on {
-    color: var(--accent);
-    text-decoration: underline 2px var(--accent);
-    text-underline-offset: 6px;
-  }
-  /* The layout shown is underlined in violet, as the current place is (the design, 14). */
-  .layouts button.on {
     color: var(--accent);
     text-decoration: underline 2px var(--accent);
     text-underline-offset: 6px;

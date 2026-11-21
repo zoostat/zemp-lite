@@ -1,4 +1,4 @@
-// A run, as the Output panel shows it: what each statement printed and said, under the line
+// A run, as the page shows it: what each statement printed and said, under the line
 // that made it (open decision #146, item 7; Zemp Specification, section 5). The engine tells
 // a run as events (a statement started, a piece of output, a statement finished) and then its
 // outcome; this file turns them into blocks, one for each line that has something to show.
@@ -278,7 +278,7 @@ export function refused(run: Run): boolean {
   );
 }
 
-/** A block of the Output panel: what there is to show for one line of the script. */
+/** A block of output: what there is to show for one line of the script. */
 export interface Block {
   /** The line of the script it stands under; `null` for what belongs to no line. */
   line: number | null;

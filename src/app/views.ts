@@ -1,7 +1,7 @@
 // View state: what is shown, never what is computed (Zemp Specification, section 5, "Analysis
 // state and view state"). The layout of a window is kept with its project, in
-// `.zemp/views.json`, which a replication package omits: which layout, the left panel's tab
-// and width, the share of the script's pane the output takes, the open tabs. Whatever the
+// `.zemp/views.json`, which a replication package omits: which panes are open and how wide,
+// what is unfolded, the place shown, the views of the data and of the plots. Whatever the
 // file holds that is not understood is passed over, and the default is used in its place, so
 // a file written by a later version, or damaged, never keeps a project from opening.
 //
@@ -10,8 +10,6 @@
 // of each place are open and how wide the two sides are.
 
 import type { View } from "../engine/messages";
-
-export type Layout = "margin" | "panes";
 
 /** The version of the view state this build writes; a file without one is of version 1. */
 export const VIEWS_VERSION = 3;
@@ -31,15 +29,8 @@ export type PlaceName = keyof typeof PANES;
 export type PaneName<P extends PlaceName> = keyof (typeof PANES)[P];
 /** Which panes are open, for each place. */
 export type PaneState = { [P in PlaceName]: { -readonly [N in PaneName<P>]: boolean } };
-export type LeftTab = "project" | "objects";
 
 export interface ViewState {
-  /**
-   * The margin editor, a note beside each statement and its output unfolded under it at the
-   * reader's asking (open decision #174), or Panes (section 5). A file of version 1 says
-   * "inline", the layout the margin editor replaces, and is read as the margin editor.
-   */
-  layout: Layout;
   /** Which panes of each place are open (#203). */
   panes: PaneState;
   /** The right pane of a place: its width, in pixels. */
@@ -64,20 +55,14 @@ export interface ViewState {
   };
   /** The parts of the file this build does not know, kept as they were (a later build's). */
   others: Record<string, unknown>;
-  left: {
-    tab: LeftTab;
-    /** The panel's width, in pixels. */
-    width: number;
-    shown: boolean;
-  };
-  output: {
-    /** The share of the script's pane the Output panel takes, from 0 to 1. */
-    share: number;
-    shown: boolean;
-  };
-  /** The open tabs, in order: `file:` and a path of the project, or `view:` and a viewer's name. */
+  /** The left pane of a place: its width, in pixels. */
+  left: { width: number };
+  /**
+   * What has been opened, in order: `file:` and a path of the project, or `view:` and a
+   * viewer's name. (The one shown is the place; a script opened is shown in the Script place.)
+   */
   tabs: string[];
-  /** The tab shown, one of `tabs`, or `null` where none is open. */
+  /** The one shown, one of `tabs`, or `null` where none is open. */
   active: string | null;
   /** The folders folded away in the project tree, by path. */
   folded: string[];
@@ -94,12 +79,10 @@ export interface ViewState {
   };
 }
 
-/** The narrowest and the widest the left panel goes. */
+/** The narrowest and the widest the left pane of a place goes. */
 export const LEFT_WIDTH = { least: 180, most: 520, usual: 268 } as const;
 /** The narrowest and the widest the right pane of a place goes. */
 export const RIGHT_WIDTH = { least: 240, most: 560, usual: 310 } as const;
-/** The least and the most of the script's pane the output takes. */
-export const OUTPUT_SHARE = { least: 0.12, most: 0.85, usual: 0.42 } as const;
 
 /** The tab of the plot viewer. */
 export const PLOTS = "view:plots";
@@ -129,8 +112,6 @@ export const tabPath = (tab: string) => (tab.startsWith("file:") ? tab.slice(5) 
 /** A project opened for the first time: its main script in a tab. */
 export function usual(): ViewState {
   return {
-    // Zemp Lite opens in the margin editor, every output folded (#174).
-    layout: "margin",
     panes: {
       script: { ...PANES.script },
       data: { ...PANES.data },
@@ -141,8 +122,7 @@ export function usual(): ViewState {
     script: { unfolded: {} },
     data: { frame: null, variable: null, hidden: {}, shown: {} },
     others: {},
-    left: { tab: "project", width: LEFT_WIDTH.usual, shown: true },
-    output: { share: OUTPUT_SHARE.usual, shown: true },
+    left: { width: LEFT_WIDTH.usual },
     tabs: [fileTab("scripts/main.zeff")],
     active: fileTab("scripts/main.zeff"),
     folded: [],
@@ -153,16 +133,13 @@ export function usual(): ViewState {
 const within = (value: number, least: number, most: number) =>
   Math.min(most, Math.max(least, value));
 
-/** The width the left panel is given when `width` is asked for. */
+/** The width the left pane is given when `width` is asked for. */
 export const leftWidth = (width: number) =>
   Math.round(within(width, LEFT_WIDTH.least, LEFT_WIDTH.most));
 
 /** The width the right pane is given when `width` is asked for. */
 export const rightWidth = (width: number) =>
   Math.round(within(width, RIGHT_WIDTH.least, RIGHT_WIDTH.most));
-
-/** The share the output is given when `share` is asked for. */
-export const outputShare = (share: number) => within(share, OUTPUT_SHARE.least, OUTPUT_SHARE.most);
 
 /** The view state a file holds, each part that cannot be read replaced by the usual one. */
 export function readViews(text: string | null): ViewState {
@@ -177,11 +154,6 @@ export function readViews(text: string | null): ViewState {
     return state;
   }
   const from = held as Record<string, unknown>;
-  if (from["layout"] === "margin" || from["layout"] === "panes") {
-    state.layout = from["layout"];
-  } else if (from["layout"] === "inline") {
-    state.layout = "margin";
-  }
   // The panes of each place, as a file of version 3 says them. A pane the file does not name,
   // or names with anything but a truth value, stands as in a project opened for the first time.
   const panes = from["panes"] as Record<string, unknown> | undefined;
@@ -241,24 +213,17 @@ export function readViews(text: string | null): ViewState {
       }
     }
   }
-  const known = new Set(["version", ...Object.keys(state)]);
+  // What a file of version 1 or 2 said of the layouts that are gone (which one, and the share
+  // of the pane its output took) is passed over, not kept as a later build's.
+  const known = new Set(["version", "layout", "output", ...Object.keys(state)]);
   for (const [key, value] of Object.entries(from)) {
     if (!known.has(key)) state.others[key] = value;
   }
   const left = from["left"] as Record<string, unknown> | undefined;
   if (typeof left === "object" && left !== null) {
-    if (left["tab"] === "project" || left["tab"] === "objects") state.left.tab = left["tab"];
     if (typeof left["width"] === "number" && Number.isFinite(left["width"])) {
       state.left.width = leftWidth(left["width"]);
     }
-    if (typeof left["shown"] === "boolean") state.left.shown = left["shown"];
-  }
-  const output = from["output"] as Record<string, unknown> | undefined;
-  if (typeof output === "object" && output !== null) {
-    if (typeof output["share"] === "number" && Number.isFinite(output["share"])) {
-      state.output.share = outputShare(output["share"]);
-    }
-    if (typeof output["shown"] === "boolean") state.output.shown = output["shown"];
   }
   const texts = (value: unknown): string[] | null =>
     Array.isArray(value) && value.every((one) => typeof one === "string")
@@ -303,15 +268,4 @@ export function unfoldToggled(state: ViewState, path: string, line: number): num
 /** The tabs with `tab` open and shown; a tab already open is shown, not opened twice. */
 export function withTab(state: ViewState, tab: string): Pick<ViewState, "tabs" | "active"> {
   return { tabs: state.tabs.includes(tab) ? state.tabs : [...state.tabs, tab], active: tab };
-}
-
-/** The tabs with `tab` closed; where it was the one shown, its neighbour is shown. */
-export function withoutTab(state: ViewState, tab: string): Pick<ViewState, "tabs" | "active"> {
-  const at = state.tabs.indexOf(tab);
-  if (at < 0) {
-    return { tabs: state.tabs, active: state.active };
-  }
-  const tabs = state.tabs.filter((one) => one !== tab);
-  const active = state.active === tab ? (tabs[at] ?? tabs[at - 1] ?? null) : state.active;
-  return { tabs, active };
 }

@@ -1,6 +1,6 @@
 // ⌘K and the console line (release 0.1, step 10).
 import type { Page } from "@playwright/test";
-import { editor, expect, printed, scriptText, test, write, useExample } from "./support";
+import { cursorTo, editor, expect, printed, scriptText, test, write, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -59,20 +59,22 @@ test("⌘K opens the palette, typing narrows it, the arrows choose, Escape close
 
 test("each command does what it says", async ({ page, press }) => {
   await scratch(page, press);
-  const panes = page.getByRole("button", { name: "Panes", exact: true });
-  const margin = page.getByRole("button", { name: "Margin", exact: true });
-  await command(page, "layout panes");
-  await expect(panes).toHaveAttribute("aria-pressed", "true");
-  await command(page, "left panel hide");
-  await expect(page.getByRole("complementary")).toHaveCount(0);
-  await command(page, "left panel show");
-  await expect(page.getByRole("complementary")).toBeVisible();
-  await command(page, "output hide");
-  await expect(page.getByRole("button", { name: "Show the output" })).toBeVisible();
-  await command(page, "output show");
-  await expect(page.getByRole("button", { name: "Hide the output" })).toBeVisible();
-  await command(page, "layout margin");
-  await expect(margin).toHaveAttribute("aria-pressed", "true");
+  // Each pane of the Script place is opened and closed by a command named for what it does.
+  const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
+  const left = page.getByRole("complementary", { name: "Script: the left pane" });
+  await command(page, "script show project");
+  await expect(left.getByRole("region", { name: "Project" })).toBeVisible();
+  await command(page, "script show outline");
+  await expect(left.getByRole("region", { name: "Outline" })).toBeVisible();
+  await command(page, "script hide project");
+  await expect(left.getByRole("region", { name: "Project" })).toHaveCount(0);
+  await command(page, "script hide outline");
+  await expect(left).toHaveCount(0);
+  const notes = bar.getByRole("button", { name: "Notes", exact: true });
+  await command(page, "script hide notes");
+  await expect(notes).toHaveAttribute("aria-pressed", "false");
+  await command(page, "script show notes");
+  await expect(notes).toHaveAttribute("aria-pressed", "true");
 
   await command(page, "theme dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -96,7 +98,7 @@ test("each command does what it says", async ({ page, press }) => {
   await command(page, "output clear");
   await expect.poll(() => printed(page)).toBe("");
 
-  // A file is opened from the palette, which is how the margin editor reaches a second file.
+  // A file is opened from the palette, as it is from the Project pane.
   await command(page, "open file zeff.toml");
   await expect.poll(() => scriptText(page)).toMatch(/^\[project\]\nname = "Scratch"/);
   await command(page, "open file main.zeff");
@@ -217,10 +219,17 @@ test("the last line says how the output stands to the script, and names the engi
 
 test("every control of the window can be reached from the keyboard", async ({ page, press }) => {
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
+  // With the left pane open on Project and Outline, so that its controls and its edge are
+  // among those held.
+  const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
+  await press(bar.getByRole("button", { name: "Project", exact: true }));
+  await press(bar.getByRole("button", { name: "Outline", exact: true }));
+  await expect(page.getByRole("separator", { name: "The width of the left pane" })).toBeVisible();
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  // Every control is one the Tab key stops at, and has a name a screen reader can say.
+  // Every control is one the Tab key stops at, and has a name a screen reader can say. One
+  // kind is the pointer's alone: the words Run to here laid over a statement's line number,
+  // one for every statement, whose command the keyboard has in ⌘K.
   const controls = await page
     .locator(
       "button, input:not([hidden]), [role='separator'], [role='switch'], [contenteditable='true']",
@@ -237,17 +246,29 @@ test("every control of the window can be reached from the keyboard", async ({ pa
           ).trim(),
           // The editor is a text the browser lets the Tab key into without being told.
           stops: (node as HTMLElement).tabIndex >= 0 || (node as HTMLElement).isContentEditable,
+          runTo: node.getAttribute("data-testid") === "run-to-here",
         })),
     );
   expect(controls.length).toBeGreaterThan(15);
-  expect(controls.filter((control) => !control.stops)).toEqual([]);
+  expect(controls.filter((control) => !control.stops && !control.runTo)).toEqual([]);
   expect(controls.filter((control) => control.name === "")).toEqual([]);
-  // And ⌘K holds a command for each thing the top bar does.
+  // The edge of the left pane is among them, and moves with the arrow keys (`panes.spec`).
+  expect(controls.map((control) => control.name)).toContain("The width of the left pane");
+  // And ⌘K holds a command for each thing the top bar does and for each pane's link, and,
+  // with the cursor on a statement, for the words over its line number.
+  await cursorTo(page, 8);
   await page.keyboard.press("ControlOrMeta+k");
   const names = await page.getByRole("option").allTextContents();
   for (const word of [
     "Run the script",
-    "Layout:",
+    "Check the script",
+    "Place: Script",
+    "Place: Data",
+    "Place: Plots",
+    "Script: hide Project",
+    "Script: hide Outline",
+    "Script: hide Notes",
+    "Run to here",
     "Theme:",
     "Code text: larger",
     "Code text: smaller",

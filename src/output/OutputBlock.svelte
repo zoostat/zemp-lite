@@ -1,8 +1,6 @@
 <script lang="ts">
-  // One block of a run: what a statement printed and what the engine said of it. In the Panes
-  // layout it is a card in the Output panel, under a line saying which line it is and how
-  // long it took. In the margin editor it is a statement's output unfolded under it (#174; the
-  // design, 7.4): a header of its lines, its time or state, and its actions (Copy as text,
+  // One block of a run: what a statement printed and what the engine said of it, as a
+  // statement's output unfolded under it (#174; the design, 7.4): a header of its lines, its time or state, and its actions (Copy as text,
   // Open in Plots, Fold); then what the engine said, each warning and error with Explain,
   // which opens the engine's explained page in place; then what it printed, or its figure.
   import type { Workspace } from "../app/workspace-state.svelte";
@@ -14,7 +12,6 @@
   let {
     block,
     edited,
-    inline = false,
     oncancel,
     workspace = null,
     last = null,
@@ -24,7 +21,6 @@
     block: Block;
     /** The script has been edited since this ran: the block is not the script's any more. */
     edited: boolean;
-    inline?: boolean;
     oncancel?: () => void;
     /** The window, where the block may show the figure of a statement that ended in a plot. */
     workspace?: Workspace | null;
@@ -81,23 +77,9 @@
   const label: Record<Said["kind"], string> = { warning: "warning", note: "note", error: "error" };
 </script>
 
-<section
-  class="block {block.state}"
-  class:inline
-  class:edited
-  data-testid="block"
-  data-line={block.line ?? ""}
->
+<section class="block {block.state}" class:edited data-testid="block" data-line={block.line ?? ""}>
   <header>
-    {#if inline}
-      <span class="line mono">{lines}</span>
-    {/if}
-    {#if !inline}
-      <span class="line mono"
-        >{block.line === null ? "after the script" : `line ${block.line}`}</span
-      >
-      <span class="gap"></span>
-    {/if}
+    <span class="line mono">{lines}</span>
     {#if edited}
       <span class="state warn">{word}</span>
     {:else if block.state === "running"}
@@ -106,14 +88,14 @@
           ? "…"
           : ` · pass ${block.pass.pass.toLocaleString("en-GB")}${block.pass.of === null ? "" : ` of ${block.pass.of.toLocaleString("en-GB")}`}`}</span
       >
-      {#if inline && oncancel}
+      {#if oncancel}
         <button class="cancel" onclick={oncancel}>Cancel</button>
       {/if}
     {:else}
-      {#if inline && block.state === "failed"}<span class="state bad">failed</span>{/if}
+      {#if block.state === "failed"}<span class="state bad">failed</span>{/if}
       {#if block.ms !== null}<span class="time" data-testid="time">{took(block.ms)}</span>{/if}
     {/if}
-    {#if inline && workspace !== null && block.line !== null && block.state !== "running"}
+    {#if workspace !== null && block.line !== null && block.state !== "running"}
       <span class="gap"></span>
       {#if block.printed !== ""}
         <button class="act" onclick={() => void workspace.copyText(block.line as number)}
@@ -137,8 +119,7 @@
         <Figure {workspace} {plot} />
       {/if}
     {/snippet}
-    <!-- In the margin editor what the engine said comes first, then the print (the design, 7.4). -->
-    {#if !inline}{@render print()}{/if}
+    <!-- What the engine said comes first, then the print (the design, 7.4). -->
     {#each block.said as one, index (index)}
       <div class="said {one.kind}" data-testid="said">
         <p class="first">
@@ -150,7 +131,7 @@
         {#each one.help as help (help)}
           <p class="help">{help}</p>
         {/each}
-        {#if inline && workspace !== null && one.kind === "error"}
+        {#if workspace !== null && one.kind === "error"}
           {@const trail = trailOf(one.raw, one.sentence)}
           {#if trail.length > 0}
             <!-- The error's trail (#183): the chain the engine named, each link a way to its line. -->
@@ -169,7 +150,7 @@
             </div>
           {/if}
         {/if}
-        {#if inline && workspace !== null && one.code !== null}
+        {#if workspace !== null && one.code !== null}
           {@const code = one.code}
           <button
             class="act explain"
@@ -187,8 +168,8 @@
         {/if}
       </div>
     {/each}
-    {#if inline}{@render print()}{/if}
-    {#if inline && block.passes.length > 0}
+    {@render print()}
+    {#if block.passes.length > 0}
       <div class="passes" data-testid="passes">
         <p class="passes-head">
           Passes <span class="quiet"
@@ -234,15 +215,18 @@
 </section>
 
 <style>
+  /* The output unfolded under its statement, across the code's column and the notes' (the
+     design, 7.4), on the softer ground with a hairline, a header of words. */
   .block {
-    background: var(--window);
+    background: var(--softer);
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 12px;
+    display: block;
+    font-family: "Atkinson Hyperlegible Next", sans-serif;
+    line-height: 1.5;
+    margin: 0 calc(-1 * var(--zemp-margin, 0px)) 0 16px;
     min-width: 0;
-    padding: 8px 14px 12px;
-  }
-  .block.failed {
-    border-color: color-mix(in srgb, var(--error) 45%, var(--line));
+    padding: 0;
   }
   /* Output that is no longer the script's: dashed and faded, with its reason. */
   .block.edited {
@@ -251,33 +235,21 @@
   .block.edited .body {
     opacity: 0.55;
   }
-  /* The margin editor: the output unfolded under its statement, across the code's column and
-     the notes' (the design, 7.4), on the softer ground with a hairline, a header of words. */
-  .block.inline {
-    background: var(--softer);
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    display: block;
-    font-family: "Atkinson Hyperlegible Next", sans-serif;
-    line-height: 1.5;
-    margin: 0 calc(-1 * var(--zemp-margin, 0px)) 0 16px;
-    padding: 0;
-  }
-  .block.inline header {
+  .block header {
     align-items: center;
     border-bottom: 1px solid var(--line);
     display: flex;
     gap: 12px;
     padding: 4px 10px 4px 16px;
   }
-  .block.inline .body {
+  .block .body {
     min-width: 0;
     padding: 6px 16px 12px;
   }
-  .block.inline.failed {
+  .block.failed {
     border-color: color-mix(in srgb, var(--error) 45%, var(--line));
   }
-  .block.inline.edited .body {
+  .block.edited .body {
     border: 1px dashed var(--line-strong);
   }
   header {

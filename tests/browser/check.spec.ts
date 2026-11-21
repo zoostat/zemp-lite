@@ -13,7 +13,6 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
 test("Check says what `zeff check` says of a script with no problems, and runs nothing", async ({
@@ -33,21 +32,25 @@ test("what Check finds stands under its line, and the results of the run before 
   page,
   press,
 }) => {
+  // A window tall enough for the whole script with its outputs: the editor draws only the
+  // lines near its window.
+  await page.setViewportSize({ width: 1280, height: 3600 });
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  // The run unfolded its seven outputs, each under its statement.
+  await expect(page.getByTestId("block")).toHaveCount(7);
   const before = await printed(page);
-  const blocks = await page.getByTestId("block").count();
 
   await write(page, file("tests/scripts/example/scripts/main.zeff") + "let z = nosuch(3)\n");
   await press(page.getByRole("button", { name: "Check" }));
   await expect(page.getByTestId("sync")).toHaveText("not run · 1 error found by the check");
-  await expect(page.getByTestId("refused")).toContainText("found 1 error; nothing was run");
-  const first = page.getByTestId("block").first();
-  await expect(first).toContainText("no function is called `nosuch`");
-  await expect(first).toHaveAttribute("data-line", "22");
+  // What the check found is the one block more, under the line it names, the last of the script.
+  await expect(page.getByTestId("block")).toHaveCount(8);
+  const found = page.getByTestId("block").last();
+  await expect(found).toContainText("no function is called `nosuch`");
+  await expect(found).toHaveAttribute("data-line", "22");
   expect(await printed(page)).toBe(before);
-  await expect(page.getByTestId("block")).toHaveCount(blocks + 1);
 });
 
 test("a script Check refuses before any run shows what it found under its line", async ({

@@ -1,5 +1,5 @@
 // The state of one window with a project open in it: the project and its engine, what the
-// left panel and the tabs show, the scripts being edited, and the last run. Every screen of
+// panes show, the scripts being edited, and the last run. Every screen of
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
 import { Language, type Diagnostic, type Range } from "../engine/language";
@@ -26,17 +26,13 @@ import {
   PLOTS,
   fileTab,
   leftWidth,
-  outputShare,
   rightWidth,
   readViews,
   tabPath,
   unfoldToggled,
   usual,
   withTab,
-  withoutTab,
   writeViews,
-  type Layout,
-  type LeftTab,
   type PaneName,
   type PlaceName,
   type ViewState,
@@ -117,7 +113,7 @@ export class Workspace {
   /** What the engine is doing, in a word or two. */
   status = $state("starting the engine");
   running = $state(false);
-  /** The last run, as the Output panel shows it, or `null` before the first and after Clear. */
+  /** The last run, as the page shows it, or `null` before the first and after Clear. */
   lastRun = $state<Run | null>(null);
   /**
    * The last press of Run, where the engine's check refused the script and the results of
@@ -418,11 +414,6 @@ export class Workspace {
 
   // What is shown. Each change is kept with the project.
 
-  setLayout(layout: Layout): void {
-    this.views.layout = layout;
-    this.#keep();
-  }
-
   /** Unfold, or fold, the output of the statement on `line` of the script at `path`. */
   toggleUnfolded(path: string, line: number): void {
     this.views.script.unfolded = {
@@ -459,28 +450,8 @@ export class Workspace {
     this.#keep();
   }
 
-  setLeftTab(tab: LeftTab): void {
-    this.views.left.tab = tab;
-    this.#keep();
-  }
-
   setLeftWidth(width: number): void {
     this.views.left.width = leftWidth(width);
-    this.#keep();
-  }
-
-  toggleLeft(): void {
-    this.views.left.shown = !this.views.left.shown;
-    this.#keep();
-  }
-
-  setOutputShare(share: number): void {
-    this.views.output.share = outputShare(share);
-    this.#keep();
-  }
-
-  toggleOutput(): void {
-    this.views.output.shown = !this.views.output.shown;
     this.#keep();
   }
 
@@ -569,11 +540,6 @@ export class Workspace {
       this.views.active = tab;
       this.#keep();
     }
-  }
-
-  close(tab: string): void {
-    Object.assign(this.views, withoutTab(this.views, tab));
-    this.#keep();
   }
 
   #keep(): void {
@@ -1527,7 +1493,7 @@ export class Workspace {
     }
   }
 
-  /** Empty the Output panel. A run that is going is left to show. */
+  /** Take the last run's results off the page. A run that is going is left to show. */
   clear(): void {
     if (!this.running) {
       this.lastRun = null;

@@ -112,52 +112,53 @@ test("the lines added to draw the figures never show: the script and its output 
   await expect(page.locator("header.top")).toContainText("· saved");
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
   // The statements of the run are still the script's nine.
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
-  await expect(page.getByTestId("run-summary")).toContainText("9 statements");
+  await expect(page.getByTestId("run-facts")).toContainText("9 statements");
 });
 
-test("in Panes a plot is under its statement in the Output panel and in the Plots tab", async ({
+test("a plot is under its statement in the script and in the Plots place, laid out for each", async ({
   page,
   press,
 }) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
-  const tabs = page.getByRole("tablist", { name: "Open files" });
-  await expect(tabs.getByRole("tab")).toHaveText(["main.zeff"]);
+  const places = page.getByRole("navigation", { name: "Places" });
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  // The Plots tab joins the script's, and the script stays the tab shown.
-  await expect(tabs.getByRole("tab")).toHaveText(["main.zeff", "Plots"]);
-  await expect(tabs.getByRole("tab", { name: "main.zeff" })).toHaveAttribute(
-    "aria-selected",
-    "true",
+  // A run leaves the Script place the one shown, with each plot under its statement.
+  await expect(places.getByRole("button", { name: "Script" })).toHaveAttribute(
+    "aria-current",
+    "page",
   );
-  const inPanel = await figure(page, 17, page.getByTestId("output"));
-  expect(Math.abs(inPanel.own![0]! - inPanel.shown[0]!)).toBeLessThan(1);
+  const inScript = await figure(page, 17, page.locator(".cm-zemp-output"));
+  expect(Math.abs(inScript.own![0]! - inScript.shown[0]!)).toBeLessThan(1);
 
-  await press(tabs.getByRole("tab", { name: "Plots" }));
+  // The Plots place, in a window of an ordinary height.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await press(places.getByRole("button", { name: "Plots" }));
+  await expect(places.getByRole("button", { name: "Plots" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
   const plots = page.getByTestId("plots");
   await expect(plots.getByRole("heading", { level: 2 })).toHaveText(
     /line 17\s+w2010 · log\(wage\) against educ/,
   );
-  // The list of plots hidden, so that the plot has the tab's width.
+  // The list of plots hidden, so that the plot has the place's width.
   await press(plots.getByRole("button", { name: "‹ Hide" }));
   await expect(plots.getByRole("list", { name: "Plots of the last run" })).toBeHidden();
   // The plot is laid out again for the wider place, by a run at the new width: it is read
   // once the place has widened and the drawing shown is the one made for it, the same at two
   // readings in a row (on a slow machine the place can still be widening, or the drawing on
   // its way, at the first readings).
-  const inTab = await steady(
+  const inPlots = await steady(
     page,
     plots.locator(".stage"),
-    (now) => now.shown[0]! > inPanel.shown[0]!,
+    (now) => now.shown[0]! > inScript.shown[0]!,
   );
-  expect(inTab.shown).toEqual(inTab.place);
-  expect(Math.abs(inTab.own![0]! - inTab.shown[0]!)).toBeLessThan(1);
-  // Larger than in the panel, and a different drawing: laid out for this place.
-  expect(inTab.shown[0]!).toBeGreaterThan(inPanel.shown[0]!);
-  expect(inTab.svg).not.toBe(inPanel.svg);
+  expect(inPlots.shown).toEqual(inPlots.place);
+  expect(Math.abs(inPlots.own![0]! - inPlots.shown[0]!)).toBeLessThan(1);
+  // Larger than under its statement, and a different drawing: laid out for this place.
+  expect(inPlots.shown[0]!).toBeGreaterThan(inScript.shown[0]!);
+  expect(inPlots.svg).not.toBe(inScript.svg);
   await expect(page.getByTestId("draw-time")).toHaveText(/^drawn by a run of the script in \d/);
   test.info().annotations.push({
     type: "redraw",
@@ -165,27 +166,30 @@ test("in Panes a plot is under its statement in the Output panel and in the Plot
   });
 });
 
-test("when its pane is made narrower a plot is laid out afresh, never stretched, its text the same size", async ({
+test("when its place is made narrower a plot is laid out afresh, never stretched, its text the same size", async ({
   page,
   press,
 }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
   await scratch(page, press);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await press(page.getByRole("tab", { name: "Plots" }));
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
+  );
   const plots = page.getByTestId("plots");
   const stage = plots.locator(".stage");
-  const wide = await figure(page, 17, stage);
+  // The first drawing for the place as it opens, held still before it is read.
+  const wide = await steady(page, stage, () => true);
 
-  // The left panel is widened with the keyboard, which makes the plots' pane narrower.
-  const edge = page.getByRole("separator", { name: "The width of the left panel" });
-  await edge.focus();
-  for (let step = 0; step < 12; step++) await page.keyboard.press("ArrowRight");
-  // Wait for the pane to settle and its last redraw to arrive: each key press narrows the
-  // pane and asks for a figure, so one of the earlier figures can be on the page for a
-  // moment after the pane has reached its final width.
+  // The window is made narrower in steps, as an edge dragged makes it, and the plots' place
+  // with it.
+  for (let step = 1; step <= 4; step++) {
+    await page.setViewportSize({ width: 1400 - step * 50, height: 900 });
+  }
+  // Wait for the place to settle and its last redraw to arrive: each step narrows the place
+  // and asks for a figure, so one of the earlier figures can be on the page for a moment
+  // after the place has reached its final width.
   const narrow = await steady(page, stage, (now) => now.shown[0]! < wide.shown[0]! - 100);
   // A new figure of new proportions for the new place, at its own size.
   expect(narrow.shown).toEqual(narrow.place);

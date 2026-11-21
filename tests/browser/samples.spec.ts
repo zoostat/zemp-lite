@@ -1,13 +1,13 @@
 // The pre-release routine (testing handbook, section 2.4, item 3): sample projects of the
-// released Zeff engine run through the interface itself, and what the Output panel shows held
-// to what the Zeff repository expects `zeff run` to print for them. The samples are those of
+// released Zeff engine run through the interface itself, and what the page shows under the
+// statements held to what the Zeff repository expects `zeff run` to print for them. The samples are those of
 // the engine's own source at the pinned commit, which cargo fetched to build the worker;
 // `tools/check-samples.mjs` runs all nine through the worker alone.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, placeOf, printed, saidAsWritten, test, write } from "./support";
+import { expect, placeOf, printed, saidAsWritten, test, wholeScript, write } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -45,11 +45,14 @@ for (const name of ["regression", "simulation", "plots"]) {
     await expect(page.getByRole("status")).toHaveText(READY);
     await placeOf(page, 118);
     await expect(page.locator(".sheet")).toHaveAttribute("data-width", "118");
-    await press(page.getByRole("button", { name: "Panes", exact: true }));
     await write(page, read("scripts/main.zeff"));
     await expect(page.locator("header.top")).toContainText("· saved");
     await press(page.getByRole("button", { name: "Run", exact: true }));
     await expect(page.getByRole("status")).toHaveText("done", { timeout: 60_000 });
+    // The run unfolded every output under its statement: the window is made tall enough to
+    // hold them all, and the place is still 118 characters wide.
+    await wholeScript(page);
+    await expect(page.locator(".sheet")).toHaveAttribute("data-width", "118");
     expect(await printed(page)).toBe(read("expected/stdout.txt"));
     expect(await saidAsWritten(page)).toBe(read("expected/stderr.txt"));
     // A plot of the sample is drawn under its statement, by the engine.
@@ -69,11 +72,11 @@ test("the specification's sample script, written for Zeff 1.0, is refused as `ze
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
   await write(page, file("docs/spec/zeff_samples.zeff"));
   await expect(page.locator("header.top")).toContainText("· saved");
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  await wholeScript(page);
   // Nothing runs, and the engine's finding stands under the line it names, in its words.
   expect(await printed(page)).toBe("");
   expect(await saidAsWritten(page)).toBe(file("tests/scripts/specification-sample.stderr"));

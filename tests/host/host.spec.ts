@@ -67,10 +67,9 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   await page.keyboard.press("ControlOrMeta+Enter");
   const statement = await timed;
   // A plot drawn afresh for a new place: the interface reports how long the run took.
-  await page.getByRole("button", { name: "Panes", exact: true }).click();
   await page
-    .getByRole("tablist", { name: "Open files" })
-    .getByRole("tab", { name: "Plots", exact: true })
+    .getByRole("navigation", { name: "Places" })
+    .getByRole("button", { name: "Plots", exact: true })
     .click();
   const drawn = page.getByTestId("draw-time");
   await expect(drawn).toHaveText(/drawn by a run of the script in \d/, { timeout: 30_000 });

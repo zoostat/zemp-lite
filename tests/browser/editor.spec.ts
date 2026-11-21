@@ -11,8 +11,6 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
-  // These tests are of the Panes layout; a project opens in the margin editor.
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
 /** The colour and style a word of the code is drawn in. */
@@ -85,10 +83,19 @@ test("what is typed is saved as it is typed, undone with the keyboard, and Tab i
   await page.keyboard.press("Tab");
   await page.keyboard.type("x");
   await expect.poll(() => scriptText(page)).toBe("let a = 1\n    x");
-  // The file in the project is what the editor holds: another tab and back shows it.
-  await press(page.getByRole("complementary").getByRole("button", { name: /zeff\.toml/ }));
+  // The file in the project is what the editor holds: another file of the Project pane and
+  // back shows it.
+  await press(
+    page
+      .getByRole("toolbar", { name: "Script: its panes and its controls" })
+      .getByRole("button", { name: "Project", exact: true }),
+  );
+  const project = page
+    .getByRole("complementary", { name: "Script: the left pane" })
+    .getByRole("region", { name: "Project" });
+  await press(project.getByRole("button", { name: /^zeff\.toml/ }));
   await expect.poll(() => scriptText(page)).toMatch(/^\[project\]/);
-  await press(page.getByRole("tab", { name: "main.zeff" }));
+  await press(project.getByRole("button", { name: /^main\.zeff/ }));
   await expect.poll(() => scriptText(page)).toBe("let a = 1\n    x");
 });
 

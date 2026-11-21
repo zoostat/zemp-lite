@@ -3,7 +3,7 @@
 // lists the commands whose names hold every word typed.
 
 export interface Command {
-  /** What the palette shows, with its group before a colon: "Layout: Panes". */
+  /** What the palette shows, with its group before a colon: "Script: show Project". */
   name: string;
   /** A word or two at the right: the key that does the same, or what it is now. */
   hint?: string;

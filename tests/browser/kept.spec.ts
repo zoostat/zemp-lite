@@ -66,79 +66,80 @@ test("the Scratch project keeps what the user wrote in it", async ({ page, press
   await expect.poll(() => scriptText(page)).toBe("print(1)\n");
 });
 
-test("the layout of a window is kept with its project and comes back after a reload", async ({
+test("the file shown and a folder folded in the Project pane are kept with the project, and come back after a reload", async ({
   page,
   press,
 }) => {
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  // A project opens in the margin editor; the layout chosen is kept with the rest.
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
-  const left = page.getByRole("complementary");
-  const edge = page.getByRole("separator", { name: "The width of the left panel" });
-  await edge.focus();
-  await page.keyboard.press("ArrowRight");
-  await press(left.getByRole("button", { name: /zeff\.toml/ }));
-  await press(left.getByRole("button", { name: "data", exact: true }));
-  await press(left.getByRole("tab", { name: "Objects" }));
-  const top = page.getByRole("separator", { name: "The height of the Output panel" });
-  await top.focus();
-  await page.keyboard.press("ArrowUp");
-  await press(page.getByRole("button", { name: "Hide the output" }));
+  // Another file of the project shown in the Script place, and a folder of the tree folded.
+  await press(
+    page
+      .getByRole("toolbar", { name: "Script: its panes and its controls" })
+      .getByRole("button", { name: "Project", exact: true }),
+  );
+  const tree = page
+    .getByRole("complementary", { name: "Script: the left pane" })
+    .getByRole("region", { name: "Project" });
+  await press(tree.getByRole("button", { name: /^zeff\.toml/ }));
+  await expect.poll(() => scriptText(page)).toMatch(/^\[project\]\nname = "Scratch"/);
+  const data = tree.getByRole("button", { name: "data", exact: true });
+  await press(data);
+  await expect(data).toHaveAttribute("aria-expanded", "false");
   // The view state is written a moment after the last change.
   await page.waitForTimeout(1500);
 
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
-  await expect(
-    page.getByRole("separator", { name: "The width of the left panel" }),
-  ).toHaveAttribute("aria-valuenow", "284");
-  await expect(left.getByRole("tab", { name: "Objects" })).toHaveAttribute("aria-selected", "true");
-  const tabs = page.getByRole("tablist", { name: "Open files" });
-  await expect(tabs.getByRole("tab")).toHaveText(["main.zeff", "zeff.toml"]);
-  await expect(tabs.getByRole("tab", { name: "zeff.toml" })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
-  await expect(page.getByRole("button", { name: "Show the output" })).toBeVisible();
-  await press(page.getByRole("button", { name: "Show the output" }));
-  await expect(
-    page.getByRole("separator", { name: "The height of the Output panel" }),
-  ).toHaveAttribute("aria-valuenow", "46");
-  await press(left.getByRole("tab", { name: "Project" }));
-  await expect(left.getByRole("button", { name: "data", exact: true })).toHaveAttribute(
-    "aria-expanded",
-    "false",
-  );
+  // The file that was shown is the one shown, and the one marked in the tree.
+  await expect(page.locator("header.top")).toContainText("/ zeff.toml · saved");
+  await expect.poll(() => scriptText(page)).toMatch(/^\[project\]\nname = "Scratch"/);
+  await expect(tree.getByRole("button", { name: /^zeff\.toml/ })).toHaveClass(/\bon\b/);
+  await expect(tree.getByRole("button", { name: /^main\.zeff/ })).not.toHaveClass(/\bon\b/);
+  await expect(data).toHaveAttribute("aria-expanded", "false");
   // The view state is the interface's own: it is in the project, and the engine is not given it.
-  await press(tabs.getByRole("tab", { name: "main.zeff" }));
+  await press(tree.getByRole("button", { name: /^main\.zeff/ }));
+  await expect
+    .poll(() => scriptText(page))
+    .toMatch(/^\/\/ Returns to schooling, in the wages panel/);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
 });
 
-test("the layout chosen is kept with the project, and a new project opens in the margin editor", async ({
+test("which panes are open is each project's own: a new project opens with Project closed and Notes open", async ({
   page,
   press,
 }) => {
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  const margin = page.getByRole("button", { name: "Margin", exact: true });
-  const panes = page.getByRole("button", { name: "Panes", exact: true });
-  await expect(margin).toHaveAttribute("aria-pressed", "true");
-  await press(panes);
+  const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
+  const project = bar.getByRole("button", { name: "Project", exact: true });
+  const notes = bar.getByRole("button", { name: "Notes", exact: true });
+  const left = page.getByRole("complementary", { name: "Script: the left pane" });
+  await press(project);
+  await press(notes);
+  await expect(left).toBeVisible();
+  // The view state is written a moment after the last change.
   await page.waitForTimeout(1500);
-  await page.reload();
-  await expect(panes).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("complementary")).toBeVisible();
-  // The choice is this project's: another project opens in the margin editor.
+  // The choice is this project's: another project opens as a project does.
   await press(page.getByRole("button", { name: "Projects" }));
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Another");
   await press(page.getByRole("button", { name: "Create" }));
-  await expect(margin).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("complementary")).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Another");
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(project).toHaveAttribute("aria-pressed", "false");
+  await expect(notes).toHaveAttribute("aria-pressed", "true");
+  await expect(left).toHaveCount(0);
+  // And the Scratch project is as it was left.
+  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(project).toHaveAttribute("aria-pressed", "true");
+  await expect(notes).toHaveAttribute("aria-pressed", "false");
+  await expect(left.getByRole("region", { name: "Project" })).toBeVisible();
 });
 
 test("what is unfolded, and whether the notes are shown, are kept with the project", async ({
@@ -226,10 +227,11 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await press(page.getByRole("tab", { name: "Plots" }));
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
+  );
   const plots = page.getByTestId("plots");
   const strip = plots.getByRole("list", { name: "Plots of the last run" });
   await strip.getByRole("button", { name: "Show the plot w2010 · log(wage) against educ" }).focus();
@@ -243,7 +245,7 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
 
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
-  // The Plots tab is the one shown; the run is made again for its plots.
+  // The Plots place is the one shown; the run is made again for its plots.
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
   await expect

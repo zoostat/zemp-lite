@@ -1,29 +1,42 @@
-// The shell of the workspace, in Panes (open decision #146): the top bar, the one left panel
-// with its two tabs, the editor tabs, and the Output panel under the script.
+// The shell of the workspace (open decisions #146 and #203): the top bar, the files of the
+// project in the Project pane at the script's left, a file of the project shown in the Script
+// place, the size of code text, the theme, and the line a narrow window is given.
 import type { Page } from "@playwright/test";
 import { editor, expect, scriptText, test, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
-async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
+type Press = (target: ReturnType<Page["locator"]>) => Promise<void>;
+
+async function scratch(page: Page, press: Press) {
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
-  // These tests are of the Panes layout; a project opens in the margin editor.
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
-test("the top bar carries its controls in order, Run the one filled, and what is not built yet is not active", async ({
+const bar = (page: Page) =>
+  page.getByRole("toolbar", { name: "Script: its panes and its controls" });
+const leftPane = (page: Page) => page.getByRole("complementary", { name: "Script: the left pane" });
+
+/** Open the Project pane at the script's left, and give the tree of the project's files. */
+async function project(page: Page, press: Press) {
+  await press(bar(page).getByRole("button", { name: "Project", exact: true }));
+  const tree = leftPane(page).getByRole("region", { name: "Project" });
+  await expect(tree).toBeVisible();
+  return tree;
+}
+
+test("the top bar carries its controls in order, Run the one filled, and Script the place shown", async ({
   page,
   press,
 }) => {
   await scratch(page, press);
-  const bar = page.locator("header.top");
-  await expect(bar).toContainText("Projects ▾");
-  await expect(bar.getByRole("heading", { level: 1 })).toHaveText("Scratch");
-  await expect(bar).toContainText("/ main.zeff · saved");
-  const names = await bar
+  const top = page.locator("header.top");
+  await expect(top).toContainText("Projects ▾");
+  await expect(top.getByRole("heading", { level: 1 })).toHaveText("Scratch");
+  await expect(top).toContainText("/ main.zeff · saved");
+  const names = await top
     .getByRole("button")
     .evaluateAll((buttons) =>
       buttons.map((button) =>
@@ -38,155 +51,107 @@ test("the top bar carries its controls in order, Run the one filled, and what is
     "Commands",
     "Smaller code text",
     "Larger code text",
-    "Margin",
-    "Panes",
     "Check",
     "Run",
   ]);
-  await expect(bar.getByRole("switch", { name: "Dark" })).toBeVisible();
-  await expect(bar.getByRole("button", { name: "Check" })).toBeEnabled();
-  await expect(bar.getByRole("button", { name: "Panes" })).toHaveAttribute("aria-pressed", "true");
+  await expect(top.getByRole("switch", { name: "Dark" })).toBeVisible();
+  await expect(top.getByRole("button", { name: "Check" })).toBeEnabled();
+  // Of the three places, the script's is the one shown, and the only one marked.
+  const places = top.getByRole("navigation", { name: "Places" });
+  await expect(places.getByRole("button", { name: "Script" })).toHaveClass(/\bon\b/);
+  await expect(places.locator("button.on")).toHaveCount(1);
   // Run is filled with the logo's violet; the others are outlined words.
-  const run = bar.getByRole("button", { name: "Run", exact: true });
+  const run = top.getByRole("button", { name: "Run", exact: true });
   expect(await run.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe(
     "rgb(91, 58, 158)",
   );
 });
 
-test("the left panel has two tabs, Project with the files and Objects with what a run left", async ({
+test("the Project pane lists the files with their sizes, and a folder folds away and comes back", async ({
   page,
   press,
 }) => {
   await scratch(page, press);
-  const left = page.getByRole("complementary");
-  await expect(left.getByRole("tab", { name: "Project" })).toHaveAttribute("aria-selected", "true");
-  await expect(left.getByRole("listitem").filter({ hasText: "main.zeff" }).last()).toContainText(
+  const tree = await project(page, press);
+  await expect(tree.getByRole("listitem").filter({ hasText: "main.zeff" }).last()).toContainText(
     "B",
   );
-  await expect(left.getByRole("listitem").filter({ hasText: "zeff.toml" })).toBeVisible();
+  await expect(tree.getByRole("listitem").filter({ hasText: "zeff.toml" })).toBeVisible();
   // A folder folds away and comes back.
-  const scripts = left.getByRole("button", { name: "scripts", exact: true });
+  const scripts = tree.getByRole("button", { name: "scripts", exact: true });
+  await expect(scripts).toHaveAttribute("aria-expanded", "true");
   await press(scripts);
   await expect(scripts).toHaveAttribute("aria-expanded", "false");
-  await expect(left.getByRole("button", { name: /main\.zeff/ })).toHaveCount(0);
+  await expect(tree.getByRole("button", { name: /main\.zeff/ })).toHaveCount(0);
   await press(scripts);
-  await expect(left.getByRole("button", { name: /main\.zeff/ })).toBeVisible();
-
-  await press(left.getByRole("tab", { name: "Objects" }));
-  await expect(left.getByText("Run the script to see what it leaves in memory.")).toBeVisible();
-  await expect(left.getByText("Zeff 0.8.0 in this browser")).toBeVisible();
-  await press(page.getByRole("button", { name: "Run", exact: true }));
-  await expect(page.getByRole("status")).toHaveText("done");
-  await expect(left.getByText("18,412 rows × ")).toBeVisible();
-  await expect(left.getByText("wages", { exact: true })).toBeVisible();
-  await expect(left.getByText("w2010", { exact: true })).toBeVisible();
-  await expect(left.getByRole("tab", { name: "Objects" })).toContainText("2");
-  // There is no right panel: the main pane reaches the window's right edge.
-  const main = await page.getByRole("region", { name: "Editor" }).boundingBox();
-  expect(main!.x + main!.width).toBe(page.viewportSize()!.width);
+  await expect(tree.getByRole("button", { name: /main\.zeff/ })).toBeVisible();
+  // The pane stands at the script's left, and the script reaches the window's right edge:
+  // nothing stands at its right.
+  const pane = (await leftPane(page).boundingBox())!;
+  const script = (await page
+    .getByRole("region", { name: "Script with its notes and output" })
+    .boundingBox())!;
+  expect(pane.x).toBe(0);
+  expect(script.x).toBeGreaterThanOrEqual(pane.x + pane.width);
+  expect(script.x + script.width).toBe(page.viewportSize()!.width);
 });
 
-test("the left panel is resized with the keyboard, inside its limits, and folds away", async ({
-  page,
-  press,
-}) => {
-  await scratch(page, press);
-  const left = page.getByRole("complementary");
-  const edge = page.getByRole("separator", { name: "The width of the left panel" });
-  await expect(edge).toHaveAttribute("aria-valuenow", "268");
-  await edge.focus();
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowRight");
-  await expect(edge).toHaveAttribute("aria-valuenow", "300");
-  expect(Math.round((await left.boundingBox())!.width)).toBe(300);
-  for (let press = 0; press < 12; press++) await page.keyboard.press("ArrowLeft");
-  await expect(edge).toHaveAttribute("aria-valuenow", "180");
-  await press(page.getByRole("button", { name: "Hide the left panel" }));
-  await expect(left).toHaveCount(0);
-  await press(page.getByRole("button", { name: "Show the left panel" }));
-  await expect(left).toBeVisible();
-});
-
-test("the left panel and the Output panel are resized by dragging their edges", async ({
-  page,
-  press,
-  mouseWorks,
-}) => {
+test("the left pane is resized by dragging its edge", async ({ page, press, mouseWorks }) => {
   test.skip(!mouseWorks, "this test browser does not deliver the mouse where it is aimed");
   await scratch(page, press);
-  const edge = page.getByRole("separator", { name: "The width of the left panel" });
+  await project(page, press);
+  const edge = page.getByRole("separator", { name: "The width of the left pane" });
+  await expect(edge).toHaveAttribute("aria-valuenow", "268");
   const box = (await edge.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + 200);
   await page.mouse.down();
   await page.mouse.move(400, box.y + 200, { steps: 4 });
   await page.mouse.up();
   await expect(edge).toHaveAttribute("aria-valuenow", "400");
-
-  const top = page.getByRole("separator", { name: "The height of the Output panel" });
-  const before = Number(await top.getAttribute("aria-valuenow"));
-  const at = (await top.boundingBox())!;
-  await page.mouse.move(at.x + 300, at.y + at.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(at.x + 300, at.y - 120, { steps: 4 });
-  await page.mouse.up();
-  expect(Number(await top.getAttribute("aria-valuenow"))).toBeGreaterThan(before + 10);
+  expect(Math.round((await leftPane(page).boundingBox())!.width)).toBe(400);
 });
 
-test("the Output panel sits under the script, folds away, is resized and is cleared", async ({
+test("a file opened from the Project pane or from ⌘K is shown in the Script place, named in the top bar and marked in the tree", async ({
   page,
   press,
 }) => {
   await scratch(page, press);
-  const script = page.locator(".cm-editor");
-  const output = page.getByTestId("output");
+  const tree = await project(page, press);
+  const top = page.locator("header.top");
+  const main = tree.getByRole("button", { name: /^main\.zeff/ });
+  const toml = tree.getByRole("button", { name: /^zeff\.toml/ });
+  await expect(main).toHaveClass(/\bon\b/);
+  await press(toml);
+  await expect.poll(() => scriptText(page)).toMatch(/^\[project\]\nname = "Scratch"/);
+  await expect(top).toContainText("/ zeff.toml · saved");
+  await expect(toml).toHaveClass(/\bon\b/);
+  await expect(main).not.toHaveClass(/\bon\b/);
+  // One file is shown at a time: the script comes back in its place, here from ⌘K.
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("open file main.zeff");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => scriptText(page)).toMatch(/^\/\/ A first look at the wages/);
+  await expect(top).toContainText("/ main.zeff · saved");
+  await expect(main).toHaveClass(/\bon\b/);
+  await expect(toml).not.toHaveClass(/\bon\b/);
+  await expect(page.getByRole("textbox", { name: "The script", exact: true })).toHaveCount(1);
+});
+
+test("Output: clear, from ⌘K, takes the run's outputs and its notes off the page", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await expect(output).toContainText("summary · by female");
-  // Under the script, in the same pane.
-  const above = (await script.boundingBox())!;
-  const below = (await output.boundingBox())!;
-  expect(below.y).toBeGreaterThan(above.y + above.height - 1);
-
-  const edge = page.getByRole("separator", { name: "The height of the Output panel" });
-  await expect(edge).toHaveAttribute("aria-valuenow", "42");
-  await edge.focus();
-  await page.keyboard.press("ArrowUp");
-  await expect(edge).toHaveAttribute("aria-valuenow", "46");
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("ArrowDown");
-  await expect(edge).toHaveAttribute("aria-valuenow", "38");
-
-  await press(page.getByRole("button", { name: "Hide the output" }));
-  await expect(output).toHaveCount(0);
-  await expect(edge).toHaveCount(0);
-  await press(page.getByRole("button", { name: "Show the output" }));
-  await expect(output).toContainText("summary · by female");
-  await press(page.getByRole("button", { name: "Clear" }));
-  await expect(output).toHaveText("Press Run to see each result under the line that made it.");
-});
-
-test("a file opens in a tab of its own, and a tab closes to its neighbour", async ({
-  page,
-  press,
-}) => {
-  await scratch(page, press);
-  const tabs = page.getByRole("tablist", { name: "Open files" });
-  await expect(tabs.getByRole("tab")).toHaveText(["main.zeff"]);
-  await press(page.getByRole("complementary").getByRole("button", { name: /zeff\.toml/ }));
-  await expect(tabs.getByRole("tab")).toHaveText(["main.zeff", "zeff.toml"]);
-  await expect(tabs.getByRole("tab", { name: "zeff.toml" })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
-  await expect.poll(() => scriptText(page)).toMatch(/^\[project\]\nname = "Scratch"/);
-  await expect(page.locator("header.top")).toContainText("/ zeff.toml · saved");
-  await press(tabs.getByRole("tab", { name: "main.zeff" }));
-  await expect.poll(() => scriptText(page)).toMatch(/^\/\/ A first look at the wages/);
-  await expect(page.getByText("scripts › main.zeff")).toBeVisible();
-  await press(page.getByRole("button", { name: "Close main.zeff" }));
-  await expect(tabs.getByRole("tab")).toHaveText(["zeff.toml"]);
-  await press(page.getByRole("button", { name: "Close zeff.toml" }));
-  await expect(page.getByText("No file is open. Choose one in the Project tab.")).toBeVisible();
+  await expect(page.locator(".cm-zemp-output").first()).toContainText("summary · by female");
+  await expect(page.getByTestId("note").first()).toBeVisible();
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("output clear");
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".cm-zemp-output")).toHaveCount(0);
+  await expect(page.getByTestId("note")).toHaveCount(0);
+  await expect(page.getByTestId("run-facts")).toHaveText("not run yet");
 });
 
 test("the Dark switch of the top bar switches the theme", async ({ page, press }) => {
@@ -248,6 +213,12 @@ test("a window narrower than 1,200 pixels says that no smaller layout exists yet
 
 test("app screens are set at 13.5 pixels and never below 12.5", async ({ page, press }) => {
   await scratch(page, press);
+  // With the left pane open on Project and Outline, and a run's notes and outputs on the page.
+  await project(page, press);
+  await press(bar(page).getByRole("button", { name: "Outline", exact: true }));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.locator(".cm-zemp-output").first()).toBeVisible();
   expect(await page.evaluate(() => getComputedStyle(document.body).fontSize)).toBe("13.5px");
   const smallest = await page.evaluate(() => {
     let least = Infinity;

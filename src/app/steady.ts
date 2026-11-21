@@ -16,28 +16,6 @@ export interface Place {
   from(name: string, edge: number): number | null;
 }
 
-/** Things drawn on the page, each with a name of its own, in order down the page. */
-export type Marks = () => Iterable<[string, Element]>;
-
-/** A place known by marks that are all on the page, such as the blocks of the Output panel. */
-export function marked(marks: Marks): Place {
-  return {
-    at(edge) {
-      for (const [name, mark] of marks()) {
-        const box = mark.getBoundingClientRect();
-        if (box.bottom > edge + 1) return { name, offset: box.top - edge };
-      }
-      return null;
-    },
-    from(name, edge) {
-      for (const [other, mark] of marks()) {
-        if (other === name) return mark.getBoundingClientRect().top - edge;
-      }
-      return null;
-    },
-  };
-}
-
 /**
  * Hold `content` at the height it has now, inside `scroller`, and note what holds the top of
  * the reader's view. Gives back what releases it: the reader is put back at that thing, as

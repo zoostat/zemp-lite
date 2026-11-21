@@ -7,17 +7,22 @@ import { expect, test, useExample } from "./support";
 const READY = "engine Zeff 0.8.0 ready";
 const kept = (name: string) => readFileSync(new URL(`../scripts/figures/${name}`, import.meta.url));
 
-/** Run the example in Panes and open the plot viewer. */
-async function viewer(page: Page, press: (target: Locator) => Promise<void>): Promise<Locator> {
-  await page.setViewportSize({ width: 1400, height: 900 });
+/** Run the example and open the plot viewer, which is the Plots place, in a window of `width`. */
+async function viewer(
+  page: Page,
+  press: (target: Locator) => Promise<void>,
+  width = 1400,
+): Promise<Locator> {
+  await page.setViewportSize({ width, height: 900 });
   await page.goto("/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await press(page.getByRole("tab", { name: "Plots" }));
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
+  );
   const plots = page.getByTestId("plots");
   await expect(plots.locator(".stage img")).toBeVisible();
   return plots;
@@ -42,7 +47,9 @@ test("the viewer shows a plot drawn to fit, and the strip holds every plot of th
   page,
   press,
 }) => {
-  const plots = await viewer(page, press);
+  // A window whose place for the plot is narrower than the 1,100 pixels a figure is drawn at
+  // most, so that the figure drawn to fit fills it.
+  const plots = await viewer(page, press, 1280);
   await expect(plots.getByRole("heading", { level: 2 })).toHaveText(
     /line 17\s+w2010 · log\(wage\) against educ/,
   );
@@ -218,7 +225,7 @@ test("a plot pops out into a window of its own, which redraws it to fit when res
   await closed;
 });
 
-test("from the margin editor the viewer is opened with ⌘K, in the script's place, and Script goes back", async ({
+test("the viewer is opened with ⌘K too, as the Plots place, and Script goes back", async ({
   page,
   press,
 }) => {
@@ -237,13 +244,19 @@ test("from the margin editor the viewer is opened with ⌘K, in the script's pla
   await expect(
     plots.getByRole("list", { name: "Plots of the last run" }).getByRole("listitem"),
   ).toHaveCount(2);
-  await expect(page.getByRole("button", { name: "Margin", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
+  // The viewer is the Plots place, and the top bar says so.
+  const places = page.getByRole("navigation", { name: "Places" });
+  await expect(places.getByRole("button", { name: "Plots" })).toHaveAttribute(
+    "aria-current",
+    "page",
   );
   await press(plots.getByRole("button", { name: "‹ Script" }));
   await expect(page.getByRole("textbox", { name: "The script", exact: true })).toBeVisible();
   await expect(plots).toHaveCount(0);
+  await expect(places.getByRole("button", { name: "Script" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
 });
 
 test("the viewer says so where the last run drew no plot", async ({ page, press }) => {

@@ -98,10 +98,6 @@ test("a project opens in the margin editor: 920 pixels of code and 300 of notes,
   press,
 }) => {
   await scratch(page, press);
-  await expect(page.getByRole("button", { name: "Margin", exact: true })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
   await expect(page.getByRole("complementary")).toHaveCount(0);
   const column = (await page.locator(".cm-editor").boundingBox())!;
   expect(column.width).toBeLessThanOrEqual(1220);
@@ -165,23 +161,6 @@ test("an unfolded output's header gives its lines, its time and its actions", as
       .getByRole("button", { name: "Open in Plots ↗" }),
   );
   await expect(page.getByRole("button", { name: "‹ Script" })).toBeVisible();
-});
-
-test("the same run reads the same unfolded in the margin editor and in Panes, and one click switches", async ({
-  page,
-  press,
-}) => {
-  await scratch(page, press);
-  await runUnfolded(page, press);
-  const inline = [await printed(page), await saidAsWritten(page)];
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
-  await expect(page.getByRole("complementary")).toBeVisible();
-  // The run is not made again: the same results, laid out in the Output panel.
-  expect([await printed(page), await saidAsWritten(page)]).toEqual(inline);
-  await expect(page.locator(".cm-zemp-output")).toHaveCount(0);
-  await press(page.getByRole("button", { name: "Margin", exact: true }));
-  await expect(page.locator(".cm-zemp-output")).toHaveCount(7);
-  expect([await printed(page), await saidAsWritten(page)]).toEqual(inline);
 });
 
 test("the example with every output unfolded is the text kept for it", async ({ page, press }) => {

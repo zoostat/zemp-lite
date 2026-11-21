@@ -1,6 +1,15 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, printed, saidAsWritten, scriptText, test, write, useExample } from "./support";
+import {
+  expect,
+  placeOf,
+  printed,
+  saidAsWritten,
+  scriptText,
+  test,
+  write,
+  useExample,
+} from "./support";
 
 const example = (file: string) =>
   readFileSync(new URL(`../scripts/example/${file}`, import.meta.url), "utf8");
@@ -14,8 +23,6 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
   await expect(page).toHaveURL(/#\/p\/scratch$/);
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
-  // These tests are of the Panes layout; a project opens in the margin editor.
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
 }
 
 test("the welcome screen opens, names the release and says where projects are kept", async ({
@@ -71,13 +78,21 @@ test("with no choice made, the theme is the system's", async ({ page }) => {
 });
 
 test("the example prints what `zeff run` 0.8.0 prints, byte for byte", async ({ page, press }) => {
+  // A window tall enough for the whole script with its outputs: the editor draws only the
+  // lines near its window.
+  await page.setViewportSize({ width: 1100, height: 3600 });
   const before = Date.now();
   await scratch(page, press);
   // For the notes of the release, not a limit: from asking for the page to the engine ready.
   test.info().annotations.push({ type: "engine ready", description: `${Date.now() - before} ms` });
   await expect.poll(() => scriptText(page)).toBe(example("scripts/main.zeff"));
+  // The page prints at the width of its place, and `zeff run` at 118 characters: the window is
+  // given the width at which the place is 118 characters wide.
+  await placeOf(page, 118);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  // The run unfolded its seven outputs, each under its statement.
+  await expect(page.getByTestId("block")).toHaveCount(7);
   expect(await printed(page)).toBe(example("expected/stdout.txt"));
   expect(await saidAsWritten(page)).toBe(example("expected/stderr.txt"));
 });
@@ -87,12 +102,21 @@ test("a data file chosen from the computer is added under data/, read by a run, 
   press,
 }) => {
   await scratch(page, press);
-  await page.getByLabel("Data files to add").setInputFiles({
+  // Files are added from the Project pane, at the script's left.
+  await press(
+    page
+      .getByRole("toolbar", { name: "Script: its panes and its controls" })
+      .getByRole("button", { name: "Project", exact: true }),
+  );
+  const project = page
+    .getByRole("complementary", { name: "Script: the left pane" })
+    .getByRole("region", { name: "Project" });
+  await project.getByLabel("Data files to add").setInputFiles({
     name: "pay.csv",
     mimeType: "text/csv",
     buffer: Buffer.from("id,wage\n1,23.5\n2,19\n3,31.25\n"),
   });
-  await expect(page.getByRole("listitem").filter({ hasText: "pay.csv" }).last()).toContainText(
+  await expect(project.getByRole("listitem").filter({ hasText: "pay.csv" }).last()).toContainText(
     "28 B",
   );
   await expect.poll(() => scriptText(page)).toBe(example("scripts/main.zeff"));
@@ -101,7 +125,7 @@ test("a data file chosen from the computer is added under data/, read by a run, 
   await expect(page.getByRole("status")).toHaveText("done");
   await expect.poll(() => printed(page)).toBe("3\n");
   // The same name a second time is refused, in words.
-  await page.getByLabel("Data files to add").setInputFiles({
+  await project.getByLabel("Data files to add").setInputFiles({
     name: "pay.csv",
     mimeType: "text/csv",
     buffer: Buffer.from("id\n9\n"),
@@ -142,15 +166,18 @@ test("in a private window, where the browser keeps nothing, the screen says so a
 }) => {
   // Only WebKit refuses a private window its storage; the others keep it for the session.
   test.skip(browserName !== "webkit", "this browser gives a private window storage");
+  // A window tall enough for the whole script with its outputs: the editor draws only the
+  // lines near its window.
+  await page.setViewportSize({ width: 1100, height: 3600 });
   await page.goto("/");
   await expect(page.getByText("Not kept.")).toBeVisible();
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
-  // The results are read in Panes, where every output is on the page: the margin editor of
-  // a window this tall draws only what is near the window.
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
+  await placeOf(page, 118);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  // The run unfolded its seven outputs, each under its statement.
+  await expect(page.getByTestId("block")).toHaveCount(7);
   expect(await printed(page)).toBe(example("expected/stdout.txt"));
 });

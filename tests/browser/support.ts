@@ -203,6 +203,30 @@ export async function placeOf(page: Page, columns: number): Promise<void> {
   await expect(sheet).toHaveAttribute("data-width", String(columns));
 }
 
+/**
+ * Give the window the height at which the whole script is on the page with its outputs. The
+ * editor draws the lines near the window and reckons the height of the rest, so a test that
+ * reads every output of a long script first makes the window as tall as the page, and again
+ * as the outputs then drawn are measured, until nothing is left to scroll to.
+ */
+export async function wholeScript(page: Page): Promise<void> {
+  const pane = page.getByRole("region", { name: "Script with its notes and output" });
+  let held = 0;
+  for (let tries = 0; tries < 60 && held < 2; tries += 1) {
+    const over = await pane.evaluate((node) => node.scrollHeight - node.clientHeight);
+    if (over > 0) {
+      held = 0;
+      const size = page.viewportSize()!;
+      await page.setViewportSize({ width: size.width, height: size.height + over + 200 });
+    } else {
+      held += 1;
+    }
+    // The page is measured again as the window settles.
+    await page.waitForTimeout(150);
+  }
+  expect(held, "the window holds the whole script").toBe(2);
+}
+
 /** The text the editor holds. (The editor draws the lines near the window; these scripts are short.) */
 export async function scriptText(page: Page): Promise<string> {
   // Each line's code, without the margin's note that stands in it. The function runs in the
@@ -248,13 +272,16 @@ export async function useExample(page: Page): Promise<void> {
   await expect(page.getByText("saving")).toHaveCount(0);
 }
 
-/** What the Output panel shows as printed, the statements' output one after another. */
+/**
+ * What the page shows as printed, the statements' output one after another: the outputs
+ * unfolded under their statements, which are those the editor has drawn.
+ */
 export async function printed(page: Page): Promise<string> {
   return (await page.getByTestId("printed").allTextContents()).join("");
 }
 
 /**
- * What the Output panel shows as said, each card written back as the engine writes a message:
+ * What the page shows as said, each card written back as the engine writes a message:
  * its kind, its code and its sentence, then the line it speaks of or, for an error, the
  * excerpt of the script, then its advice.
  */

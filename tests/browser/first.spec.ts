@@ -5,7 +5,7 @@
 // `examples/scratch/expected/`.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, printed, saidAsWritten, scriptText, test } from "./support";
+import { expect, placeOf, printed, saidAsWritten, scriptText, test, wholeScript } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 const scratch = (file: string) =>
@@ -21,12 +21,18 @@ test("the Scratch project opens on the returns to schooling, and both its script
   page,
   press,
 }) => {
+  await page.setViewportSize({ width: 1100, height: 3600 });
   await opened(page, press);
   await expect.poll(() => scriptText(page)).toBe(scratch("scripts/main.zeff"));
-  // In Panes, the Output panel holds the whole of what each run printed and said.
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
+  // The page prints at the width of its place, and `zeff run` at 118 characters: the window is
+  // given the width at which the place is 118 characters wide.
+  await placeOf(page, 118);
+  // A run unfolds every output under its statement; the window is made tall enough to hold
+  // them all, so that the whole of what the run printed and said is on the page.
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  await wholeScript(page);
+  await expect(page.locator(".sheet")).toHaveAttribute("data-width", "118");
   await expect.poll(() => printed(page)).toBe(scratch("expected/main.stdout"));
   await expect.poll(() => saidAsWritten(page)).toBe(scratch("expected/main.stderr"));
   // The second script, opened from ⌘K and run.
@@ -39,6 +45,8 @@ test("the Scratch project opens on the returns to schooling, and both its script
     .toMatch(/^\/\/ Instrumental variables, end to end, on the staff data/);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  await wholeScript(page);
+  await expect(page.locator(".sheet")).toHaveAttribute("data-width", "118");
   await expect.poll(() => printed(page)).toBe(scratch("expected/instruments.stdout"));
   await expect.poll(() => saidAsWritten(page)).toBe(scratch("expected/instruments.stderr"));
 });
@@ -54,10 +62,12 @@ test("the showcase of plots prints what `zeff run` prints, and its 21 plots are 
   await expect
     .poll(() => scriptText(page))
     .toMatch(/^\/\/ Plots in Zeff, from one line to a figure ready for a journal/);
-  await press(page.getByRole("button", { name: "Panes", exact: true }));
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
-  // Printed at the width of the Output panel, a wide table is laid out otherwise than at the
+  // Every output is unfolded under its statement, the 21 figures among them: the window is
+  // made tall enough to hold them all.
+  await wholeScript(page);
+  // Printed at the width of the place, a wide table is laid out otherwise than at the
   // 80 columns of `expected/plots.stdout`, which the native test holds the whole text to; what
   // does not depend on the width is held here: the head of each plot, in order, and every
   // message as the engine words it.
@@ -67,8 +77,9 @@ test("the showcase of plots prints what `zeff run` prints, and its 21 plots are 
     .toEqual(heads(scratch("expected/plots.stdout")));
   await expect.poll(() => saidAsWritten(page)).toBe(scratch("expected/plots.stderr"));
   // Every plot the script prints is one of the plots of the run, each drawn by the engine.
-  const tabs = page.getByRole("tablist", { name: "Open files" });
-  await press(tabs.getByRole("tab", { name: "Plots", exact: true }));
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
+  );
   const plots = page.getByTestId("plots");
   await expect(
     plots.getByRole("list", { name: "Plots of the last run" }).getByRole("listitem"),

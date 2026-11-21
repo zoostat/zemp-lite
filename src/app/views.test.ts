@@ -2,21 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   fileTab,
   leftWidth,
-  outputShare,
   readViews,
   rightWidth,
   tabPath,
   unfoldToggled,
   usual,
   withTab,
-  withoutTab,
   writeViews,
 } from "./views";
 
 describe("the view state of a project", () => {
   it("is written and read back as it was", () => {
     const state = usual();
-    state.layout = "panes";
     state.script = { unfolded: { "scripts/main.zeff": [8, 13] } };
     state.panes = {
       script: { project: true, outline: true, notes: false },
@@ -25,8 +22,7 @@ describe("the view state of a project", () => {
       help: { outline: false, related: false },
     };
     state.right = { width: 400 };
-    state.left = { tab: "objects", width: 312, shown: false };
-    state.output = { share: 0.3, shown: false };
+    state.left = { width: 312 };
     state.tabs = [fileTab("scripts/main.zeff"), fileTab("scripts/second.zeff"), "view:plots"];
     state.active = "view:plots";
     state.folded = ["data"];
@@ -76,9 +72,8 @@ describe("the view state of a project", () => {
   it("replaces each part it cannot read by the usual one, and keeps the rest", () => {
     const read = readViews(
       JSON.stringify({
-        layout: "columns",
         left: { tab: "methods", width: "wide", shown: false },
-        output: { share: 0.5, shown: "yes" },
+        right: { width: "narrow" },
         tabs: ["file:a.zeff", 7],
         folded: "data",
         later: { anything: true },
@@ -86,14 +81,13 @@ describe("the view state of a project", () => {
     );
     expect(read).toEqual({
       ...usual(),
-      left: { tab: "project", width: 268, shown: false },
-      output: { share: 0.5, shown: true },
+      left: { width: 268 },
+      right: { width: 310 },
       others: { later: { anything: true } },
     });
   });
 
-  it("opens a project in the margin editor with every output folded and the notes shown", () => {
-    expect(usual().layout).toBe("margin");
+  it("opens a project with every output folded and the notes shown", () => {
     expect(usual().script).toEqual({ unfolded: {} });
     expect(usual().panes.script.notes).toBe(true);
   });
@@ -150,19 +144,29 @@ describe("the view state of a project", () => {
     expect(later.panes.plots.list).toBe(true);
   });
 
-  it("reads a file of version 1, whose layout is Inline, as the margin editor", () => {
-    expect(readViews(JSON.stringify({ layout: "inline" })).layout).toBe("margin");
-    expect(readViews(JSON.stringify({ layout: "panes" })).layout).toBe("panes");
+  it("passes over the layouts an earlier file names, which are gone, and does not keep them", () => {
+    for (const layout of ["inline", "panes", "margin"]) {
+      const read = readViews(
+        JSON.stringify({
+          version: 2,
+          layout,
+          output: { share: 0.3, shown: false },
+          left: { tab: "objects", width: 300, shown: false },
+        }),
+      );
+      expect(read).toEqual({ ...usual(), left: { width: 300 } });
+      const written = JSON.parse(writeViews(read)) as Record<string, unknown>;
+      expect(Object.keys(written)).not.toContain("layout");
+      expect(Object.keys(written)).not.toContain("output");
+      expect(written["left"]).toEqual({ width: 300 });
+    }
   });
 
   it("writes its version, and keeps what a later build wrote that this one does not know", () => {
-    const read = readViews(
-      JSON.stringify({ version: 4, paper: { file: "p.zmd" }, layout: "panes" }),
-    );
+    const read = readViews(JSON.stringify({ version: 4, paper: { file: "p.zmd" } }));
     const written = JSON.parse(writeViews(read)) as Record<string, unknown>;
     expect(written["version"]).toBe(3);
     expect(written["paper"]).toEqual({ file: "p.zmd" });
-    expect(written["layout"]).toBe("panes");
     expect(Object.keys(written)).not.toContain("others");
   });
 
@@ -187,18 +191,16 @@ describe("the view state of a project", () => {
     expect(unfoldToggled(state, "t.zeff", 4)).toEqual([4]);
   });
 
-  it("holds the panel's width and the output's share inside their limits", () => {
+  it("holds the width of the left pane and of the right inside their limits", () => {
     expect(leftWidth(20)).toBe(180);
     expect(leftWidth(9000)).toBe(520);
     expect(leftWidth(300.4)).toBe(300);
     expect(rightWidth(20)).toBe(240);
     expect(rightWidth(9000)).toBe(560);
     expect(rightWidth(333.6)).toBe(334);
-    expect(outputShare(0)).toBe(0.12);
-    expect(outputShare(1)).toBe(0.85);
-    const read = readViews(JSON.stringify({ left: { width: 5 }, output: { share: 7 } }));
+    const read = readViews(JSON.stringify({ left: { width: 5 }, right: { width: 7 } }));
     expect(read.left.width).toBe(180);
-    expect(read.output.share).toBe(0.85);
+    expect(read.right.width).toBe(240);
   });
 
   it("reads the plot viewer's state, at most four plots pinned, an unknown page passed over", () => {
@@ -247,19 +249,5 @@ describe("the tabs", () => {
       tabs: ["file:a", "file:b", "file:c"],
       active: "file:a",
     });
-  });
-
-  it("close a tab and show its neighbour where it was the one shown", () => {
-    expect(withoutTab(state, "file:b")).toEqual({ tabs: ["file:a", "file:c"], active: "file:c" });
-    expect(withoutTab({ ...state, active: "file:c" }, "file:c")).toEqual({
-      tabs: ["file:a", "file:b"],
-      active: "file:b",
-    });
-    expect(withoutTab(state, "file:a")).toEqual({ tabs: ["file:b", "file:c"], active: "file:b" });
-    expect(withoutTab({ ...state, tabs: ["file:b"] }, "file:b")).toEqual({
-      tabs: [],
-      active: null,
-    });
-    expect(withoutTab(state, "file:z")).toEqual({ tabs: state.tabs, active: "file:b" });
   });
 });
