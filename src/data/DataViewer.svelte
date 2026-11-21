@@ -297,7 +297,7 @@
 <svelte:window onmouseup={() => (dragging = false)} />
 
 <div class="data" data-testid="data">
-  {#if workspace.views.data.list}
+  {#if workspace.views.panes.data.frames}
     <aside class="side" aria-label="The frames of the run">
       <div class="side-head">
         <span>Frames of the run</span>
@@ -375,7 +375,7 @@
   <div class="main">
     <div class="bar">
       {#if onback}<button class="word" onclick={onback}>‹ Script</button>{/if}
-      {#if !workspace.views.data.list}
+      {#if !workspace.views.panes.data.frames}
         <button class="word" onclick={() => workspace.setDataList(true)}
           >Show frames and variables ›</button
         >

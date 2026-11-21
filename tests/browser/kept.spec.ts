@@ -177,6 +177,42 @@ test("what is unfolded, and whether the notes are shown, are kept with the proje
   await expect(page.getByTestId("note")).toHaveCount(0);
 });
 
+test("which panes of a place are open, and the left pane's width, are kept with the project", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
+  const project = bar.getByRole("button", { name: "Project", exact: true });
+  const notes = bar.getByRole("button", { name: "Notes", exact: true });
+  // A project opens with Project closed and Notes open (open decision #203).
+  await expect(project).toHaveAttribute("aria-pressed", "false");
+  await expect(notes).toHaveAttribute("aria-pressed", "true");
+  await press(project);
+  await press(notes);
+  const edge = page.getByRole("separator", { name: "The width of the left pane" });
+  await edge.focus();
+  await page.keyboard.press("ArrowRight");
+  // The view state is written a moment after the last change.
+  await page.waitForTimeout(1500);
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(project).toHaveAttribute("aria-pressed", "true");
+  await expect(notes).toHaveAttribute("aria-pressed", "false");
+  await expect(
+    page.getByRole("complementary", { name: "Script: the left pane" }).getByRole("region", {
+      name: "Project",
+    }),
+  ).toBeVisible();
+  await expect(edge).toHaveAttribute("aria-valuenow", "284");
+  // Left as a project opens, for the tests that follow in this profile.
+  await press(project);
+  await press(notes);
+  await page.waitForTimeout(1500);
+});
+
 test("the order of the strip, the plots pinned and the page chosen are kept with the project", async ({
   page,
   press,

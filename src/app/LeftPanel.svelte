@@ -2,66 +2,17 @@
   // The one left panel, with two tabs (open decision #146, item 7). Project: the project's
   // files as a tree, with their sizes. Objects: what the last run left in memory, and the
   // engine. There is no right panel.
-  import type { TreeNode } from "../project/projects";
-  import { count, size } from "./format";
-  import { fileTab } from "./views";
-  import { editable, type Workspace } from "./workspace-state.svelte";
+  import { count } from "./format";
+  import ProjectTree from "./ProjectTree.svelte";
+  import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
-
-  let chooser = $state<HTMLInputElement | null>(null);
 
   // The memory budget of a window of the browser: the smaller of 3.5 GB and half the memory
   // the device reports (Engine Specification, section 8.3, point 7).
   const device = (navigator as { deviceMemory?: number }).deviceMemory;
   const budget = device === undefined ? 3.5 : Math.min(3.5, device / 2);
-
-  async function chosen(): Promise<void> {
-    if (chooser?.files) {
-      await workspace.addData(chooser.files);
-      chooser.value = "";
-    }
-  }
 </script>
-
-{#snippet rows(nodes: TreeNode[], depth: number)}
-  <ul>
-    {#each nodes as node (node.path)}
-      <li>
-        {#if node.kind === "folder"}
-          {@const folded = workspace.views.folded.includes(node.path)}
-          <button
-            class="row"
-            style:padding-left="{8 + depth * 18}px"
-            aria-expanded={!folded}
-            onclick={() => workspace.toggleFolder(node.path)}
-          >
-            <span class="chevron" class:open={!folded} aria-hidden="true">›</span>
-            <span class="name">{node.name}</span>
-          </button>
-          {#if !folded}
-            {@render rows(node.children, depth + 1)}
-          {/if}
-        {:else if editable(node.path)}
-          <button
-            class="row file"
-            class:on={workspace.views.active === fileTab(node.path)}
-            style:padding-left="{26 + depth * 18}px"
-            onclick={() => void workspace.open(node.path)}
-          >
-            <span class="name">{node.name}</span>
-            <em>{size(node.size)}</em>
-          </button>
-        {:else}
-          <div class="row file plain" style:padding-left="{26 + depth * 18}px">
-            <span class="name">{node.name}</span>
-            <em>{size(node.size)}</em>
-          </div>
-        {/if}
-      </li>
-    {/each}
-  </ul>
-{/snippet}
 
 <aside class="left" aria-label="Project and objects">
   <div class="tabs" role="tablist">
@@ -86,27 +37,7 @@
 
   {#if workspace.views.left.tab === "project"}
     <div class="panel" role="tabpanel" aria-label="Project">
-      <div class="head">
-        <span>{workspace.project.info.name}</span>
-        <button
-          class="add"
-          onclick={() => chooser?.click()}
-          aria-label="Add a data file…"
-          title="Add a data file…">+</button
-        >
-        <input
-          bind:this={chooser}
-          type="file"
-          multiple
-          hidden
-          onchange={chosen}
-          aria-label="Data files to add"
-        />
-      </div>
-      <div class="tree">
-        {@render rows(workspace.tree, 0)}
-      </div>
-      {#if workspace.problem}<p class="problem" role="alert">{workspace.problem}</p>{/if}
+      <ProjectTree {workspace} />
     </div>
   {:else}
     <div class="panel" role="tabpanel" aria-label="Objects">
@@ -188,8 +119,7 @@
   .gap {
     flex: 1;
   }
-  .fold,
-  .add {
+  .fold {
     background: transparent;
     border: 0;
     border-radius: 6px;
@@ -199,8 +129,7 @@
     line-height: 1;
     width: 22px;
   }
-  .fold:hover,
-  .add:hover {
+  .fold:hover {
     background: var(--line);
     color: var(--ink);
   }
@@ -222,58 +151,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  .tree {
-    padding: 0 8px 10px;
-  }
-  ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .row {
-    align-items: center;
-    background: transparent;
-    border: 0;
-    border-radius: 7px;
-    box-sizing: border-box;
-    color: var(--ink-2);
-    display: flex;
-    gap: 7px;
-    height: 30px;
-    padding-right: 8px;
-    text-align: left;
-    white-space: nowrap;
-    width: 100%;
-  }
-  button.row:hover {
-    background: var(--line);
-  }
-  .row.on {
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 600;
-  }
-  .row .name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .row em {
-    color: var(--ink-3);
-    font-size: 12.5px;
-    font-style: normal;
-    font-weight: 400;
-    margin-left: auto;
-  }
-  .chevron {
-    color: var(--ink-3);
-    display: inline-block;
-    text-align: center;
-    transition: transform 0.12s;
-    width: 11px;
-  }
-  .chevron.open {
-    transform: rotate(90deg);
   }
   .objects {
     display: grid;
@@ -323,14 +200,9 @@
     color: var(--ink-3);
     font-weight: 400;
   }
-  .none,
-  .problem {
+  .none {
     color: var(--ink-3);
     margin: 0;
     padding: 0 4px 6px;
-  }
-  .problem {
-    color: var(--warning);
-    padding: 0 16px 10px;
   }
 </style>

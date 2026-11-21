@@ -4,13 +4,33 @@
 // and width, the share of the script's pane the output takes, the open tabs. Whatever the
 // file holds that is not understood is passed over, and the default is used in its place, so
 // a file written by a later version, or damaged, never keeps a project from opening.
+//
+// From Zemp Lite 0.2.1 every place has a left pane, the place itself and a right pane, each
+// pane opened and closed by its own link (open decision #203), and the file says which panes
+// of each place are open and how wide the two sides are.
 
 import type { View } from "../engine/messages";
 
 export type Layout = "margin" | "panes";
 
 /** The version of the view state this build writes; a file without one is of version 1. */
-export const VIEWS_VERSION = 2;
+export const VIEWS_VERSION = 3;
+
+/**
+ * The panes of each place, and whether each is open in a project opened for the first time
+ * (#203): beside the script, Project and Outline closed and Notes open; beside the data, the
+ * frames open and the variables closed; beside a plot and a help page, both open.
+ */
+export const PANES = {
+  script: { project: false, outline: false, notes: true },
+  data: { frames: true, variables: false },
+  plots: { list: true, about: true },
+  help: { outline: true, related: true },
+} as const;
+export type PlaceName = keyof typeof PANES;
+export type PaneName<P extends PlaceName> = keyof (typeof PANES)[P];
+/** Which panes are open, for each place. */
+export type PaneState = { [P in PlaceName]: { -readonly [N in PaneName<P>]: boolean } };
 export type LeftTab = "project" | "objects";
 
 export interface ViewState {
@@ -20,23 +40,24 @@ export interface ViewState {
    * "inline", the layout the margin editor replaces, and is read as the margin editor.
    */
   layout: Layout;
+  /** Which panes of each place are open (#203). */
+  panes: PaneState;
+  /** The right pane of a place: its width, in pixels. */
+  right: { width: number };
   /** The margin editor's view of the scripts. */
   script: {
-    /** Whether the notes beside the code are shown. */
-    notes: boolean;
     /** For each script, by its path, the lines of the statements whose output is unfolded. */
     unfolded: Record<string, number[]>;
   };
   /**
-   * The data viewer: the frame shown, by the name of its binding; the list shown or hidden; the
-   * variable chosen for the inspector; and, for each frame, the variables hidden from the grid.
+   * The data viewer: the frame shown, by the name of its binding; the variable chosen for the
+   * inspector; and, for each frame, the variables hidden from the grid.
    * Hiding is the view's alone: a hidden variable is still in every result and export. And
    * for each frame, how it is shown: kept to the rows of a condition, sorted and searched,
    * which the viewer's Copy as Zeff writes as a statement and the script never holds.
    */
   data: {
     frame: string | null;
-    list: boolean;
     variable: string | null;
     hidden: Record<string, string[]>;
     shown: Record<string, View>;
@@ -70,13 +91,13 @@ export interface ViewState {
     shown: string | null;
     /** The size plots are drawn at: to fit the pane, or a page of a journal or a slide. */
     page: "fit" | "one_column" | "two_column" | "slide";
-    /** Whether the list of plots at the left is shown. */
-    list: boolean;
   };
 }
 
 /** The narrowest and the widest the left panel goes. */
 export const LEFT_WIDTH = { least: 180, most: 520, usual: 268 } as const;
+/** The narrowest and the widest the right pane of a place goes. */
+export const RIGHT_WIDTH = { least: 240, most: 560, usual: 310 } as const;
 /** The least and the most of the script's pane the output takes. */
 export const OUTPUT_SHARE = { least: 0.12, most: 0.85, usual: 0.42 } as const;
 
@@ -110,15 +131,22 @@ export function usual(): ViewState {
   return {
     // Zemp Lite opens in the margin editor, every output folded (#174).
     layout: "margin",
-    script: { notes: true, unfolded: {} },
-    data: { frame: null, list: true, variable: null, hidden: {}, shown: {} },
+    panes: {
+      script: { ...PANES.script },
+      data: { ...PANES.data },
+      plots: { ...PANES.plots },
+      help: { ...PANES.help },
+    },
+    right: { width: RIGHT_WIDTH.usual },
+    script: { unfolded: {} },
+    data: { frame: null, variable: null, hidden: {}, shown: {} },
     others: {},
     left: { tab: "project", width: LEFT_WIDTH.usual, shown: true },
     output: { share: OUTPUT_SHARE.usual, shown: true },
     tabs: [fileTab("scripts/main.zeff")],
     active: fileTab("scripts/main.zeff"),
     folded: [],
-    plots: { order: [], pinned: [], shown: null, page: "fit", list: true },
+    plots: { order: [], pinned: [], shown: null, page: "fit" },
   };
 }
 
@@ -128,6 +156,10 @@ const within = (value: number, least: number, most: number) =>
 /** The width the left panel is given when `width` is asked for. */
 export const leftWidth = (width: number) =>
   Math.round(within(width, LEFT_WIDTH.least, LEFT_WIDTH.most));
+
+/** The width the right pane is given when `width` is asked for. */
+export const rightWidth = (width: number) =>
+  Math.round(within(width, RIGHT_WIDTH.least, RIGHT_WIDTH.most));
 
 /** The share the output is given when `share` is asked for. */
 export const outputShare = (share: number) => within(share, OUTPUT_SHARE.least, OUTPUT_SHARE.most);
@@ -150,9 +182,30 @@ export function readViews(text: string | null): ViewState {
   } else if (from["layout"] === "inline") {
     state.layout = "margin";
   }
+  // The panes of each place, as a file of version 3 says them. A pane the file does not name,
+  // or names with anything but a truth value, stands as in a project opened for the first time.
+  const panes = from["panes"] as Record<string, unknown> | undefined;
+  if (typeof panes === "object" && panes !== null) {
+    for (const place of Object.keys(PANES) as PlaceName[]) {
+      const said = panes[place] as Record<string, unknown> | undefined;
+      if (typeof said !== "object" || said === null) continue;
+      const open = state.panes[place] as Record<string, boolean>;
+      for (const pane of Object.keys(PANES[place])) {
+        if (typeof said[pane] === "boolean") open[pane] = said[pane];
+      }
+    }
+  }
+  const right = from["right"] as Record<string, unknown> | undefined;
+  if (typeof right === "object" && right !== null) {
+    if (typeof right["width"] === "number" && Number.isFinite(right["width"])) {
+      state.right.width = rightWidth(right["width"]);
+    }
+  }
+  // A file of version 1 or 2 said three of them where the viewers then kept them.
+  const earlier = typeof panes !== "object" || panes === null;
   const script = from["script"] as Record<string, unknown> | undefined;
   if (typeof script === "object" && script !== null) {
-    if (typeof script["notes"] === "boolean") state.script.notes = script["notes"];
+    if (earlier && typeof script["notes"] === "boolean") state.panes.script.notes = script["notes"];
     const unfolded = script["unfolded"];
     if (typeof unfolded === "object" && unfolded !== null && !Array.isArray(unfolded)) {
       for (const [path, lines] of Object.entries(unfolded as Record<string, unknown>)) {
@@ -169,7 +222,7 @@ export function readViews(text: string | null): ViewState {
   const data = from["data"] as Record<string, unknown> | undefined;
   if (typeof data === "object" && data !== null) {
     if (typeof data["frame"] === "string") state.data.frame = data["frame"];
-    if (typeof data["list"] === "boolean") state.data.list = data["list"];
+    if (earlier && typeof data["list"] === "boolean") state.panes.data.frames = data["list"];
     if (typeof data["variable"] === "string") state.data.variable = data["variable"];
     const hidden = data["hidden"];
     if (typeof hidden === "object" && hidden !== null && !Array.isArray(hidden)) {
@@ -228,7 +281,7 @@ export function readViews(text: string | null): ViewState {
     if (page === "fit" || page === "one_column" || page === "two_column" || page === "slide") {
       state.plots.page = page;
     }
-    if (typeof plots["list"] === "boolean") state.plots.list = plots["list"];
+    if (earlier && typeof plots["list"] === "boolean") state.panes.plots.list = plots["list"];
   }
   return state;
 }

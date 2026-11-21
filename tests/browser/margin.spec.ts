@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import {
+  cursorTo,
   blocksAsText,
   editor,
   expect,
@@ -92,7 +93,7 @@ const under = (page: Page) =>
     }),
   );
 
-test("a project opens in the margin editor: 760 pixels of code and 300 of notes, with no panel beside it", async ({
+test("a project opens in the margin editor: 920 pixels of code and 300 of notes, with no panel beside it", async ({
   page,
   press,
 }) => {
@@ -103,8 +104,8 @@ test("a project opens in the margin editor: 760 pixels of code and 300 of notes,
   );
   await expect(page.getByRole("complementary")).toHaveCount(0);
   const column = (await page.locator(".cm-editor").boundingBox())!;
-  expect(column.width).toBeLessThanOrEqual(1060);
-  expect(column.width).toBeGreaterThan(1000);
+  expect(column.width).toBeLessThanOrEqual(1220);
+  expect(column.width).toBeGreaterThan(1160);
   // The column is centred in the window.
   const window = page.viewportSize()!.width;
   expect(Math.abs(column.x + column.width / 2 - window / 2)).toBeLessThan(2);
@@ -439,12 +440,12 @@ test("the code's column widens with the size of the code, and the notes keep the
   await page.setViewportSize({ width: 1600, height: 3200 });
   await scratch(page, press);
   const width = async () => Math.round((await page.locator(".cm-editor").boundingBox())!.width);
-  expect(await width()).toBe(760 + 300);
+  expect(await width()).toBe(920 + 300);
   for (let more = 0; more < 3; more++) {
     await press(page.getByRole("button", { name: "Larger code text" }));
   }
-  // At 18 pixels the code's column is 18/14 of 760.
-  await expect.poll(width).toBe(Math.round((760 * 18) / 14) + 300);
+  // At 18 pixels the code's column is 18/14 of 920.
+  await expect.poll(width).toBe(Math.round((920 * 18) / 14) + 300);
 });
 
 test("a run leaves the reader where they were in the script, not at the top of the page", async ({
@@ -627,9 +628,12 @@ test("the engine prints at the width of the place, and again at a new width when
   // Every line the engine printed fits the place: it laid its tables out at that width.
   await expect.poll(longest).toBeLessThanOrEqual(wide);
   const before = await printed(page);
-  // A narrower window: the prints are laid out afresh, the run keeping its number.
+  const longestBefore = await longest();
+  // A narrower window, too narrow for the widest table as it stands: the prints are laid out
+  // afresh, the run keeping its number. (The width passes through others as the window
+  // settles, so the test waits for one that the old print does not fit.)
   await page.setViewportSize({ width: 760, height: 3200 });
-  await expect.poll(width).toBeLessThan(wide);
+  await expect.poll(width).toBeLessThan(longestBefore);
   const narrow = await width();
   await expect.poll(longest).toBeLessThanOrEqual(narrow);
   expect(await printed(page)).not.toBe(before);
@@ -680,10 +684,8 @@ test("⌥↵ unfolds and folds the output of the statement at the cursor", async
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  await editor(page).focus();
-  await page.keyboard.press("ControlOrMeta+Home");
-  // Down to line 8, the summary.
-  for (let line = 1; line < 8; line++) await page.keyboard.press("ArrowDown");
+  // To line 8, the summary.
+  await cursorTo(page, 8);
   await page.keyboard.press("Alt+Enter");
   await expect(page.locator('[data-testid="note"][data-line="8"]')).toHaveAttribute(
     "aria-expanded",
@@ -730,9 +732,7 @@ test("Run from here, from ⌘K, runs the statement at the cursor, what follows a
   press,
 }) => {
   await scratch(page, press);
-  await editor(page).focus();
-  await page.keyboard.press("ControlOrMeta+Home");
-  for (let line = 1; line < 16; line++) await page.keyboard.press("ArrowDown");
+  await cursorTo(page, 16);
   await page.keyboard.press("ControlOrMeta+k");
   await page.keyboard.type("run from here");
   await page.keyboard.press("Enter");

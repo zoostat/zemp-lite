@@ -3,7 +3,7 @@
 // said, and `:help` in the console line. Every page is the engine's.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { editor, expect, test, write, useExample } from "./support";
+import { cursorTo, expect, test, write, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -17,10 +17,7 @@ async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) 
 
 /** Put the cursor at a column of a line of the script (both counted from 1). */
 async function cursorAt(page: Page, line: number, column: number) {
-  await editor(page).focus();
-  await page.keyboard.press("ControlOrMeta+Home");
-  for (let at = 1; at < line; at++) await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("Home");
+  await cursorTo(page, line);
   for (let at = 1; at < column; at++) await page.keyboard.press("ArrowRight");
 }
 

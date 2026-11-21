@@ -161,6 +161,20 @@ export { expect };
 export const editor = (page: Page) =>
   page.getByRole("textbox", { name: "The script", exact: true });
 
+/**
+ * Put the cursor at the start of a line of the script (counted from 1), however the lines
+ * before it wrap: an arrow key moves by the rows drawn, not by the lines of the script.
+ */
+export async function cursorTo(page: Page, line: number): Promise<void> {
+  await editor(page).focus();
+  await editor(page).evaluate((content, at) => {
+    const row = content.querySelectorAll(":scope > .cm-line")[at - 1];
+    if (row === undefined) throw new Error(`the script shows no line ${at}`);
+    getSelection()!.collapse(row, 0);
+  }, line);
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText(String(line));
+}
+
 /** The text the editor holds. (The editor draws the lines near the window; these scripts are short.) */
 export async function scriptText(page: Page): Promise<string> {
   // Each line's code, without the margin's note that stands in it. The function runs in the

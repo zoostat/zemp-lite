@@ -3,8 +3,9 @@
   // from the 0.2 alpha in place of the Inline layout. The script fills the column; a note
   // beside each statement says what it made and how large it is; the whole output of a
   // statement unfolds under it when the reader asks, and a script opens with every output
-  // folded. Running never moves the code. Notes · Fold all · Unfold all stand over the script;
-  // all three change only the view. The column is 760 pixels of code at the usual code size,
+  // folded. Running never moves the code. From 0.2.1 the place stands on the frame of #203:
+  // Project at its left, the notes its right pane, and the run's facts with Fold all and
+  // Unfold all in its bar; all three change only the view. The column is 920 pixels of code at the usual code size (100 characters),
   // wider with the code, and the 300 pixels of the notes beside it.
   import { tick } from "svelte";
   import Editor from "../editor/Editor.svelte";
@@ -17,6 +18,9 @@
   import { placed } from "../output/place";
   import { took } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
+  import { paneOf } from "./panes";
+  import Place from "./Place.svelte";
+  import ProjectTree from "./ProjectTree.svelte";
   import { held } from "./steady";
   import { DATA, PLOTS, fileTab } from "./views";
   import DataViewer from "../data/DataViewer.svelte";
@@ -74,7 +78,7 @@
     return [...own, ...extra].sort((a, b) => a.line - b.line);
   });
   const unfolded = $derived(workspace.views.script.unfolded[path] ?? []);
-  const notesShown = $derived(workspace.views.script.notes);
+  const notesShown = $derived(workspace.views.panes.script.notes);
   // An output is shown under its statement where the reader unfolded it; what failed, and
   // what belongs to no statement, is always shown. A run is stopped from the top bar.
   const blocks = $derived(
@@ -230,77 +234,82 @@
 {:else if workspace.views.active === DATA}
   <DataViewer {workspace} onback={() => workspace.show(fileTab(workspace.scriptPath))} />
 {:else}
-  <div class="place">
-    <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
-      <div
-        class="sheet"
-        bind:this={sheet}
-        style:--zemp-margin={notesShown ? "300px" : "0px"}
-        data-width={workspace.printWidth}
-      >
-        <span class="probe mono" aria-hidden="true" bind:this={probe}>{"0".repeat(100)}</span>
-        <div class="results" role="toolbar" aria-label="The run, and what is shown of its results">
-          <button
-            class="facts"
-            data-testid="run-facts"
-            disabled={ours === null}
-            aria-haspopup="dialog"
-            title="The run's facts: the engine, the seed, where the time and the memory went"
-            onclick={() => (workspace.panel = workspace.panel === "facts" ? null : "facts")}
-            >{facts}</button
-          >
-          <span class="copied" aria-live="polite" data-testid="copied">{workspace.copied}</span>
-          <span class="gap"></span>
-          <button
-            class="view"
-            aria-pressed={notesShown}
-            onclick={() => workspace.setNotes(!notesShown)}
-            title="Show or hide the notes beside the code">Notes</button
-          >
-          <button
-            class="view"
-            onclick={() => workspace.setUnfolded(path, [])}
-            title="Fold every output; an error stays">Fold all</button
-          >
-          <button
-            class="view"
-            onclick={() => workspace.setUnfolded(path, opening)}
-            disabled={opening.length === 0}
-            title="Unfold every output under its statement">Unfold all</button
-          >
+  {#snippet project()}
+    <ProjectTree {workspace} />
+  {/snippet}
+  {#snippet controls()}
+    <button
+      class="facts"
+      data-testid="run-facts"
+      disabled={ours === null}
+      aria-haspopup="dialog"
+      title="The run's facts: the engine, the seed, where the time and the memory went"
+      onclick={() => (workspace.panel = workspace.panel === "facts" ? null : "facts")}
+      >{facts}</button
+    >
+    <span class="copied" aria-live="polite" data-testid="copied">{workspace.copied}</span>
+    <span class="gap"></span>
+    <button
+      class="view"
+      onclick={() => workspace.setUnfolded(path, [])}
+      title="Fold every output; an error stays">Fold all</button
+    >
+    <button
+      class="view"
+      onclick={() => workspace.setUnfolded(path, opening)}
+      disabled={opening.length === 0}
+      title="Unfold every output under its statement">Unfold all</button
+    >
+  {/snippet}
+  <Place
+    {workspace}
+    name="Script"
+    left={[paneOf(workspace, "script", "project", project)]}
+    right={[paneOf(workspace, "script", "notes", null)]}
+    bar={controls}
+  >
+    <div class="place">
+      <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
+        <div
+          class="sheet"
+          bind:this={sheet}
+          style:--zemp-margin={notesShown ? "300px" : "0px"}
+          data-width={workspace.printWidth}
+        >
+          <span class="probe mono" aria-hidden="true" bind:this={probe}>{"0".repeat(100)}</span>
+          {#if buffer?.loaded}
+            {#key path}
+              <Editor
+                bind:this={editor}
+                text={buffer.text}
+                label="The script"
+                onchange={(text) => workspace.edit(path, text)}
+                onrun={() => void workspace.run()}
+                inline={output}
+                notes={margin}
+                onunfold={unfoldAt}
+                onstatement={(line) => void workspace.runPart("statement", line)}
+                {runto}
+                oncursor={(line) => (workspace.cursor = { path, line })}
+                reveal={workspace.reveal?.path === path ? workspace.reveal : null}
+                inserting={workspace.inserting?.path === path ? workspace.inserting : null}
+                oninserted={(count) => workspace.inserted(count)}
+                diagnostics={workspace.diagnostics[path] ?? []}
+                onhover={(line, character) => workspace.hover(path, line, character)}
+                oncomplete={(line, character) => workspace.complete(path, line, character)}
+                onusage={(line, character) => workspace.signature(path, line, character)}
+                onfunction={(name) => workspace.atFunction(name)}
+                onhelp={(name) => void workspace.showHelp(name)}
+              />
+            {/key}
+          {/if}
         </div>
-        {#if buffer?.loaded}
-          {#key path}
-            <Editor
-              bind:this={editor}
-              text={buffer.text}
-              label="The script"
-              onchange={(text) => workspace.edit(path, text)}
-              onrun={() => void workspace.run()}
-              inline={output}
-              notes={margin}
-              onunfold={unfoldAt}
-              onstatement={(line) => void workspace.runPart("statement", line)}
-              {runto}
-              oncursor={(line) => (workspace.cursor = { path, line })}
-              reveal={workspace.reveal?.path === path ? workspace.reveal : null}
-              inserting={workspace.inserting?.path === path ? workspace.inserting : null}
-              oninserted={(count) => workspace.inserted(count)}
-              diagnostics={workspace.diagnostics[path] ?? []}
-              onhover={(line, character) => workspace.hover(path, line, character)}
-              oncomplete={(line, character) => workspace.complete(path, line, character)}
-              onusage={(line, character) => workspace.signature(path, line, character)}
-              onfunction={(name) => workspace.atFunction(name)}
-              onhelp={(name) => void workspace.showHelp(name)}
-            />
-          {/key}
-        {/if}
-      </div>
-    </section>
-    {#if workspace.help.shown}
-      <HelpPanel {workspace} />
-    {/if}
-  </div>
+      </section>
+      {#if workspace.help.shown}
+        <HelpPanel {workspace} />
+      {/if}
+    </div>
+  </Place>
 {/if}
 
 <style>
@@ -324,18 +333,14 @@
   .sheet {
     position: relative;
     margin: 0 auto;
-    max-width: calc(760px * var(--code-scale, 1) + var(--zemp-margin, 0px));
+    /* 920 pixels of code: its line numbers and 100 characters, the longest line Zeff's
+       formatter leaves (Language Reference, section 3), so that formatted code never wraps
+       beside its notes where the window gives the room. */
+    max-width: calc(920px * var(--code-scale, 1) + var(--zemp-margin, 0px));
     padding: 0 18px;
   }
-  /* The results bar: the run's facts, and the three controls, which change only the view and
-     so are words with a dashed underline (the design, sections 5 and 14.2). */
-  .results {
-    align-items: center;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    gap: 14px;
-    min-height: 36px;
-  }
+  /* The run's facts, and the two controls that change only the view, which are words with a
+     dashed underline (the design, sections 5 and 14.2); they stand in the place's bar. */
   .facts {
     background: none;
     border: 0;
@@ -375,10 +380,6 @@
   }
   .view:hover {
     background: var(--soft);
-  }
-  .view[aria-pressed="true"] {
-    color: var(--accent);
-    text-decoration-color: var(--accent);
   }
   .view:disabled {
     color: var(--ink-3);

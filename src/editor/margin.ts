@@ -150,7 +150,10 @@ const field = StateField.define<Shown>({
  * it on its line's first row, whatever the line wraps to.
  */
 const look = EditorView.theme({
-  ".cm-content": { paddingRight: "var(--zemp-margin, 0px)" },
+  // The code may be narrower than the widest thing it holds: an unfolded table must not keep
+  // the column from narrowing with the window, or the engine is never asked to print it again
+  // at the new width.
+  ".cm-content": { paddingRight: "var(--zemp-margin, 0px)", minWidth: "0" },
   ".cm-line": { position: "relative" },
   ".cm-zemp-note": {
     position: "absolute",

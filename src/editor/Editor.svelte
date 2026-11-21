@@ -138,7 +138,9 @@
       lineHeight: "1.75",
       overflow: "auto",
     },
-    ".cm-content": { caretColor: "var(--ink)", padding: "10px 0 24px" },
+    // The space above and below only: the right padding is the margin's (`margin.ts`), which a
+    // shorthand here would set to nothing, leaving the notes outside the sheet.
+    ".cm-content": { caretColor: "var(--ink)", paddingTop: "10px", paddingBottom: "24px" },
     ".cm-line": { padding: "0 18px 0 16px" },
     ".cm-gutters": {
       backgroundColor: "var(--window)",
@@ -185,7 +187,7 @@
   const tall = EditorView.theme({
     "&": { height: "auto" },
     ".cm-scroller": { overflow: "visible" },
-    ".cm-content": { padding: "18px 0 40px" },
+    ".cm-content": { paddingTop: "18px", paddingBottom: "40px" },
     // A block of output is not code: its sentences wrap. Its space above and below is
     // padding, not margin, so that the editor measures it and the line numbers stay in step.
     ".cm-zemp-output": { padding: "4px 0 14px", whiteSpace: "normal" },

@@ -15,6 +15,7 @@
   import MainPane from "./MainPane.svelte";
   import NarrowLine from "./NarrowLine.svelte";
   import Palette from "./Palette.svelte";
+  import { paneCommand } from "./panes";
   import ReportWindow from "./ReportWindow.svelte";
   import Splitter from "./Splitter.svelte";
   import TopBar from "./TopBar.svelte";
@@ -66,11 +67,9 @@
     },
     { name: "Place: Data", hint: "the frames of the run", run: () => workspace.openData() },
     { name: "Place: Plots", hint: "the plots of the run", run: () => workspace.openPlots() },
-    {
-      name: workspace.views.plots.list ? "Plots: hide the list" : "Plots: show the list",
-      hint: "the list of plots at the left",
-      run: () => workspace.setPlotList(!workspace.views.plots.list),
-    },
+    paneCommand(workspace, "script", "project"),
+    paneCommand(workspace, "script", "notes"),
+    paneCommand(workspace, "plots", "list"),
     {
       name: workspace.help.shown ? "Help: hide" : "Help: show",
       hint: "F1 in the script opens the page of the name at the cursor",

@@ -27,6 +27,7 @@ import {
   fileTab,
   leftWidth,
   outputShare,
+  rightWidth,
   readViews,
   tabPath,
   unfoldToggled,
@@ -36,6 +37,8 @@ import {
   writeViews,
   type Layout,
   type LeftTab,
+  type PaneName,
+  type PlaceName,
   type ViewState,
 } from "./views";
 
@@ -412,7 +415,18 @@ export class Workspace {
 
   /** Show or hide the notes beside the code. */
   setNotes(shown: boolean): void {
-    this.views.script.notes = shown;
+    this.setPane("script", "notes", shown);
+  }
+
+  /** Open or close a pane of a place (#203); kept with the project. */
+  setPane<P extends PlaceName>(place: P, pane: PaneName<P>, open: boolean): void {
+    this.views.panes[place] = { ...this.views.panes[place], [pane]: open };
+    this.#keep();
+  }
+
+  /** The width of the right pane of the places, within its limits. */
+  setRightWidth(width: number): void {
+    this.views.right.width = rightWidth(width);
     this.#keep();
   }
 
@@ -1231,8 +1245,7 @@ export class Workspace {
 
   /** Show or hide the data viewer's list of frames and variables. */
   setDataList(shown: boolean): void {
-    this.views.data.list = shown;
-    this.#keep();
+    this.setPane("data", "frames", shown);
   }
 
   /** How the data viewer shows a frame: kept to the rows of a condition, sorted, searched. */
@@ -1269,8 +1282,7 @@ export class Workspace {
 
   /** Show or hide the list of plots at the left of the plot viewer. */
   setPlotList(shown: boolean): void {
-    this.views.plots.list = shown;
-    this.#keep();
+    this.setPane("plots", "list", shown);
   }
 
   /** Open the plot viewer: its tab is added where it is not there, and shown. */

@@ -36,9 +36,14 @@ for (const name of ["regression", "simulation", "plots"]) {
     test.setTimeout(120_000);
     const folder = path.join(samples(), name);
     const read = (file: string) => readFileSync(path.join(folder, file), "utf8");
+    // The interface prints at the width of its place, and `zeff run` at 118 characters: the
+    // window is given the width at which the place is 118 characters wide, and that is held
+    // before anything is compared.
+    await page.setViewportSize({ width: 1054, height: 3200 });
     await page.goto("/");
     await press(page.getByRole("button", { name: "Scratch project" }));
     await expect(page.getByRole("status")).toHaveText(READY);
+    await expect(page.locator(".sheet")).toHaveAttribute("data-width", "118");
     await press(page.getByRole("button", { name: "Panes", exact: true }));
     await write(page, read("scripts/main.zeff"));
     await expect(page.locator("header.top")).toContainText("· saved");

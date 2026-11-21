@@ -124,7 +124,7 @@
         : "The last run drew no plot. A plot is drawn when a statement ends in one."}
     </p>
   {:else}
-    {#if workspace.views.plots.list}
+    {#if workspace.views.panes.plots.list}
       <aside class="side" aria-label="The list of plots">
         <div class="side-head">
           <span>Plots of the run</span>
@@ -181,7 +181,7 @@
     <div class="main">
       <div class="bar">
         {#if onback}<button class="word" onclick={onback}>‹ Script</button>{/if}
-        {#if !workspace.views.plots.list}
+        {#if !workspace.views.panes.plots.list}
           <button class="word" onclick={() => workspace.setPlotList(true)}
             >Show the list of plots ›</button
           >

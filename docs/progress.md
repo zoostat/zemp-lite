@@ -159,3 +159,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 166 unit tests; 288 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
 
 **Next.** Step 2 `[engine]`: the view state at version 3 and the frame of a place, the Script place on it with Project and Notes.
+
+## 22 November 2026, release 0.2.1, step 2
+
+**Done.** Step 2 `[engine]`: the view state at version 3 (which panes of each place are open, the right pane's width; versions 1 and 2 read); the frame of a place (`Place.svelte`: the bar of links, the left pane, the middle, the right pane, × and the edges); the Script place on it, with **Project** at the left and **Notes** at the right, each a command of ⌘K. **Found and mended:** in 0.2 the notes were drawn 300 pixels too far right, outside the sheet, so no reader saw them (the owner's "there is no notes pane"); a test now holds where each note stands. With the notes in place the code's column is made 920 pixels, for the formatter's 100 characters, and an unfolded table no longer keeps the column from narrowing. Step 1 is green on GitHub and deployed (9ea83f1).
+
+**Green.** `npm run routine`: 169 unit tests; 302 browser tests passed and 2 skipped by design; 28 native tests; the nine samples identical.
+
+**Next.** Step 3 `[function]`: the Outline from the comments `// # Title` and `// ## Title`, with **Run section**.
