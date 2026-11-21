@@ -121,3 +121,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Done.** The owner opened the alpha at `https://lite.zeff-lang.dev` in his own browsers and ran it ("it opens"), with `plots.zeff` in his Scratch project after the mend of 0cb1005; step 17b ticked. GitHub green on 92f2794, deployed and checked at both addresses.
 
 **Next.** 19b `[function]`: the measures at the address, the samples read in the hosted alpha, the checks by hand (keyboard alone, VoiceOver, the print at every size), the reader test the owner runs, the notes finished; then "Release 0.2".
+
+## 21 November 2026, release 0.2, step 19b begun
+
+**Done.** Timing the alpha at its address found that a plot bound with `let` was never drawn, the two plots of the first example among them; mended (f0857e8): drawn under its statement, its note opening to it, listed in Plots. A check after each deployment now times a statement run alone and a plot drawn afresh as well as the first start (630ee2a). At the address from GitHub's machines: first start 1.4 s (Chromium) and 2.0 s (WebKit), a redraw 160 to 175 ms. The draft notes carry the address, the showcase and these measures. Three tests mended for GitHub's slower machine (92f2794); one WebKit page load that hung there was run again and passed.
+
+**Green.** `npm run routine`: 166 unit tests; 286 browser tests passed and 2 skipped by design; 28 native tests. GitHub green on 630ee2a, deployed and checked.
+
+**Next.** What 19b needs of the owner: the reader test with five to eight readers (`docs/releases/0.2-reader-test/README.md`); his own trial at the address; the checks by hand (the keyboard alone, VoiceOver, a fit's table at the sizes the design names); WebKit's timing of ⌘↵ checked by hand. Then the notes are finished and he says "Release 0.2".
