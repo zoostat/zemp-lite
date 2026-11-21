@@ -948,3 +948,21 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 **Choice.** A column is the widest of three: its header (the name in the code face at 8 pixels a character, or the type with the count of NA in the text face at 7 pixels a character, whichever is longer, plus 52 pixels for the buttons and the padding), its widest cell of the first page, and 64 pixels; never wider than 280. A name longer than the widest column still ends in an ellipsis, and the whole name shows when the pointer rests on it. Tests: browser (every header of the returns to schooling shows its whole name and its facts, in Chromium and WebKit).
 
 **Reason.** The design's rule that the grid writes what the engine names, in full (the Zemp Specification, the Data place); the owner's report of 21 November 2026.
+
+## 21 November 2026: Three panes on every page, for release 0.2.1; the reader test and the checks by hand move there
+
+**What the owner decided.** Trying the hosted alpha, the owner proposed one layout for every place in place of the margin and Panes; a mockup was drawn twice to his corrections (kept in the shared notes, `zemp-lite-three-panes-mockup.html`), and he answered "looks fine", then "Yes, record it as 0.2.1 and reader test, your checks by hand etc will move to 0.2.1".
+
+**The layout.** Every place has a left pane, the place in the middle and a right pane, each pane opened and closed by its own link in a bar above it (and by its own ×); **Panes** and the **Margin** link go, and each place remembers its panes.
+- Script: left, **Project** and **Outline** (sections `// # Title`, subsections `// ## Title`, each going to its line, with **Run section**), each with its own link, both closed at first, open together one above the other; right, **Notes**, open at first, which take over from the Objects panel (removed). **Run** unfolds every output; a script opened stays folded.
+- Data: left, **Frames of the run**, open at first; right, **Variables**, closed at first, showing the list (with each variable's box) or, once a column's header or a name is clicked, that one variable's properties in place of the list: label, type, missing count and share, histogram, and for a number N, mean, sd, min, the quartiles and median, max and the distinct values, for a category each level's count and share; "‹ All variables" goes back. Read-only: the change of type, contrast and labels and their Copy as Zeff leave the pane.
+- Plots: left, the plots of the run; right, the plot's statement, line, kind and export size; both open at first.
+- Help: left, the outline of the help page; right, the related functions (the page's See also, each with its title); both open at first.
+
+**When, and on what.** Release 0.2.1, after 0.2 is released, on Zeff 0.8.0: a Zemp fix needs no engine release (the Zemp Specification, section 15). The statistics are the engine's (`quantile` and `median` are in 0.8.0); until the language server reports sections (#178, Zeff 0.9.0), the interface reads the comments `// # Title` and `// ## Title` itself.
+
+**What moves to 0.2.1.** The reader test, the acceptance tests left for the hand (the keyboard alone, VoiceOver, the print at every size and in the dark theme) and the check by hand of ⌘↵'s timing in Safari; step 19b of 0.2 keeps the rest. 0.2 is then released on the owner's "Release 0.2".
+
+**The register and the specification.** They are edited in the Zeff repository, so the entry, its revision of #174 and #176 R2, the moved reader test (Zeff 0.9.0, step 45) and the amendments of the Zemp Specification's section 15 (a 0.2.1 row) are left as a note for a session opened there: `zemp-lite-0.2.1-three-panes-for-the-register.md` in the shared notes. The checklist `docs/releases/0.2.1.md` is written at "Start release 0.2.1".
+
+**Reason.** The owner's ruling of 21 November 2026.

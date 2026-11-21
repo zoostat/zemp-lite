@@ -131,3 +131,9 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Next.** What 19b needs of the owner: the reader test with five to eight readers (`docs/releases/0.2-reader-test/README.md`); his own trial at the address; the checks by hand (the keyboard alone, VoiceOver, a fit's table at the sizes the design names); WebKit's timing of ⌘↵ checked by hand. Then the notes are finished and he says "Release 0.2".
 
 **Mend (21 November 2026).** The owner saw only the first letter of each variable's name in the Data grid; each column is now as wide as its header, with the type, the count of NA and the buttons, as well as its cells. A browser test checks that no header is cut.
+
+## 21 November 2026, release 0.2: the layout of 0.2.1 decided
+
+**Done.** The owner decided one layout of three panes on every place, each pane with its own link (the mockup in the shared notes), for a release 0.2.1 on Zeff 0.8.0, and moved the reader test and the checks by hand there. Recorded in `docs/decisions.md`, step 19b and the draft notes; the register's entry and the Zemp Specification's 0.2.1 row are left for a Zeff session (`zemp-lite-0.2.1-three-panes-for-the-register.md`).
+
+**Next.** The owner's "Release 0.2": the samples read by eye in the hosted alpha, the notes finished, the version, the tag and the GitHub release. Then "Start release 0.2.1".
