@@ -129,3 +129,5 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** `npm run routine`: 166 unit tests; 286 browser tests passed and 2 skipped by design; 28 native tests. GitHub green on 630ee2a, deployed and checked.
 
 **Next.** What 19b needs of the owner: the reader test with five to eight readers (`docs/releases/0.2-reader-test/README.md`); his own trial at the address; the checks by hand (the keyboard alone, VoiceOver, a fit's table at the sizes the design names); WebKit's timing of ⌘↵ checked by hand. Then the notes are finished and he says "Release 0.2".
+
+**Mend (21 November 2026).** The owner saw only the first letter of each variable's name in the Data grid; each column is now as wide as its header, with the type, the count of NA and the buttons, as well as its cells. A browser test checks that no header is cut.

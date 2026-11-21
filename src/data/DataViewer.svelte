@@ -275,14 +275,20 @@
     if (text !== null) void copy(text, `copied ${text}`);
   }
 
-  // Each column as wide as its name or its widest cell of the first page, within bounds.
+  // Each column as wide as its header or its widest cell of the first page, within bounds. The
+  // header holds the name (in the code face) over the type and the count of NA (in the text
+  // face), beside the sort and hide buttons, which take about 34 pixels with the padding.
   const widths = $derived(
     (first?.variables ?? []).map((variable, at) => {
+      const facts =
+        variable.type.length +
+        (variable.missing > 0 ? ` · ${counted(variable.missing)} NA`.length : 0);
+      const head = Math.max(variable.name.length * 8, facts * 7) + 52;
       const longest = Math.max(
-        variable.name.length,
+        0,
         ...(first?.rows ?? []).slice(0, 100).map((row) => (row[at] ?? "").length),
       );
-      return Math.min(Math.max(longest * 8 + 24, 64), 280);
+      return Math.min(Math.max(head, longest * 8 + 24, 64), 280);
     }),
   );
   const numberWidth = $derived(Math.max(String(total).length * 8 + 22, 48));
@@ -477,7 +483,8 @@
                 aria-label={variable.name}
               >
                 <button class="pick" onclick={() => workspace.chooseVariable(variable.name)}
-                  ><span class="vname">{variable.name}</span><span class="vfacts"
+                  ><span class="vname" title={variable.name}>{variable.name}</span><span
+                    class="vfacts"
                     >{variable.type}{#if variable.missing > 0}<span class="miss">
                         · {counted(variable.missing)} NA</span
                       >{/if}</span

@@ -322,3 +322,20 @@ test("the inspector copies a change of type, of contrast and of labels as Zeff",
     'copied let wages = wages.label(union, [0 => "not a member", 1 => "member"])',
   );
 });
+
+test("every header shows its variable's whole name, its type and its count of NA", async ({
+  page,
+  press,
+}) => {
+  await ran(page, press);
+  const grid = page.getByRole("grid");
+  await expect(grid.getByRole("columnheader", { name: "wage", exact: true })).toBeVisible();
+  const cut = await grid
+    .locator(".vname, .vfacts")
+    .evaluateAll((all) =>
+      all
+        .filter((one) => one.scrollWidth > one.clientWidth + 0.5)
+        .map((one) => `${one.textContent} (${one.clientWidth} of ${one.scrollWidth} px)`),
+    );
+  expect(cut).toEqual([]);
+});
