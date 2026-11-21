@@ -496,6 +496,34 @@ test("a frame kept to a condition gives that condition's statistics, asked again
     .toEqual(["N", "18,201"]);
 });
 
+test("a variable's properties are of the frame of the script that ran, not of another script's frame of that name", async ({
+  page,
+  press,
+}) => {
+  // Found reading the hosted alpha at 0.2.1: both the returns to schooling and the showcase
+  // of plots make a frame `wages`, of 15,571 and of 18,201 rows; with the showcase run, the
+  // pane gave the statistics of the other script's.
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("plots.zeff");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => scriptText(page)).toMatch(/^\/\/ Plots in Zeff/);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Data" }),
+  );
+  await expect(page.getByTestId("frame-header")).toHaveText(/^wages · 18,201 rows × 12 variables/);
+  const pane = await chosen(page, press, "wage");
+  // The showcase drops the rows without a wage: 18,201 rows, none missing.
+  await expect(pane.getByTestId("variable-facts")).toHaveText(
+    /Type\s*Float\s*Rows\s*18,201\s*Missing\s*0$/,
+  );
+  expect((await rowsOf(pane.getByTestId("variable-statistics")))[0]).toEqual(["N", "18,201"]);
+});
+
 test("a date's properties are its rows, its least and its greatest, and its distinct values", async ({
   page,
   press,

@@ -246,4 +246,6 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 
 **Green.** As at step 8 here (the five WebKit tests of the mouse on this Mac apart).
 
+**A second fault found by the same reading, and mended:** with the showcase run, the Variables pane gave the statistics of the other example's frame of the same name (`wages`); the statements are now asked after the script that ran last. The first mend is green on GitHub and deployed (4e73085).
+
 **Next.** The mend checked on GitHub and at the address, the examples read by eye again there; then the owner's part of step 11: the reader test, the checks by hand, his trial, "Release 0.2.1".

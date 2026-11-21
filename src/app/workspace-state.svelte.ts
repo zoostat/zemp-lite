@@ -1244,17 +1244,17 @@ export class Workspace {
    * What the engine prints for each of some statements, run after the script as the console
    * line runs one, so that every number shown of a variable is the engine's (`frame.summary`,
    * `quantile`, `tabulate` and the rest; `src/data/properties.ts`). The script is not changed.
+   * The statements follow the text of the last run, whose frames they are asked of.
    * A statement that printed nothing gives what the engine said of it; `said` is what the
    * engine said where it refused the statements or one of them failed.
    */
   async askAfter(statements: string[]): Promise<{ printed: string[]; said: string }> {
-    const script = this.scriptPath;
-    await this.#load(script);
-    const { text, from } = composed(
-      this.buffers[script]?.text ?? "",
-      statements.slice(0, -1),
-      statements.at(-1) ?? "",
-    );
+    // After the script that ran last, as it ran: the frames the Data place shows are that
+    // run's, whichever script is open now and however it has been edited since.
+    const run = this.lastRun;
+    if (run === null) return { printed: statements.map(() => ""), said: "" };
+    const script = run.script;
+    const { text, from } = composed(run.text, statements.slice(0, -1), statements.at(-1) ?? "");
     // Each statement is on a line of its own, the last of them on line `from`.
     const first = from - (statements.length - 1);
     const before = this.#busy;

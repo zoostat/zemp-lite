@@ -1159,3 +1159,11 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Tests.** Browser (`first.spec`, the showcase): the plot shown is drawn, twenty thumbnails are drawn and the one refused says the engine's sentence, nothing says "The engine wrote no figure.", and the refused plot chosen is drawn at the place's size.
 
 **Reason.** The checklist's step 11 (the examples read by eye in the hosted alpha); a fault of the app, mended where it lies.
+
+## 22 November 2026: A variable's statistics are asked of the script that ran (found reading the hosted alpha, step 11)
+
+**What was found.** In the hosted alpha, with the showcase of plots run, the Data place showed its frame `wages` (18,201 rows) and the Variables pane gave that variable's statistics for 15,571 rows: those of the returns to schooling, which also makes a frame `wages`. The statements were added after the text of the project's first script, not after the text of the script that ran last. (0.2's inspector asked its `summary` the same way; with one script run it was not seen.)
+
+**Choice.** The statements are asked after the text of the last run, as it ran (`Workspace.askAfter`): the frames the Data place shows are that run's, whichever script is open now and however it has been edited since. Tests: browser (`data.spec`: with the showcase run, the pane's rows and N are the showcase's frame's).
+
+**Reason.** The checklist's step 11 (the examples read by eye in the hosted alpha).
