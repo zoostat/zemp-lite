@@ -175,6 +175,34 @@ export async function cursorTo(page: Page, line: number): Promise<void> {
   await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText(String(line));
 }
 
+/**
+ * Give the window the width at which the script's place is `columns` characters wide, which
+ * is the width the engine prints at there. A character of the print's font is not as wide in
+ * every browser and on every machine (a pixel's fraction decides it), so the width is found
+ * by measuring: the place's width and a character's, as the page itself measures them.
+ */
+export async function placeOf(page: Page, columns: number): Promise<void> {
+  const sheet = page.locator(".sheet");
+  for (let tries = 0; tries < 10; tries += 1) {
+    const now = Number(await sheet.getAttribute("data-width"));
+    if (now === columns) return;
+    const delta = await sheet.evaluate((at, wanted) => {
+      const content = at.querySelector<HTMLElement>(".cm-content")!;
+      const char = at.querySelector(".probe")!.getBoundingClientRect().width / 100;
+      // The place's width in characters is the whole of (its pixels less 50) over a character.
+      return Math.round(50 + (wanted + 0.5) * char - content.clientWidth);
+    }, columns);
+    const size = page.viewportSize()!;
+    await page.setViewportSize({
+      width: size.width + (delta === 0 ? 1 : delta),
+      height: size.height,
+    });
+    // The place is measured again as the window settles.
+    await page.waitForTimeout(150);
+  }
+  await expect(sheet).toHaveAttribute("data-width", String(columns));
+}
+
 /** The text the editor holds. (The editor draws the lines near the window; these scripts are short.) */
 export async function scriptText(page: Page): Promise<string> {
   // Each line's code, without the margin's note that stands in it. The function runs in the

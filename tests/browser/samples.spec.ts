@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, printed, saidAsWritten, test, write } from "./support";
+import { expect, placeOf, printed, saidAsWritten, test, write } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -39,10 +39,11 @@ for (const name of ["regression", "simulation", "plots"]) {
     // The interface prints at the width of its place, and `zeff run` at 118 characters: the
     // window is given the width at which the place is 118 characters wide, and that is held
     // before anything is compared.
-    await page.setViewportSize({ width: 1054, height: 3200 });
+    await page.setViewportSize({ width: 1100, height: 3200 });
     await page.goto("/");
     await press(page.getByRole("button", { name: "Scratch project" }));
     await expect(page.getByRole("status")).toHaveText(READY);
+    await placeOf(page, 118);
     await expect(page.locator(".sheet")).toHaveAttribute("data-width", "118");
     await press(page.getByRole("button", { name: "Panes", exact: true }));
     await write(page, read("scripts/main.zeff"));
