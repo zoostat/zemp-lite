@@ -34,3 +34,52 @@ test("what is counted, and what is never collected, is said on a page of its own
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("What is counted");
   await expect(page.getByText("No cookie", { exact: false }).first()).toBeVisible();
 });
+
+test("a statement run alone and a plot drawn afresh are timed at the address", async ({ page }) => {
+  await page.goto("/");
+  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  await expect(open).toBeEnabled({ timeout: 30_000 });
+  await open.click();
+  await page.getByRole("button", { name: "Scratch project" }).click();
+  await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  // ⌘↵ on the last statement of the script: it runs with what it needs, from the top.
+  await page.locator(".cm-content .cm-line").last().click();
+  // Timed in the page: from the key to the status saying "done" again after it changed.
+  const timed = page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        const status = document.querySelector('[role="status"]')!;
+        let from = 0;
+        let left = false;
+        document.addEventListener("keydown", () => (from = performance.now()), {
+          capture: true,
+          once: true,
+        });
+        new MutationObserver(() => {
+          const now = status.textContent ?? "";
+          if (now !== "done") left = true;
+          else if (left) resolve(Math.round(performance.now() - from));
+        }).observe(status, { childList: true, characterData: true, subtree: true });
+      }),
+  );
+  await page.keyboard.press("ControlOrMeta+Enter");
+  const statement = await timed;
+  // A plot drawn afresh for a new place: the interface reports how long the run took.
+  await page.getByRole("button", { name: "Panes", exact: true }).click();
+  await page
+    .getByRole("tablist", { name: "Open files" })
+    .getByRole("tab", { name: "Plots", exact: true })
+    .click();
+  const drawn = page.getByTestId("draw-time");
+  await expect(drawn).toHaveText(/drawn by a run of the script in \d/, { timeout: 30_000 });
+  const redraw = (await drawn.textContent()) ?? "";
+  for (const [type, description] of [
+    ["one statement", `${statement} ms for ⌘↵ on the last statement, from the key to done`],
+    ["redraw", redraw],
+  ] as const) {
+    test.info().annotations.push({ type, description });
+    console.log(`${type}: ${description}`);
+  }
+});
