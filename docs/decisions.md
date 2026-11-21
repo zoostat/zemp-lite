@@ -1134,3 +1134,18 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **The draft notes** are `docs/releases/0.2.1-notes.md`.
 
 **Reason.** The checklist's step 9; the owner's answer of 22 November 2026.
+
+## 22 November 2026: The acceptance tests gone through again, and three corrections of 0.2's notes (release 0.2.1, step 10)
+
+**Done.** Each acceptance test of the design's section 21 that 0.2's notes listed was gone through against the one layout and is set down in `docs/releases/0.2.1-notes.md` with the test that holds it now, by its name, or as not built, or as left for the hand at step 11.
+
+**Three things in 0.2's notes were wrong**, and are corrected in a section added at the foot of `docs/releases/0.2-notes.md`, the released text above it left as it was:
+1. The notes were not seen in 0.2 (found at step 2).
+2. "The list of plots with the console line's apart: holds (`viewer.spec`)". No test held it and nothing in the list of plots knows a plot of the console line; the list holds the plots of the script's run. It is recorded as not built. The notes of the GitHub release of 0.2 say the same wrong thing; changing a published release is the owner's to decide.
+3. The measure "⌘↵ on the last statement: 2.2 s in Chromium" took in the drawing of the figures after the run. The run's own facts give a few milliseconds for the statement with the two frames it reads, and the key to "done" tens of milliseconds in both engines, as WebKit's figure had it.
+
+**The check after each deployment** timed ⌘↵ after clicking the last line the editor had drawn, which since Run unfolds every output is no longer the script's last. It now folds the outputs first, holds that the cursor is on the script's last line, holds that a second run was made, and reports the key-to-done time with the run's own time from its facts.
+
+**A page's load is tried once more.** On GitHub's Linux machines WebKit at times never ends the load of a page at the start of a test (twice before 0.1's release, once at 0.2, and twice in the one run of step 8's commit, in tests of the editor's colours and of a pane's edge, neither of which that commit touched). The remedy named at 0.1's release is taken: in the tests' own `page`, a load that has not ended in twelve seconds is asked for once more. Only the load is tried again, never a test; no assertion is changed, and a page that loads and then fails still fails.
+
+**Reason.** The checklist's step 10; the testing handbook's rule that a release's notes say what was validated.

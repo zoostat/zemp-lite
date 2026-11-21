@@ -44,8 +44,12 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
-  // ⌘↵ on the last statement of the script: it runs with what it needs, from the top.
+  // ⌘↵ on the last statement of the script: it runs with what it needs, from the top. Run
+  // has unfolded every output, and the editor draws only the lines near its window: folded,
+  // the whole script is drawn, and its last line is the script's last, which is held.
+  await page.getByRole("button", { name: "Fold all", exact: true }).click();
   await page.locator(".cm-content .cm-line").last().click();
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("24");
   // Timed in the page: from the key to the status saying "done" again after it changed.
   const timed = page.evaluate(
     () =>
@@ -66,6 +70,12 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   );
   await page.keyboard.press("ControlOrMeta+Enter");
   const statement = await timed;
+  // That a second run was made, and how long the engine took over it, as the run's own facts
+  // say: the time from the key to "done" holds more than the run (the check before it, and
+  // the page drawn after it), so both are reported.
+  const facts = page.getByTestId("run-facts");
+  await expect(facts).toHaveText(/^run 2 · .* in [\d.,]+ m?s$/);
+  const ran = (await facts.textContent()) ?? "";
   // A plot drawn afresh for a new place: the interface reports how long the run took.
   await page
     .getByRole("navigation", { name: "Places" })
@@ -75,7 +85,10 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   await expect(drawn).toHaveText(/drawn by a run of the script in \d/, { timeout: 30_000 });
   const redraw = (await drawn.textContent()) ?? "";
   for (const [type, description] of [
-    ["one statement", `${statement} ms for ⌘↵ on the last statement, from the key to done`],
+    [
+      "one statement",
+      `${statement} ms for ⌘↵ on the last statement, from the key to done (${ran})`,
+    ],
     ["redraw", redraw],
   ] as const) {
     test.info().annotations.push({ type, description });

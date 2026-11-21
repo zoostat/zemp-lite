@@ -115,7 +115,23 @@ export const test = base.extend<Each, Shared>({
     await context.close();
   },
   page: async ({ context }, use) => {
-    await use(context.pages()[0] ?? (await context.newPage()));
+    const page = context.pages()[0] ?? (await context.newPage());
+    // The WebKit of GitHub's Linux machines at times never ends the load of a page it has
+    // only just been given (seen at 0.1, at 0.2 and twice in one run at 0.2.1; never on a
+    // Mac, never in Chromium): the test then waits out its thirty seconds on a page that is
+    // not coming. So a load that has not ended in twelve seconds is asked for once more. Only
+    // the load is tried again, never the test: whatever the page does after it has loaded is
+    // held as before.
+    const load = page.goto.bind(page);
+    page.goto = async (url, options) => {
+      try {
+        return await load(url, { timeout: 12_000, ...options });
+      } catch (error) {
+        if (!/Timeout .* exceeded/.test(String(error))) throw error;
+        return load(url, options);
+      }
+    };
+    await use(page);
   },
   mouseWorks: [
     async ({ browser }, use) => {

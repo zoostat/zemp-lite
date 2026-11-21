@@ -231,3 +231,11 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 **Green.** As at step 8: all but the five WebKit tests that need a real click of the mouse on this Mac, which pass on GitHub.
 
 **Next.** Step 10 `[function]`: the design's acceptance tests gone through again, and the measures at the address.
+
+## 22 November 2026, release 0.2.1, step 10
+
+**Done.** Step 10 `[function]`: each acceptance test of the design gone through against the one layout and set down in the draft notes with the test that holds it, or as not built, or as left for the hand. Three corrections of 0.2's notes, added at their foot: the notes were not seen; the console line's plots are not listed apart (no test held it; not built); ⌘↵ on the last statement takes tens of milliseconds, not 2.2 s. The check after a deployment now times ⌘↵ on the script's true last line and reports the run's own time beside it. A page's load that never ends in WebKit on GitHub's machines is asked for once more (step 8's commit failed there by it, twice in one run; steps 7b and 9 are checked with this push).
+
+**Green.** As at step 8 here. On GitHub: 33f8950 (step 7b) green and deployed; 09698a5 (step 8) failed by the WebKit page load alone.
+
+**Next.** Step 11 `[function]`: the pre-release routine on the hosted 0.2.1, which waits for the owner: the reader test, the checks by hand, his trial, and "Release 0.2.1".
