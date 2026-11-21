@@ -94,7 +94,7 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 
 ## 21 November 2026, release 0.2, step 19a (the close, prepared)
 
-**Done.** Step 19 split into 19a and 19b. Step 19a `[function]`: the reader test made ready (ten scripts that run on 0.8.0, the readers' sheet, the owner's key, how to run it, in `docs/releases/0.2-reader-test/`); the design's acceptance tests gone through in the draft notes (`docs/releases/0.2-notes.md`), which found and mended two faults of the console's styles; the measures that need no host. Steps 18a is green on GitHub.
+**Done.** Step 19 split into 19a and 19b. Step 19a `[function]`: the reader test made ready (ten scripts that run on 0.8.0, the readers' sheet, the owner's key, how to run it, in `docs/releases/0.2-reader-test/`); the design's acceptance tests gone through in the draft notes (`docs/releases/0.2-notes.md`), which found and mended two faults of the console's styles; the measures that need no host. Steps 18a, 18b and 19a are green on GitHub; step 17b waits for the owner's Cloudflare account and the two secrets.
 
 **Green.** `npm run routine`: 164 unit tests; 282 browser tests passed and 2 skipped by design; 28 native tests.
 
