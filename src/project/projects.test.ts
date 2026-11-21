@@ -143,6 +143,33 @@ describe("the projects of a browser", () => {
     expect(await project!.readText("scripts/main.zeff")).toBe("print(1)\n");
   });
 
+  it("gives a Scratch project made before an example came that example, once", async () => {
+    const root = new MemoryFolder();
+    const store = kept();
+    // A Scratch project of an earlier release: the returns to schooling and the instruments.
+    await root.write("projects/scratch/zeff.toml", bytes(manifest("Scratch")));
+    await root.write("projects/scratch/scripts/main.zeff", bytes("print(1)\n"));
+    await root.write("projects/scratch/scripts/instruments.zeff", bytes("// mine\n"));
+    const projects = new Projects(root, store);
+    await projects.scratch();
+    const project = await projects.open(SCRATCH);
+    // The showcase of plots is added; what the user had is as it was.
+    expect(await project!.readText("scripts/plots.zeff")).toMatch(/^\/\/ Plots in Zeff/);
+    expect(await project!.readText("scripts/main.zeff")).toBe("print(1)\n");
+    expect(await project!.readText("scripts/instruments.zeff")).toBe("// mine\n");
+    // Deleted, an example given once is not given again.
+    await root.remove("projects/scratch/scripts/plots.zeff");
+    await projects.scratch();
+    expect(await project!.readText("scripts/plots.zeff")).toBeNull();
+    // A new browser's Scratch project has all three.
+    const fresh = empty();
+    await fresh.projects.scratch();
+    const scratch = await fresh.projects.open(SCRATCH);
+    for (const name of ["main", "instruments", "plots"]) {
+      expect(await scratch!.readText(`scripts/${name}.zeff`), name).not.toBeNull();
+    }
+  });
+
   it("lists the project opened last first, and those never opened by name", async () => {
     const { projects, clock } = empty();
     await projects.create("beta");

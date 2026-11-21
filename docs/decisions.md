@@ -929,6 +929,6 @@ TypeScript is 6.0.3, not the 7.0.2 that is its latest: `svelte-check` and `types
 
 **What the browser test holds.** The Output panel prints at its own width, and two of the plots' tables are wider than the 80 columns at which `expected/plots.stdout` was written, so they are laid out otherwise there. The native test holds the whole text at 80 columns and the width tests hold printing at a place's width; the browser test holds what does not depend on the width: the head of each of the 21 plots in order, and every message as the engine words it.
 
-**A browser that already has a Scratch project** keeps it as it is, as at step 18a; the showcase is in every new browser's Scratch project.
+**A Scratch project made before an example came is given it, once** (a mend of the same day, found when the owner's own browser, which had opened the alpha before, showed two scripts). Opening the Scratch project adds each example it has not yet been given, never writing over a file of that name; the examples given are remembered in the browser, so one the user deletes or renames is not given again. Where the browser kept no record (a project made before this mend), the files there stand for what was given. So every visitor of the alpha before this day finds `plots.zeff` beside what was there, and a later release's example reaches them the same way.
 
 **Reason.** The owner's answer of 21 November 2026; the checklist's step 18c; the Zemp Specification, section 15 (the release's examples).

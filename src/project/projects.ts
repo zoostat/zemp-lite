@@ -33,6 +33,17 @@ export class ProjectError extends Error {
 
 const ROOT = "projects";
 const OPENED = "zemp-opened";
+/** The examples the Scratch project of this browser has been given, each given once. */
+const GIVEN = "zemp-scratch-examples";
+
+/**
+ * The examples of the Scratch project besides `main.zeff`, in the order they came: one added
+ * by a later release is given to a Scratch project made before it.
+ */
+const EXAMPLES: [string, string][] = [
+  ["instruments.zeff", instruments],
+  ["plots.zeff", plots],
+];
 /** The folder of the Scratch project. */
 export const SCRATCH = "scratch";
 
@@ -147,17 +158,36 @@ export class Projects {
    * returns to schooling on `wages`, which opens; instrumental variables on `staff`, the
    * engine's own sample of 0.8.0 (the owner's answer to question 7 of release 0.2); and the
    * showcase of plots, from one line to a finished figure (his answer of 21 November 2026).
+   * A Scratch project made before an example came is given it, once: the examples given are
+   * remembered, so one the user deletes or renames is not given again, and a file of that
+   * name already there is never written over.
    */
   async scratch(): Promise<ProjectInfo> {
-    if ((await this.#root.read(`${ROOT}/${SCRATCH}/zeff.toml`)) === null) {
+    const made = (await this.#root.read(`${ROOT}/${SCRATCH}/zeff.toml`)) === null;
+    if (made) {
       await this.#fill(SCRATCH, "Scratch", example);
-      await this.#root.write(
-        `${ROOT}/${SCRATCH}/scripts/instruments.zeff`,
-        encoder.encode(instruments),
-      );
-      await this.#root.write(`${ROOT}/${SCRATCH}/scripts/plots.zeff`, encoder.encode(plots));
     }
+    const given = made ? [] : this.#given();
+    for (const [name, text] of EXAMPLES) {
+      const path = `${ROOT}/${SCRATCH}/scripts/${name}`;
+      if (!given.includes(name) && (await this.#root.kind(path)) === null) {
+        await this.#root.write(path, encoder.encode(text));
+      }
+    }
+    this.#kept.setItem(GIVEN, JSON.stringify(EXAMPLES.map(([name]) => name)));
     return { folder: SCRATCH, name: "Scratch", opened: this.#opened()[SCRATCH] ?? null };
+  }
+
+  /** The examples given before; none remembered where the browser kept no record of them. */
+  #given(): string[] {
+    try {
+      const read = JSON.parse(this.#kept.getItem(GIVEN) ?? "[]") as unknown;
+      return Array.isArray(read)
+        ? read.filter((name): name is string => typeof name === "string")
+        : [];
+    } catch {
+      return [];
+    }
   }
 
   async #fill(folder: string, name: string, script: string): Promise<void> {
