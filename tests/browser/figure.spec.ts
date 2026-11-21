@@ -33,6 +33,35 @@ async function figure(page: Page, line: number, within = page.locator("body")) {
   });
 }
 
+/**
+ * The figure of line 17 in `within` once it holds still: the drawing shown is the one made for
+ * its place, `also` holds of it, and the same is read twice in a row, 300 ms apart, which is
+ * longer than the interface waits before it asks for a drawing.
+ */
+async function steady(
+  page: Page,
+  within: ReturnType<Page["locator"]>,
+  also: (now: Awaited<ReturnType<typeof figure>>) => boolean,
+) {
+  let last = "";
+  let held: Awaited<ReturnType<typeof figure>> | null = null;
+  await expect
+    .poll(
+      async () => {
+        const now = await figure(page, 17, within);
+        const fits = JSON.stringify(now.shown) === JSON.stringify(now.place) && also(now);
+        const seen = `${JSON.stringify(now.shown)} ${now.svg.length}`;
+        const still = fits && seen === last;
+        last = fits ? seen : "";
+        if (still) held = now;
+        return still;
+      },
+      { intervals: [300], timeout: 20_000 },
+    )
+    .toBe(true);
+  return held!;
+}
+
 test("each plot of the example is drawn under the statement that made it, by the engine, at the size of its place", async ({
   page,
   press,
@@ -116,18 +145,14 @@ test("in Panes a plot is under its statement in the Output panel and in the Plot
   await press(plots.getByRole("button", { name: "‹ Hide" }));
   await expect(plots.getByRole("list", { name: "Plots of the last run" })).toBeHidden();
   // The plot is laid out again for the wider place, by a run at the new width: it is read
-  // once the drawing shown is the one made for the place (on a slow machine the first
-  // readings come before the new drawing; two equal readings in a row are not enough).
-  await expect
-    .poll(
-      async () => {
-        const now = await figure(page, 17, plots.locator(".stage"));
-        return JSON.stringify(now.shown) === JSON.stringify(now.place);
-      },
-      { intervals: [200], timeout: 15_000 },
-    )
-    .toBe(true);
-  const inTab = await figure(page, 17, plots.locator(".stage"));
+  // once the place has widened and the drawing shown is the one made for it, the same at two
+  // readings in a row (on a slow machine the place can still be widening, or the drawing on
+  // its way, at the first readings).
+  const inTab = await steady(
+    page,
+    plots.locator(".stage"),
+    (now) => now.shown[0]! > inPanel.shown[0]!,
+  );
   expect(inTab.shown).toEqual(inTab.place);
   expect(Math.abs(inTab.own![0]! - inTab.shown[0]!)).toBeLessThan(1);
   // Larger than in the panel, and a different drawing: laid out for this place.
@@ -161,19 +186,7 @@ test("when its pane is made narrower a plot is laid out afresh, never stretched,
   // Wait for the pane to settle and its last redraw to arrive: each key press narrows the
   // pane and asks for a figure, so one of the earlier figures can be on the page for a
   // moment after the pane has reached its final width.
-  await expect
-    .poll(
-      async () => {
-        const now = await figure(page, 17, stage);
-        return (
-          now.shown[0]! < wide.shown[0]! - 100 &&
-          JSON.stringify(now.shown) === JSON.stringify(now.place)
-        );
-      },
-      { timeout: 10_000 },
-    )
-    .toBe(true);
-  const narrow = await figure(page, 17, stage);
+  const narrow = await steady(page, stage, (now) => now.shown[0]! < wide.shown[0]! - 100);
   // A new figure of new proportions for the new place, at its own size.
   expect(narrow.shown).toEqual(narrow.place);
   expect(Math.abs(narrow.own![0]! - narrow.shown[0]!)).toBeLessThan(1);
