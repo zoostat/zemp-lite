@@ -462,4 +462,43 @@ describe("rows of a frame", () => {
     worker.answer({ type: "rows", ...page });
     expect((await after).filter?.ok).toBe(false);
   });
+
+  it("are asked again where a run came between the filter and the rows", async () => {
+    const { engine: made, worker } = await opened();
+    const view = { where: "id > 1", sort: null, search: "" };
+    const asked = made.rows("pay", 0, 200, view);
+    await settle();
+    worker.answer({ type: "filter", ok: true, rows: 2, said: "" });
+    await settle();
+    const rows = worker.last;
+    expect(rows).toMatchObject({ type: "rows", filtered: true });
+    // A run starts before the rows are answered (a statement asked after the script, for a
+    // variable's statistics): the worker's filter goes with the frames of the run before, and
+    // what it answers for the rows is the whole frame.
+    const ran = made.run("scripts/main.zeff", "let pay = 1\n");
+    await settle();
+    const run = worker.last;
+    expect(run).toMatchObject({ type: "run" });
+    worker.say({ type: "rows", ...page, kept: 3, id: rows["id"] });
+    worker.say({
+      type: "done",
+      exit_code: 0,
+      stdout: "",
+      stderr: "",
+      statements: [],
+      frames: [],
+      id: run["id"],
+    });
+    await ran;
+    await settle();
+    // The filter is made again on the new frames, and the rows asked again.
+    expect(worker.last).toMatchObject({ type: "filter", name: "pay", condition: "id > 1" });
+    worker.answer({ type: "filter", ok: true, rows: 2, said: "" });
+    await settle();
+    expect(worker.last).toMatchObject({ type: "rows", filtered: true });
+    worker.answer({ type: "rows", ...page, kept: 2 });
+    const found = await asked;
+    expect(found.kept).toBe(2);
+    expect(found.filter).toEqual({ ok: true, rows: 2, said: "" });
+  });
 });

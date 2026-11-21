@@ -1,8 +1,9 @@
 // The Data place (release 0.2, step 13; open decision #75): the frames of the run, each by the
 // statement that made it, and the frame chosen as a grid drawn as it is scrolled, every cell
 // as the engine prints it.
+import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { EXAMPLE, expect, scriptText, test, useExample } from "./support";
+import { EXAMPLE, expect, scriptText, test, useExample, write } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -166,13 +167,9 @@ test("the Variables pane shows the list, or one variable in its place once a var
   await expect(inspector.getByRole("heading", { name: "wage", exact: true })).toBeVisible();
   await expect(find).toHaveCount(0);
   await expect(pane.getByRole("checkbox")).toHaveCount(0);
-  // With what the engine says of it.
-  await expect(inspector).toContainText("Float");
-  await expect(inspector).toContainText("missing");
-  const summary = inspector.getByTestId("variable-summary");
-  await expect(summary).toContainText("summary");
-  await expect(summary).toContainText("wage");
-  await expect(summary).not.toHaveText("…");
+  // With what the engine says of it (its properties are held below, cell by cell).
+  await expect(inspector.getByTestId("variable-facts")).toContainText(/Type\s*Float/);
+  await expect(inspector.getByTestId("variable-statistics")).toContainText("mean");
   // Hidden from here, the variable leaves the grid and stays the one shown.
   await press(inspector.getByRole("button", { name: "Hide from the grid" }));
   await expect(grid.getByRole("columnheader", { name: "wage", exact: true })).toHaveCount(0);
@@ -327,6 +324,203 @@ test("a range of cells is copied as the engine wrote them", async ({
       expect(lines[at]).toBe(cells.slice(1, 4).join("\t"));
     }
   }
+});
+
+// Step 7b: one variable's properties, every number a cell of what the engine prints for the
+// statements of tests/scripts/properties.json, which the released `zeff run` printed.
+const KEPT = (
+  JSON.parse(readFileSync(new URL("../scripts/properties.json", import.meta.url), "utf8")) as {
+    cases: { base: string; name: string; key: string; printed: string }[];
+  }
+).cases;
+const kept = (base: string, name: string) =>
+  KEPT.filter((one) => one.base === base && one.name === name)
+    .map((one) => one.printed)
+    .join("\n");
+
+/** Choose a variable by its column's header, and wait until the engine has answered. */
+async function chosen(
+  page: Page,
+  press: (target: ReturnType<Page["locator"]>) => Promise<void>,
+  name: string,
+) {
+  await press(
+    page
+      .getByRole("grid")
+      .getByRole("columnheader", { name, exact: true })
+      .getByRole("button")
+      .first(),
+  );
+  const pane = variablesPane(page);
+  await expect(pane.getByRole("heading", { name, exact: true })).toBeVisible();
+  await expect(pane.getByTestId("variable-asking")).toHaveCount(0);
+  return pane;
+}
+/** The rows of a table of the pane, each as its cells. */
+const rowsOf = (table: ReturnType<Page["locator"]>) =>
+  table
+    .locator("tbody tr, tfoot tr")
+    .evaluateAll((rows) =>
+      rows.map((row) => [...row.children].map((cell) => cell.textContent?.trim() ?? "")),
+    );
+
+test("a number's properties are the engine's: its type, its rows and missing, its distribution and its statistics", async ({
+  page,
+  press,
+}) => {
+  await ran(page, press);
+  const pane = await chosen(page, press, "wage");
+  await expect(pane.getByTestId("variable-label")).not.toBeEmpty();
+  await expect(pane.getByTestId("variable-facts")).toHaveText(
+    /Type\s*Float\s*Rows\s*18,412\s*Missing\s*211 · 1\.1 %/,
+  );
+  const statistics = await rowsOf(pane.getByTestId("variable-statistics"));
+  expect(statistics).toEqual([
+    ["N", "18,201"],
+    ["mean", "27.370"],
+    ["sd", "14.027"],
+    ["min", "3.530"],
+    ["first quartile", "17.56"],
+    ["median", "24.35"],
+    ["third quartile", "33.73"],
+    ["max", "152.390"],
+    ["distinct values", "5022"],
+  ]);
+  // Every number of the pane is a cell of what the released `zeff run` printed: none is the
+  // interface's own.
+  const printed = kept("wages", "wage");
+  for (const [, cell] of statistics) expect(printed).toContain(cell);
+  for (const cell of ["18,412", "211", "1.1"]) expect(printed).toContain(cell);
+  // The distribution is drawn from the engine's bins, with the least and the greatest at its ends.
+  await expect(pane.getByTestId("variable-shape")).toHaveAttribute(
+    "aria-label",
+    /^\d+ bins of the engine's histogram$/,
+  );
+  await expect(pane.locator(".ends")).toHaveText(/^3\.530\s*152\.390$/);
+  // A number of many values is not counted value by value.
+  await expect(pane.getByTestId("variable-values")).toHaveCount(0);
+});
+
+test("a category's properties are each level's count and share, and a whole number of few labelled values has both", async ({
+  page,
+  press,
+}) => {
+  await ran(page, press);
+  const pane = await chosen(page, press, "industry");
+  await expect(pane.getByTestId("variable-facts")).toHaveText(
+    /Type\s*Category\s*Rows\s*18,412\s*Missing\s*0$/,
+  );
+  const levels = await rowsOf(pane.getByTestId("variable-values"));
+  expect(levels).toHaveLength(13);
+  expect(levels[0]).toEqual(["Agriculture", "535", "2.9"]);
+  expect(levels[11]).toEqual(["Public administration", "1,421", "7.7"]);
+  expect(levels[12]).toEqual(["Total", "18,412", "100.0"]);
+  const printed = kept("wages", "industry");
+  for (const row of levels) for (const cell of row) expect(printed).toContain(cell);
+  expect(await rowsOf(pane.getByTestId("variable-statistics"))).toEqual([
+    ["N", "18,412"],
+    ["distinct values", "12"],
+  ]);
+  // Years of schooling, a whole number of thirteen values: the engine draws it as a number
+  // (its header is a histogram), so it has a number's statistics and is not counted by value.
+  await chosen(page, press, "educ");
+  expect(await rowsOf(pane.getByTestId("variable-statistics"))).toEqual([
+    ["N", "18,412"],
+    ["mean", "13.491"],
+    ["sd", "2.485"],
+    ["min", "8.000"],
+    ["first quartile", "12"],
+    ["median", "14"],
+    ["third quartile", "15"],
+    ["max", "20.000"],
+    ["distinct values", "13"],
+  ]);
+  await expect(pane.getByTestId("variable-values")).toHaveCount(0);
+  // Union membership, a whole number of two labelled values: a number's statistics, and each
+  // value counted under its label.
+  await chosen(page, press, "union");
+  const member = await rowsOf(pane.getByTestId("variable-statistics"));
+  expect(member).toEqual([
+    ["N", "18,412"],
+    ["mean", "0.318"],
+    ["sd", "0.466"],
+    ["min", "0.000"],
+    ["first quartile", "0"],
+    ["median", "0"],
+    ["third quartile", "1"],
+    ["max", "1.000"],
+    ["distinct values", "2"],
+  ]);
+  const members = await rowsOf(pane.getByTestId("variable-values"));
+  expect(members).toEqual([
+    ["no", "12,556", "68.2"],
+    ["yes", "5,856", "31.8"],
+    ["Total", "18,412", "100.0"],
+  ]);
+  const union = kept("wages", "union");
+  for (const row of [...member, ...members]) {
+    for (const cell of row.slice(1)) expect(union).toContain(cell);
+  }
+});
+
+test("a frame kept to a condition gives that condition's statistics, asked again when it changes", async ({
+  page,
+  press,
+}) => {
+  await ran(page, press);
+  const pane = await chosen(page, press, "wage");
+  await expect(pane.getByTestId("variable-facts")).toContainText("18,412");
+  const condition = page.getByRole("textbox", { name: "Keep rows where" });
+  await condition.fill("year == 2015");
+  await condition.press("Enter");
+  await expect(page.getByTestId("kept-count")).toHaveText("2,179 of 18,412 rows");
+  await expect(pane.getByTestId("variable-facts")).toHaveText(
+    /Type\s*Float\s*Rows\s*2,179\s*Missing\s*27 · 1\.2 %/,
+  );
+  const statistics = await rowsOf(pane.getByTestId("variable-statistics"));
+  expect(statistics.slice(0, 1)).toEqual([["N", "2,152"]]);
+  expect(statistics.slice(4, 7)).toEqual([
+    ["first quartile", "17.6275"],
+    ["median", "24.045"],
+    ["third quartile", "33.175"],
+  ]);
+  expect(statistics.at(-1)).toEqual(["distinct values", "1661"]);
+  const printed = kept("wages.where(year == 2015)", "wage");
+  for (const [, cell] of statistics) expect(printed).toContain(cell);
+  // The condition taken away, the whole frame's again.
+  await condition.fill("");
+  await condition.press("Enter");
+  await expect(pane.getByTestId("variable-facts")).toContainText("18,412");
+  await expect
+    .poll(async () => (await rowsOf(pane.getByTestId("variable-statistics")))[0])
+    .toEqual(["N", "18,201"]);
+});
+
+test("a date's properties are its rows, its least and its greatest, and its distinct values", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await write(page, "let firms = dataset(firms)\n");
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Data" }),
+  );
+  const pane = await chosen(page, press, "founded");
+  await expect(pane.getByTestId("variable-facts")).toHaveText(
+    /Type\s*Date\s*Rows\s*400\s*Missing\s*0$/,
+  );
+  expect(await rowsOf(pane.getByTestId("variable-statistics"))).toEqual([
+    ["N", "400"],
+    ["min", "1950-01-15"],
+    ["max", "2009-11-26"],
+    ["distinct values", "396"],
+  ]);
+  await expect(pane.getByTestId("variable-values")).toHaveCount(0);
+  await expect(pane.getByTestId("variable-said")).toHaveCount(0);
 });
 
 test("the Variables pane is for looking: nothing in it changes a variable or offers the statement that would", async ({

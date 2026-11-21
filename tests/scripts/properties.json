@@ -1,0 +1,245 @@
+{
+  "setup": "let wages = dataset(wages)\nlet firms = dataset(firms)\n",
+  "cases": [
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "wage",
+      "type": "Float",
+      "few": false,
+      "key": "summary",
+      "statement": "wages.summary([wage])",
+      "printed": "summary · wages\n\n  variable        N   missing     mean       sd     min       max\n  wage       18,201       211   27.370   14.027   3.530   152.390\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "wage",
+      "type": "Float",
+      "few": false,
+      "key": "quartiles",
+      "statement": "wages.quantile(wage, p: [0.25, 0.5, 0.75])",
+      "printed": "17.56\n24.35\n33.73\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "wage",
+      "type": "Float",
+      "few": false,
+      "key": "distinct",
+      "statement": "n_distinct(wages[\"wage\"])",
+      "printed": "5022\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "wage",
+      "type": "Float",
+      "few": false,
+      "key": "missing",
+      "statement": "wages.add(zemp_missing = is_missing(wage)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing        N       %\n  false          18,201    98.9\n  true              211     1.1\n  ─────────────────────────────\n  Total          18,412   100.0\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "educ",
+      "type": "Int",
+      "few": false,
+      "key": "summary",
+      "statement": "wages.summary([educ])",
+      "printed": "summary · wages\n\n  variable        N   missing     mean      sd     min      max\n  educ       18,412         0   13.491   2.485   8.000   20.000\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "educ",
+      "type": "Int",
+      "few": false,
+      "key": "quartiles",
+      "statement": "wages.quantile(educ, p: [0.25, 0.5, 0.75])",
+      "printed": "12\n14\n15\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "educ",
+      "type": "Int",
+      "few": false,
+      "key": "distinct",
+      "statement": "n_distinct(wages[\"educ\"])",
+      "printed": "13\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "educ",
+      "type": "Int",
+      "few": false,
+      "key": "missing",
+      "statement": "wages.add(zemp_missing = is_missing(educ)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing        N       %\n  false          18,412   100.0\n  ─────────────────────────────\n  Total          18,412   100.0\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "union",
+      "type": "Int",
+      "few": true,
+      "key": "summary",
+      "statement": "wages.summary([union])",
+      "printed": "summary · wages\n\n  variable        N   missing    mean      sd     min     max\n  union      18,412         0   0.318   0.466   0.000   1.000\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "union",
+      "type": "Int",
+      "few": true,
+      "key": "quartiles",
+      "statement": "wages.quantile(union, p: [0.25, 0.5, 0.75])",
+      "printed": "0\n0\n1\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "union",
+      "type": "Int",
+      "few": true,
+      "key": "values",
+      "statement": "wages.tabulate(union)",
+      "printed": "tabulate · wages · union\n\n  union        N       %\n  no      12,556    68.2\n  yes      5,856    31.8\n  ──────────────────────\n  Total   18,412   100.0\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "union",
+      "type": "Int",
+      "few": true,
+      "key": "distinct",
+      "statement": "n_distinct(wages[\"union\"])",
+      "printed": "2\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "union",
+      "type": "Int",
+      "few": true,
+      "key": "missing",
+      "statement": "wages.add(zemp_missing = is_missing(union)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing        N       %\n  false          18,412   100.0\n  ─────────────────────────────\n  Total          18,412   100.0\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "industry",
+      "type": "Category",
+      "few": true,
+      "key": "values",
+      "statement": "wages.tabulate(industry)",
+      "printed": "tabulate · wages · industry\n\n  industry                     N       %\n  Agriculture                535     2.9\n  Mining                     200     1.1\n  Utilities                  370     2.0\n  Construction             1,477     8.0\n  Manufacturing            2,574    14.0\n  Retail                   2,871    15.6\n  Transport                  976     5.3\n  Finance                  1,560     8.5\n  Services                 2,637    14.3\n  Education                1,693     9.2\n  Health                   2,098    11.4\n  Public administration    1,421     7.7\n  ──────────────────────────────────────\n  Total                   18,412   100.0\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "industry",
+      "type": "Category",
+      "few": true,
+      "key": "distinct",
+      "statement": "n_distinct(wages[\"industry\"])",
+      "printed": "12\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages",
+      "name": "industry",
+      "type": "Category",
+      "few": true,
+      "key": "missing",
+      "statement": "wages.add(zemp_missing = is_missing(industry)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing        N       %\n  false          18,412   100.0\n  ─────────────────────────────\n  Total          18,412   100.0\n"
+    },
+    {
+      "frame": "firms",
+      "base": "firms",
+      "name": "founded",
+      "type": "Date",
+      "few": false,
+      "key": "least",
+      "statement": "firms.min(founded)",
+      "printed": "1950-01-15\n"
+    },
+    {
+      "frame": "firms",
+      "base": "firms",
+      "name": "founded",
+      "type": "Date",
+      "few": false,
+      "key": "greatest",
+      "statement": "firms.max(founded)",
+      "printed": "2009-11-26\n"
+    },
+    {
+      "frame": "firms",
+      "base": "firms",
+      "name": "founded",
+      "type": "Date",
+      "few": false,
+      "key": "distinct",
+      "statement": "n_distinct(firms[\"founded\"])",
+      "printed": "396\n"
+    },
+    {
+      "frame": "firms",
+      "base": "firms",
+      "name": "founded",
+      "type": "Date",
+      "few": false,
+      "key": "missing",
+      "statement": "firms.add(zemp_missing = is_missing(founded)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing     N       %\n  false          400   100.0\n  ──────────────────────────\n  Total          400   100.0\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages.where(year == 2015)",
+      "name": "wage",
+      "type": "Float",
+      "few": false,
+      "key": "summary",
+      "statement": "wages.where(year == 2015).summary([wage])",
+      "printed": "summary · frame\n\n  variable       N   missing     mean       sd     min       max\n  wage       2,152        27   27.012   13.540   5.250   140.240\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages.where(year == 2015)",
+      "name": "wage",
+      "type": "Float",
+      "few": false,
+      "key": "quartiles",
+      "statement": "wages.where(year == 2015).quantile(wage, p: [0.25, 0.5, 0.75])",
+      "printed": "17.6275\n24.045\n33.175\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages.where(year == 2015)",
+      "name": "wage",
+      "type": "Float",
+      "few": false,
+      "key": "distinct",
+      "statement": "n_distinct(wages.where(year == 2015)[\"wage\"])",
+      "printed": "1661\n"
+    },
+    {
+      "frame": "wages",
+      "base": "wages.where(year == 2015)",
+      "name": "wage",
+      "type": "Float",
+      "few": false,
+      "key": "missing",
+      "statement": "wages.where(year == 2015).add(zemp_missing = is_missing(wage)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing       N       %\n  false          2,152    98.8\n  true              27     1.2\n  ────────────────────────────\n  Total          2,179   100.0\n"
+    }
+  ]
+}

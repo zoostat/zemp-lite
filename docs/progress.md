@@ -204,6 +204,14 @@ The owner said "Go, as recommended" to the plan and its seventeen questions, and
 
 **Done.** Step 7a `[function]`: the Data place on the frame, **Frames of the run** at its left (open) and **Variables** at its right (closed until asked for or until a variable is chosen); the pane shows the list of variables or, in its place, the one chosen, with **‹ All variables** back; the copying of a change of type, contrast or labels removed with its four cases and its test. Step 4 is green on GitHub (1058371).
 
-**Green.** Format, lint, types, the edition check, the worker's checks and 28 native tests, the nine samples identical, 176 unit tests; the browser tests all green in Chromium. In WebKit on this Mac six tests failed in two runs, the six that need a real click of the mouse (`console.spec` :95, `data.spec` :106 and :304, `help.spec` :46, `language.spec` :67 and :114), with the suite's own probe saying WebKit's mouse was not landing (the fault `tests/browser/support.ts` describes; the drag test skipped itself for it); GitHub's WebKit is the test of record for them.
+**Green.** Format, lint, types, the edition check, the worker's checks and 28 native tests, the nine samples identical, 172 unit tests (four fewer: the cases of the copying removed); the browser tests all green in Chromium. In WebKit on this Mac six tests failed in two runs, the six that need a real click of the mouse (`console.spec` :95, `data.spec` :106 and :304, `help.spec` :46, `language.spec` :67 and :114), with the suite's own probe saying WebKit's mouse was not landing (the fault `tests/browser/support.ts` describes; the drag test skipped itself for it); GitHub's WebKit is the test of record for them.
 
 **Next.** Step 7b `[engine]`: one variable's properties, each number a cell of the engine's print.
+
+## 22 November 2026, release 0.2.1, step 7b
+
+**Done.** Step 7b `[engine]`: one variable's properties in the Variables pane, each number a cell of what the engine prints for a few statements asked after the script (a summary and the quartiles for a number; each value's count and share for a variable of few values; the least and the greatest of a date; the distinct values and the rows without a value for all), on the frame as the view shows it, so a condition's statistics are its own. The 24 statements are kept with the released `zeff run`'s prints and held by a native test, the unit tests and the browser tests. **Mended on the way:** rows asked under a condition while a run starts were answered with the whole frame; they are now asked again.
+
+**Green.** Format, lint, types, the edition check, the worker's checks and 29 native tests, the nine samples identical, 180 unit tests; the browser tests all green in Chromium, and in WebKit all but the same six that need a real click of the mouse, which this Mac's headless WebKit is not delivering today (see step 7a).
+
+**Next.** Step 8 `[function]`: Help, a place, with the page's outline at its left and its related functions at its right.

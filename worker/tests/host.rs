@@ -880,6 +880,26 @@ fn each_statement_copy_as_zeff_writes_gives_what_the_view_showed() {
 }
 
 #[test]
+fn each_statement_the_variables_pane_asks_prints_what_zeff_run_prints() {
+    // tests/scripts/properties.json: the statements the Variables pane asks of the engine for a
+    // variable (a summary, the quartiles, the distinct values, each value's count and share,
+    // the rows without a value, a date's ends), each with what the released `zeff run` printed
+    // for it after the two lines that make the frames. The interface reads its cells out of
+    // these prints, so they are held here byte for byte.
+    let kept: Value = serde_json::from_str(&read("tests/scripts/properties.json")).unwrap();
+    let setup = kept["setup"].as_str().unwrap();
+    let cases = kept["cases"].as_array().unwrap();
+    assert_eq!(cases.len(), 24);
+    for case in cases {
+        let statement = case["statement"].as_str().unwrap();
+        let host = Host::new("demo");
+        let done = run_at(&host, &format!("{setup}{statement}\n"), 0);
+        assert_eq!(done["exit_code"], 0, "{statement}: {done}");
+        assert_eq!(done["stdout"], case["printed"], "{statement}");
+    }
+}
+
+#[test]
 fn the_bindings_are_listed_as_zeff_repl_lists_them() {
     // tests/scripts/repl/vars.stdout is what the released `zeff repl` printed for `:vars`
     // after the four statements of tests/scripts/repl/console.txt.

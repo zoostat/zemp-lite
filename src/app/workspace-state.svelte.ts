@@ -1244,29 +1244,46 @@ export class Workspace {
   }
 
   /**
-   * The engine's summary of one variable of a frame, as it prints it: the statement
-   * `frame.summary([variable])` run after the script, as the console line runs one, so that
-   * every number is the engine's. The script is not changed.
+   * What the engine prints for each of some statements, run after the script as the console
+   * line runs one, so that every number shown of a variable is the engine's (`frame.summary`,
+   * `quantile`, `tabulate` and the rest; `src/data/properties.ts`). The script is not changed.
+   * A statement that printed nothing gives what the engine said of it; `said` is what the
+   * engine said where it refused the statements or one of them failed.
    */
-  async summaryOf(frame: string, variable: string): Promise<string> {
+  async askAfter(statements: string[]): Promise<{ printed: string[]; said: string }> {
     const script = this.scriptPath;
     await this.#load(script);
-    const statement = `${frame}.summary([\`${variable.replaceAll("`", "")}\`])`;
-    const { text, from } = composed(this.buffers[script]?.text ?? "", [], statement);
+    const { text, from } = composed(
+      this.buffers[script]?.text ?? "",
+      statements.slice(0, -1),
+      statements.at(-1) ?? "",
+    );
+    // Each statement is on a line of its own, the last of them on line `from`.
+    const first = from - (statements.length - 1);
     const before = this.#busy;
-    let printed = "";
+    let answer = { printed: statements.map(() => ""), said: "" };
     const work = (async () => {
       await before;
       await this.#saving;
       const told = consoleRun(script, text);
       const outcome = await this.session.run(script, text, told.hear, 0);
       told.end(outcome);
-      const result = outcomeOf(told.run, from);
-      printed = result.printed !== "" ? result.printed : result.said.map((one) => one.raw).join("");
+      const all = blocks(told.run);
+      const raw = (block: (typeof all)[number]) => block.said.map((one) => one.raw).join("");
+      answer = {
+        printed: statements.map((_, at) => {
+          const block = all.find((one) => one.line === first + at);
+          return block === undefined ? "" : block.printed !== "" ? block.printed : raw(block);
+        }),
+        said: all
+          .filter((block) => block.state === "failed")
+          .map(raw)
+          .join(""),
+      };
     })();
     this.#busy = work;
     await work;
-    return printed;
+    return answer;
   }
 
   /** Show or hide the data viewer's list of frames and variables. */

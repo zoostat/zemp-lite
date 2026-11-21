@@ -15,7 +15,16 @@
   import { counted } from "../margin/notes";
   import { paneOf } from "../app/panes";
   import Place from "../app/Place.svelte";
-  import { viewAsZeff } from "./zeff";
+  import {
+    asked as statementsOf,
+    kindOf,
+    missingCells,
+    printedValues,
+    summaryCells,
+    tabulated,
+    type Key,
+  } from "./properties";
+  import { named, viewAsZeff } from "./zeff";
 
   let { workspace }: { workspace: Workspace } = $props();
 
@@ -116,23 +125,100 @@
     workspace.setHidden(chosen, hide ? [...hidden, name] : hidden.filter((one) => one !== name));
   }
 
-  // The inspector: the variable chosen, and the engine's summary of it.
+  // The variable chosen, shown in the Variables pane in place of the list.
   const inspected = $derived(
     (first?.variables ?? []).find((one) => one.name === workspace.views.data.variable) ?? null,
   );
-  let summary = $state("");
+  // Its properties (open decision #203): what the engine prints for a few statements asked
+  // after the script, by the variable's type (`properties.ts`), on the frame as the view shows
+  // it, so a condition's statistics are the condition's. Asked again when the variable, the
+  // frame, the condition or the run changes; `null` while the engine is asked.
+  let answers = $state<Partial<Record<Key, string>> | null>(null);
+  let refused = $state("");
+  const kept = $derived(first?.filter?.ok === false ? "" : view.where);
+  const asking = $derived(
+    chosen === null || inspected === null
+      ? null
+      : JSON.stringify([
+          chosen,
+          inspected.name,
+          inspected.type,
+          inspected.bars?.levels !== undefined,
+          kept,
+          workspace.lastRun?.startedAt ?? 0,
+        ]),
+  );
   $effect(() => {
-    const frame = chosen;
-    const variable = inspected?.name ?? null;
-    summary = "";
-    if (frame === null || variable === null) return;
+    const now = asking;
+    answers = null;
+    refused = "";
+    if (now === null) return;
+    const [frame, name, type, few, where] = JSON.parse(now) as [
+      string,
+      string,
+      string,
+      boolean,
+      string,
+    ];
+    const base = viewAsZeff(frame, { where, sort: null }) ?? named(frame);
+    const statements = statementsOf(base, {
+      name,
+      type,
+      bars: few ? { counts: [], levels: [] } : null,
+    });
+    let old = false;
     void workspace
-      .summaryOf(frame, variable)
-      .then((text) => {
-        if (inspected?.name === variable) summary = text;
+      .askAfter(statements.map((one) => one.statement))
+      .then((answer) => {
+        if (old) return;
+        answers = Object.fromEntries(
+          statements.map((one, at) => [one.key, answer.printed[at] ?? ""]),
+        );
+        refused = answer.said;
       })
-      .catch((error: Error) => (summary = error.message));
+      .catch((error: Error) => {
+        if (old) return;
+        answers = {};
+        refused = error.message;
+      });
+    return () => {
+      old = true;
+    };
   });
+  const kind = $derived(inspected === null ? null : kindOf(inspected));
+  const summary = $derived(answers?.summary ? summaryCells(answers.summary) : null);
+  const quartiles = $derived(answers?.quartiles ? printedValues(answers.quartiles) : []);
+  const absent = $derived(answers?.missing ? missingCells(answers.missing) : null);
+  const values = $derived(answers?.values ? tabulated(answers.values) : null);
+  const one = (key: Key) => (answers?.[key] ? (printedValues(answers[key])[0] ?? "") : "");
+  /** The statistics as rows of a name and the engine's cell, by the variable's kind. */
+  const statistics = $derived.by((): [string, string][] => {
+    if (answers === null || kind === null) return [];
+    const rows: [string, string][] = [];
+    if (kind.number && summary !== null) {
+      rows.push(["N", summary["N"] ?? ""], ["mean", summary["mean"] ?? ""]);
+      rows.push(["sd", summary["sd"] ?? ""], ["min", summary["min"] ?? ""]);
+      rows.push(["first quartile", quartiles[0] ?? ""], ["median", quartiles[1] ?? ""]);
+      rows.push(["third quartile", quartiles[2] ?? ""], ["max", summary["max"] ?? ""]);
+    } else if (absent !== null) {
+      rows.push(["N", absent.present]);
+      if (kind.moment) rows.push(["min", one("least")], ["max", one("greatest")]);
+    }
+    if (one("distinct") !== "") rows.push(["distinct values", one("distinct")]);
+    return rows.filter(([, cell]) => cell !== "");
+  });
+  /** What the engine said where a print is not the table or the values asked for. */
+  const unread = $derived(
+    answers === null
+      ? ""
+      : [
+          kind?.number && summary === null ? (answers.summary ?? "") : "",
+          kind?.few && values === null ? (answers.values ?? "") : "",
+          absent === null ? (answers.missing ?? "") : "",
+        ]
+          .filter((text) => text !== "")
+          .join(""),
+  );
   const visible = $derived(Array.from({ length: Math.max(0, to - from) }, (_, at) => from + at));
 
   // The condition and the search as they are typed: the condition is given to the engine on
@@ -358,17 +444,92 @@
         >‹ All variables</button
       >
       <h3 class="mono">{inspected.name}</h3>
-      <p class="facts">
-        {inspected.type}{inspected.label === "" ? "" : ` · ${inspected.label}`} · {counted(
-          inspected.missing,
-        )} missing
+      <p class="label" data-testid="variable-label">
+        {#if inspected.label === ""}<span class="quiet-word">no label</span
+          >{:else}{inspected.label}{/if}
       </p>
+      <dl class="facts" data-testid="variable-facts">
+        <dt>Type</dt>
+        <dd class="mono">{inspected.type}</dd>
+        <dt>Rows</dt>
+        <dd class="mono">{absent === null ? "…" : absent.rows}</dd>
+        <dt>Missing</dt>
+        <dd class="mono" class:na={absent !== null && absent.share !== null}>
+          {#if absent === null}…{:else}{absent.missing}{absent.share === null
+              ? ""
+              : ` · ${absent.share} %`}{/if}
+        </dd>
+      </dl>
       <button class="word" onclick={() => hide(inspected.name, !hidden.includes(inspected.name))}
         >{hidden.includes(inspected.name) ? "Show in the grid" : "Hide from the grid"}</button
       >
-      <pre class="mono summary" data-testid="variable-summary">{summary === ""
-          ? "…"
-          : summary}</pre>
+      {#if inspected.bars !== null}
+        {@const bars = inspected.bars}
+        <h4>Distribution</h4>
+        <svg
+          class="shape"
+          viewBox="0 0 {bars.counts.length} 12"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label={described(bars)}
+          data-testid="variable-shape"
+          ><title>{described(bars)}</title>{#each bars.counts as count, bin (bin)}<rect
+              x={bin + 0.08}
+              width="0.84"
+              y={12 - (12 * count) / most(bars)}
+              height={(12 * count) / most(bars)}
+            />{/each}</svg
+        >
+        {#if kind?.number && summary !== null && bars.levels === undefined}
+          <p class="ends mono"><span>{summary["min"]}</span><span>{summary["max"]}</span></p>
+        {/if}
+      {/if}
+      {#if answers === null}
+        <p class="quiet" data-testid="variable-asking">…</p>
+      {:else}
+        {#if statistics.length > 0}
+          <h4>Descriptive statistics</h4>
+          <table class="stats" data-testid="variable-statistics">
+            <tbody>
+              {#each statistics as [name, cell] (name)}
+                <tr><th scope="row">{name}</th><td class="mono">{cell}</td></tr>
+              {/each}
+            </tbody>
+          </table>
+        {/if}
+        {#if values !== null}
+          <h4>Values</h4>
+          <table class="stats" data-testid="variable-values">
+            <thead>
+              <tr><th scope="col">value</th><th scope="col">N</th><th scope="col">%</th></tr>
+            </thead>
+            <tbody>
+              {#each values.rows as row (row.value)}
+                <tr
+                  ><th scope="row" class="mono">{row.value}</th><td class="mono">{row.n}</td><td
+                    class="mono">{row.share}</td
+                  ></tr
+                >
+              {/each}
+            </tbody>
+            {#if values.total !== null}
+              <tfoot>
+                <tr
+                  ><th scope="row">{values.total.value}</th><td class="mono">{values.total.n}</td
+                  ><td class="mono">{values.total.share}</td></tr
+                >
+              </tfoot>
+            {/if}
+          </table>
+        {/if}
+        <!-- What the engine said where it gave no table: its own sentence, never a blank. -->
+        {#if unread !== "" || refused !== ""}
+          <pre class="mono summary" data-testid="variable-said">{unread !== ""
+              ? unread
+              : refused}</pre>
+        {/if}
+      {/if}
+      <p class="looking">For looking only: a variable is changed in the script, not here.</p>
     </div>
   {/if}
 {/snippet}
@@ -822,18 +983,98 @@
     padding: 2px 0;
     text-align: left;
   }
-  .facts {
+  .label {
     color: var(--ink-2);
-    font-size: 13px;
     margin: 0;
-    padding: 2px 14px 6px;
+    padding: 0 14px 4px;
+  }
+  .quiet-word {
+    color: var(--ink-3);
+    font-style: italic;
+  }
+  .facts {
+    display: grid;
+    font-size: 13px;
+    gap: 3px 14px;
+    grid-template-columns: auto 1fr;
+    margin: 4px 0 8px;
+    padding: 0 14px;
+  }
+  .facts dt {
+    color: var(--ink-3);
+  }
+  .facts dd {
+    color: var(--ink);
+    margin: 0;
+  }
+  .one h4 {
+    color: var(--ink-3);
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    margin: 14px 14px 6px;
+    text-transform: uppercase;
+  }
+  /* The variable's distribution, drawn from the engine's bins or counts as its header is. */
+  .shape {
+    display: block;
+    fill: var(--accent);
+    height: 96px;
+    margin: 0 14px;
+    opacity: 0.8;
+    width: calc(100% - 28px);
+  }
+  .ends {
+    color: var(--ink-3);
+    display: flex;
+    font-size: 12.5px;
+    justify-content: space-between;
+    margin: 2px 14px 0;
+  }
+  .stats {
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 0 14px;
+    width: calc(100% - 28px);
+  }
+  .stats th,
+  .stats td {
+    border-bottom: 1px solid var(--line);
+    font-weight: 400;
+    padding: 3px 0;
+    text-align: left;
+  }
+  .stats td {
+    padding-left: 10px;
+    text-align: right;
+  }
+  .stats thead th {
+    color: var(--ink-3);
+    font-size: 12.5px;
+  }
+  .stats thead th + th {
+    padding-left: 10px;
+    text-align: right;
+  }
+  .stats tfoot th,
+  .stats tfoot td {
+    border-bottom: 0;
+    border-top: 1px solid var(--line-strong);
+    color: var(--ink-2);
+  }
+  .looking {
+    background: var(--soft);
+    border-radius: 6px;
+    color: var(--ink-3);
+    font-size: 12.5px;
+    margin: 14px;
+    padding: 8px 10px;
   }
   .summary {
-    flex: 1;
     font-size: 12.5px;
     margin: 8px 0 0;
     overflow: auto;
-    padding: 6px 14px 16px;
+    padding: 6px 14px 8px;
     white-space: pre;
   }
   .quiet {

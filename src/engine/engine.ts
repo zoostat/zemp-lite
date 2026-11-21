@@ -301,25 +301,35 @@ export class Engine {
     view: View = { where: "", sort: null, search: "" },
   ): Promise<Rows> {
     const where = view.where.trim();
-    let filter: Filtered | null = null;
-    if (where !== "") {
-      const held = this.#filter;
-      filter =
-        held !== null && held.name === name && held.condition === where && held.runs === this.#runs
-          ? held.answer
-          : await this.filter(name, where);
+    // A run that comes between the filter and the rows takes the worker's filter with it, and
+    // the rows asked for would then be the whole frame's under a condition's name: so where a
+    // run has started meanwhile, the filter is made again on the new frames and the rows
+    // asked again.
+    let filter: Filtered | null;
+    let found;
+    for (let tries = 0; ; tries += 1) {
+      const runs = this.#runs;
+      filter = null;
+      if (where !== "") {
+        const held = this.#filter;
+        filter =
+          held !== null && held.name === name && held.condition === where && held.runs === runs
+            ? held.answer
+            : await this.filter(name, where);
+      }
+      const asked: Request = {
+        type: "rows",
+        name,
+        offset,
+        limit,
+        sort: view.sort?.variable ?? "",
+        desc: view.sort?.desc ?? false,
+        filtered: filter?.ok === true,
+        search: view.search,
+      };
+      found = expect(await this.#ask(asked), "rows");
+      if (filter?.ok !== true || this.#runs === runs || tries >= 4) break;
     }
-    const asked: Request = {
-      type: "rows",
-      name,
-      offset,
-      limit,
-      sort: view.sort?.variable ?? "",
-      desc: view.sort?.desc ?? false,
-      filtered: filter?.ok === true,
-      search: view.search,
-    };
-    const found = expect(await this.#ask(asked), "rows");
     return {
       name: found.name,
       header: found.header,
