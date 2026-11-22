@@ -166,4 +166,8 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Done.** On the owner's "Start release 0.2.2": `v0.2.1` is tagged and the tree clean; the row, #208, #117's paragraph and sections 3, 5 and 10 of the Zemp Specification read, with the code the release touches; `docs/releases/0.2.2.md` written: fourteen steps in five parts (the zip and a project out of the browser and back; the storage kept and the reminder; files and folders; projects; the whole and the close), with five questions for the owner. No code is written.
 
-**Next.** The owner's "go", with his answers; then step 1 `[engine]`, the release opened.
+**The owner's "Go, as recommended"** took the five answers as recommended (`docs/decisions.md`).
+
+**Done, step 1 `[engine]`.** The release opened: version `0.2.2-dev`; the greyed line of **Open folder…** says where it comes. Green here: the whole routine in both browsers.
+
+**Next.** Step 2 `[engine]`: a zip, written and read.

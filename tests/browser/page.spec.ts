@@ -36,7 +36,11 @@ test("the welcome screen opens, names the release and says where projects are ke
   // The page is cross-origin isolated, so the cancel flag can be shared with the worker.
   expect(await page.evaluate(() => crossOriginIsolated)).toBe(true);
   await expect(page.getByRole("button", { name: "New project…" })).toBeEnabled();
-  await expect(page.getByRole("button", { name: "Open folder…" })).toBeDisabled();
+  // Open folder… is not here yet, and says where it comes (#208): with the desktop beta.
+  const folder = page.getByRole("button", { name: "Open folder…" });
+  await expect(folder).toBeDisabled();
+  await expect(folder).toContainText("comes with the desktop app, and then in Chrome and Edge");
+  await expect(folder).not.toContainText("prototype");
   await expect(page.getByRole("button", { name: "Scratch project" })).toBeEnabled();
   // WebKit's test profile behaves as a private window does, which keeps nothing; that
   // projects are kept, in both browsers, is tested in `kept.spec.ts`.

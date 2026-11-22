@@ -1329,3 +1329,21 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **The notes.** The text published with the GitHub release is `docs/releases/0.2.1-notes.md` as of that commit, which differs from the tag's in two places, both facts learned from the release's own run and deployment: that run's failure and re-run, and the slow ⌘↵, which appeared at the release's deployment too (2,529 ms, 2,503 of it before the run began) while the first drawing of the figures took 435 ms there. So the drawing is not what the statement waits for; the suspicion is withdrawn, and the cause stays not found.
 
 **Reason.** A release is said done when it is deployed and checked, and its notes should not say less than was known when they were published.
+
+## 22 November 2026: Release 0.2.2 opened (step 1)
+
+**The owner's word:** "Start release 0.2.2", and, to the plan and its five questions, "Go, as recommended". Each answer is his to overturn.
+
+**His answers, as recommended.**
+
+1. **A deletion** asks once, in the row: it names the file, or the folder and how many files go with it, says that it cannot be brought back, and offers **Delete** and **Keep**. Nothing is undone in 0.2.2. The deletion of a project offers **Export project…** first.
+2. **`scripts/main.zeff`** is not renamed, moved or deleted; every other script is.
+3. **Dragging a row to move a file** is left out of 0.2.2; **Move to…** in the row's menu does it.
+4. **The Scratch project** is not renamed; **Duplicate…** makes a named project of it; in place of **Delete** it has **Reset…**, which puts back its examples as a first visit has them.
+5. **An exported zip** is `<the project's name>.zip` with one folder of that name in it, holding `zeff.toml`, `scripts/`, `functions/`, `data/`, `output/` and anything else the visitor put in the project; without `.zemp/` and without what `zeff new` keeps out of Git (the engine's caches, run records, lock and console session).
+
+**What the reading found** is in `docs/releases/0.2.2.md`: the operations on a file exist and nothing on screen calls them; a project's folder in the browser's storage is made from its name, so a rename parts the two; what a script writes with `export` cannot be had today; the engine is told of files already; a zip needs no dependency, the browsers having its deflate built in.
+
+**Choices of this step.** Version `0.2.2-dev` in `package.json`, `worker/Cargo.toml` and their lock files. The greyed line of **Open folder…** on the start screen says "comes with the desktop app, and then in Chrome and Edge" in place of "not in this prototype yet": it is no prototype, and #208 places the folder with the 0.5 desktop beta. Tests: browser (`page.spec`, the line's words).
+
+**Reason.** The owner's decisions; and a line that says a thing is not here should say when it will be.

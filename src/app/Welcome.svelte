@@ -108,7 +108,9 @@
     {/if}
     <button class="act" disabled>
       <span class="what">Open folder…</span>
-      <span class="about">a project folder on this computer: not in this prototype yet</span>
+      <span class="about"
+        >a project folder on this computer: comes with the desktop app, and then in Chrome and Edge</span
+      >
     </button>
     <button class="act" onclick={scratch}>
       <span class="what">Scratch project</span>
