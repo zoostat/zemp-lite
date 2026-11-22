@@ -127,10 +127,16 @@
     />
 
     {#if workspace.reminder !== null}
-      <span class="reminder" data-testid="reminder">{workspace.reminder}</span>
+      <!-- Where the window is narrow the line is cut short before the console is: its whole
+           text is then in its title. -->
+      <span class="reminder" data-testid="reminder" title={workspace.reminder}
+        >{workspace.reminder}</span
+      >
       <button class="export" onclick={() => void workspace.exportProject()}>Export project…</button>
     {/if}
-    <span class="keys mono" aria-hidden="true">{mac ? "⌘↵ run · ⌘K" : "Ctrl ↵ run · Ctrl K"}</span>
+    <span class="keys mono" class:beside={workspace.reminder !== null} aria-hidden="true"
+      >{mac ? "⌘↵ run · ⌘K" : "Ctrl ↵ run · Ctrl K"}</span
+    >
     <span role="status">{workspace.status}</span>
     <span class="engine">engine Zeff {workspace.engineVersion ?? "…"} · in this browser</span>
   </div>
@@ -160,7 +166,8 @@
     color: var(--ink);
     flex: 1;
     font-size: calc(var(--code-size, 14px) - 1px);
-    min-width: 0;
+    /* Room to type a statement in, whatever else the line holds: the reminder gives way. */
+    min-width: 240px;
     outline: none;
     padding: 0;
   }
@@ -208,6 +215,13 @@
     color: var(--ink-3);
     flex: none;
     font-size: 12.5px;
+  }
+  /* Beside the reminder, in a window with no room to spare, the keys are left out: the top bar
+     names both. */
+  @media (max-width: 1439px) {
+    .keys.beside {
+      display: none;
+    }
   }
   /* The reminder to export: quiet words, and the one thing to press beside them. */
   .reminder {

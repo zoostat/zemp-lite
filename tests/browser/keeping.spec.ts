@@ -110,3 +110,49 @@ test("where the browser has agreed to keep the storage the status bar is silent,
   await expect(reminder(page)).toHaveText("not exported for 31 days");
   expect(await asked(page)).toBe(1);
 });
+
+test("at the narrowest window the reminder leaves the console room to type in", async ({
+  page,
+  press,
+  browserName,
+}) => {
+  // Found by eye at the pre-release look of 0.2.2: at 1,200 pixels the reminder left the
+  // console's field 146 pixels in Chromium, and 39 where the browser keeps nothing.
+  await browserThat(page, false);
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const line =
+    browserName === "webkit"
+      ? "this browser keeps no project after the tab is closed · not exported yet"
+      : "the browser may clear this project · not exported yet";
+  await expect(reminder(page)).toHaveText(line);
+  const field = page.getByRole("textbox", { name: /^Console/ });
+  const widths = async () => ({
+    field: (await field.boundingBox())!.width,
+    cut: await reminder(page).evaluate((node) => node.scrollWidth > node.clientWidth),
+    // Nothing of the line runs past the window's edge.
+    over: await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  });
+  const ready = await widths();
+  expect(ready.field).toBeGreaterThanOrEqual(240);
+  expect(ready.over).toBe(0);
+  // The shorter of the two lines stands whole at this width; the longer may be cut short,
+  // and either way the whole of it is the line's title.
+  if (browserName !== "webkit") expect(ready.cut).toBe(false);
+  await expect(reminder(page)).toHaveAttribute("title", line);
+  await expect(exportButton(page)).toBeVisible();
+  // A longer word in the status beside it changes nothing of that.
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  const done = await widths();
+  expect(done.field).toBeGreaterThanOrEqual(240);
+  expect(done.over).toBe(0);
+  // In a wide window the keys stand beside the reminder as before.
+  await page.setViewportSize({ width: 1600, height: 800 });
+  await expect(page.locator("footer .keys")).toBeVisible();
+  expect((await widths()).cut).toBe(false);
+});

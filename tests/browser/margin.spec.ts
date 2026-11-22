@@ -318,24 +318,35 @@ test("the foot is one line: the state after its dot, the console, the keys, the 
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
   const foot = page.locator("footer.bottom .line");
-  const parts = await foot.evaluate((line) =>
-    [...line.children].map((child) => {
-      const box = child.getBoundingClientRect();
-      return {
-        name: child.className.split(" ")[0] ?? child.tagName,
-        middle: box.top + box.height / 2,
-        left: box.left,
-      };
-    }),
-  );
-  // One line: every part on the same row, from left to right in the design's order.
-  const middles = parts.map((part) => part.middle);
-  expect(Math.max(...middles) - Math.min(...middles)).toBeLessThan(3);
-  const order = parts.map((part) => part.name);
-  expect(order.indexOf("state")).toBeLessThan(order.indexOf("mono"));
-  expect(order.at(-1)).toBe("engine");
-  const lefts = parts.map((part) => part.left);
-  expect([...lefts].sort((a, b) => a - b)).toEqual(lefts);
+  // The parts of the line that are shown, each with where it stands.
+  const shown = () =>
+    foot.evaluate((line) =>
+      [...line.children]
+        .map((child) => ({ child, box: child.getBoundingClientRect() }))
+        .filter(({ box }) => box.width > 0)
+        .map(({ child, box }) => ({
+          name: child.className.split(" ")[0] ?? child.tagName,
+          middle: box.top + box.height / 2,
+          left: box.left,
+        })),
+    );
+  // One line: every part on the same row, from left to right in the design's order. In a
+  // wide window the keys are among them; in a narrower one they give their place to the
+  // reminder to export where it stands (release 0.2.2), and are there where it does not.
+  await page.setViewportSize({ width: 1600, height: 800 });
+  for (const wide of [true, false]) {
+    if (!wide) await page.setViewportSize({ width: 1280, height: 720 });
+    const parts = await shown();
+    const middles = parts.map((part) => part.middle);
+    expect(Math.max(...middles) - Math.min(...middles)).toBeLessThan(3);
+    const order = parts.map((part) => part.name);
+    expect(order.indexOf("state")).toBeLessThan(order.indexOf("mono"));
+    expect(order.at(-1)).toBe("engine");
+    const reminded = (await page.getByTestId("reminder").count()) > 0;
+    expect(order.includes("keys")).toBe(wide || !reminded);
+    const lefts = parts.map((part) => part.left);
+    expect([...lefts].sort((a, b) => a - b)).toEqual(lefts);
+  }
   // The state's dot is coloured, and its words are there beside it.
   await expect(foot.locator(".state.ok")).toBeVisible();
   await write(page, "print(1)\n");

@@ -1575,3 +1575,13 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choice.** The test begins to listen for the chooser before it opens the menu, and presses Enter after. What it asserts is unchanged. The cause is taken to be the test's: the test tool takes over the chooser only once it has been told to listen, and a key pressed in that instant can open the browser's own chooser, which no test sees. It is not shown by a failure brought about on purpose: the old form did not fail here in any trial. If the test fails again in this place, the fault is the app's and is looked for there.
 
 **Reason.** A reader's Enter on **Add files…** runs the item at once, in the key's own turn, which is what a browser asks before it shows a chooser; nothing in the app waits between the key and the chooser.
+
+## 23 November 2026: The reminder left the console no room in a narrow window (release 0.2.2, step 11)
+
+**Found** by eye at the pre-release look, in pictures taken at the address. In the status bar the reminder of step 6 stands between the console's field and the keys. At 1,200 pixels, the narrowest window Zemp Lite lays out, it left the field 146 pixels in Chromium ("the browser may clear this project · not exported yet", which is what most first visitors see) and 39 pixels where the browser keeps nothing: the field's own hint was cut short, and a statement could hardly be typed in it. No test held the field's width.
+
+**Choice** (`ConsoleLine.svelte`). The console's field keeps at least 240 pixels, whatever else the line holds; the reminder gives way before it, cut short with an ellipsis, its whole text then its title. And in a window under 1,440 pixels the keys ("⌘↵ run · ⌘K") are left out while the reminder stands: the top bar names both, beside Run and in the search box. With that the shorter reminder stands whole at 1,200 pixels.
+
+**Tests.** Browser (`keeping.spec`, both browsers): at 1,200 pixels with the reminder standing the field is at least 240 pixels wide, before and after a run, nothing runs past the window's edge, the shorter reminder is whole, the line's title is its whole text and **Export project…** is there; at 1,600 pixels the keys stand beside it. The test of 0.2 that holds the status bar to one line in the design's order (`margin.spec`) now reads the line at both widths: the keys among its parts in the wide window, and in the narrower one only where no reminder stands.
+
+**Reason.** The console is where a reader tries a statement; a reminder must not take its place. Features are frozen at this step, and this is a fault of the release's own making, mended before it is released.
