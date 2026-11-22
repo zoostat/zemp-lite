@@ -3,6 +3,8 @@
   // project open, one quiet screen. On the left what can be done; on the right the projects
   // of this browser, the one opened last first.
   import { exportProject } from "../project/export";
+  import { limitsFor, projectOf } from "../project/from-zip";
+  import { ZipError, readZip } from "../project/zip";
   import { ProjectError, when, type ProjectInfo, type Projects } from "../project/projects";
   import Logo from "../theme/Logo.svelte";
   import ThemeButton from "../theme/ThemeButton.svelte";
@@ -65,6 +67,32 @@
       said = `${info.name} exported as ${made.name}`;
     } catch (error) {
       said = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  let zipChooser = $state<HTMLInputElement | null>(null);
+  /** Why a zip chosen was not opened, in a sentence. */
+  let zipProblem = $state("");
+
+  /**
+   * Open a zip as a new project (open decisions #208 and #117): the zip is read and proved
+   * whole before anything is written, and what cannot be opened is said in a sentence.
+   */
+  async function zipChosen(): Promise<void> {
+    const file = zipChooser?.files?.[0];
+    if (zipChooser !== null) zipChooser.value = "";
+    if (file === undefined) return;
+    zipProblem = "";
+    try {
+      const device = (navigator as { deviceMemory?: number }).deviceMemory;
+      const held = await readZip(new Uint8Array(await file.arrayBuffer()), limitsFor(device));
+      const made = await projects.adopt(projectOf(held), file.name.replace(/\.zip$/i, ""));
+      onopen(made.folder);
+    } catch (error) {
+      zipProblem =
+        error instanceof ZipError || error instanceof ProjectError
+          ? error.message
+          : `The zip could not be opened: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
 
@@ -132,6 +160,21 @@
         >a project folder on this computer: comes with the desktop app, and then in Chrome and Edge</span
       >
     </button>
+    <button class="act" onclick={() => zipChooser?.click()}>
+      <span class="what">Open a project's zip…</span>
+      <span class="about"
+        >a zip that Export project… wrote, or a project's folder zipped on this computer</span
+      >
+    </button>
+    <input
+      bind:this={zipChooser}
+      type="file"
+      accept=".zip,application/zip"
+      hidden
+      onchange={zipChosen}
+      aria-label="A project's zip to open"
+    />
+    {#if zipProblem}<p class="problem" role="alert">{zipProblem}</p>{/if}
     <button class="act" onclick={scratch}>
       <span class="what">Scratch project</span>
       <span class="about"

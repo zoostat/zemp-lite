@@ -8,6 +8,7 @@ import plots from "../../examples/scratch/scripts/plots.zeff?raw";
 import { ENGINE } from "../app/version";
 import type { Kept } from "../theme/theme";
 import { Inside, type Entry, type Folder } from "./folder";
+import type { ZipFile } from "./zip";
 
 /** A project as the welcome screen lists it. */
 export interface ProjectInfo {
@@ -81,6 +82,51 @@ export function manifest(name: string): string {
     line(`zeff = "${ENGINE}"`, "the engine this project runs on, exactly") +
     line('edition = "preview"', '"2027" from Zeff 1.0.0')
   );
+}
+
+/** What a zip gives a new project: its manifest, its files and its empty folders. */
+export interface FromZip {
+  /** The text of its `zeff.toml`. */
+  toml: string;
+  /** The name its `zeff.toml` gives it, or `null` where it gives none that can be read. */
+  name: string | null;
+  /** Every file, `zeff.toml` among them, by its path from the project's folder. */
+  files: ZipFile[];
+  /** The folders that hold nothing. */
+  folders: string[];
+}
+
+/**
+ * A `zeff.toml` with its project named anew: the line of the name rewritten, its comment kept
+ * at its column where the new name leaves room, and every other character as it was. A
+ * manifest with no line of a name is given one under `[project]`, or at its head.
+ */
+export function renamed(toml: string, name: string): string {
+  const line = /^([ \t]*name[ \t]*=[ \t]*)("(?:[^"\\]|\\.)*")([ \t]*)(#.*)?$/m;
+  const found = line.exec(toml);
+  const written = JSON.stringify(name);
+  if (found === null) {
+    const setting = `name = ${written}\n`;
+    return /^\[project\][ \t]*$/m.test(toml)
+      ? toml.replace(/^(\[project\][ \t]*\n?)/m, `$1${setting}`)
+      : `[project]\n${setting}${toml}`;
+  }
+  const [whole, before = "", old = "", gap = "", comment = ""] = found;
+  // The comment stays where it stood, or one space after a name that reaches past it.
+  const space =
+    comment === ""
+      ? gap
+      : " ".repeat(Math.max(1, [...old].length + gap.length - [...written].length));
+  return toml.replace(whole, `${before}${written}${space}${comment}`);
+}
+
+/** A name not among those taken, whatever their capitals: `Wages`, then `Wages 2`, `Wages 3`. */
+export function freeName(wanted: string, taken: string[]): string {
+  const lower = new Set(taken.map((name) => name.toLowerCase()));
+  if (!lower.has(wanted.toLowerCase())) return wanted;
+  for (let n = 2; ; n += 1) {
+    if (!lower.has(`${wanted} ${n}`.toLowerCase())) return `${wanted} ${n}`;
+  }
 }
 
 /** The name a `zeff.toml` gives its project, or `null` where it gives none that can be read. */
@@ -261,6 +307,45 @@ export class Projects {
     return new Project(info, new Inside(this.#root, `${ROOT}/${folder}`), () => {
       info.exported = this.noteExported(folder);
     });
+  }
+
+  /**
+   * Make a new project of what a zip gave (`from-zip.ts`): under the name its manifest gives,
+   * or `fallback` where it gives none, with a number after it where a project of that name is
+   * here already; in a folder of its own. Its files are written as they are, but for the
+   * manifest's line of the name where the name had to change. If a file cannot be written,
+   * what was written is removed: there is the whole project or none of it.
+   */
+  async adopt(from: FromZip, fallback: string): Promise<ProjectInfo> {
+    const wanted = (from.name ?? fallback).trim().slice(0, 80) || "Project";
+    const here = await this.list();
+    const name = freeName(wanted, ["Scratch", ...here.map((one) => one.name)]);
+    const folder = await this.#freeFolder(name);
+    const base = `${ROOT}/${folder}`;
+    try {
+      for (const file of from.files) {
+        const bytes =
+          file.path === "zeff.toml" && name !== from.name
+            ? encoder.encode(renamed(from.toml, name))
+            : file.bytes;
+        await this.#root.write(`${base}/${file.path}`, bytes);
+      }
+      for (const path of from.folders) await this.#root.make(`${base}/${path}`);
+    } catch (error) {
+      await this.#root.remove(base);
+      throw error;
+    }
+    return { folder, name, opened: null, exported: null };
+  }
+
+  /** A folder for a project of this name that no project has: `wages`, then `wages-2`. */
+  async #freeFolder(name: string): Promise<string> {
+    const wanted = folderOf(name);
+    for (let n = 1; ; n += 1) {
+      const folder = n === 1 ? wanted : `${wanted}-${n}`;
+      if (folder !== SCRATCH && (await this.#root.kind(`${ROOT}/${folder}`)) === null)
+        return folder;
+    }
   }
 
   /** Remove a project and all it holds. */
