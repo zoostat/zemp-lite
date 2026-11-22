@@ -140,4 +140,6 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Done, step 10a `[engine]`.** The reader of a help page (`src/help/read.ts`): the print read into its parts, held on every page the engine has (596 names, 144 codes): each of a known shape, no word lost, added or moved. Green here: the whole routine in both browsers (318 browser tests, 198 unit tests).
 
-**Next.** Step 10b `[function]`: the Help place draws the page from what the reader gives.
+**Done, step 10b `[function]`, to be checked on GitHub and at the address.** The Help place draws the page from what the reader gives (`src/help/HelpPage.svelte`): title, facts, headings, prose with code and links, arguments with their types, codes by kind, the table of R and Stata, usage and examples as code. With both panes open the page no longer runs past the middle (held at 1,200 pixels, at every code size). Green here: the whole routine in both browsers (326 browser tests, 197 unit tests). A note for the register is in the shared notes (`zemp-lite-0.2.1-formatted-help-for-the-register.md`).
+
+**Next.** The step checked on GitHub and read at the address, in both themes and at the largest code size; then step 11 `[function]`, the owner's part, on the page as it will ship.

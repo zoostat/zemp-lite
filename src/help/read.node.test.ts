@@ -6,7 +6,16 @@ import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { pieces, readPage, wordsOf, wordsOfPrint, type Block, type HelpDoc } from "./read";
+import {
+  outlineOf,
+  pieces,
+  readPage,
+  relatedOf,
+  wordsOf,
+  wordsOfPrint,
+  type Block,
+  type HelpDoc,
+} from "./read";
 
 const at = (path: string) => fileURLToPath(new URL(`../../${path}`, import.meta.url));
 const kept = (name: string) => readFileSync(at(`tests/scripts/${name}`), "utf8");
@@ -53,6 +62,14 @@ describe("the reader of a help page, on every page of the engine", () => {
   it("has the pages to read: the catalogue's functions and the engine's codes", () => {
     expect(pages.length).toBeGreaterThanOrEqual(596);
     expect(codes.length).toBeGreaterThanOrEqual(144);
+  });
+
+  it("is given the kept pages as the worker gives them", () => {
+    for (const name of ["add", "summary"]) {
+      const found = pages.find((one) => one.name === name);
+      expect(found?.page, name).toBe(kept(`help-${name}.txt`));
+    }
+    expect(codes.find((one) => one.name === "W0201")?.page).toBe(kept("explain-W0201.txt"));
   });
 
   it("knows the shape of every page", () => {
@@ -137,6 +154,50 @@ describe("the reader of a help page, on the kept pages", () => {
         expect(kept("help-summary.txt").split("\n")[section.line]).toBe(section.heading);
       }
     }
+  });
+
+  it("gives the outline: the sections, each function named over its own where there are two", () => {
+    const outline = outlineOf(readPage(kept("help-summary.txt")));
+    expect(outline.filter((one) => one.entry).map((one) => one.title)).toEqual([
+      "summary · data",
+      "summary · results",
+    ]);
+    expect(outline[0]).toEqual({ title: "summary · data", line: 0, entry: true });
+    expect(outline[1]?.title).toBe("Usage");
+    // A page of one function names no function in its outline, and keeps a name's own capitals.
+    const one = outlineOf(readPage(kept("help-add.txt")));
+    expect(one.every((item) => !item.entry)).toBe(true);
+    expect(one.map((item) => item.title)).toContain("Coming from R or Stata");
+    expect(outlineOf(readPage("no such page"))).toEqual([]);
+  });
+
+  it("gives the functions named under SEE ALSO, in order and once each", () => {
+    expect(relatedOf(readPage(kept("help-summary.txt")))).toEqual([
+      "mean",
+      "sd",
+      "describe",
+      "estimates",
+      "export",
+      "reg",
+    ]);
+    expect(relatedOf(readPage(kept("explain-W0201.txt")))).toEqual([]);
+    expect(
+      relatedOf(readPage("reg — Linear regression\n\nUSAGE\n    data.reg(formula)\n")),
+    ).toEqual([]);
+  });
+
+  it("reads every kind of part of a function's page", () => {
+    const [entry] = readPage(kept("help-add.txt")).entries;
+    const kinds = (heading: string) =>
+      entry?.sections
+        .find((section) => section.heading === heading)
+        ?.blocks.map((block) => block.kind);
+    expect(kinds("IN BRIEF")).toEqual(["list"]);
+    expect(kinds("DETAILS")).toEqual(["subheading", "paragraph", "subheading", "paragraph"]);
+    expect(kinds("A COMMON MISTAKE")).toEqual(["paragraph", "example", "paragraph"]);
+    expect(kinds("COMING FROM R OR STATA")).toEqual(["paragraph", "table", "paragraph"]);
+    // Another function of the name, to come: said after this one's sections.
+    expect(entry?.notes.map((note) => note.text.slice(0, 13))).toEqual(["Another `add`"]);
   });
 
   it("reads a code's page: what it means, its causes as a list, an example, the fix", () => {

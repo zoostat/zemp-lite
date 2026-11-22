@@ -108,6 +108,12 @@ const ENTRY = /^(\S+) — (.*)$/;
 /** The body of a section stands four characters in. */
 const INDENT = "    ";
 
+/** A heading in sentence case, the names it holds kept as names: `Coming from R or Stata`. */
+function titleOf(heading: string): string {
+  const lower = heading.charAt(0) + heading.slice(1).toLowerCase();
+  return lower.replace(/\br\b/g, "R").replace(/\bstata\b/g, "Stata");
+}
+
 /** Read a page as the engine prints it. */
 export function readPage(page: string): HelpDoc {
   const lines = page.replace(/\n+$/, "").split("\n");
@@ -157,7 +163,7 @@ export function readPage(page: string): HelpDoc {
       if (!close()) return unknown;
       const section: Section = {
         heading: written,
-        title: written.charAt(0) + written.slice(1).toLowerCase(),
+        title: titleOf(written),
         line,
         blocks: [],
       };
@@ -526,4 +532,41 @@ export function wordsOf(doc: HelpDoc): string[] {
 /** The words of a page as printed. */
 export function wordsOfPrint(page: string): string[] {
   return page.split(/\s+/).filter((word) => word !== "");
+}
+
+/** A place of a page the outline goes to: a function, where the page has several, or a section. */
+export interface OutlineItem {
+  /** `Usage`, or `summary · data` for a function of a page that holds several of a name. */
+  title: string;
+  /** The line of the page it stands on, counted from 0. */
+  line: number;
+  /** Whether it is a function, over its own sections. */
+  entry: boolean;
+}
+
+/** The outline of a page: its sections, each function named over its own where there are several. */
+export function outlineOf(doc: HelpDoc): OutlineItem[] {
+  const several = doc.entries.length > 1;
+  return doc.entries.flatMap((entry): OutlineItem[] => [
+    ...(several
+      ? [{ title: `${entry.name} · ${entry.facts[0] ?? ""}`, line: entry.line, entry: true }]
+      : []),
+    ...entry.sections.map((section) => ({
+      title: section.title,
+      line: section.line,
+      entry: false,
+    })),
+  ]);
+}
+
+/** The functions a page names under SEE ALSO, in its order and once each. */
+export function relatedOf(doc: HelpDoc): string[] {
+  const names = doc.entries.flatMap((entry) =>
+    entry.sections
+      .filter((section) => section.heading === "SEE ALSO")
+      .flatMap((section) =>
+        section.blocks.flatMap((block) => (block.kind === "names" ? block.names : [])),
+      ),
+  );
+  return names.filter((name, at) => names.indexOf(name) === at);
 }

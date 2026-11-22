@@ -2,10 +2,11 @@
   // A piece of Zeff code shown outside the editor (a plot's statement in the Plots place),
   // in the editor's colours: the same small reader of the code's shapes (`zeff.ts`), the same
   // tokens of the look. It stands on the window's ground, the ground those colours are held
-  // to (`tokens.ts`).
+  // to (`tokens.ts`). `inline` sets it within a line of a block that has its own size and its
+  // own breaking (an example of a help page), and not as a block of its own.
   import { tokens } from "./zeff";
 
-  let { text }: { text: string } = $props();
+  let { text, inline = false }: { text: string; inline?: boolean } = $props();
 
   /** The break between two lines, kept as the code has it. */
   const BREAK = "\n";
@@ -26,7 +27,7 @@
   );
 </script>
 
-<code class="mono" data-testid="code"
+<code class="mono" class:inline data-testid="code"
   >{#each lines as pieces, at (at)}{#if at > 0}{BREAK}{/if}{#each pieces as piece, index (index)}{#if piece.kind === null}{piece.text}{:else}<span
           class={piece.kind}>{piece.text}</span
         >{/if}{/each}{/each}</code
@@ -40,6 +41,13 @@
     line-height: 1.5;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+  }
+  code.inline {
+    display: inline;
+    font-size: inherit;
+    line-height: inherit;
+    overflow-wrap: inherit;
+    white-space: inherit;
   }
   .keyword {
     color: var(--code-keyword);

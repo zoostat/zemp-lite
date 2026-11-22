@@ -1,12 +1,15 @@
 <script lang="ts">
-  // The Help place (open decisions #74 and #203; the owner's answer of 22 November 2026: Help
-  // is a place, not a panel beside the script). In the middle the engine's own page, as
-  // `zeff help` prints a function's and `zeff explain` a code's, whole and unchanged. At its
-  // left the pane **Outline**: the page's sections, each going to its place, the one in view
-  // marked. At its right the pane **Related functions**: those the page names under SEE ALSO,
-  // each with what its own page says it does, a click opening that page. F1 on a name in the
-  // script, **Explain** in what a run said, and the field here each open a page.
-  import { headOf, relatedOf, sectionsOfPage } from "../margin/helppage";
+  // The Help place (open decisions #74 and #203; the owner's answers of 22 November 2026: Help
+  // is a place, not a panel beside the script, and its page is set in type, not shown as the
+  // terminal prints it). In the middle the engine's page, a function's or a code's, read from
+  // its print (`help/read.ts`) and formatted (`help/HelpPage.svelte`), every word the engine's.
+  // At its left the pane **Outline**: the page's sections, each going to its place, the one in
+  // view marked. At its right the pane **Related functions**: those the page names under SEE
+  // ALSO, each with what its own page says it does, a click opening that page. F1 on a name in
+  // the script, **Explain** in what a run said, a name or a code in the page itself, and the
+  // field here each open a page.
+  import HelpPage from "../help/HelpPage.svelte";
+  import { outlineOf, readPage, relatedOf } from "../help/read";
   import { paneOf } from "./panes";
   import Place from "./Place.svelte";
   import type { Workspace } from "./workspace-state.svelte";
@@ -14,23 +17,11 @@
   let { workspace }: { workspace: Workspace } = $props();
 
   const page = $derived(workspace.help.page);
-  const lines = $derived(page.split("\n"));
-  const sections = $derived(sectionsOfPage(page));
-  /** The page in parts: what stands before the first section, then each section with its lines. */
-  const parts = $derived.by(() => {
-    const starts = sections.map((one) => one.line);
-    const cuts = starts[0] === 0 ? starts : [0, ...starts];
-    return cuts.map((from, at) => ({
-      section: sections.find((one) => one.line === from) ?? null,
-      // Each part ends with its line break, but the last, so that the parts together are the page.
-      text:
-        lines.slice(from, cuts[at + 1] ?? lines.length).join("\n") +
-        (at < cuts.length - 1 ? "\n" : ""),
-    }));
-  });
+  const doc = $derived(readPage(page));
+  const sections = $derived(outlineOf(doc));
 
   // The related functions, each with the first line of its own page, asked of the engine.
-  const related = $derived(relatedOf(page));
+  const related = $derived(relatedOf(doc));
   let heads = $state<Record<string, { does: string; pack: string } | null>>({});
   $effect(() => {
     for (const name of related) {
@@ -39,8 +30,8 @@
       void workspace
         .helpPage(name)
         .then((found) => {
-          const head = found.page === null ? null : headOf(found.page);
-          heads[name] = head === null ? { does: "", pack: "" } : head;
+          const [head] = found.page === null ? [] : readPage(found.page).entries;
+          heads[name] = { does: head?.does ?? "", pack: head?.facts[0] ?? "" };
         })
         .catch(() => {
           heads[name] = { does: "", pack: "" };
@@ -156,12 +147,15 @@
           Press F1 on a function's name in the script, press Explain on what a run said, or type a
           name in the field above, to read the engine's page here.
         </p>
+      {:else if doc.plain !== null}
+        <!-- A page the reader does not know (a package's list): as the engine prints it. -->
+        <pre class="mono" data-testid="help-page">{doc.plain}</pre>
       {:else}
-        <pre
-          class="mono"
-          data-testid="help-page">{#each parts as part (part.section?.line ?? -1)}<span
-              data-line={part.section?.line}>{part.text}</span
-            >{/each}</pre>
+        <HelpPage
+          {doc}
+          onname={(name) => void workspace.showHelp(name)}
+          oncode={(code) => void workspace.showCode(code)}
+        />
       {/if}
     </div>
   </Place>

@@ -1,7 +1,8 @@
-// Help (open decisions #74 and #203; release 0.2.1, step 8): a place of its own, with the
-// engine's page in the middle, the page's outline at its left and its related functions at
-// its right; opened by F1 on a name, by Explain in what a run said, and by its own field; and
-// `:help` in the console line. Every page is the engine's.
+// Help (open decisions #74 and #203; release 0.2.1, steps 8 and 10b): a place of its own, with
+// the engine's page in the middle, set in type, the page's outline at its left and its related
+// functions at its right; opened by F1 on a name, by Explain in what a run said, by a name or a
+// code in the page itself, and by its own field; and `:help` in the console line. Every word
+// of every page is the engine's.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { cursorTo, expect, test, write, useExample } from "./support";
@@ -22,6 +23,48 @@ async function cursorAt(page: Page, line: number, column: number) {
   for (let at = 1; at < column; at++) await page.keyboard.press("ArrowRight");
 }
 
+/**
+ * The words of a page, in order, without what the type takes the place of: the backticks of
+ * code and the asterisks of a title, the print's marks; the dash of the first line, the dots
+ * between the facts and the hyphen of a list's item; the full stop, comma, colon or bracket
+ * at a word's edge, which a label or a list of links does without; and the capitals of a
+ * heading, which is set in sentence case.
+ */
+const wordsOf = (text: string) =>
+  text
+    .replaceAll("`", "")
+    .split(/\s+/)
+    .map((word) => word.replace(/^[.,:;()*]+|[.,:;()*]+$/g, "").toLowerCase())
+    .filter((word) => word !== "" && !/^[—·-]$/.test(word));
+
+/** The print's mark of a description shared with other functions, at a line's right edge. */
+const SHARED = /\s{2,}\(shared\)$/gm;
+
+/** The words of a page as the engine prints it, and how many descriptions it marks as shared. */
+const printed = (text: string) => ({
+  words: wordsOf(text.replace(SHARED, "")),
+  shared: (text.match(SHARED) ?? []).length,
+});
+
+/**
+ * The words the Help place shows, as a reader sees them, and how many descriptions it marks
+ * as shared: the mark stands by the argument's name, where the print has it at the line's end.
+ */
+const shown = async (page: Page) =>
+  page.getByTestId("help-page").evaluate((node) => {
+    const marks = [...node.querySelectorAll<HTMLElement>(".shared")];
+    for (const mark of marks) mark.hidden = true;
+    const text = (node as HTMLElement).innerText;
+    for (const mark of marks) mark.hidden = false;
+    return { text, shared: marks.length };
+  });
+
+/** Hold the page shown to a page as the engine prints it: the same words, in the same order. */
+async function holdsPrint(page: Page, print: string) {
+  const seen = await shown(page);
+  expect({ words: wordsOf(seen.text), shared: seen.shared }).toEqual(printed(print));
+}
+
 const places = (page: Page) => page.getByRole("navigation", { name: "Places" });
 const bar = (page: Page) => page.getByRole("toolbar", { name: "Help: its panes and its controls" });
 const outline = (page: Page) =>
@@ -33,7 +76,7 @@ const related = (page: Page) =>
     .getByRole("complementary", { name: "Help: the right pane" })
     .getByRole("region", { name: "Related functions" });
 
-test("F1 on a function's name opens the Help place at its page, as zeff help prints it", async ({
+test("F1 on a function's name opens the Help place at its page, every word the engine's", async ({
   page,
   press,
 }) => {
@@ -50,9 +93,11 @@ test("F1 on a function's name opens the Help place at its page, as zeff help pri
     "page",
   );
   await expect(help.getByTestId("help-title")).toHaveText("summary");
-  // The page is the engine's, whole and unchanged, however the place divides it.
-  const shown = await help.getByTestId("help-page").evaluate((node) => node.textContent);
-  expect(shown).toBe(file("tests/scripts/help-summary.txt"));
+  // The page is the engine's, word for word and in its order, however the place sets it: a
+  // page of two functions, each with its name as a heading over its sections.
+  await holdsPrint(page, file("tests/scripts/help-summary.txt"));
+  await expect(help.getByRole("heading", { level: 3, name: "summary" })).toHaveCount(2);
+  await expect(help.getByRole("heading", { level: 4, name: "Usage" })).toHaveCount(2);
   await press(places(page).getByRole("button", { name: "Script" }));
   await expect(help).toHaveCount(0);
   await expect(page.getByRole("textbox", { name: "The script", exact: true })).toBeVisible();
@@ -146,8 +191,9 @@ test("the Help place has the page's related functions at its right, each with wh
   // One opened: its page, its own outline and its own related functions.
   await press(listed.nth(5));
   await expect(page.getByTestId("help-title")).toHaveText("reg");
+  await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText("reg");
   await expect(page.getByTestId("help-page")).toContainText(
-    "reg — Linear regression by least squares, with fixed effects",
+    "Linear regression by least squares, with fixed effects",
   );
   await expect(outline(page).locator("ul").getByRole("button").first()).toHaveText("Usage");
   await expect(related(page).locator("ul").getByRole("button")).toHaveText([
@@ -184,8 +230,7 @@ test("a code's explained page opens in the Help place from what the run said, an
   );
   const help = page.getByTestId("help");
   await expect(help.getByTestId("help-title")).toHaveText("W0201");
-  const shown = await help.getByTestId("help-page").evaluate((node) => node.textContent);
-  expect(shown).toBe(file("tests/scripts/explain-W0201.txt"));
+  await holdsPrint(page, file("tests/scripts/explain-W0201.txt"));
   await expect(outline(page).locator("ul").getByRole("button")).toHaveText([
     "Meaning",
     "Common causes",
@@ -204,6 +249,206 @@ test("a code's explained page opens in the Help place from what the run said, an
   await expect(help.getByTestId("help-title")).toHaveText("W0201");
   await expect(help.getByTestId("help-page")).toContainText(
     "missing values skipped by a statistic",
+  );
+});
+
+test("a page of every kind of part is set in type, and every word of it is the engine's", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await press(places(page).getByRole("button", { name: "Help" }));
+  const field = bar(page).getByRole("searchbox", {
+    name: "Open the page of a function or a code",
+  });
+  await field.fill("add");
+  await field.press("Enter");
+  await expect(page.getByTestId("help-title")).toHaveText("add");
+  const formatted = page.getByTestId("help-page");
+  await holdsPrint(page, file("tests/scripts/help-add.txt"));
+  // The name is the title, what it does stands under it, and its facts are a list of labels.
+  await expect(formatted.getByRole("heading", { level: 3 })).toHaveText("add");
+  await expect(
+    formatted.getByRole("list", { name: "Facts of add" }).getByRole("listitem"),
+  ).toHaveText(["data", "tier 1", "since 0.2.0", "1.0", "exact"]);
+  // Headings are headings, in sentence case, a name in one keeping its capitals.
+  await expect(formatted.getByRole("heading", { level: 4 })).toHaveText([
+    "In brief",
+    "Usage",
+    "Description",
+    "Arguments",
+    "Value",
+    "Missing values",
+    "Details",
+    "Warnings and notes",
+    "A common mistake",
+    "Coming from R or Stata",
+    "Related tasks",
+    "Accuracy",
+    "See also",
+    "Examples",
+  ]);
+  await expect(formatted.getByRole("heading", { level: 5 })).toHaveText([
+    "What a definition may contain",
+    "Replacing a variable",
+  ]);
+  // An argument with its type and whether its description is shared; the codes in a table,
+  // each by its kind; R and Stata in a table of three columns; a list in the prose.
+  const by = formatted.locator("dl.arguments dt").nth(1);
+  await expect(by.locator("code")).toHaveText(["by:", "Vars"]);
+  await expect(by).toContainText("shared");
+  const codes = formatted.locator("table.codes");
+  await expect(codes.locator("th")).toHaveText([
+    "Note",
+    "W0102",
+    "Z0101",
+    "Z0217",
+    "Z0219",
+    "Z0401",
+  ]);
+  await expect(codes.locator(".badge.note")).toHaveCount(1);
+  await expect(codes.locator("button.badge.warning")).toHaveCount(1);
+  await expect(codes.locator("button.badge.error")).toHaveCount(4);
+  await expect(formatted.getByRole("columnheader")).toHaveText(["Zeff", "R", "Stata"]);
+  await expect(formatted.locator("table.compare tbody tr")).toHaveCount(3);
+  await expect(formatted.locator("ul.list").first().getByRole("listitem")).toHaveCount(3);
+  // The usage and what an example typed are code in the editor's colours; what an example
+  // printed is as printed, in a block that scrolls and is reached by the Tab key, by its name.
+  await expect(formatted.locator("pre.usage").getByTestId("code").locator(".function")).toHaveText(
+    "add",
+  );
+  const last = formatted.getByRole("group", { name: "Example" }).last();
+  await expect(last.locator(".prompt").first()).toHaveText("> ");
+  await expect(last.getByTestId("code").first()).toHaveText("let wages = dataset(wages)");
+  expect(await last.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("pre");
+  await expect(last).toHaveAttribute("tabindex", "0");
+  // Every link of the page has a name.
+  const unnamed = await formatted
+    .getByRole("button")
+    .evaluateAll((all) => all.filter((one) => (one.textContent ?? "").trim() === "").length);
+  expect(unnamed).toBe(0);
+});
+
+test("a function named in a page, a related name and a code each open their own page", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await press(places(page).getByRole("button", { name: "Help" }));
+  const field = bar(page).getByRole("searchbox", {
+    name: "Open the page of a function or a code",
+  });
+  const title = page.getByTestId("help-title");
+  const formatted = page.getByTestId("help-page");
+  const open = async (name: string) => {
+    await field.fill(name);
+    await field.press("Enter");
+    await expect(title).toHaveText(name);
+  };
+  await open("reg");
+  // A function the prose names as a call.
+  await press(formatted.getByRole("button", { name: "base()", exact: true }).first());
+  await expect(title).toHaveText("base");
+  await expect(formatted.getByRole("heading", { level: 3 })).toHaveText("base");
+  // A code the prose names, and a code of the warnings and notes.
+  await open("reg");
+  await press(formatted.locator("p").getByRole("button", { name: "W1001", exact: true }).first());
+  await expect(title).toHaveText("W1001");
+  await expect(formatted.getByRole("heading", { level: 3 })).toHaveText("W1001");
+  await open("reg");
+  await press(formatted.locator("table.codes").getByRole("button", { name: "Z0802", exact: true }));
+  await expect(title).toHaveText("Z0802");
+  // A name a result answers to, under VALUE, and a name under SEE ALSO.
+  await open("reg");
+  await press(
+    formatted.locator(".answers").getByRole("button", { name: "coef_plot", exact: true }),
+  );
+  await expect(title).toHaveText("coef_plot");
+  await open("reg");
+  const also = formatted.locator("section", {
+    has: page.getByRole("heading", { name: "See also" }),
+  });
+  await press(also.getByRole("button", { name: "interact", exact: true }));
+  await expect(title).toHaveText("interact");
+  // A reference's title is set apart, and each reference stands on its own.
+  await open("reg");
+  await expect(formatted.locator("ul.references li")).toHaveCount(5);
+  await expect(formatted.locator("ul.references em").first()).toHaveText(
+    "Econometric Theory and Methods",
+  );
+});
+
+test("a help page stays inside its place and never under 12.5 pixels, at every code size", async ({
+  page,
+  press,
+}) => {
+  // The narrowest window, with both panes open, as Help opens.
+  await page.setViewportSize({ width: 1200, height: 800 });
+  await scratch(page, press);
+  await press(places(page).getByRole("button", { name: "Help" }));
+  await expect(outline(page)).toBeVisible();
+  await expect(related(page)).toBeVisible();
+  const field = bar(page).getByRole("searchbox", {
+    name: "Open the page of a function or a code",
+  });
+  const sizes = async () =>
+    page.getByTestId("help").evaluate((help) => {
+      const pane = help.querySelector(".page") as HTMLElement;
+      let least = Infinity;
+      for (const node of pane.querySelectorAll("*")) {
+        // A block of code is at the code's size, which is the reader's to choose: the app's
+        // own type, and the code set within it, is what is held.
+        if (node.closest("pre") !== null) continue;
+        if (node.textContent?.trim() && node.children.length === 0) {
+          least = Math.min(least, parseFloat(getComputedStyle(node).fontSize));
+        }
+      }
+      return { least, sideways: pane.scrollWidth - pane.clientWidth };
+    });
+  for (const name of ["reg", "add", "plot"]) {
+    await field.fill(name);
+    await field.press("Enter");
+    await expect(page.getByTestId("help-title")).toHaveText(name);
+    // The page is read down, never sideways: a long line of an example scrolls in its block.
+    const usual = await sizes();
+    expect(usual.sideways, name).toBe(0);
+    expect(usual.least, name).toBeGreaterThanOrEqual(12.5);
+  }
+  // `plot` has an example 500 characters wide: its block scrolls, the page does not.
+  const wide = page.getByTestId("help-page").getByRole("group", { name: "Example" }).last();
+  expect(await wide.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeGreaterThan(0);
+  // At the smallest code size and at the largest.
+  const smaller = page.getByRole("button", { name: "Smaller code text" });
+  while (await smaller.isEnabled()) await press(smaller);
+  const small = await sizes();
+  expect(small.least).toBeGreaterThanOrEqual(12.5);
+  expect(small.sideways).toBe(0);
+  const larger = page.getByRole("button", { name: "Larger code text" });
+  while (await larger.isEnabled()) await press(larger);
+  expect((await sizes()).sideways).toBe(0);
+});
+
+test("a page the reader does not know, a package's list, is shown as the engine prints it", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await press(places(page).getByRole("button", { name: "Help" }));
+  const field = bar(page).getByRole("searchbox", {
+    name: "Open the page of a function or a code",
+  });
+  await field.fill("regress");
+  await field.press("Enter");
+  await expect(page.getByTestId("help-title")).toHaveText("regress");
+  const formatted = page.locator('pre[data-testid="help-page"]');
+  await expect(formatted).toContainText("regress · tier 2 · 10 of 10 functions in this release");
+  await expect(formatted).toContainText("  reg           Linear regression by least squares");
+  // A function that arrives with a later release has a line, and no page: the line is shown.
+  await field.fill("a_learning");
+  await field.press("Enter");
+  await expect(page.getByTestId("help-title")).toHaveText("a_learning");
+  await expect(page.getByTestId("help-page")).toContainText(
+    "arrives with a release after 1.0, in the decide package",
   );
 });
 
