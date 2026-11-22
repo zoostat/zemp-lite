@@ -7,8 +7,12 @@ import instruments from "../../examples/scratch/scripts/instruments.zeff?raw";
 import plots from "../../examples/scratch/scripts/plots.zeff?raw";
 import { ENGINE } from "../app/version";
 import type { Kept } from "../theme/theme";
+import { ProjectError } from "./error";
+import * as files from "./files";
 import { Inside, type Entry, type Folder } from "./folder";
 import type { ZipFile } from "./zip";
+
+export { ProjectError };
 
 /** A project as the welcome screen lists it. */
 export interface ProjectInfo {
@@ -32,9 +36,6 @@ export interface TreeNode extends Entry {
 }
 
 /** What the user asked for cannot be done, in words for the user. */
-export class ProjectError extends Error {
-  override name = "ProjectError";
-}
 
 const ROOT = "projects";
 const OPENED = "zemp-opened";
@@ -462,42 +463,52 @@ export class Project {
     return this.#files.write(path, encoder.encode(text));
   }
 
-  /** Give a file another path in the project; a path already taken is refused. */
-  async rename(from: string, to: string): Promise<void> {
-    const bytes = await this.#files.read(from);
-    if (bytes === null) {
-      throw new ProjectError(`There is no file \`${from}\` in this project.`);
-    }
-    if (from === to) {
-      return;
-    }
-    if ((await this.#files.kind(to)) !== null) {
-      throw new ProjectError(`\`${to}\` is already in this project. Choose another name.`);
-    }
-    await this.#files.write(to, bytes);
-    await this.#files.remove(from);
+  /** Make a script, empty, in a folder of the project (`scripts` where none is named); its path. */
+  newScript(name: string, folder = "scripts"): Promise<string> {
+    return files.newScript(this.#files, name, folder);
   }
 
-  remove(path: string): Promise<void> {
-    return this.#files.remove(path);
+  /** Make a folder in a folder of the project (the project's own where none is named); its path. */
+  newFolder(name: string, parent = ""): Promise<string> {
+    return files.newFolder(this.#files, name, parent);
   }
 
   /**
-   * Add a data file chosen from the computer, under `data/`. Nothing is written into a script:
-   * in Zemp Lite the user writes the `import` (Zemp Specification, section 2). A file of that
-   * name already there is refused.
+   * Add a file chosen from the computer into a folder, under its own name; its path. Nothing is
+   * written into a script: in Zemp Lite the reader writes the `import` (Zemp Specification,
+   * section 2).
    */
+  add(folder: string, name: string, bytes: Uint8Array): Promise<string> {
+    return files.add(this.#files, folder, name, bytes);
+  }
+
+  /** Add a data file chosen from the computer, under `data/`, which is made where it is not there. */
   async addData(name: string, bytes: Uint8Array): Promise<string> {
-    const clean = name.replace(/[/\\]/g, "-").trim();
-    if (clean === "" || clean === "." || clean === "..") {
-      throw new ProjectError("That file has no name that can be kept.");
-    }
-    const path = `data/${clean}`;
-    if ((await this.#files.kind(path)) !== null) {
-      throw new ProjectError(`\`${path}\` is already in this project. Rename the file first.`);
-    }
-    await this.#files.write(path, bytes);
-    return path;
+    await this.#files.make("data");
+    return files.add(this.#files, "data", name, bytes);
+  }
+
+  /**
+   * Give a file or a folder another path in the project: another name, another folder, or
+   * both. The place must be free; what the engine and Zemp open by name is not moved.
+   */
+  move(from: string, to: string): Promise<void> {
+    return files.move(this.#files, from, to);
+  }
+
+  /** Make a copy of a file or a folder beside it, under a name with "copy" in it; its path. */
+  duplicate(path: string): Promise<string> {
+    return files.duplicate(this.#files, path);
+  }
+
+  /** How many files a path is: one, or those a folder holds. */
+  count(path: string): Promise<number> {
+    return files.count(this.#files, path);
+  }
+
+  /** Delete a file, or a folder with all it holds; how many files went. */
+  remove(path: string): Promise<number> {
+    return files.remove(this.#files, path);
   }
 }
 

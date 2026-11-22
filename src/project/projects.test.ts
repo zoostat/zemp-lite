@@ -241,17 +241,17 @@ describe("an open project", () => {
   it("renames a file, and refuses a path already taken", async () => {
     const project = await demo();
     await project.writeText("scripts/extra.zeff", "2\n");
-    await project.rename("scripts/extra.zeff", "scripts/second.zeff");
+    await project.move("scripts/extra.zeff", "scripts/second.zeff");
     expect(await project.readText("scripts/extra.zeff")).toBeNull();
     expect(await project.readText("scripts/second.zeff")).toBe("2\n");
-    await expect(project.rename("scripts/second.zeff", "scripts/main.zeff")).rejects.toThrow(
+    await expect(project.move("scripts/second.zeff", "scripts/main.zeff")).rejects.toThrow(
       "`scripts/main.zeff` is already in this project",
     );
-    await expect(project.rename("scripts/second.zeff", "data")).rejects.toThrow(ProjectError);
-    await expect(project.rename("scripts/none.zeff", "scripts/x.zeff")).rejects.toThrow(
-      "There is no file",
+    await expect(project.move("scripts/second.zeff", "data")).rejects.toThrow(ProjectError);
+    await expect(project.move("scripts/none.zeff", "scripts/x.zeff")).rejects.toThrow(
+      "There is no `scripts/none.zeff` in this project.",
     );
-    await project.rename("scripts/second.zeff", "scripts/second.zeff");
+    await project.move("scripts/second.zeff", "scripts/second.zeff");
     expect(await project.readText("scripts/second.zeff")).toBe("2\n");
   });
 

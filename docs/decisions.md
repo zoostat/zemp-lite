@@ -1463,3 +1463,21 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Tests.** Unit (`left.test`): noted and taken up once; each project's own; nothing where the record holds no note or not one; quiet where the browser keeps none. Browser (`kept.spec`, "a change of the view made as the page is left is kept…"): Notes closed and the page loaded again in the same breath shows it closed; panes changed in quick turns, the last as the page is left, stand as the reader left them; and the project's own file holds them a moment later. The test that showed the fault passes twenty times in twenty.
 
 **Reason.** What a reader sets should be there the next time, to the last press.
+
+## 22 November 2026: The operations on a project's files and folders (release 0.2.2, step 7)
+
+**Choice** (`src/project/files.ts`; `Project` passes them on). A script made, empty, with `.zeff` after its name where the name lacks it; a folder made; a file added into any folder under its own name (`addData` is that, into `data/`); a file or a folder renamed or moved, which are one operation, a new path; duplicated beside itself under a name with "copy" in it, the first that is free (`clean copy.zeff`, `clean copy 2.zeff`); deleted, with the files that go counted.
+
+**A move is a copy, checked, and then a removal.** The browser's storage has no moving of its own. So the copy is made and held to the original, every file read back and compared, and only then is the original removed: a tab closed half-way, or a storage that fills, leaves the original whole. A copy that cannot be finished is itself removed, and the reader is told the thing "is where it was", with the reason. A folder's files and the folders in it that hold nothing all go.
+
+**The rules of a name, in one place.** One part of a path: no `/` and no `\`, not `.` or `..`, no control character, no space at an end, at most 120 characters. Not taken in its folder, and not differing from a neighbour only in capitals, since most computers cannot keep both and a project is meant to leave the browser; a change of capitals alone in a thing's own name is a rename and is allowed. A folder is not moved into itself. A file added from the computer keeps its name, with what a path cannot hold made a hyphen.
+
+**What is fixed** (the points settled on 22 November; question 2): `zeff.toml`; the folders `scripts`, `functions` and `data`; `scripts/main.zeff`; and `.zemp/` and `.zeff/` with all they hold. None is renamed, moved or deleted, and nothing is made or put in the last two. What a fixed folder holds is free, and what is fixed can be copied: the copy is an ordinary file.
+
+**Every refusal is a sentence that says what to do**, and nothing is changed by an operation that is refused.
+
+**`ProjectError`** moved to a file of its own (`error.ts`), so that the operations and the projects can both use it without depending on each other in a circle; it is still given out by `projects.ts`.
+
+**Tests.** Unit (`files.test`, 12 tests, on a folder in memory and on one that fails at a write the test names): the rules of a name; what is fixed; a script, a folder and a file made, in the project and in folders of it; each refusal, with its sentence, and nothing made by any of them; a file renamed and moved, a change of capitals alone; a folder moved with its empty folders; what is fixed, a place taken, a folder into itself and a thing not there refused; a move that fails at a file's write, and at a folder's second file, leaving the original whole and no copy; duplicates under free names, of files and of a folder; the count, and the deletions, with what is fixed and what is not there refused.
+
+**Reason.** The row of the plan; and that an operation on a reader's files must never leave him with less than he had.

@@ -54,4 +54,8 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 6 `[function]`.** The browser is asked to keep the storage when a project is first made; the status bar of a project says where the browser may clear it or it has not been exported for 30 days, with **Export project…** beside it; the start screen says which holds (`src/project/keeping.ts`).
 
-**Next.** Steps 5 and 6 seen green on GitHub; the export and the opening made at the address, and the export run by the released `zeff run`; then step 7 `[engine]`: the operations on a project's files and folders.
+**Checked at the address (steps 3 and 5's last condition).** The Scratch project exported from the hosted alpha in Chromium unpacks on this Mac and the released `zeff run` 0.8.0 runs it: exit 0, what it prints and says the example's expected output to the character. The same zip opened at the address is "Scratch 2", and runs.
+
+**Done, step 7 `[engine]`.** The operations on a project's files and folders (`src/project/files.ts`): made, added, renamed and moved (a copy, checked, then a removal), duplicated, deleted; the rules of a name and what is fixed, in one place.
+
+**Next.** Step 6 seen green on GitHub; then step 8a `[function]`: new script, new folder, and files added into a folder.
