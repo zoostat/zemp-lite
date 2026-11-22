@@ -133,3 +133,11 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **After that entry, the same day.** GitHub's routine failed once on 0c74438, a commit of this file alone: in WebKit the sample project "plots" read with its last print missing. Not made to fail here in 44 runs; reasoned to be the test reading before the editor had drawn every line. The helper `wholeScript` now waits until it has, and GitHub keeps the page where a browser test fails (`docs/decisions.md`). Here the whole routine is green in both browsers (318 browser tests, 185 unit tests, 29 native tests).
 
 **And: ⌘↵ sometimes slow on GitHub's machine.** The check after de84a4a gave 2,468 ms from the key to "done" in Chromium (38 and 47 ms at the deployments before and after; 14 to 20 ms from this Mac). Cause not found; the notes of 0.2 (its third correction, published again) and of 0.2.1 say only what is shown, it is a known issue, and the check now reports the time before the run begins. **To find before "Release 0.2.1"** if a deployment shows it again.
+
+## 22 November 2026, release 0.2.1: the formatted Help page, steps 10a and 10b
+
+**Decided by the owner** (in the session of release 0.1, passed on): Help shows the engine's page formatted, the mockup's look C, every word the engine's. Two steps were written into the checklist before step 11.
+
+**Done, step 10a `[engine]`.** The reader of a help page (`src/help/read.ts`): the print read into its parts, held on every page the engine has (596 names, 144 codes): each of a known shape, no word lost, added or moved. Green here: the whole routine in both browsers (318 browser tests, 198 unit tests).
+
+**Next.** Step 10b `[function]`: the Help place draws the page from what the reader gives.
