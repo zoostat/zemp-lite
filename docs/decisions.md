@@ -1305,3 +1305,17 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choice.** `docs/spec/` is the Zeff repository's at commit 3159c99, each of its ten files taken from the commit and compared byte for byte. Four differ from the copy of 1beefc7: the register and the Zemp Specification, by the entries above; the catalogue and the Language Reference, by the work of Zeff 0.9.0 since (three functions' status, the codes Z0414, Z0417 and Z0717), none of which Zemp Lite on Zeff 0.8.0 reads.
 
 **Reason.** The specification is the authority, and a release is planned from its row: the copy must hold the row of 0.2.2 before "Start release 0.2.2".
+
+## 22 November 2026: Release 0.2.1 is closed
+
+**The owner's word:** "Release 0.2.1". Asked what the notes should say of his part of step 11, he answered: the reader test, "Not run; carry it forward"; the checks by hand and his own trial, "Not done; say so".
+
+**What that means, and where it is written.** The reader test is one test for Zemp Lite and Zeff 0.9.0 and stays owed at Zeff 0.9.0; what it needs is ready and it can be run on this alpha. The checks by hand are listed in the notes' known issues as not checked at this release, each held only as far as the automatic test named for it holds it. Step 11 is ticked on its own condition, the owner's word; nothing is said to have been checked that was not.
+
+**The routine at the close.** Here: the whole routine green in both browsers (29 native tests, 18 message tests, the nine sample projects identical, 197 unit tests, 326 browser tests, 2 skipped by design). On GitHub: green in both browsers on the commit before the release, and again on the release's own. At the address, in Chromium, as a first visitor from the Start screen: the three examples print and say what `zeff run` does, every figure drawn (2, none and 21); the Help page read by eye in both themes. WebKit at the address is held by GitHub's check after each deployment, not by this Mac, whose WebKit takes no mouse.
+
+**The registers.** They are the Zeff repository's. The review is left for it in the shared notes (`zemp-lite-0.2.1-release-review-for-zeff.md`): the reader test still owed at 0.9.0; R4's figures; the first start in WebKit at and over its goal; the dependence on the layout of the help print; #203 built, #208 decided for 0.2.2; #37 still the owner's.
+
+**The release.** Version 0.2.1 in `package.json`, `worker/Cargo.toml` and their lock files; the commit "Release 0.2.1"; the tag `v0.2.1`; a GitHub release marked a pre-release, as 0.2 was, carrying `docs/releases/0.2.1-notes.md`.
+
+**Carried to later.** The cause of the occasional slow ⌘↵ on GitHub's machine, which was to be found before this release and was not: the checks narrowed it to a wait before the run begins and did not show what stands before it. It is a known issue, with what is and is not shown.
