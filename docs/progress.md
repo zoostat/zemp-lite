@@ -142,4 +142,8 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Done, step 10b `[function]`, to be checked on GitHub and at the address.** The Help place draws the page from what the reader gives (`src/help/HelpPage.svelte`): title, facts, headings, prose with code and links, arguments with their types, codes by kind, the table of R and Stata, usage and examples as code. With both panes open the page no longer runs past the middle (held at 1,200 pixels, at every code size). Green here: the whole routine in both browsers (326 browser tests, 197 unit tests). A note for the register is in the shared notes (`zemp-lite-0.2.1-formatted-help-for-the-register.md`).
 
-**Next.** The step checked on GitHub and read at the address, in both themes and at the largest code size; then step 11 `[function]`, the owner's part, on the page as it will ship.
+**Checked.** GitHub: the whole routine green in both browsers on f312621, deployed, the checks at both addresses green. At the address the page of `reg` was read by eye in the light theme and in the dark at the largest code size (22): inside its place with both panes open, an example's table scrolling in its block. Steps 10a and 10b are ticked.
+
+**⌘↵, narrowed.** The same deployment's check gave 3,245 ms from the key to "done" in Chromium, 3,188 ms of it before the run began: the statement waits its turn, it does not run slowly. The engine does one thing at a time, and what stands before it is, by reasoning not yet shown, the first drawing of the run's figures. The check now times that first drawing (here 330 to 460 ms after "done"); the next deployments on GitHub's machine will show whether it takes seconds there.
+
+**Next.** Step 11 `[function]`, the owner's part, on the page as it will ship: the reader test, the checks by hand (the formatted Help page with VoiceOver among them), his trial; then "Release 0.2.1".

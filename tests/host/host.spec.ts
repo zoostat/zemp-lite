@@ -100,3 +100,43 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
     console.log(`${type}: ${description}`);
   }
 });
+
+test("the first drawing of a run's figures is timed at the address", async ({ page }) => {
+  // The engine does one thing at a time: a statement asked for while the figures of the run
+  // before are being drawn waits its turn. So how long that first drawing takes, on a machine
+  // that has drawn no figure yet, is what a ⌘↵ pressed just after Run may wait (the check
+  // above has shown 2.5 to 3.2 s before its run began, at some deployments in Chromium).
+  // The window is tall, so that the editor draws every line and each figure is asked for.
+  await page.setViewportSize({ width: 1280, height: 3000 });
+  await page.goto("/");
+  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  await expect(open).toBeEnabled({ timeout: 30_000 });
+  await open.click();
+  await page.getByRole("button", { name: "Scratch project" }).click();
+  await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
+  // Timed in the page: from the status saying "done" to the first figure standing on it.
+  const timed = page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        const status = document.querySelector('[role="status"]')!;
+        let done = 0;
+        const look = () => {
+          if (done === 0 && status.textContent === "done") done = performance.now();
+          if (done !== 0 && document.querySelector('[data-testid="figure"] img') !== null) {
+            watch.disconnect();
+            resolve(Math.round(performance.now() - done));
+          }
+        };
+        const watch = new MutationObserver(look);
+        watch.observe(document.body, { childList: true, characterData: true, subtree: true });
+      }),
+  );
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible({
+    timeout: 30_000,
+  });
+  const description = `the run's figures first drawn ${await timed} ms after done`;
+  test.info().annotations.push({ type: "first drawing", description });
+  console.log(`first drawing: ${description}`);
+});
