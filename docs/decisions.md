@@ -1319,3 +1319,13 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **The release.** Version 0.2.1 in `package.json`, `worker/Cargo.toml` and their lock files; the commit "Release 0.2.1"; the tag `v0.2.1`; a GitHub release marked a pre-release, as 0.2 was, carrying `docs/releases/0.2.1-notes.md`.
 
 **Carried to later.** The cause of the occasional slow ⌘↵ on GitHub's machine, which was to be found before this release and was not: the checks narrowed it to a wait before the run begins and did not show what stands before it. It is a known issue, with what is and is not shown.
+
+## 22 November 2026: After the tag: a test's helper mended, and the notes brought to the release's own deployment
+
+**What was found.** GitHub ran the release's commit twice, for the branch and for the tag. The tag's run passed whole. The branch's failed one test in WebKit (`margin.spec`, "Run from here, from ⌘K…"), and a failed run deploys nothing, so the address still served the build before. The page kept from the failure (kept since this morning's change to the workflow) shows the engine ready and the editor in focus: the test's helper `cursorTo` had set the selection on the page and the editor had not taken it. The helper set it once and then waited.
+
+**Choice.** The failed job was run again on the same commit, passed, and the release was deployed and checked at both addresses: no test was changed to make the release green, and the tag stands on the commit as it was. Then, in the commit after the tag: `cursorTo` sets the selection again until the editor holds it; and the workflow keeps from a failure only the page as it stood and its pictures, not the whole folder, which held the browsers' own profiles (224 MB).
+
+**The notes.** The text published with the GitHub release is `docs/releases/0.2.1-notes.md` as of that commit, which differs from the tag's in two places, both facts learned from the release's own run and deployment: that run's failure and re-run, and the slow ⌘↵, which appeared at the release's deployment too (2,529 ms, 2,503 of it before the run began) while the first drawing of the figures took 435 ms there. So the drawing is not what the statement waits for; the suspicion is withdrawn, and the cause stays not found.
+
+**Reason.** A release is said done when it is deployed and checked, and its notes should not say less than was known when they were published.

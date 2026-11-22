@@ -143,12 +143,15 @@ jobs:
 
       # Where a browser test failed, what the page held at that moment is kept (Playwright
       # writes it under test-results/), so that the failure can be read and not guessed at.
+      # Only that: the folder also holds the browsers' own profiles, hundreds of megabytes.
       - name: Keep what the page held where a browser test failed
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: browser-test-results
-          path: test-results
+          path: |
+            test-results/**/error-context.md
+            test-results/**/*.png
           if-no-files-found: ignore
           retention-days: 14
 

@@ -159,3 +159,5 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Green.** The whole routine here and on GitHub in both browsers; the checks at both addresses.
 
 **Next.** "Start release 0.2.2" (#208): its checklist, with three questions for the owner. Its first steps are `[engine]`: the zip, written and read. **Still the owner's:** the reader test, on this alpha, for Zeff 0.9.0; the checks by hand; the trademarks (#37) before the address is announced.
+
+**After the tag.** GitHub's run of the release commit for the branch failed one WebKit test by the test's own cursor helper (the tag's run passed whole); run again it passed, and the release is deployed and checked at both addresses, which serve 0.2.1. The helper now sets the cursor until the editor holds it, and the workflow keeps only the page of a failure. The slow ⌘↵ appeared at the release's deployment too, and the first drawing of the figures is ruled out as its cause.

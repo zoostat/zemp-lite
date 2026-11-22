@@ -179,16 +179,22 @@ export const editor = (page: Page) =>
 
 /**
  * Put the cursor at the start of a line of the script (counted from 1), however the lines
- * before it wrap: an arrow key moves by the rows drawn, not by the lines of the script.
+ * before it wrap: an arrow key moves by the rows drawn, not by the lines of the script. The
+ * editor takes the selection from the page a moment after it is set there, and once, in WebKit
+ * on a slow machine, did not take it: it is set again until the editor holds it.
  */
 export async function cursorTo(page: Page, line: number): Promise<void> {
-  await editor(page).focus();
-  await editor(page).evaluate((content, at) => {
-    const row = content.querySelectorAll(":scope > .cm-line")[at - 1];
-    if (row === undefined) throw new Error(`the script shows no line ${at}`);
-    getSelection()!.collapse(row, 0);
-  }, line);
-  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText(String(line));
+  await expect(async () => {
+    await editor(page).focus();
+    await editor(page).evaluate((content, at) => {
+      const row = content.querySelectorAll(":scope > .cm-line")[at - 1];
+      if (row === undefined) throw new Error(`the script shows no line ${at}`);
+      getSelection()!.collapse(row, 0);
+    }, line);
+    await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText(String(line), {
+      timeout: 1_000,
+    });
+  }).toPass({ timeout: 15_000 });
 }
 
 /**
