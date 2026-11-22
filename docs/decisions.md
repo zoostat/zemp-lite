@@ -1264,3 +1264,36 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Not started.** `docs/releases/0.2.2.md` is written at "Start release 0.2.2", after 0.2.1 is tagged; no step of it is taken before.
 
 **Reason.** The owner's decision; and a release's work is never pulled into the one before it.
+
+## 22 November 2026: Release 0.2.2 widened: actions on files, folders and projects
+
+**The owner's word**, given in the coordinating session and passed on, after his "Yes, into 0.2.2": "Add file actions, folder actions, project actions". He named the three groups; the list under each was proposed to him by the coordinating session and is taken here as the starting scope, adjusted below on engineering grounds. Nothing is built before 0.2.1 is released; the checklist is written at "Start release 0.2.2", where the questions marked for him are put.
+
+**Scope kept.**
+
+- **Files** (a menu on each row of the Project pane, every item also a command of ⌘K): new script; add files from the computer into any folder, not `data/` alone; rename; move to another folder; duplicate; delete; save a copy to the computer.
+- **Folders:** new folder; rename; move; delete with what it holds, saying how many files go; save to the computer as a zip.
+- **Projects** (the start screen and **Projects ▾**): new, as now; rename; duplicate; delete; **Export project…** as a zip; open an exported zip as a new project. With them, from the entry above: the request for persistent storage and the reminder to export.
+
+**One thing found on the way, a reason of its own for "save a copy".** What a script writes with `export` (a table, a figure) goes into the project in the browser's storage, and nothing on screen takes it out: a visitor's exported table cannot be had today. Saving a file to the computer ends that.
+
+**Adjusted.** Moving by dragging a row is left out of 0.2.2: **Move to…** in the row's menu does the same and is reached by the keyboard, which every control must be; dragging is a second way to the same end, and costs its own tests in two browsers. It is put to the owner at the plan as left out, his to bring back.
+
+**The points settled.**
+
+1. **`zeff.toml` is not deleted, moved or renamed**: a folder without it is not a project. The folders the engine knows by name (`scripts`, `functions`, `data`) are not renamed, moved or deleted either, though what they hold is: a `functions` folder under another name would stop a project's functions from being found, without a word.
+2. **`.zemp/` stays hidden**, and is left out of an exported zip, as the specification leaves it out of a replication package (section 5): it is the interface's view state, not the project's. A project duplicated in the browser keeps it.
+3. **Renaming a project changes its name in `zeff.toml`; its folder in the browser's storage does not follow.** That folder is the app's own key (the time each project was opened is kept by it); moving a whole tree there is a copy and then a deletion, which a closed tab can leave half done, for a name the visitor does not meet. An exported zip is named by the project's name.
+4. **Renaming, moving or deleting a file rewrites no script**, as in R and Stata, and by the rule of Zemp Lite that no control writes a statement. **The app says so where it matters:** if a script's text names the old path, a line says which scripts and lines do, each a way to its place, and changes nothing.
+5. **An open file follows.** Renamed or moved, the editor holds it under its new path, what was typed saved first; deleted, the editor shows another script. The results of a run stay with their script under its new path, and go with a script deleted.
+6. **Names.** A name is one part of a path (no `/` or `\`, not `.` or `..`); a name taken is refused, in a sentence, and so is one that differs from a neighbour only in capitals, since the computers a zip is opened on mostly cannot hold both.
+7. **No dialog.** A name is typed, and a deletion confirmed, in the row itself, as **New project…** is named now: the Lite build holds no dialog (the edition check).
+8. **An exported zip opened** is refused where a path would leave the project or the whole is larger than the memory budget, as the specification says of a replication package. Whether the zip is written and read by a few lines of this repository's own or by a dependency is decided at the step, by the rule for dependencies.
+
+**For the owner, at the plan of 0.2.2** (each with its recommendation): how a deletion is confirmed and whether it can be undone (asked once, in the row, naming what goes and how many files, and saying it cannot be brought back; a project's deletion offering **Export project…** first; no bin in 0.2.2); whether `scripts/main.zeff`, which the engine and the app both open by name, may be renamed or deleted (recommended: not); dragging to move (recommended: left out).
+
+**The size.** This is no longer a small release: about eight to ten steps. The checklist will put **Export project…** and the saving of a file first, since each green step reaches the address, so that a visitor's way out arrives before the rest.
+
+**The plan's row.** The words of the row for the Zeff session, in the shared note `zemp-lite-saving-a-project-for-the-register.md`, are widened to match.
+
+**Reason.** The owner's decision of the scope; the adjustments keep to rules the app already holds (the keyboard, no dialog, no statement written for the user) and to what the browser's storage can do safely.
