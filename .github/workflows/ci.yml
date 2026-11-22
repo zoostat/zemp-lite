@@ -141,6 +141,17 @@ jobs:
       - name: Browser tests, in Chromium and WebKit
         run: npm run test:browser
 
+      # Where a browser test failed, what the page held at that moment is kept (Playwright
+      # writes it under test-results/), so that the failure can be read and not guessed at.
+      - name: Keep what the page held where a browser test failed
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-test-results
+          path: test-results
+          if-no-files-found: ignore
+          retention-days: 14
+
       # The build the browser tests ran on, kept for the deployment (deploy.yml), which sends
       # these very files to the host after a green run of the main branch.
       - name: Keep the tested build for the deployment

@@ -1173,3 +1173,11 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choice.** On the owner's word ("Yes, correct them"), the text of the GitHub release of v0.2.0 is `docs/releases/0.2-notes.md` as it now stands: the released text unchanged, and under it the section "Corrections, found while 0.2.1 was built" (the notes were not seen; the console line's plots are not listed apart; ⌘↵ on the last statement takes tens of milliseconds). The title, the tag (6c354f6) and the pre-release mark are untouched; nothing of the history is rewritten. Read back from GitHub and held to the file: the same.
 
 **Reason.** A reader of the release page should not be told three things that were found wrong; the corrections stand apart from the released text so that what was said at the release can still be read.
+
+## 22 November 2026: A test that reads every output waits until the editor has drawn every line
+
+**What was found.** On GitHub the routine failed once in WebKit on a commit that changed the progress file alone (0c74438): the sample project "plots" read with its last print missing, the 18 lines of the statement `panels`. The same code had passed on the commit before. It could not be made to fail here in 44 runs under load. No picture of the page was kept, so the cause is reasoned, not seen: the editor draws the lines near the window; the helper `wholeScript` makes the window taller until nothing is left to scroll to, and a window just made taller has nothing to scroll to until the editor measures again and draws the lines it left out. The helper took two looks 150 ms apart as settled; on a slow machine the editor can take longer.
+
+**Choice.** `wholeScript` holds only when nothing is left to scroll to and the editor holds no gap in the lines' place (`.cm-gap`, what it sets where lines are not drawn): the helper asks more before a test reads, and what the tests compare is unchanged. And the workflow keeps `test-results/` for 14 days where a browser test fails (the page as it stood, which Playwright writes there), so that a failure of this kind is read the next time.
+
+**Reason.** A test that fails by its own timing teaches nothing and hides the day a real fault fails it; if the reasoning is wrong and the page itself was at fault, the test still fails, and the page kept will show it.

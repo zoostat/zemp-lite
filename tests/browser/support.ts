@@ -223,24 +223,31 @@ export async function placeOf(page: Page, columns: number): Promise<void> {
  * Give the window the height at which the whole script is on the page with its outputs. The
  * editor draws the lines near the window and reckons the height of the rest, so a test that
  * reads every output of a long script first makes the window as tall as the page, and again
- * as the outputs then drawn are measured, until nothing is left to scroll to.
+ * as the outputs then drawn are measured, until nothing is left to scroll to and the editor
+ * has drawn every line: where it has not, it holds a gap in the lines' place, and a window
+ * just made taller holds one until the editor has measured again, however long that takes.
  */
 export async function wholeScript(page: Page): Promise<void> {
   const pane = page.getByRole("region", { name: "Script with its notes and output" });
   let held = 0;
   for (let tries = 0; tries < 60 && held < 2; tries += 1) {
-    const over = await pane.evaluate((node) => node.scrollHeight - node.clientHeight);
+    const { over, gaps } = await pane.evaluate((node) => ({
+      over: node.scrollHeight - node.clientHeight,
+      gaps: node.querySelectorAll(".cm-content .cm-gap").length,
+    }));
     if (over > 0) {
       held = 0;
       const size = page.viewportSize()!;
       await page.setViewportSize({ width: size.width, height: size.height + over + 200 });
+    } else if (gaps > 0) {
+      held = 0;
     } else {
       held += 1;
     }
     // The page is measured again as the window settles.
     await page.waitForTimeout(150);
   }
-  expect(held, "the window holds the whole script").toBe(2);
+  expect(held, "the window holds the whole script, every line drawn").toBe(2);
 }
 
 /** The text the editor holds. (The editor draws the lines near the window; these scripts are short.) */
