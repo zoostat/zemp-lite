@@ -218,6 +218,10 @@ test("a script and a folder are made from the Project pane, each named in the ro
     "New script",
     "New folder",
     "Add files…",
+    "Rename…",
+    "Move to…",
+    "Duplicate",
+    "Delete…",
     "Save as a zip…",
   ]);
   await press(menu(page, "drafts").getByRole("menuitem", { name: "New script" }));
@@ -257,6 +261,7 @@ test("by the keyboard alone a folder is made and files are added into it, which 
   // Files from the computer, into that folder and not `data/`.
   await more(page, "survey").focus();
   await page.keyboard.press("Enter");
+  await expect(menu(page, "survey").getByRole("menuitem").first()).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
   await expect(menu(page, "survey").getByRole("menuitem", { name: "Add files…" })).toBeFocused();
@@ -296,8 +301,12 @@ test("by the keyboard alone a folder is made and files are added into it, which 
     (async () => {
       await more(page, "survey").focus();
       await page.keyboard.press("Enter");
+      await expect(menu(page, "survey").getByRole("menuitem").first()).toBeFocused();
       await page.keyboard.press("ArrowDown");
       await page.keyboard.press("ArrowDown");
+      await expect(
+        menu(page, "survey").getByRole("menuitem", { name: "Add files…" }),
+      ).toBeFocused();
       await page.keyboard.press("Enter");
     })(),
   ]);
@@ -601,4 +610,176 @@ test("a data file a script names is deleted: the script is said, with its line, 
   // And the folder it lay in, which the engine knows by name, is still there, with no Delete….
   await press(more(page, "data"));
   await expect(menu(page, "data").getByRole("menuitem", { name: "Delete…" })).toHaveCount(0);
+});
+
+test("a folder is renamed, moved, duplicated and deleted with all it holds, and a script open in it follows", async ({
+  page,
+  press,
+}) => {
+  await opened(page, press);
+  const item = (path: string, name: string) =>
+    menu(page, path).getByRole("menuitem", { name, exact: true });
+  const made = async (from: string, what: "New script" | "New folder", name: string) => {
+    await press(more(page, from));
+    await press(item(from, what));
+    const box = tree(page).getByRole("textbox", {
+      name: what === "New script" ? "The name of the new script" : "The name of the new folder",
+    });
+    await box.fill(name);
+    await box.press("Enter");
+    await expect(box).toHaveCount(0);
+  };
+  // A folder of scripts in `scripts`, with a folder in it that holds nothing, and a file.
+  await made("scripts", "New folder", "drafts");
+  await made("scripts/drafts", "New folder", "old");
+  await made("scripts/drafts", "New script", "two");
+  await made("scripts/drafts", "New script", "one");
+  const script = "let pay = frame(a = [1.0, 2])\nprint(pay.mean(a))\n";
+  await write(page, script);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("printed")).toHaveText("1.5\n");
+  const [chooser] = await Promise.all([
+    page.waitForEvent("filechooser"),
+    (async () => {
+      await press(more(page, "scripts/drafts"));
+      await press(item("scripts/drafts", "Add files…"));
+    })(),
+  ]);
+  await chooser.setFiles([
+    { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("kept") },
+  ]);
+  await expect(more(page, "scripts/drafts/notes.txt")).toBeVisible();
+  // The folder in it is folded away, and stays so through what follows.
+  const old = (under: string) =>
+    tree(page)
+      .getByRole("button", { name: "old", exact: true })
+      .and(tree(page).locator(`.line:has([aria-label="Actions for ${under}/old"]) button.row`));
+  await press(old("scripts/drafts"));
+  await expect(old("scripts/drafts")).toHaveAttribute("aria-expanded", "false");
+  // Renamed where it stands: its name, with no ending to leave alone, is all selected.
+  await press(more(page, "scripts/drafts"));
+  await press(item("scripts/drafts", "Rename…"));
+  const name = tree(page).getByRole("textbox", { name: "The new name of drafts" });
+  await expect(name).toHaveValue("drafts");
+  expect(
+    await name.evaluate((box: HTMLInputElement) => [box.selectionStart, box.selectionEnd]),
+  ).toEqual([0, 6]);
+  await page.keyboard.type("sketches");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("renamed to sketches");
+  for (const file of ["one.zeff", "two.zeff", "notes.txt"]) {
+    await expect(more(page, `scripts/sketches/${file}`)).toBeVisible();
+  }
+  await expect(more(page, "scripts/drafts")).toHaveCount(0);
+  // The script open in it follows: shown and marked under its new path, its text and its
+  // results as they were; the folder in it still folded; and it runs where it now is.
+  await expect(tree(page).getByRole("button", { name: /^one\.zeff/ })).toHaveClass(/\bon\b/);
+  await expect.poll(() => scriptText(page)).toBe(script);
+  await expect(page.getByTestId("printed")).toHaveText("1.5\n");
+  await expect(old("scripts/sketches")).toHaveAttribute("aria-expanded", "false");
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 2 · /);
+  // Moved: not into itself, nor into what lies in it, nor to where it is.
+  await press(more(page, "scripts/sketches"));
+  await press(item("scripts/sketches", "Move to…"));
+  const where = tree(page).getByRole("combobox", { name: "The folder to move sketches into" });
+  await expect(where.locator("option")).toHaveText(["the project's own folder", "data"]);
+  await where.selectOption({ label: "the project's own folder" });
+  await press(tree(page).getByRole("button", { name: "Move", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("moved to sketches");
+  await expect(more(page, "sketches/one.zeff")).toBeVisible();
+  await expect(more(page, "scripts/sketches")).toHaveCount(0);
+  await expect.poll(() => scriptText(page)).toBe(script);
+  await expect(page.getByTestId("printed")).toHaveText("1.5\n");
+  // Duplicated: a folder beside it with all it holds.
+  await press(more(page, "sketches"));
+  await press(item("sketches", "Duplicate"));
+  await expect(page.getByRole("status")).toHaveText("copied as sketches copy");
+  for (const file of ["one.zeff", "two.zeff", "notes.txt"]) {
+    await expect(more(page, `sketches copy/${file}`)).toBeVisible();
+  }
+  await expect(more(page, "sketches copy/old")).toBeVisible();
+  // Deleted: the question says how many files go with it; an empty folder has none to count.
+  await press(more(page, "sketches copy/old"));
+  await press(item("sketches copy/old", "Delete…"));
+  await expect(tree(page).getByRole("group", { name: "Delete old?" })).toContainText(
+    "Delete old? It cannot be brought back.",
+  );
+  await press(
+    tree(page).getByRole("group", { name: "Delete old?" }).getByRole("button", { name: "Keep" }),
+  );
+  await press(more(page, "sketches copy"));
+  await press(item("sketches copy", "Delete…"));
+  const asked = tree(page).getByRole("group", { name: "Delete sketches copy?" });
+  await expect(asked).toContainText(
+    "Delete sketches copy and the 3 files in it? It cannot be brought back.",
+  );
+  await press(asked.getByRole("button", { name: "Delete" }));
+  await expect(page.getByRole("status")).toHaveText("deleted sketches copy and the 3 files in it");
+  await expect(more(page, "sketches copy")).toHaveCount(0);
+  await expect(more(page, "sketches copy/one.zeff")).toHaveCount(0);
+  // The script shown was not in it: it is still shown, with its results.
+  await expect(tree(page).getByRole("button", { name: /^one\.zeff/ })).toHaveClass(/\bon\b/);
+  await expect(page.getByTestId("printed")).toHaveText("1.5\n");
+  // The folder that holds the script shown, deleted: the main script takes its place.
+  await press(more(page, "sketches"));
+  await press(item("sketches", "Delete…"));
+  await press(
+    tree(page)
+      .getByRole("group", { name: "Delete sketches?" })
+      .getByRole("button", { name: "Delete" }),
+  );
+  await expect(more(page, "sketches")).toHaveCount(0);
+  await expect(header(page)).toContainText("main.zeff");
+  await expect(tree(page).getByRole("button", { name: /^main\.zeff/ })).toHaveClass(/\bon\b/);
+  await expect(page.getByTestId("printed")).toHaveCount(0);
+  // The folders the engine knows by name are not renamed, moved or deleted; a copy can be made.
+  for (const fixed of ["scripts", "data"]) {
+    await press(more(page, fixed));
+    await expect(menu(page, fixed).getByRole("menuitem")).toHaveText([
+      "New script",
+      "New folder",
+      "Add files…",
+      "Duplicate",
+      "Save as a zip…",
+    ]);
+    await page.keyboard.press("Escape");
+  }
+});
+
+test("a row's menu stands inside the window: over its button where there is no room below", async ({
+  page,
+  press,
+}) => {
+  // Found at step 8d: at the window's foot the list ran off the screen, and its last items
+  // could not be reached.
+  await page.setViewportSize({ width: 1280, height: 420 });
+  await opened(page, press);
+  const within = async (path: string) => {
+    const window = page.viewportSize()!;
+    const list = (await menu(page, path).boundingBox())!;
+    const button = (await more(page, path).boundingBox())!;
+    expect(list.y).toBeGreaterThanOrEqual(0);
+    expect(list.y + list.height).toBeLessThanOrEqual(window.height);
+    expect(list.x + list.width).toBeLessThanOrEqual(window.width);
+    return { list, button };
+  };
+  // A row high in the pane: the list under its button.
+  await press(more(page, "data"));
+  const high = await within("data");
+  expect(high.list.y).toBeGreaterThanOrEqual(high.button.y + high.button.height);
+  await page.keyboard.press("Escape");
+  // The lowest row, with a list of five and no room for it below: the list over its button,
+  // every item of it to be pressed.
+  await press(more(page, "scripts/plots.zeff"));
+  await expect(menu(page, "scripts/plots.zeff").getByRole("menuitem")).toHaveCount(5);
+  const low = await within("scripts/plots.zeff");
+  expect(low.list.y + low.list.height).toBeLessThanOrEqual(low.button.y);
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    press(menu(page, "scripts/plots.zeff").getByRole("menuitem", { name: "Save a copy…" })),
+  ]);
+  expect(download.suggestedFilename()).toBe("plots.zeff");
 });

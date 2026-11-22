@@ -64,4 +64,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 8c `[function]`.** **Duplicate** and **Delete…** in a file's menu and in ⌘K; a deletion asked once in the row, **Keep** in focus; the editor, the results and the engines follow.
 
-**Next.** Steps 8a to 8c seen green on GitHub; then step 8d `[function]`: the same for a folder.
+**Done, step 8d `[function]`.** A folder's menu has **Rename…**, **Move to…**, **Duplicate** and **Delete…**; what it holds follows it, an open script among it; a deletion says how many files go. Found and mended: a row's menu near the window's foot ran off the screen; it now opens over its button where there is no room below.
+
+**Next.** Steps 8b to 8d seen green on GitHub; then step 9 `[function]`: a project renamed, duplicated and deleted, and the Scratch project's own items.

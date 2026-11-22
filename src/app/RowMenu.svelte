@@ -5,6 +5,8 @@
   // arrow keys move through the list, Escape and a press elsewhere close it, and focus goes
   // back to the button. An item that does not apply to a row is not in its list.
 
+  import { tick } from "svelte";
+
   export interface RowAction {
     name: string;
     run: () => void;
@@ -24,8 +26,16 @@
   let open = $state(false);
   let button = $state<HTMLButtonElement | null>(null);
   let list = $state<HTMLElement | null>(null);
-  /** Where the list stands: under the button, kept inside the window. */
-  let place = $state({ left: 0, top: 0 });
+  /**
+   * Where the list stands: under the button, or over it where the window has no room below,
+   * and always inside the window. One of `top` and `bottom` is set, in pixels from that edge.
+   */
+  let place = $state<{ left: number; top: number | null; bottom: number | null; most: number }>({
+    left: 0,
+    top: 0,
+    bottom: null,
+    most: 0,
+  });
 
   function items(): HTMLElement[] {
     return [...(list?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])];
@@ -34,10 +44,19 @@
   function show(): void {
     if (button === null) return;
     const at = button.getBoundingClientRect();
-    place = { left: Math.max(8, Math.min(at.left, window.innerWidth - 228)), top: at.bottom + 4 };
+    const left = Math.max(8, Math.min(at.left, window.innerWidth - 228));
+    // The room the list needs: its items, each about 32 pixels, and its own edge.
+    const needs = actions.length * 32 + 12;
+    const below = window.innerHeight - at.bottom - 12;
+    const above = at.top - 12;
+    place =
+      below >= needs || below >= above
+        ? { left, top: at.bottom + 4, bottom: null, most: Math.max(below, 64) }
+        : { left, top: null, bottom: window.innerHeight - at.top + 4, most: Math.max(above, 64) };
     open = true;
-    // The first item is where the keyboard begins.
-    queueMicrotask(() => items()[0]?.focus());
+    // The first item is where the keyboard begins: once the list is drawn, which `tick` waits
+    // for (a moment sooner, on a slow machine, there was no item yet to take the focus).
+    void tick().then(() => items()[0]?.focus());
   }
 
   function close(back = true): void {
@@ -101,7 +120,9 @@
       aria-label={label}
       bind:this={list}
       style:left="{place.left}px"
-      style:top="{place.top}px"
+      style:top={place.top === null ? null : `${place.top}px`}
+      style:bottom={place.bottom === null ? null : `${place.bottom}px`}
+      style:max-height="{place.most}px"
       onkeydown={keys}
     >
       {#each actions as action (action.name)}
@@ -142,6 +163,7 @@
     display: flex;
     flex-direction: column;
     min-width: 180px;
+    overflow-y: auto;
     padding: 4px;
     position: fixed;
     width: max-content;
@@ -149,6 +171,7 @@
     z-index: 30;
   }
   .list button {
+    flex: none;
     background: none;
     border: 0;
     border-radius: 6px;

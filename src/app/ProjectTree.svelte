@@ -142,6 +142,9 @@
     return [
       // Nothing is made in the app's own folder or the engine's.
       ...(own(node.path) ? [] : making(node.path)),
+      ...placing,
+      ...copying,
+      ...deleting,
       { name: "Save as a zip…", run: () => void workspace.saveFolder(node.path) },
     ];
   }
@@ -239,13 +242,11 @@
       style:padding-left="{(node.kind === 'folder' ? 8 : 26) + depth * 18}px"
     >
       <p>
-        {#if node.kind === "folder"}
-          Delete <span class="mono">{node.name}</span>
-          {files === 0 ? "" : files === 1 ? "and the file in it" : `and the ${files} files in it`}?
-          It cannot be brought back.
-        {:else}
-          Delete <span class="mono">{node.name}</span>? It cannot be brought back.
-        {/if}
+        Delete <span class="mono">{node.name}</span>{node.kind === "file" || files === 0
+          ? ""
+          : files === 1
+            ? " and the file in it"
+            : ` and the ${files} files in it`}? It cannot be brought back.
       </p>
       <button class="word danger" onkeydown={leave} onclick={() => void deleted(node.path)}
         >Delete</button
