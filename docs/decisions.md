@@ -1241,3 +1241,26 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Recommended.** A small release of its own, 0.2.2 on Zeff 0.8.0, after 0.2.1 closes: **Export project…** and the opening of an exported zip, with the request for persistent storage and the reminder to export (the parts of #117 that wait on no engine), in every browser the alpha supports. **Open folder…** with the 0.5 desktop beta, where a folder of the computer is the project's own home, and on the web in Chrome and Edge at the same release; until then the greyed line says where it comes, not "this prototype".
 
 **Reason.** A public preview that can lose a visitor's work, with no way to take a copy, should not wait five engine releases for one; the zip serves every browser and is small. A folder on the computer serves the browsers of some readers only and belongs with the edition whose storage it is.
+
+## 22 November 2026: Release 0.2.2 is decided: a project saved to the computer, and the actions on its files
+
+**The owner's word**, given in the coordinating session and passed on: to the recommendation of the entry above, yes; and, asked whether the file actions go with it, "Yes, into 0.2.2".
+
+**What 0.2.2 holds**, on Zeff 0.8.0, after 0.2.1 is released:
+
+1. **Export project…**: the project's files as one zip, downloaded, in every browser the alpha supports; and the opening of such a zip as a new project.
+2. The request to the browser for persistent storage when a project is first made, and the reminder to export (the parts of #117 that wait on no engine).
+3. **New script**, and in the project tree a file renamed, moved and deleted.
+4. A project deleted from the start screen.
+
+**Open folder…** stays for the 0.5 desktop beta (Zeff 0.11.0), on the desktop and, on the web, in the browsers that allow it. Until then the greyed line of the start screen says where it comes; its wording is changed in 0.2.2, not in 0.2.1, whose features are frozen for the reader test.
+
+**What the reading found for item 3 and 4.** The project's own code can already rename and remove a file (`Project.rename`, `Project.remove`) and remove a project (`Projects.remove`), each with its tests, and nothing on screen calls them: the Project pane offers only **+**, to add a data file. A script is made today only by `:save` in the console line. So these are controls over machinery that exists.
+
+**Left by the owner to engineering, with what is intended:** how a deletion is confirmed and whether it can be undone. Intended: a deletion asks once, naming the file or the project and saying that it cannot be brought back, since the browser's storage has no bin; the deletion of a project offers **Export project…** first. This changes what a reader sees, so it is put to the owner among the questions of the plan of 0.2.2, with this as the recommendation.
+
+**The plan's row and the register.** The row of 0.2.2 in section 15 of the Zemp Specification, the register's entry and the line in `docs/spec_changes.md` are the Zeff repository's, which this session may not edit, and this repository's `docs/spec/` is its copy: the note `zemp-lite-saving-a-project-for-the-register.md` in the shared notes now carries the owner's decision and the row's words, for the Zeff session to enter, as #203 was entered for 0.2.1. The copy here is brought up to date when that is done.
+
+**Not started.** `docs/releases/0.2.2.md` is written at "Start release 0.2.2", after 0.2.1 is tagged; no step of it is taken before.
+
+**Reason.** The owner's decision; and a release's work is never pulled into the one before it.
