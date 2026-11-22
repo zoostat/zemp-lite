@@ -1181,3 +1181,11 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choice.** `wholeScript` holds only when nothing is left to scroll to and the editor holds no gap in the lines' place (`.cm-gap`, what it sets where lines are not drawn): the helper asks more before a test reads, and what the tests compare is unchanged. And the workflow keeps `test-results/` for 14 days where a browser test fails (the page as it stood, which Playwright writes there), so that a failure of this kind is read the next time.
 
 **Reason.** A test that fails by its own timing teaches nothing and hides the day a real fault fails it; if the reasoning is wrong and the page itself was at fault, the test still fails, and the page kept will show it.
+
+## 22 November 2026: ⌘↵ is sometimes slow on GitHub's machine, and the notes say only what is shown
+
+**What was found.** The check after the deployment of de84a4a gave 2,468 ms from the key to "done" for ⌘↵ in Chromium, the run itself 31 ms; the deployments before and after gave 38 and 47 ms, WebKit 31 to 35 ms each time, and this Mac 14 to 20 ms at the address in every trial, whenever after Run the key was pressed. So 0.2's 2.2 s was not only a fault of the measure, and the correction published an hour before ("tens, in both engines"; "the page drawing its figures") said more than is shown. Probes from this Mac could not make it slow.
+
+**Choice.** The correction in `docs/releases/0.2-notes.md` and the measure in the draft notes of 0.2.1 are reworded to what is shown, the cause given as not found, and it is a known issue of 0.2.1; the published notes of 0.2 are set to the file again. The check after a deployment now reports how much of the time passes before the run begins (the status leaving "done"), so that the next slow one says where the time goes: waiting for work before it, or the run and what follows.
+
+**Reason.** A correction must itself be right. The cause is to be found before "Release 0.2.1" if a deployment shows it again; until then nothing is claimed.
