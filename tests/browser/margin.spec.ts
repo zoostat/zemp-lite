@@ -260,7 +260,9 @@ test("when the check refuses a script, the results of the run before stay on the
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
   await expect(error).toHaveCount(0);
-  expect(await printed(page)).toBe(before);
+  // The whole script was written anew, so the editor draws its last outputs a moment after
+  // the run is said to be in step: the page is read until it holds them.
+  await expect.poll(() => printed(page)).toBe(before);
   await expect(page.getByTestId("block")).toHaveCount(blocks);
 });
 
