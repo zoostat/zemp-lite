@@ -52,6 +52,9 @@
     workspace.cursor === null ? null : sectionAt(workspace.sections, workspace.cursor.line),
   );
 
+  // The file the Script place shows, which ⌘K offers to save to the computer.
+  const shownFile = $derived(workspace.activePath ?? workspace.scriptPath);
+
   // The commands of ⌘K: every control of the window, and what has no button of its own.
   const commands = $derived<Command[]>([
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
@@ -60,6 +63,11 @@
       name: "Project: export…",
       hint: "the whole project as a zip, saved to this computer",
       run: () => void workspace.exportProject(),
+    },
+    {
+      name: `File: save a copy of ${shownFile.split("/").pop()}`,
+      hint: `${shownFile}, saved to this computer`,
+      run: () => void workspace.saveCopy(shownFile),
     },
     {
       name: "Report a problem",

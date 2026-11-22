@@ -1387,3 +1387,15 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Tests.** Unit (`export.test`, 8 tests): the one folder and what it holds; an empty folder kept; `.zemp/` and `.zeff/` left out and a visitor's own dot-file kept; the same bytes twice; the name made safe; the time remembered and listed; a project looked into without being opened; a folder as a zip (for step 4). Browser (`export.spec`, both browsers): from ⌘K, the downloaded file's name, its entries read back by this repository's reader and by Python's `zipfile` with every CRC tested, the script as typed a moment before, the file the run wrote, the manifest to the character, nothing of `.zemp/` or `.zeff/`, the script unchanged; from the start screen, by the mouse and by the keyboard alone, with the project not opened.
 
 **Reason.** The owner's answer to question 5; the rest is what makes the zip a project the command line runs, and the control one a keyboard reaches.
+
+## 22 November 2026: A file saved to the computer, and a folder as a zip (release 0.2.2, step 4)
+
+**Choice.** Every row of the Project pane has the menu made at step 3, named for its row by its path ("Actions for output/figure.svg"). A file's has **Save a copy…**, which gives the file to the computer as it is, under its own name; a folder's has **Save as a zip…**, which gives a zip named for the folder and holding it under its name (`exportFolder`). What is typed is saved first, so a script saved is the script as it stands. The file shown is saved from ⌘K too ("File: save a copy of main.zeff"). The status line says what was saved. A file is given with no type of its own, so that the browser saves it and does not open it.
+
+**What it gives with step 2b.** A table saved and a figure exported by a script can now be taken out of the browser, one at a time or as the whole `output` folder.
+
+**The rows.** A row is now its button, or its plain line where the file is not one the editor opens, and its menu beside it; opening a menu folds and opens nothing.
+
+**Tests.** Browser (`files.spec`, both browsers): a script saved is what was typed a moment before; a figure and a frame a run wrote are the engine's bytes; a data file of every byte value comes back as it went in; the file shown is saved from ⌘K; a folder saved by the keyboard alone (the button in focus, Enter, Escape giving the focus back, Enter on the item), its zip read by this repository's reader and by Python's `zipfile`; an empty folder is a zip of that folder.
+
+**Reason.** The row of the plan; and what a script writes is the visitor's work as much as the script.

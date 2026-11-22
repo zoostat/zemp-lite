@@ -42,4 +42,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 3 `[function]`, but for the check at the address.** **Project: export…** in ⌘K and **Export project…** in the menu of a project's row on the start screen: the project as one zip, read back in tests by this repository's reader and by Python's `zipfile`. The row's menu is made here for the steps after. Green here but for the five WebKit tests that need a real press of the mouse, which this Mac's headless WebKit again did not deliver (the same five as through release 0.2.1; GitHub is the test of record for them).
 
-**Next.** The export made at the address and run by the released `zeff run`; then step 4 `[function]`: a file saved to the computer, and a folder as a zip.
+**Done, step 4 `[function]`.** Every row of the Project pane has a menu: **Save a copy…** for a file, **Save as a zip…** for a folder; the file shown is saved from ⌘K. With step 2b, what a script writes can be taken out of the browser.
+
+**Next.** The export made at the address and run by the released `zeff run` (step 3's last condition); then step 5 `[function]`: an exported zip opened as a new project.

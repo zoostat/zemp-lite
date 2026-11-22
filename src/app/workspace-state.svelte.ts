@@ -39,7 +39,7 @@ import {
   type ViewState,
 } from "./views";
 import { sectionsOf, type Section } from "../editor/sections";
-import { exportProject } from "../project/export";
+import { exportFolder, exportProject } from "../project/export";
 import { saveToComputer } from "./save";
 import { notesOf } from "../margin/notes";
 
@@ -586,6 +586,35 @@ export class Workspace {
       saveToComputer(made.name, made.bytes, "application/zip");
       this.project.noteExported();
       this.status = `exported as ${made.name}`;
+    } catch (error) {
+      this.status = (error as Error).message;
+    }
+  }
+
+  /**
+   * Give a file of the project to the computer, as it is (open decision #208): a script as it
+   * stands, what is typed saved first; a data file; a table or a figure a run wrote.
+   */
+  async saveCopy(path: string): Promise<void> {
+    try {
+      await this.settle();
+      const bytes = await this.project.read(path);
+      if (bytes === null) throw new ProjectError(`There is no file \`${path}\` in this project.`);
+      const name = path.split("/").pop() ?? path;
+      saveToComputer(name, bytes);
+      this.status = `saved as ${name}`;
+    } catch (error) {
+      this.status = (error as Error).message;
+    }
+  }
+
+  /** Give a folder of the project to the computer as a zip that holds it, named by the folder. */
+  async saveFolder(path: string): Promise<void> {
+    try {
+      await this.settle();
+      const made = await exportFolder(this.project, path, Date.now());
+      saveToComputer(made.name, made.bytes, "application/zip");
+      this.status = `saved as ${made.name}`;
     } catch (error) {
       this.status = (error as Error).message;
     }

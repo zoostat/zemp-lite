@@ -83,9 +83,9 @@ test("the Project pane lists the files with their sizes, and a folder folds away
   await expect(scripts).toHaveAttribute("aria-expanded", "true");
   await press(scripts);
   await expect(scripts).toHaveAttribute("aria-expanded", "false");
-  await expect(tree.getByRole("button", { name: /main\.zeff/ })).toHaveCount(0);
+  await expect(tree.getByRole("button", { name: /^main\.zeff/ })).toHaveCount(0);
   await press(scripts);
-  await expect(tree.getByRole("button", { name: /main\.zeff/ })).toBeVisible();
+  await expect(tree.getByRole("button", { name: /^main\.zeff/ })).toBeVisible();
   // The pane stands at the script's left, and the script reaches the window's right edge:
   // nothing stands at its right.
   const pane = (await leftPane(page).boundingBox())!;

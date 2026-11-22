@@ -2,14 +2,24 @@
   // The files of the project as a tree, with their sizes (the Zemp Specification, section 5):
   // a folder folds and unfolds, a script opens in the Script place, and a data file is added
   // from the computer. From Zemp Lite 0.2.1 it is the Project pane at the script's left (#203).
+  // From 0.2.2 each row has a menu at its end (#208): a file is saved to the computer, a
+  // folder as a zip.
   import type { TreeNode } from "../project/projects";
   import { size } from "./format";
+  import RowMenu, { type RowAction } from "./RowMenu.svelte";
   import { fileTab } from "./views";
   import { editable, type Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
 
   let chooser = $state<HTMLInputElement | null>(null);
+
+  /** What can be done with a row: the items of its menu, in order. */
+  function actionsOf(node: TreeNode): RowAction[] {
+    return node.kind === "folder"
+      ? [{ name: "Save as a zip…", run: () => void workspace.saveFolder(node.path) }]
+      : [{ name: "Save a copy…", run: () => void workspace.saveCopy(node.path) }];
+  }
 
   async function chosen(): Promise<void> {
     if (chooser?.files) {
@@ -25,32 +35,40 @@
       <li>
         {#if node.kind === "folder"}
           {@const folded = workspace.views.folded.includes(node.path)}
-          <button
-            class="row"
-            style:padding-left="{8 + depth * 18}px"
-            aria-expanded={!folded}
-            onclick={() => workspace.toggleFolder(node.path)}
-          >
-            <span class="chevron" class:open={!folded} aria-hidden="true">›</span>
-            <span class="name">{node.name}</span>
-          </button>
+          <div class="line">
+            <button
+              class="row"
+              style:padding-left="{8 + depth * 18}px"
+              aria-expanded={!folded}
+              onclick={() => workspace.toggleFolder(node.path)}
+            >
+              <span class="chevron" class:open={!folded} aria-hidden="true">›</span>
+              <span class="name">{node.name}</span>
+            </button>
+            <RowMenu label="Actions for {node.path}" actions={actionsOf(node)} />
+          </div>
           {#if !folded}
             {@render rows(node.children, depth + 1)}
           {/if}
-        {:else if editable(node.path)}
-          <button
-            class="row file"
-            class:on={workspace.views.active === fileTab(node.path)}
-            style:padding-left="{26 + depth * 18}px"
-            onclick={() => void workspace.open(node.path)}
-          >
-            <span class="name">{node.name}</span>
-            <em>{size(node.size)}</em>
-          </button>
         {:else}
-          <div class="row file plain" style:padding-left="{26 + depth * 18}px">
-            <span class="name">{node.name}</span>
-            <em>{size(node.size)}</em>
+          <div class="line">
+            {#if editable(node.path)}
+              <button
+                class="row file"
+                class:on={workspace.views.active === fileTab(node.path)}
+                style:padding-left="{26 + depth * 18}px"
+                onclick={() => void workspace.open(node.path)}
+              >
+                <span class="name">{node.name}</span>
+                <em>{size(node.size)}</em>
+              </button>
+            {:else}
+              <div class="row file plain" style:padding-left="{26 + depth * 18}px">
+                <span class="name">{node.name}</span>
+                <em>{size(node.size)}</em>
+              </div>
+            {/if}
+            <RowMenu label="Actions for {node.path}" actions={actionsOf(node)} />
           </div>
         {/if}
       </li>
@@ -118,6 +136,15 @@
     list-style: none;
     margin: 0;
     padding: 0;
+  }
+  .line {
+    align-items: center;
+    display: flex;
+    gap: 2px;
+  }
+  .line .row {
+    flex: 1;
+    min-width: 0;
   }
   .row {
     align-items: center;
