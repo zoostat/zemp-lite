@@ -258,17 +258,18 @@ test("by the keyboard alone a folder is made and files are added into it, which 
   await page.keyboard.type("survey");
   await page.keyboard.press("Enter");
   await expect(tree(page).getByRole("button", { name: "survey", exact: true })).toBeVisible();
-  // Files from the computer, into that folder and not `data/`.
+  // Files from the computer, into that folder and not `data/`. The test begins to listen for
+  // the computer's chooser before it opens the menu, so that it is listening when Enter is
+  // pressed: asked for in the same instant as the key, the chooser was once missed.
+  const choosing = page.waitForEvent("filechooser");
   await more(page, "survey").focus();
   await page.keyboard.press("Enter");
   await expect(menu(page, "survey").getByRole("menuitem").first()).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
   await expect(menu(page, "survey").getByRole("menuitem", { name: "Add files…" })).toBeFocused();
-  const [chooser] = await Promise.all([
-    page.waitForEvent("filechooser"),
-    page.keyboard.press("Enter"),
-  ]);
+  await page.keyboard.press("Enter");
+  const chooser = await choosing;
   await chooser.setFiles([
     {
       name: "pay.csv",

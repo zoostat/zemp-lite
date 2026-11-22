@@ -1567,3 +1567,11 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choice.** The test reads the page until it holds what the run before printed (`expect.poll`), as the other tests of what a run prints do. What it asserts is unchanged: the same text, whole.
 
 **Reason.** The editor draws its outputs a moment after the run ends; a test must wait for the page it reads. The same kind of slip as the one mended on 22 November in `wholeScript`.
+
+## 23 November 2026: A test that asked for the file chooser as it pressed the key (release 0.2.2, step 10)
+
+**Found.** GitHub's run of the commit after (1ffedbe), which changed one line of another test, failed one test of step 8a in Chromium and passed everything else: "by the keyboard alone a folder is made and files are added into it" (`files.spec`). The page kept from the failure shows the app as it should be after Enter on **Add files…**: the menu closed and the focus back on the row's button. The test was still waiting for the computer's file chooser, which it had begun to listen for in the same instant as it pressed Enter. The same test had passed on GitHub in the five runs before, and here.
+
+**Choice.** The test begins to listen for the chooser before it opens the menu, and presses Enter after. What it asserts is unchanged. The cause is taken to be the test's: the test tool takes over the chooser only once it has been told to listen, and a key pressed in that instant can open the browser's own chooser, which no test sees. It is not shown by a failure brought about on purpose: the old form did not fail here in any trial. If the test fails again in this place, the fault is the app's and is looked for there.
+
+**Reason.** A reader's Enter on **Add files…** runs the item at once, in the key's own turn, which is what a browser asks before it shows a chooser; nothing in the app waits between the key and the chooser.
