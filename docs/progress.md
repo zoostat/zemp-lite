@@ -170,4 +170,6 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Done, step 1 `[engine]`.** The release opened: version `0.2.2-dev`; the greyed line of **Open folder…** says where it comes. Green here: the whole routine in both browsers.
 
-**Next.** Step 2 `[engine]`: a zip, written and read.
+**Done, step 2 `[engine]`.** A zip written and read by this repository's own code (`src/project/zip.ts`), the deflate the platform's; held to Python's `zipfile` both ways, and to an archive made for each refusal (15 unit tests). Green here: the whole routine in both browsers.
+
+**Next.** Step 3 `[function]`: **Export project…**.

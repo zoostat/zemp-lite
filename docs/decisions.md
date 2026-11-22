@@ -1347,3 +1347,15 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choices of this step.** Version `0.2.2-dev` in `package.json`, `worker/Cargo.toml` and their lock files. The greyed line of **Open folder…** on the start screen says "comes with the desktop app, and then in Chrome and Edge" in place of "not in this prototype yet": it is no prototype, and #208 places the folder with the 0.5 desktop beta. Tests: browser (`page.spec`, the line's words).
 
 **Reason.** The owner's decisions; and a line that says a thing is not here should say when it will be.
+
+## 22 November 2026: A zip of this repository's own (release 0.2.2, step 2)
+
+**Choice** (`src/project/zip.ts`). No dependency: the deflate of a zip is the platform's own (`CompressionStream` and `DecompressionStream`, "deflate-raw", in every browser the alpha supports and in Node), and the container is written here: each file's header, the directory at the end, a CRC-32. A file is deflated, or stored as it is where deflating does not make it smaller; names are UTF-8; a folder that holds nothing has an entry of its own, so that an empty `data/` comes back. Every entry carries the moment given, so the same files at the same moment are the same bytes. The 64-bit form is neither written nor read: a project of this browser is far under 4 GB and 65,535 files.
+
+**Reading trusts nothing the archive says of itself.** The sizes and the CRC are taken from the directory at the end, never from a file's own header (so a zip written to a pipe, with each size after its bytes, is read). Refused whole, with a sentence, before a caller writes anything: what is no zip or is cut short; a zip split, or of the 64-bit kind; one protected by a password; a file packed otherwise than stored or deflated; a name not in UTF-8; a path that would leave the folder (`..`, `.`, an empty part, a path from the root, a drive, a backslash); a path twice; two paths that differ only in capitals, a folder's among them; one path as a file and as a folder; a file that does not unpack to its length and its CRC; and a whole larger than the limit given, counted as it unpacks, so that a hundred megabytes of zeros claimed as one kilobyte stops at the limit. A small file whose own header alone is in the 64-bit way (as a cautious writer does) is an ordinary zip and is read.
+
+**Tests** (`zip.node.test.ts`, under Node, with Python's `zipfile` as the reference; 15 tests). What is written is read back the same; is the same bytes twice; deflates what shrinks and stores what does not; is read by the reference, every name, byte, folder and moment. What the reference writes is read: stored; deflated, with folders' entries and a comment at the end; written to a pipe. Each refusal by an archive made for it, with its sentence. The CRC-32 by its known value.
+
+**The build.** The module is in no page yet: step 3 is its first use, and the measure is taken there.
+
+**Reason.** A dependency is added only where it saves real work; here the platform does the hard part, and what is left is small enough to hold whole in tests against a reference.
