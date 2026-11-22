@@ -50,21 +50,26 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   await page.getByRole("button", { name: "Fold all", exact: true }).click();
   await page.locator(".cm-content .cm-line").last().click();
   await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("24");
-  // Timed in the page: from the key to the status saying "done" again after it changed.
+  // Timed in the page: from the key to the status saying "done" again after it changed, and
+  // of that, how long before the status first changed (the run had not begun until then).
   const timed = page.evaluate(
     () =>
-      new Promise<number>((resolve) => {
+      new Promise<{ whole: number; before: number }>((resolve) => {
         const status = document.querySelector('[role="status"]')!;
         let from = 0;
-        let left = false;
+        let left = 0;
         document.addEventListener("keydown", () => (from = performance.now()), {
           capture: true,
           once: true,
         });
         new MutationObserver(() => {
           const now = status.textContent ?? "";
-          if (now !== "done") left = true;
-          else if (left) resolve(Math.round(performance.now() - from));
+          const at = performance.now();
+          if (now !== "done") {
+            if (left === 0) left = at;
+          } else if (left !== 0) {
+            resolve({ whole: Math.round(at - from), before: Math.round(left - from) });
+          }
         }).observe(status, { childList: true, characterData: true, subtree: true });
       }),
   );
@@ -87,7 +92,7 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   for (const [type, description] of [
     [
       "one statement",
-      `${statement} ms for ⌘↵ on the last statement, from the key to done (${ran})`,
+      `${statement.whole} ms for ⌘↵ on the last statement, from the key to done, ${statement.before} ms of it before the run began (${ran})`,
     ],
     ["redraw", redraw],
   ] as const) {
