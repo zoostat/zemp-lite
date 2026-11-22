@@ -58,4 +58,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 7 `[engine]`.** The operations on a project's files and folders (`src/project/files.ts`): made, added, renamed and moved (a copy, checked, then a removal), duplicated, deleted; the rules of a name and what is fixed, in one place.
 
-**Next.** Step 6 seen green on GitHub; then step 8a `[function]`: new script, new folder, and files added into a folder.
+**Done, step 8a `[function]`.** The Project pane's **+** is a menu: **New script**, **New folder**, **Add files…**, and each folder has the same for itself; the name is typed in the row, a refusal is a sentence under it.
+
+**Next.** Steps 6, 7 and 8a seen green on GitHub; then step 8b `[function]`: a file renamed and moved, the open file following.

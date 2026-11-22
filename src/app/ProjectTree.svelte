@@ -5,6 +5,7 @@
   // From 0.2.2 each row has a menu at its end (#208): a file is saved to the computer, a
   // folder as a zip.
   import type { TreeNode } from "../project/projects";
+  import { own } from "../project/files";
   import { size } from "./format";
   import RowMenu, { type RowAction } from "./RowMenu.svelte";
   import { fileTab } from "./views";
@@ -13,24 +14,109 @@
   let { workspace }: { workspace: Workspace } = $props();
 
   let chooser = $state<HTMLInputElement | null>(null);
+  /** The folder the files chosen next are added into. */
+  let into = $state("data");
+
+  /** A script or a folder being named, in a row where it will stand. */
+  let naming = $state<{ kind: "script" | "folder"; parent: string } | null>(null);
+  let named = $state("");
+  /** Why what was typed cannot be the name, as a sentence. */
+  let refused = $state("");
+
+  function name(kind: "script" | "folder", parent: string): void {
+    naming = { kind, parent };
+    named = "";
+    refused = "";
+    workspace.unfoldFolder(parent);
+  }
+
+  async function make(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    if (naming === null) return;
+    const problem =
+      naming.kind === "script"
+        ? await workspace.newScript(named, naming.parent)
+        : await workspace.newFolder(named, naming.parent);
+    if (problem === null) naming = null;
+    else refused = problem;
+  }
+
+  function focus(node: HTMLInputElement): void {
+    node.focus();
+  }
+
+  function addInto(folder: string): void {
+    into = folder;
+    chooser?.click();
+  }
+
+  /** What is made in a folder: a script, a folder, files from the computer. */
+  function making(folder: string): RowAction[] {
+    return [
+      { name: "New script", run: () => name("script", folder === "" ? "scripts" : folder) },
+      { name: "New folder", run: () => name("folder", folder) },
+      { name: "Add files…", run: () => addInto(folder === "" ? "data" : folder) },
+    ];
+  }
 
   /** What can be done with a row: the items of its menu, in order. */
   function actionsOf(node: TreeNode): RowAction[] {
-    return node.kind === "folder"
-      ? [{ name: "Save as a zip…", run: () => void workspace.saveFolder(node.path) }]
-      : [{ name: "Save a copy…", run: () => void workspace.saveCopy(node.path) }];
+    if (node.kind === "file") {
+      return [{ name: "Save a copy…", run: () => void workspace.saveCopy(node.path) }];
+    }
+    return [
+      // Nothing is made in the app's own folder or the engine's.
+      ...(own(node.path) ? [] : making(node.path)),
+      { name: "Save as a zip…", run: () => void workspace.saveFolder(node.path) },
+    ];
   }
 
   async function chosen(): Promise<void> {
     if (chooser?.files) {
-      await workspace.addData(chooser.files);
+      await workspace.addFiles(chooser.files, into);
       chooser.value = "";
     }
+    into = "data";
   }
 </script>
 
-{#snippet rows(nodes: TreeNode[], depth: number)}
+<!-- The row in which a new script or folder is named, where it will stand. -->
+{#snippet namingRow(depth: number)}
+  {#if naming !== null}
+    <li>
+      <form class="naming" style:padding-left="{26 + depth * 18}px" onsubmit={make}>
+        <input
+          class="mono"
+          bind:value={named}
+          use:focus
+          aria-label={naming.kind === "script"
+            ? "The name of the new script"
+            : "The name of the new folder"}
+          placeholder={naming.kind === "script" ? "name.zeff" : "name"}
+          autocomplete="off"
+          spellcheck="false"
+          maxlength="120"
+          oninput={() => (refused = "")}
+          onkeydown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              naming = null;
+            }
+          }}
+        />
+        <button class="word" type="submit">Create</button>
+        <button class="word" type="button" onclick={() => (naming = null)}>Cancel</button>
+      </form>
+      {#if refused}<p class="refused" role="alert">{refused}</p>{/if}
+    </li>
+  {/if}
+{/snippet}
+
+{#snippet rows(nodes: TreeNode[], depth: number, path: string)}
   <ul>
+    {#if naming !== null && naming.parent === path}
+      {@render namingRow(depth)}
+    {/if}
     {#each nodes as node (node.path)}
       <li>
         {#if node.kind === "folder"}
@@ -48,7 +134,7 @@
             <RowMenu label="Actions for {node.path}" actions={actionsOf(node)} />
           </div>
           {#if !folded}
-            {@render rows(node.children, depth + 1)}
+            {@render rows(node.children, depth + 1, node.path)}
           {/if}
         {:else}
           <div class="line">
@@ -78,12 +164,7 @@
 
 <div class="head">
   <span>{workspace.project.info.name}</span>
-  <button
-    class="add"
-    onclick={() => chooser?.click()}
-    aria-label="Add a data file…"
-    title="Add a data file…">+</button
-  >
+  <RowMenu label="Add to the project" symbol="+" actions={making("")} />
   <input
     bind:this={chooser}
     type="file"
@@ -94,24 +175,55 @@
   />
 </div>
 <div class="tree">
-  {@render rows(workspace.tree, 0)}
+  {@render rows(workspace.tree, 0, "")}
 </div>
 {#if workspace.problem}<p class="problem" role="alert">{workspace.problem}</p>{/if}
 
 <style>
-  .add {
-    background: transparent;
+  .naming {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+    height: 34px;
+    padding-right: 4px;
+  }
+  .naming input {
+    background: var(--window);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    color: var(--ink);
+    flex: 1;
+    font-size: 13px;
+    min-width: 0;
+    padding: 3px 7px;
+  }
+  .naming input:focus-visible {
+    border-color: var(--accent);
+    outline: 1px solid var(--accent);
+  }
+  .word {
+    background: none;
     border: 0;
     border-radius: 6px;
-    color: var(--ink-3);
-    font-size: 16px;
-    height: 22px;
-    line-height: 1;
-    width: 22px;
+    color: var(--ink-2);
+    cursor: pointer;
+    flex: none;
+    font: inherit;
+    font-size: 13px;
+    padding: 3px 6px;
   }
-  .add:hover {
+  .word:hover {
     background: var(--line);
-    color: var(--ink);
+  }
+  .word:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+  .refused {
+    color: var(--warning);
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 0;
+    padding: 0 8px 6px 26px;
   }
   .head {
     align-items: center;

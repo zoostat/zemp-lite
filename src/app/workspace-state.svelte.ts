@@ -1667,15 +1667,20 @@ export class Workspace {
     return buffer !== undefined && buffer.loaded && buffer.text !== run.text;
   }
 
-  /** Add data files chosen from the computer; nothing is written into a script. */
-  async addData(files: Iterable<File>): Promise<void> {
+  /**
+   * Add files chosen from the computer into a folder of the project (`data` where none is
+   * named); nothing is written into a script. A file that cannot be added says why, and the
+   * others are added.
+   */
+  async addFiles(files: Iterable<File>, folder = "data"): Promise<void> {
     this.problem = "";
     for (const file of files) {
       try {
-        const path = await this.project.addData(
-          file.name,
-          new Uint8Array(await file.arrayBuffer()),
-        );
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const path =
+          folder === "data"
+            ? await this.project.addData(file.name, bytes)
+            : await this.project.add(folder, file.name, bytes);
         this.session.changed(path);
         this.language?.changed(path);
       } catch (error) {
@@ -1683,5 +1688,38 @@ export class Workspace {
       }
     }
     await this.refresh();
+  }
+
+  /**
+   * Make a script in a folder of the project and open it (open decision #208). Gives the
+   * reason, as a sentence, where it cannot be made, and `null` where it was.
+   */
+  async newScript(name: string, folder: string): Promise<string | null> {
+    try {
+      const path = await this.project.newScript(name, folder);
+      this.session.changed(path);
+      this.language?.changed(path);
+      await this.refresh();
+      await this.open(path);
+      return null;
+    } catch (error) {
+      return error instanceof ProjectError ? error.message : String(error);
+    }
+  }
+
+  /** Make a folder in a folder of the project. Gives the reason where it cannot be made. */
+  async newFolder(name: string, parent: string): Promise<string | null> {
+    try {
+      await this.project.newFolder(name, parent);
+      await this.refresh();
+      return null;
+    } catch (error) {
+      return error instanceof ProjectError ? error.message : String(error);
+    }
+  }
+
+  /** Show what a folder holds, where it is folded away. */
+  unfoldFolder(path: string): void {
+    if (path !== "" && this.views.folded.includes(path)) this.toggleFolder(path);
   }
 }

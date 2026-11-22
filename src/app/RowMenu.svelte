@@ -10,7 +10,16 @@
     run: () => void;
   }
 
-  let { label, actions }: { label: string; actions: RowAction[] } = $props();
+  let {
+    label,
+    actions,
+    symbol = "⋯",
+  }: {
+    label: string;
+    actions: RowAction[];
+    /** What the button shows: three dots for "more", a plus for "add". */
+    symbol?: string;
+  } = $props();
 
   let open = $state(false);
   let button = $state<HTMLButtonElement | null>(null);
@@ -82,7 +91,7 @@
       else show();
     }}
   >
-    <span aria-hidden="true">⋯</span>
+    <span aria-hidden="true">{symbol}</span>
   </button>
   {#if open}
     <!-- svelte-ignore a11y_interactive_supports_focus -->
