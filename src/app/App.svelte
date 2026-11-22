@@ -4,6 +4,7 @@
   // so that a reload comes back to the same project and a second tab can hold another.
   import { browserEngine } from "../engine/browser";
   import { MemoryFolder, OpfsFolder } from "../project/folder";
+  import { keepingOf, type Keeping } from "../project/keeping";
   import { Projects, type Project } from "../project/projects";
   import { browserStorage } from "../theme/theme.svelte";
   import Start from "./Start.svelte";
@@ -14,7 +15,23 @@
   // Projects are kept in the browser's private file system; a browser that gives the page
   // none (a private window) keeps them for the life of the tab, and the welcome screen says so.
   let lasting = $state(true);
+  // Whether the browser has agreed to keep that storage for good, or may clear it (Zemp
+  // Specification, section 10; #117): it is asked once, when the first project is made.
+  let keeping = $state<Keeping>("may-clear");
+  const ASKED = "zemp-asked-to-keep";
   let projects = $state<Projects | null>(null);
+
+  /** A project was made: the browser is asked to keep the storage, the first time. */
+  async function made(): Promise<void> {
+    let ask = true;
+    try {
+      ask = localStorage.getItem(ASKED) === null;
+      localStorage.setItem(ASKED, "1");
+    } catch {
+      // A browser that keeps no note is asked each time, which costs nothing.
+    }
+    keeping = await keepingOf(navigator.storage, lasting, ask);
+  }
   const engine = browserEngine();
   // The engine's language server runs in a worker of its own, so that typing never waits on a run.
   const language = browserEngine();
@@ -57,6 +74,7 @@
       const kept = await OpfsFolder.open();
       lasting = kept !== null;
       projects = new Projects(kept ?? new MemoryFolder(), browserStorage());
+      keeping = await keepingOf(navigator.storage, lasting, false);
     }
     naming = window.location.hash === "#/new";
     const folder = named();
@@ -87,11 +105,17 @@
   <p class="waiting" role="status">Opening…</p>
 {:else if project === null}
   {#key naming}
-    <Welcome {projects} {lasting} {naming} onopen={open} />
+    <Welcome {projects} {lasting} {keeping} {naming} onopen={open} onmade={() => void made()} />
   {/key}
 {:else}
   {#key project.info.folder}
-    <Workspace {project} {engine} {language} onclose={() => (window.location.hash = "")} />
+    <Workspace
+      {project}
+      {engine}
+      {language}
+      {keeping}
+      onclose={() => (window.location.hash = "")}
+    />
   {/key}
 {/if}
 

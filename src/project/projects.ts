@@ -20,6 +20,8 @@ export interface ProjectInfo {
   opened: number | null;
   /** When it was last exported from this browser as a zip, or `null` if never. */
   exported: number | null;
+  /** When it was made in this browser, or first seen by it, or `null` where that is not kept. */
+  made: number | null;
 }
 
 /** A file or a folder of a project, with what a folder holds. */
@@ -38,6 +40,8 @@ const ROOT = "projects";
 const OPENED = "zemp-opened";
 /** When each project was last exported, by its folder. */
 const EXPORTED = "zemp-exported";
+/** When each project was made here, or first seen, by its folder. */
+const MADE = "zemp-made";
 /** The examples the Scratch project of this browser has been given, each given once. */
 const GIVEN = "zemp-scratch-examples";
 
@@ -168,6 +172,22 @@ export class Projects {
     return this.#times(OPENED);
   }
 
+  /**
+   * When a project was made here. One not yet noted (made by a release before this was kept)
+   * is noted now, as first seen: the reminder to export counts from here.
+   */
+  #made(folder: string): number | null {
+    const times = this.#times(MADE);
+    if (times[folder] !== undefined) return times[folder];
+    const at = this.#now();
+    try {
+      this.#kept.setItem(MADE, JSON.stringify({ ...times, [folder]: at }));
+      return at;
+    } catch {
+      return null;
+    }
+  }
+
   /** Note that a project was exported now: the reminder to export counts from here. */
   noteExported(folder: string): number {
     const at = this.#now();
@@ -193,6 +213,7 @@ export class Projects {
         name: nameIn(decoder.decode(toml)) ?? entry.name,
         opened: opened[entry.name] ?? null,
         exported: exported[entry.name] ?? null,
+        made: this.#made(entry.name),
       });
     }
     return found.sort(
@@ -218,7 +239,7 @@ export class Projects {
       );
     }
     await this.#fill(folder, wanted, `// ${wanted}\n`);
-    return { folder, name: wanted, opened: null, exported: null };
+    return { folder, name: wanted, opened: null, exported: null, made: this.#made(folder) };
   }
 
   /**
@@ -248,6 +269,7 @@ export class Projects {
       name: "Scratch",
       opened: this.#opened()[SCRATCH] ?? null,
       exported: this.#times(EXPORTED)[SCRATCH] ?? null,
+      made: this.#made(SCRATCH),
     };
   }
 
@@ -303,6 +325,7 @@ export class Projects {
       name: nameIn(toml) ?? folder,
       opened,
       exported: this.#times(EXPORTED)[folder] ?? null,
+      made: this.#made(folder),
     };
     return new Project(info, new Inside(this.#root, `${ROOT}/${folder}`), () => {
       info.exported = this.noteExported(folder);
@@ -335,7 +358,7 @@ export class Projects {
       await this.#root.remove(base);
       throw error;
     }
-    return { folder, name, opened: null, exported: null };
+    return { folder, name, opened: null, exported: null, made: this.#made(folder) };
   }
 
   /** A folder for a project of this name that no project has: `wages`, then `wages-2`. */
@@ -351,13 +374,16 @@ export class Projects {
   /** Remove a project and all it holds. */
   async remove(folder: string): Promise<void> {
     await this.#root.remove(`${ROOT}/${folder}`);
-    const opened = Object.fromEntries(
-      Object.entries(this.#opened()).filter(([name]) => name !== folder),
-    );
-    try {
-      this.#kept.setItem(OPENED, JSON.stringify(opened));
-    } catch {
-      // Nothing to forget.
+    // What was kept of it is forgotten: a project made later in a folder of this name is new.
+    for (const key of [OPENED, EXPORTED, MADE]) {
+      const times = Object.fromEntries(
+        Object.entries(this.#times(key)).filter(([name]) => name !== folder),
+      );
+      try {
+        this.#kept.setItem(key, JSON.stringify(times));
+      } catch {
+        // Nothing to forget.
+      }
     }
   }
 }

@@ -2,6 +2,8 @@
   // The workspace of a project (Zemp Specification, section 5; open decision #203): the top
   // bar, the place shown on its frame of panes, and a line at the foot.
   import type { Engine } from "../engine/engine";
+  import type { Keeping } from "../project/keeping";
+  import { browserStorage } from "../theme/theme.svelte";
   import type { Project } from "../project/projects";
   import { closePopOuts } from "../plots/popout";
   import type { TreeNode } from "../project/projects";
@@ -24,12 +26,23 @@
     project,
     engine,
     language = null,
+    keeping = "may-clear",
     onclose,
-  }: { project: Project; engine: Engine; language?: Engine | null; onclose: () => void } = $props();
+  }: {
+    project: Project;
+    engine: Engine;
+    language?: Engine | null;
+    /** What the browser does with the projects, for the reminder to export. */
+    keeping?: Keeping;
+    onclose: () => void;
+  } = $props();
 
   // One project to a window: this component is made anew for each project it shows.
   // svelte-ignore state_referenced_locally
-  const workspace = new Workspace(project, engine, language);
+  const workspace = new Workspace(project, engine, language, browserStorage());
+  $effect(() => {
+    workspace.keeping = keeping;
+  });
 
   let palette = $state(false);
   let console_ = $state<ReturnType<typeof ConsoleLine> | null>(null);
@@ -164,7 +177,7 @@
 </script>
 
 <!-- A page that is being left writes what waits to be written, as far as the browser lets it. -->
-<svelte:window onkeydown={keys} onpagehide={() => void workspace.settle()} />
+<svelte:window onkeydown={keys} onpagehide={() => workspace.leave()} />
 
 <TopBar {workspace} onclose={() => void close()} onpalette={() => (palette = true)} />
 

@@ -413,3 +413,56 @@ test("a change of the view is kept though others follow it at once, and the page
     }),
   ).toBeVisible();
 });
+
+test("a change of the view made as the page is left is kept: the page loaded again at once shows it", async ({
+  page,
+  press,
+}) => {
+  // The view state is written to the project a fifth of a second after a change, and a page
+  // being left cannot be relied on to finish that writing. So as the page is left the view
+  // state is noted in the browser's own record, written at once, and taken up at the next
+  // opening (`src/app/left.ts`).
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "New project…" }));
+  await page.getByLabel("The name of the new project").fill("Left at once");
+  await press(page.getByRole("button", { name: "Create" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
+  const notes = bar.getByRole("button", { name: "Notes", exact: true });
+  const project = bar.getByRole("button", { name: "Project", exact: true });
+  await expect(notes).toHaveAttribute("aria-pressed", "true");
+  // Closed, and the page loaded again in the same breath: closed.
+  await press(notes);
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(notes).toHaveAttribute("aria-pressed", "false");
+  // Opened again with another pane, closed and opened in quick turns, the last of them as the
+  // page is left: what stands is what the reader left, not a moment on the way.
+  await press(project);
+  await press(notes);
+  await press(notes);
+  await press(notes);
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(notes).toHaveAttribute("aria-pressed", "true");
+  await expect(project).toHaveAttribute("aria-pressed", "true");
+  // And it is written to the project itself, not left in the browser's record alone.
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        try {
+          let folder = await navigator.storage.getDirectory();
+          for (const part of ["projects", "left-at-once", ".zemp"]) {
+            folder = await folder.getDirectoryHandle(part);
+          }
+          const text = await (await (await folder.getFileHandle("views.json")).getFile()).text();
+          const script = (JSON.parse(text) as { panes: { script: Record<string, boolean> } }).panes
+            .script;
+          return `${script["notes"]} ${script["project"]}`;
+        } catch {
+          return "not written";
+        }
+      }),
+    )
+    .toBe("true true");
+});

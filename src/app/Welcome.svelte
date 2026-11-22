@@ -4,6 +4,7 @@
   // of this browser, the one opened last first.
   import { exportProject } from "../project/export";
   import { limitsFor, projectOf } from "../project/from-zip";
+  import type { Keeping } from "../project/keeping";
   import { ZipError, readZip } from "../project/zip";
   import { ProjectError, when, type ProjectInfo, type Projects } from "../project/projects";
   import Logo from "../theme/Logo.svelte";
@@ -17,15 +18,21 @@
   let {
     projects,
     lasting,
+    keeping,
     naming: asked = false,
     onopen,
+    onmade,
   }: {
     projects: Projects;
     /** Whether the screen opens asking for a new project's name. */
     naming?: boolean;
     /** Whether the browser keeps the projects after the tab is closed. */
     lasting: boolean;
+    /** Whether the browser has agreed to keep the storage for good, or may clear it. */
+    keeping: Keeping;
     onopen: (folder: string) => void;
+    /** A project was made here: the browser is then asked to keep the storage. */
+    onmade: () => void;
   } = $props();
 
   let recent = $state<ProjectInfo[]>([]);
@@ -44,6 +51,7 @@
     event.preventDefault();
     try {
       const made = await projects.create(name);
+      onmade();
       onopen(made.folder);
     } catch (error) {
       problem =
@@ -87,6 +95,7 @@
       const device = (navigator as { deviceMemory?: number }).deviceMemory;
       const held = await readZip(new Uint8Array(await file.arrayBuffer()), limitsFor(device));
       const made = await projects.adopt(projectOf(held), file.name.replace(/\.zip$/i, ""));
+      onmade();
       onopen(made.folder);
     } catch (error) {
       zipProblem =
@@ -97,7 +106,9 @@
   }
 
   async function scratch(): Promise<void> {
-    onopen((await projects.scratch()).folder);
+    const made = await projects.scratch();
+    onmade();
+    onopen(made.folder);
   }
 
   function focus(node: HTMLInputElement): void {
@@ -184,8 +195,10 @@
 
     <p class="store">
       {#if lasting}
-        <b>Kept on this computer.</b> Projects live in this browser's private storage. Clearing the site's
-        data would remove them.
+        <b>Kept on this computer.</b> Projects live in this browser's private storage. Clearing the
+        site's data would remove them{keeping === "kept"
+          ? ", and the browser has agreed not to clear it on its own."
+          : ", and the browser may clear it when the computer runs short of room."}
       {:else}
         <b class="warn">Not kept.</b> This browser gives a page no private storage, so a project lasts
         only until this tab is closed.

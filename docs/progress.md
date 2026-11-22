@@ -50,4 +50,8 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 5 `[function]`.** **Open a project's zip…** on the start screen: the zip proved whole, its one folder taken off, the project named for its manifest with a number where the name is taken, written whole or not at all (`src/project/from-zip.ts`, `Projects.adopt`).
 
-**Next.** Steps 3 to 5 seen green on GitHub with the mend; the export and the opening made at the address, and the export run by the released `zeff run`; then step 6 `[function]`: the browser asked to keep the storage, and the reminder to export.
+**And its consequence, found at step 6.** With the new timing a change made as the page is left could be lost while one a moment earlier was kept (a test of the notes failed four times in ten). As the page is left the view state is now noted in the browser's own record and taken up at the next opening (`src/app/left.ts`).
+
+**Done, step 6 `[function]`.** The browser is asked to keep the storage when a project is first made; the status bar of a project says where the browser may clear it or it has not been exported for 30 days, with **Export project…** beside it; the start screen says which holds (`src/project/keeping.ts`).
+
+**Next.** Steps 5 and 6 seen green on GitHub; the export and the opening made at the address, and the export run by the released `zeff run`; then step 7 `[engine]`: the operations on a project's files and folders.

@@ -40,6 +40,9 @@ import {
 } from "./views";
 import { sectionsOf, type Section } from "../editor/sections";
 import { exportFolder, exportProject } from "../project/export";
+import { reminderOf, type Keeping } from "../project/keeping";
+import { noteLeft, takeLeft } from "./left";
+import type { Kept } from "../theme/theme";
 import { saveToComputer } from "./save";
 import { notesOf } from "../margin/notes";
 
@@ -191,8 +194,35 @@ export class Workspace {
   diagnostics = $state<Record<string, Diagnostic[]>>({});
   #telling: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(project: Project, engine: Engine, language: Engine | null = null) {
+  /** What the browser does with the projects: kept for good, or it may clear them. */
+  keeping = $state<Keeping>("may-clear");
+  /** When the project was last exported, as the status bar's reminder counts it. */
+  exportedAt = $state<number | null>(null);
+
+  /**
+   * The line of the status bar that reminds the reader to export (Zemp Specification, section
+   * 10; #117), or `null` where there is nothing to say.
+   */
+  get reminder(): string | null {
+    return reminderOf(
+      { made: this.project.info.made, exported: this.exportedAt },
+      this.keeping,
+      Date.now(),
+    );
+  }
+
+  /** The browser's own small record, where the view state is noted as the page is left. */
+  readonly #record: Kept | null;
+
+  constructor(
+    project: Project,
+    engine: Engine,
+    language: Engine | null = null,
+    kept: Kept | null = null,
+  ) {
+    this.#record = kept;
     this.project = project;
+    this.exportedAt = project.info.exported;
     this.engine = engine;
     this.session = new Session(project, engine);
     this.language = language === null ? null : new Language(project, language);
@@ -341,7 +371,13 @@ export class Workspace {
       },
       (error: Error) => (this.status = error.message),
     );
-    const views = readViews(await this.project.readText(VIEWS));
+    // The view state as the page was last left, where that was noted (`left.ts`), is newer than
+    // what the project holds: it is taken up, and written to the project.
+    const left = this.#record === null ? null : takeLeft(this.#record, this.project.info.folder);
+    if (left !== null) {
+      this.#saving = this.#saving.then(() => this.project.writeText(VIEWS, left));
+    }
+    const views = readViews(left ?? (await this.project.readText(VIEWS)));
     // A tab whose file is gone is not opened.
     const tabs: string[] = [];
     for (const tab of views.tabs) {
@@ -592,6 +628,7 @@ export class Workspace {
       const made = await exportProject(this.project, Date.now());
       saveToComputer(made.name, made.bytes, "application/zip");
       this.project.noteExported();
+      this.exportedAt = this.project.info.exported;
       this.status = `exported as ${made.name}`;
     } catch (error) {
       this.status = (error as Error).message;
@@ -625,6 +662,18 @@ export class Workspace {
     } catch (error) {
       this.status = (error as Error).message;
     }
+  }
+
+  /**
+   * The page is being left: the view state is noted in the browser's own record, which is
+   * written at once, and what waits to be written is begun. A project still being opened has
+   * no view state of its own yet, and notes nothing.
+   */
+  leave(): void {
+    if (this.ready && this.#record !== null) {
+      noteLeft(this.#record, this.project.info.folder, writeViews($state.snapshot(this.views)));
+    }
+    void this.settle();
   }
 
   /** Write what waits to be written: the view state and the scripts. */

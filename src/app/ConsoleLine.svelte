@@ -126,6 +126,10 @@
       spellcheck="false"
     />
 
+    {#if workspace.reminder !== null}
+      <span class="reminder" data-testid="reminder">{workspace.reminder}</span>
+      <button class="export" onclick={() => void workspace.exportProject()}>Export project…</button>
+    {/if}
     <span class="keys mono" aria-hidden="true">{mac ? "⌘↵ run · ⌘K" : "Ctrl ↵ run · Ctrl K"}</span>
     <span role="status">{workspace.status}</span>
     <span class="engine">engine Zeff {workspace.engineVersion ?? "…"} · in this browser</span>
@@ -204,6 +208,31 @@
     color: var(--ink-3);
     flex: none;
     font-size: 12.5px;
+  }
+  /* The reminder to export: quiet words, and the one thing to press beside them. */
+  .reminder {
+    color: var(--ink-3);
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .export {
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    color: var(--accent);
+    cursor: pointer;
+    flex: none;
+    font: inherit;
+    padding: 2px 6px;
+  }
+  .export:hover {
+    background: var(--soft);
+  }
+  .export:focus-visible {
+    outline: 2px solid var(--accent);
   }
   .sync,
   [role="status"],

@@ -138,7 +138,7 @@ describe("a project made of a zip", () => {
     const root = new MemoryFolder();
     const projects = new Projects(root, kept());
     const made = await projects.adopt(from(), "fallback");
-    expect(made).toEqual({ folder: "wages", name: "Wages", opened: null, exported: null });
+    expect(made).toMatchObject({ folder: "wages", name: "Wages", opened: null, exported: null });
     expect(read(await root.read("projects/wages/zeff.toml"))).toBe(TOML);
     expect(read(await root.read("projects/wages/scripts/main.zeff"))).toBe("print(1)\n");
     expect(await root.kind("projects/wages/data")).toBe("folder");
