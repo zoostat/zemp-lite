@@ -22,7 +22,7 @@ use zeff_diagnostics::json_string;
 use zeff_diagnostics::{Diagnostic, Severity, Source, Sources};
 use zeff_engine::control::{Control, Event};
 use zeff_engine::dependencies::graph;
-use zeff_engine::fs::{FileSystem, MemoryFileSystem};
+use zeff_engine::fs::FileSystem;
 use zeff_engine::interpreter::{MemoryNote, StatementOutput};
 use zeff_engine::language::outline::statements_in;
 use zeff_engine::language::{Position, Range, offset, position};
@@ -34,6 +34,9 @@ use zeff_web::{default_budget, event_json};
 #[cfg(target_arch = "wasm32")]
 mod browser;
 mod view;
+mod written;
+
+use written::Recording;
 
 /// Where the project lies in the worker's memory.
 const ROOT: &str = "/project";
@@ -226,7 +229,8 @@ type Filtered = (String, String, zeff_core::value::Frame);
 
 /// A project in memory, and the runs made in it.
 pub struct Host {
-    fs: MemoryFileSystem,
+    /// The project as the engine sees it, in memory, noting what a run writes.
+    fs: Recording,
     /// The engine's language server (`zeff-lsp`), over the project as this host holds it.
     language: RefCell<zeff_lsp::Server>,
     /// The frames the bindings of the last run held when it ended, for the interface to show.
@@ -245,7 +249,7 @@ pub struct Host {
 impl Host {
     /// A project called `name`, pinned to this engine, with nothing in it yet.
     pub fn new(name: &str) -> Host {
-        let fs = MemoryFileSystem::new();
+        let fs = Recording::new();
         fs.add_file(
             format!("{ROOT}/zeff.toml"),
             format!(
@@ -317,6 +321,8 @@ impl Host {
             width,
             only: chosen,
         } = *asked;
+        // What this run writes is noted from here (see [`Recording`]).
+        self.fs.begin();
         // A run of chosen statements runs the text with the others blanked (see [`only`]).
         let blanked;
         let text = match chosen {
@@ -957,11 +963,23 @@ impl Host {
                 )
             })
             .collect();
+        // The files the run wrote, by their paths from the project's folder; the engine's own
+        // folder, `.zeff/`, is rebuilt on every run and is not the project's to keep.
+        let written: Vec<String> = self
+            .fs
+            .written()
+            .iter()
+            .filter_map(|path| path.strip_prefix(ROOT).ok())
+            .map(|path| path.to_string_lossy().replace('\\', "/"))
+            .filter(|path| !path.is_empty() && path != ".zeff" && !path.starts_with(".zeff/"))
+            .map(|path| json_string(&path))
+            .collect();
         format!(
-            "{{\"type\": \"done\", \"exit_code\": {exit_code}, \"stdout\": {}, \"stderr\": {}, \"statements\": {statements}, \"frames\": [{}]}}",
+            "{{\"type\": \"done\", \"exit_code\": {exit_code}, \"stdout\": {}, \"stderr\": {}, \"statements\": {statements}, \"frames\": [{}], \"written\": [{}]}}",
             json_string(stdout),
             json_string(stderr),
-            frames.join(", ")
+            frames.join(", "),
+            written.join(", ")
         )
     }
 }

@@ -40,7 +40,7 @@
 //   { type: "filed", path }             the file was put into the project
 //   { type: "ranges", statements }      first in a run: [{ line, end, kind }]
 //   { type: "started" | "finished" | "pass" | "output", ... }   while a run goes
-//   { type: "done", exit_code, stdout, stderr, statements, frames }   its outcome: each
+//   { type: "done", exit_code, stdout, stderr, statements, frames, written }   its outcome: each
 //                                       statement with what it printed, said and made, and
 //                                       the frames its bindings hold: [{ name, rows, variables }]
 //   { type: "statements", statements }  the answer to `statements`: [{ line, end, kind }]

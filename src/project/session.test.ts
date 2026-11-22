@@ -12,6 +12,7 @@ const done: Outcome = {
   stderr: "",
   statements: [],
   frames: [],
+  written: [],
   stopped: false,
 };
 

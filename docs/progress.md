@@ -172,4 +172,8 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 
 **Done, step 2 `[engine]`.** A zip written and read by this repository's own code (`src/project/zip.ts`), the deflate the platform's; held to Python's `zipfile` both ways, and to an archive made for each refusal (15 unit tests). Green here: the whole routine in both browsers.
 
-**Next.** Step 3 `[function]`: **Export project…**.
+**Found at step 3, and a step added.** A file a script writes with `export` or `save` never reached the project: it stayed in the engine's memory, in no pane, and was lost with the tab. The plan had it wrong; its finding 5 is corrected, and step 2b added.
+
+**Done, step 2b `[engine]`.** The worker notes what a run writes and the run's outcome names it; after a run the visitor asked for, the interface writes each file into the project, where the Project pane shows it and it is kept (`worker/src/written.rs`, `Workspace.#keepWritten`). Green here: the whole routine in both browsers (30 native tests, 212 unit tests, 328 browser tests); the worker 2,918.9 kB with brotli.
+
+**Next.** Step 3 `[function]`: **Export project…** (its work begun, set aside in a stash while 2b was built).

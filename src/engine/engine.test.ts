@@ -221,6 +221,7 @@ describe("the engine, from the interface's side", () => {
       stderr: "note: a note\n",
       statements: [],
       frames: [],
+      written: [],
       stopped: true,
     });
     await expect(pending).rejects.toBeInstanceOf(EngineError);

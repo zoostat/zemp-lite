@@ -299,3 +299,83 @@ test("the data viewer's sort and condition are kept with the project, and nothin
   );
   await expect.poll(() => scriptText(page)).toBe("let wages = dataset(wages)\n");
 });
+
+test("what a run writes is brought into the project: in the Project pane, in the browser's storage, and there after a reload", async ({
+  page,
+  press,
+}) => {
+  // A script's `export` and `save` write under the project's folder (Engine Specification,
+  // section 2). The engine writes into its own copy of the project; the interface brings each
+  // file a run wrote into the project itself (release 0.2.2, step 2b).
+  const script = (size: string) =>
+    "let pay = frame(educ = [10.0, 12, 14, 16], wage = [11.0, 14, 19, 26])\n" +
+    `pay.plot(x: educ, y: wage).points().export("output/figure.svg", size: ${size})\n` +
+    'pay.save("pay.csv")\n';
+  /** A file of the project as the browser's own storage holds it, or `null` where it has none. */
+  const stored = (path: string) =>
+    page.evaluate(async (parts) => {
+      try {
+        let folder = await navigator.storage.getDirectory();
+        for (const part of parts.slice(0, -1)) folder = await folder.getDirectoryHandle(part);
+        const name = parts[parts.length - 1] as string;
+        return await (await (await folder.getFileHandle(name)).getFile()).text();
+      } catch {
+        return null;
+      }
+    }, `projects/what-a-run-writes/${path}`.split("/"));
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "New project…" }));
+  await page.getByLabel("The name of the new project").fill("What a run writes");
+  await press(page.getByRole("button", { name: "Create" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  expect(await stored("output/figure.svg")).toBeNull();
+  await write(page, script("[120, 80]"));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  // Both files stand under `output/` in the Project pane, each with its size.
+  await press(
+    page
+      .getByRole("toolbar", { name: "Script: its panes and its controls" })
+      .getByRole("button", { name: "Project", exact: true }),
+  );
+  const tree = page
+    .getByRole("complementary", { name: "Script: the left pane" })
+    .getByRole("region", { name: "Project" });
+  await expect(tree.getByRole("button", { name: "output", exact: true })).toBeVisible();
+  await expect(tree.getByRole("listitem").filter({ hasText: "figure.svg" }).last()).toContainText(
+    /\d (B|kB)/,
+  );
+  await expect(tree.getByRole("listitem").filter({ hasText: "pay.csv" }).last()).toContainText(
+    /\d (B|kB)/,
+  );
+  // In the browser's storage each is what the engine wrote: the figure at 120 by 80 mm, which
+  // is 340.157 by 226.772 points, and the frame as CSV.
+  const figure = (await stored("output/figure.svg")) ?? "";
+  expect(figure).toMatch(/^<\?xml[^>]*\?>\n<svg [^>]*width="340\.157pt" height="226\.772pt"/);
+  expect(figure.trimEnd().endsWith("</svg>")).toBe(true);
+  expect(await stored("output/pay.csv")).toBe(
+    "educ,wage\n10.0,11.0\n12.0,14.0\n14.0,19.0\n16.0,26.0\n",
+  );
+  // A run that writes the figure afresh, at another size, replaces it.
+  await write(page, script("[80, 120]"));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect
+    .poll(async () => (await stored("output/figure.svg")) ?? "")
+    .toMatch(/<svg [^>]*width="226\.772pt" height="340\.157pt"/);
+  // A statement of the console line that writes a file brings it too.
+  const line = page.getByRole("textbox", { name: /Console/ });
+  await line.fill('pay.save("from-the-console.csv")');
+  await line.press("Enter");
+  await expect.poll(() => stored("output/from-the-console.csv")).toMatch(/^educ,wage\n/);
+  // After the page is loaded again the files are still the project's.
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(tree.getByRole("listitem").filter({ hasText: "figure.svg" }).last()).toBeVisible();
+  await expect(
+    tree.getByRole("listitem").filter({ hasText: "from-the-console.csv" }).last(),
+  ).toBeVisible();
+  expect(await stored("output/pay.csv")).toBe(
+    "educ,wage\n10.0,11.0\n12.0,14.0\n14.0,19.0\n16.0,26.0\n",
+  );
+});

@@ -191,6 +191,7 @@ export class Engine {
               stderr: done.stderr,
               statements: done.statements,
               frames: done.frames,
+              written: done.written,
               stopped: false,
             });
           } catch (error) {
@@ -232,6 +233,7 @@ export class Engine {
       stderr: running.stderr,
       statements: [],
       frames: [],
+      written: [],
       stopped: true,
     });
   }

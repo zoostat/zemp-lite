@@ -4,7 +4,15 @@ import type { Ranged, RunEvent } from "../engine/messages";
 import { endOf, placed } from "./place";
 import { begin, end, hear } from "./run";
 
-const outcome = { exitCode: 0, stdout: "", stderr: "", statements: [], frames: [], stopped: false };
+const outcome = {
+  exitCode: 0,
+  stdout: "",
+  stderr: "",
+  statements: [],
+  frames: [],
+  written: [],
+  stopped: false,
+};
 
 /** Statements from their first and last lines, as the engine's outline gives them. */
 const ranges = (...spans: [number, number][]): Ranged[] =>

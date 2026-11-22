@@ -206,6 +206,7 @@ export type Reply =
       stderr: string;
       statements: StatementInfo[];
       frames: FrameInfo[];
+      written: string[];
     }
   | { type: "statements"; statements: Ranged[] }
   | {
@@ -244,6 +245,12 @@ export interface Outcome {
   statements: StatementInfo[];
   /** The frames the run's bindings hold. */
   frames: FrameInfo[];
+  /**
+   * The files of the project the run wrote (`export`, `save`), each by its path from the
+   * project's folder: they are in the engine's copy of the project, and the interface brings
+   * them into the project itself. None where the run was stopped.
+   */
+  written: string[];
   /** Whether the interface ended the worker to stop the run, so that the project in it is gone. */
   stopped: boolean;
 }

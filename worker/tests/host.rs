@@ -53,7 +53,7 @@ fn a_run_tells_each_event_as_a_line_of_json_and_gives_its_outcome() {
             r#"{"type": "done", "exit_code": 0, "stdout": "one\n", "stderr": "", "statements": ["#,
             r#"{"line": 1, "end": 1, "kind": "statement", "name": null, "type": "Nothing", "ran": true, "stdout": "one\n", "stderr": "", "frame": null, "memory": null}, "#,
             r#"{"line": 2, "end": 2, "kind": "statement", "name": "a", "type": "Int", "ran": true, "stdout": "", "stderr": "", "frame": null, "memory": null}"#,
-            r#"], "frames": []}"#
+            r#"], "frames": [], "written": []}"#
         )
     );
 }
@@ -109,6 +109,51 @@ fn a_figure_a_run_exports_is_given_back_as_the_file_it_wrote() {
     assert_ne!(again.file("output/figure.svg").unwrap(), figure.as_bytes());
 }
 
+/// The files a run's outcome says it wrote.
+fn written(done: &str) -> Vec<String> {
+    let outcome: Value = serde_json::from_str(done).unwrap();
+    outcome["written"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|path| path.as_str().unwrap().to_string())
+        .collect()
+}
+
+#[test]
+fn a_runs_outcome_names_the_files_it_wrote_and_no_others() {
+    let host = Host::new("demo");
+    // A file the interface puts in is not a file a run wrote.
+    assert!(host.add_file("data/pay.csv", b"id,wage\n1,23.5\n2,19\n3,31.25\n"));
+    let (_, done) = run(&host, "print(import(\"data/pay.csv\").mean(wage))\n");
+    assert_eq!(written(&done), Vec::<String>::new(), "{done}");
+    // A figure exported and a frame saved, each named by its path from the project's folder.
+    let script = "let pay = import(\"data/pay.csv\")\n\
+                  pay.plot(x: id, y: wage).points().export(\"output/pay.svg\", size: [120, 80])\n\
+                  pay.save(\"output/pay.csv\")\n";
+    let (_, done) = run(&host, script);
+    assert!(done.contains(r#""exit_code": 0"#), "{done}");
+    assert_eq!(written(&done), ["output/pay.csv", "output/pay.svg"]);
+    // Each is there to be read, as the run wrote it.
+    assert!(host.file("output/pay.svg").is_some());
+    let saved = String::from_utf8(host.file("output/pay.csv").unwrap()).unwrap();
+    assert!(saved.starts_with("id,wage\n"), "{saved}");
+    // The next run names what it wrote itself: nothing of the run before.
+    let (_, done) = run(&host, "print(1)\n");
+    assert_eq!(written(&done), Vec::<String>::new());
+    // A run that writes a file again names it again; the engine's own folder is never named.
+    let (_, done) = run(&host, script);
+    assert_eq!(written(&done), ["output/pay.csv", "output/pay.svg"]);
+    assert!(written(&done).iter().all(|path| !path.starts_with(".zeff")));
+    // A run that stops at an error names what it wrote before it.
+    let (_, done) = run(
+        &host,
+        "import(\"data/pay.csv\").save(\"output/first.csv\")\nerror(\"stop\")\n",
+    );
+    assert!(done.contains(r#""exit_code": 1"#), "{done}");
+    assert_eq!(written(&done), ["output/first.csv"]);
+}
+
 #[test]
 fn a_file_that_is_not_there_and_a_path_that_leaves_the_project_give_nothing() {
     let host = Host::new("demo");
@@ -131,7 +176,7 @@ fn a_frame_of_the_last_run_is_given_as_an_arrow_stream() {
         "let pay = frame(region = [\"north\", \"south\"], wage = [23.5, NA])\nlet n = pay.n_rows()\n",
     );
     assert!(
-        done.ends_with(r#""frames": [{"name": "pay", "rows": 2, "variables": 2}]}"#),
+        done.ends_with(r#""frames": [{"name": "pay", "rows": 2, "variables": 2}], "written": []}"#),
         "{done}"
     );
     let bytes = host.frame("pay").unwrap();

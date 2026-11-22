@@ -35,7 +35,19 @@ function ran(text: string, statements: [number, string, number?][]) {
     ];
     for (const event of events) hear(run, event, 1);
   });
-  end(run, { exitCode: 0, stdout: "", stderr: "", statements: [], frames: [], stopped: false }, 2);
+  end(
+    run,
+    {
+      exitCode: 0,
+      stdout: "",
+      stderr: "",
+      statements: [],
+      frames: [],
+      written: [],
+      stopped: false,
+    },
+    2,
+  );
   return run;
 }
 

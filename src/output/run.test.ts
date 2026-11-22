@@ -8,6 +8,7 @@ const done = (exitCode: number, stderr = ""): Outcome => ({
   stderr,
   statements: [],
   frames: [],
+  written: [],
   stopped: false,
 });
 
@@ -207,7 +208,15 @@ describe("a run, as the page shows it", () => {
     hear(run, { type: "started", statement: 1, of: 1, line: 1 }, 5);
     end(
       run,
-      { exitCode: null, stdout: "", stderr: "", statements: [], frames: [], stopped: true },
+      {
+        exitCode: null,
+        stdout: "",
+        stderr: "",
+        statements: [],
+        frames: [],
+        written: [],
+        stopped: true,
+      },
       905,
     );
     expect(run.state).toBe("stopped");

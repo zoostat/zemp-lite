@@ -3,7 +3,7 @@
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
 import { Language, type Diagnostic, type Range } from "../engine/language";
-import type { Checked, FrameInfo, Ranged, Report, Rows, View } from "../engine/messages";
+import type { Checked, FrameInfo, Outcome, Ranged, Report, Rows, View } from "../engine/messages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
@@ -546,6 +546,32 @@ export class Workspace {
     }, 200);
   }
 
+  /**
+   * Bring what a run wrote into the project (release 0.2.2, step 2b). A script's `export` and
+   * `save` write under the project's folder (Engine Specification, section 2), which for the
+   * engine is its own copy in the worker's memory: each file the run's outcome names is read
+   * from there and written into the project itself, so that it is kept, shown in the Project
+   * pane, and there to be saved to the computer. This is done after the runs the visitor asks
+   * for; the runs the interface makes for itself (to draw a figure, to lay a print out afresh,
+   * to ask a variable's statistics) write nothing of the visitor's that the run before did not.
+   */
+  async #keepWritten(outcome: Outcome): Promise<void> {
+    // The interface's own folder is not the engine's to write into.
+    const paths = outcome.written.filter((path) => path !== ".zemp" && !path.startsWith(".zemp/"));
+    if (outcome.stopped || paths.length === 0) return;
+    try {
+      for (const path of paths) {
+        const bytes = await this.engine.read(path);
+        if (bytes === null) continue;
+        await this.project.write(path, bytes);
+        this.language?.changed(path);
+      }
+    } catch (error) {
+      this.problem = `What the run wrote could not be kept in the project: ${(error as Error).message}`;
+    }
+    await this.refresh();
+  }
+
   /** Write what waits to be written: the view state and the scripts. */
   async settle(): Promise<void> {
     if (this.#keeping !== null) {
@@ -686,6 +712,7 @@ export class Workspace {
       }
       // A script that was refused made no frames: those of the results kept are kept too.
       if (shown) this.frames = outcome.frames;
+      await this.#keepWritten(outcome);
       if (shown) this.setUnfolded(script, openable(run));
       // A run that drew a plot puts the Plots tab beside the script's, without leaving the script.
       if (shown && plotsOf(run).length > 0 && !this.views.tabs.includes(PLOTS)) {
@@ -846,6 +873,7 @@ export class Workspace {
       this.lastRun =
         previous !== null && previous.script === script ? merged(previous, fresh) : fresh;
       this.frames = outcome.frames;
+      await this.#keepWritten(outcome);
       // A run of part of the script unfolds the outputs of the statements asked for, and
       // leaves the others as they were (the owner's answer of 22 November 2026): not those
       // of the statements run only because the ones asked for read them.
@@ -992,6 +1020,7 @@ export class Workspace {
         stderr: checked.found,
         statements: [],
         frames: [],
+        written: [],
         stopped: false,
       },
       performance.now(),
@@ -1407,6 +1436,7 @@ export class Workspace {
         // A statement that ran is kept, so that the next one typed sees what it made.
         if (entry.state === "done") this.#kept.push(statement);
         this.frames = outcome.frames;
+        await this.#keepWritten(outcome);
       } catch (error) {
         entry.state = "failed";
         entry.told = (error as Error).message;

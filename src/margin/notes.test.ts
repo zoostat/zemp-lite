@@ -26,6 +26,7 @@ const outcome = (statements: StatementInfo[], exitCode = 0): Outcome => ({
   stderr: "",
   statements,
   frames: [],
+  written: [],
   stopped: false,
 });
 

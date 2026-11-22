@@ -44,6 +44,7 @@ function ran(text: string, lines?: number[]): Run {
       stderr: "",
       statements: chosen.map(({ line }) => info(line, `${source[line - 1]}\n`)),
       frames: [],
+      written: [],
       stopped: false,
     },
     3,

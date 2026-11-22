@@ -354,7 +354,10 @@ test("a file a run wrote is given back, and passed to the interface, not copied"
     "let pay = frame(educ = [10.0, 12, 14, 16], wage = [11.0, 14, 19, 26])\n" +
     'pay.plot(x: educ, y: wage).points().export("output/figure.svg", size: [120, 80])\n';
   worker.postMessage({ type: "run", script: "scripts/main.zeff", text: script });
-  assert.equal((await next("done")).exit_code, 0);
+  const done = await next("done");
+  assert.equal(done.exit_code, 0);
+  // The run's outcome names what it wrote, for the interface to bring into the project.
+  assert.deepEqual(done.written, ["output/figure.svg"]);
   said.length = 0;
   worker.postMessage({ type: "read", path: "output/figure.svg", id: 7 });
   const read = await next("read");

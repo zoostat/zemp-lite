@@ -52,6 +52,7 @@ function exampleRun() {
     stderr: done.stderr,
     statements: done.statements,
     frames: [],
+    written: [],
     stopped: false,
   };
   end(run, outcome, 2);
