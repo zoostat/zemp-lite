@@ -60,4 +60,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 8a `[function]`.** The Project pane's **+** is a menu: **New script**, **New folder**, **Add files…**, and each folder has the same for itself; the name is typed in the row, a refusal is a sentence under it.
 
-**Next.** Steps 6, 7 and 8a seen green on GitHub; then step 8b `[function]`: a file renamed and moved, the open file following.
+**Done, step 8b `[function]`, with a piece of the worker.** The worker forgets one file or folder, keeping the last run's frames (`worker/src/written.rs`, the message `remove`, `Session.gone`). **Rename…** and **Move to…** in a file's menu and in ⌘K, answered in the row; what is open follows, with its results; a script that names the old path is said, with its line, and not rewritten.
+
+**Next.** Steps 7, 8a and 8b seen green on GitHub; then step 8c `[function]`: a file duplicated and deleted.

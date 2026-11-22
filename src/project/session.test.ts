@@ -31,6 +31,10 @@ function engine(): Runs & { asked: string[]; project: string | null } {
       asked.push(`put ${path} (${bytes.byteLength})`);
       return Promise.resolve();
     },
+    remove(path) {
+      asked.push(`remove ${path}`);
+      return Promise.resolve(true);
+    },
     run(script, text, _listener, _width, only) {
       asked.push(
         `run ${script}: ${text.trim()}${only === undefined ? "" : ` (only ${only.join(", ")})`}`,
@@ -88,7 +92,41 @@ describe("a session", () => {
     expect(runs.asked).toEqual(["put data/pay.csv (5)", "run scripts/main.zeff: 3"]);
   });
 
-  it("fills the engine afresh after a file is removed, and after the worker was ended", async () => {
+  it("has the engine forget what is gone from the project, before what was changed is given, and keeps its project", async () => {
+    const { project, runs, session: made } = await session();
+    await made.run("scripts/main.zeff", "1\n");
+    // A file renamed: gone under one path, changed under the other.
+    await project.addData("pay.csv", new TextEncoder().encode("id\n1\n"));
+    made.changed("data/pay.csv");
+    await made.run("scripts/main.zeff", "1\n");
+    await project.move("data/pay.csv", "data/wages.csv");
+    made.gone("data/pay.csv");
+    made.changed("data/wages.csv");
+    runs.asked.length = 0;
+    await made.run("scripts/main.zeff", "2\n");
+    expect(runs.asked).toEqual([
+      "remove data/pay.csv",
+      "put data/wages.csv (5)",
+      "run scripts/main.zeff: 2",
+    ]);
+    // Told once: the next run has nothing to bring in step.
+    runs.asked.length = 0;
+    await made.run("scripts/main.zeff", "3\n");
+    expect(runs.asked).toEqual(["run scripts/main.zeff: 3"]);
+    // A file changed and then gone, or lying in a folder that is gone, is not given again.
+    made.changed("data/wages.csv");
+    made.changed("data/old/a.csv");
+    made.gone("data/wages.csv");
+    made.gone("data/old");
+    await made.check("scripts/main.zeff", "3\n");
+    expect(runs.asked.slice(1)).toEqual([
+      "remove data/wages.csv",
+      "remove data/old",
+      "check scripts/main.zeff",
+    ]);
+  });
+
+  it("fills the engine afresh when it is asked to, and after the worker was ended", async () => {
     const { project, runs, session: made } = await session();
     await made.run("scripts/main.zeff", "1\n");
     await project.writeText("scripts/extra.zeff", "2\n");

@@ -34,10 +34,14 @@
 //   { type: "codes" }                   every code with an explained page (needs no project)
 //   { type: "frame", name }             a frame of the last run, by the name of its binding
 //   { type: "read", path }              a file of the project: one put in, or one a run wrote
+//   { type: "remove", path }            forget a file of the project, or a folder with all it
+//                                       holds: the reader renamed, moved or deleted it
 // Messages out:
 //   { type: "ready", version }          once, when the engine is loaded: the engine's version
 //   { type: "opened", name }
 //   { type: "filed", path }             the file was put into the project
+//   { type: "removed", path, was }      the file or folder was forgotten; `was` is whether
+//                                       there was one
 //   { type: "ranges", statements }      first in a run: [{ line, end, kind }]
 //   { type: "started" | "finished" | "pass" | "output", ... }   while a run goes
 //   { type: "done", exit_code, stdout, stderr, statements, frames, written }   its outcome: each
@@ -110,6 +114,7 @@ export function serve(engine, port, deviceBytes) {
     if (
       ![
         "file",
+        "remove",
         "run",
         "frame",
         "read",
@@ -129,6 +134,7 @@ export function serve(engine, port, deviceBytes) {
     if (project === null) {
       const what = {
         file: "a file was sent",
+        remove: "a file was to be forgotten",
         run: "a run was asked for",
         frame: "a frame was asked for",
         read: "a file was asked for",
@@ -151,6 +157,9 @@ export function serve(engine, port, deviceBytes) {
         } else {
           refuse(`the path \`${String(said.path)}\` is not inside the project`);
         }
+        break;
+      case "remove":
+        answer({ type: "removed", path: said.path, was: project.remove(String(said.path)) });
         break;
       case "run": {
         {

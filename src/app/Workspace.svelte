@@ -2,6 +2,7 @@
   // The workspace of a project (Zemp Specification, section 5; open decision #203): the top
   // bar, the place shown on its frame of panes, and a line at the foot.
   import type { Engine } from "../engine/engine";
+  import { fixed } from "../project/files";
   import type { Keeping } from "../project/keeping";
   import { browserStorage } from "../theme/theme.svelte";
   import type { Project } from "../project/projects";
@@ -82,6 +83,21 @@
       hint: `${shownFile}, saved to this computer`,
       run: () => void workspace.saveCopy(shownFile),
     },
+    // The file shown is renamed and moved in its row of the Project pane, which is opened for it.
+    ...(fixed(shownFile)
+      ? []
+      : (["rename", "move"] as const).map((kind) => ({
+          name: `File: ${kind} ${shownFile.split("/").pop()}…`,
+          hint:
+            kind === "rename"
+              ? "a new name, typed in its row of the Project pane"
+              : "another folder, chosen in its row of the Project pane",
+          run: () => {
+            workspace.setPane("script", "project", true);
+            workspace.show(fileTab(shownFile));
+            workspace.asking = { kind, path: shownFile };
+          },
+        }))),
     {
       name: "Report a problem",
       hint: "a bug report built here, nothing sent",

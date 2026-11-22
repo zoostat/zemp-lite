@@ -155,6 +155,64 @@ fn a_runs_outcome_names_the_files_it_wrote_and_no_others() {
 }
 
 #[test]
+fn a_file_or_a_folder_forgotten_is_gone_for_the_engine_and_the_last_runs_frames_are_kept() {
+    let host = Host::new("demo");
+    assert!(host.add_file("data/pay.csv", b"id,wage\n1,23.5\n2,19\n3,31.25\n"));
+    assert!(host.add_file("data/old/a.csv", b"id\n1\n"));
+    assert!(host.add_file("data/old/deep/b.csv", b"id\n2\n"));
+    let reads = "let pay = import(\"data/pay.csv\")\nprint(pay.mean(wage))\n";
+    let (_, done) = run(&host, reads);
+    assert!(done.contains(r#""stdout": "24.5833\n""#), "{done}");
+    // Forgotten, the file is not there: not to be read back, and not for a script that names it.
+    assert!(host.remove("data/pay.csv"));
+    assert_eq!(host.file("data/pay.csv"), None);
+    // The frame the last run left is still given: forgetting a file ends no run's results.
+    assert!(host.frame("pay").is_some());
+    let (_, done) = run(&host, reads);
+    assert!(done.contains(r#""exit_code": 1"#), "{done}");
+    assert!(
+        done.contains("Z0701") || done.contains("data/pay.csv"),
+        "{done}"
+    );
+    // Its neighbours are as they were.
+    assert_eq!(
+        host.file("data/old/a.csv").as_deref(),
+        Some(&b"id\n1\n"[..])
+    );
+    // Put in again, under its name or another, it is there again.
+    assert!(host.add_file("data/wages.csv", b"id,wage\n1,10\n"));
+    assert!(host.add_file("data/pay.csv", b"id,wage\n1,40\n"));
+    let (_, done) = run(&host, reads);
+    assert!(done.contains(r#""stdout": "40\n""#), "{done}");
+    // A file a run wrote is forgotten the same way, and written again by the next run.
+    let writes = "import(\"data/pay.csv\").save(\"kept.csv\")\n";
+    let (_, done) = run(&host, writes);
+    assert_eq!(written(&done), ["output/kept.csv"]);
+    assert!(host.remove("output/kept.csv"));
+    assert_eq!(host.file("output/kept.csv"), None);
+    let (_, done) = run(&host, "print(1)\n");
+    assert_eq!(written(&done), Vec::<String>::new());
+    let (_, done) = run(&host, writes);
+    assert_eq!(written(&done), ["output/kept.csv"]);
+    assert!(host.file("output/kept.csv").is_some());
+    // A folder goes with all it holds.
+    assert!(host.remove("data/old"));
+    assert_eq!(host.file("data/old/a.csv"), None);
+    assert_eq!(host.file("data/old/deep/b.csv"), None);
+    assert_eq!(
+        host.file("data/wages.csv").as_deref(),
+        Some(&b"id,wage\n1,10\n"[..])
+    );
+    // What is not there, the manifest, and a path that leaves the project are not forgotten.
+    assert!(!host.remove("data/none.csv"));
+    assert!(!host.remove("data/old"));
+    assert!(!host.remove("zeff.toml"));
+    assert!(!host.remove("../secret"));
+    assert!(!host.remove(""));
+    assert!(host.file("zeff.toml").is_some());
+}
+
+#[test]
 fn a_file_that_is_not_there_and_a_path_that_leaves_the_project_give_nothing() {
     let host = Host::new("demo");
     assert_eq!(host.file("output/none.svg"), None);

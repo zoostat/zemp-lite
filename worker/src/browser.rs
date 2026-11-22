@@ -48,6 +48,12 @@ impl Project {
         self.host.add_file(path, bytes)
     }
 
+    /// Forget a file of the project, or a folder with all it holds: one the reader renamed,
+    /// moved or deleted. Whether there was one to forget.
+    pub fn remove(&self, path: &str) -> bool {
+        self.host.remove(path)
+    }
+
     /// A file of the project as its bytes, or nothing where there is none of that path.
     pub fn file(&self, path: &str) -> Option<Vec<u8>> {
         self.host.file(path)

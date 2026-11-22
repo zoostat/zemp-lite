@@ -40,6 +40,7 @@ import {
 } from "./views";
 import { sectionsOf, type Section } from "../editor/sections";
 import { exportFolder, exportProject } from "../project/export";
+import { own, placeOf } from "../project/files";
 import { reminderOf, type Keeping } from "../project/keeping";
 import { noteLeft, takeLeft } from "./left";
 import type { Kept } from "../theme/theme";
@@ -1712,6 +1713,165 @@ export class Workspace {
     try {
       await this.project.newFolder(name, parent);
       await this.refresh();
+      return null;
+    } catch (error) {
+      return error instanceof ProjectError ? error.message : String(error);
+    }
+  }
+
+  /**
+   * A file or a folder the reader is renaming, moving or deleting from the Project pane, in
+   * the row where it stands; `null` where none is. ⌘K sets it too, for the file shown.
+   */
+  asking = $state<{ kind: "rename" | "move" | "delete"; path: string } | null>(null);
+
+  /**
+   * Where the scripts of the project name a path that is no longer there (renamed, moved or
+   * deleted). The scripts are not changed: no control of Zemp Lite writes a statement, and a
+   * renamed file is not a reason to rewrite a reader's script. The reader is told, and goes
+   * to each place himself.
+   */
+  named = $state<{ was: string; where: { script: string; line: number }[] } | null>(null);
+
+  /** The folders of the project, each by its path; `""` is the project's own. */
+  get folders(): string[] {
+    const found: string[] = [""];
+    const walk = (nodes: TreeNode[]): void => {
+      for (const node of nodes) {
+        if (node.kind === "folder" && !own(node.path)) {
+          found.push(node.path);
+          walk(node.children);
+        }
+      }
+    };
+    walk(this.tree);
+    return found;
+  }
+
+  /** Every file of the project under a path (the path itself, where it is a file; all of them for `""`). */
+  #under(path: string): string[] {
+    const found: string[] = [];
+    const within = (file: string) => path === "" || file === path || file.startsWith(`${path}/`);
+    const walk = (nodes: TreeNode[]): void => {
+      for (const node of nodes) {
+        if (node.kind === "folder") walk(node.children);
+        else if (within(node.path)) found.push(node.path);
+      }
+    };
+    walk(this.tree);
+    return found;
+  }
+
+  /**
+   * Where the project's scripts name a path, as text: each script, as it stands in the editor
+   * or in the project, and each line of it that holds the path (a folder's with the `/` that
+   * follows it). At most twenty places.
+   */
+  async #naming(path: string, folder: boolean): Promise<{ script: string; line: number }[]> {
+    const sought = folder ? `${path}/` : path;
+    const found: { script: string; line: number }[] = [];
+    for (const script of this.#under("").filter((one) => one.endsWith(".zeff"))) {
+      const buffer = this.buffers[script];
+      const text = buffer?.loaded ? buffer.text : ((await this.project.readText(script)) ?? "");
+      for (const [at, line] of text.split("\n").entries()) {
+        if (line.includes(sought) && found.length < 20) found.push({ script, line: at + 1 });
+      }
+    }
+    return found;
+  }
+
+  /**
+   * What the window keeps by a file's path is kept by its new one: the text open in the
+   * editor, its tab, which of its outputs are unfolded, which folders are folded, and the
+   * results of its run. `to` is `null` where the path is gone and nothing takes its place.
+   */
+  #repath(from: string, to: string | null): void {
+    const hit = (path: string) => path === from || path.startsWith(`${from}/`);
+    const at = (path: string) => (to === null ? null : `${to}${path.slice(from.length)}`);
+    const keyed = <T>(record: Record<string, T>): Record<string, T> =>
+      Object.fromEntries(
+        Object.entries(record).flatMap(([path, value]): [string, T][] => {
+          if (!hit(path)) return [[path, value]];
+          const now = at(path);
+          return now === null ? [] : [[now, value]];
+        }),
+      );
+    this.buffers = keyed(this.buffers);
+    this.diagnostics = keyed(this.diagnostics);
+    this.#told = Object.fromEntries(Object.entries(this.#told).filter(([path]) => !hit(path)));
+    this.views.script.unfolded = keyed(this.views.script.unfolded);
+    this.views.folded = this.views.folded.flatMap((path) => (hit(path) ? (at(path) ?? []) : path));
+    const tab = (one: string): string | null => {
+      const path = tabPath(one);
+      if (path === null || !hit(path)) return one;
+      const now = at(path);
+      return now === null ? null : fileTab(now);
+    };
+    const shown = this.views.active === null ? null : tab(this.views.active);
+    this.views.tabs = this.views.tabs.flatMap((one) => tab(one) ?? []);
+    // A file that is gone leaves the script's place to the main script, or the first one open.
+    if (!this.views.tabs.some((one) => tabPath(one)?.endsWith(".zeff"))) {
+      this.views.tabs = [fileTab(MAIN), ...this.views.tabs];
+    }
+    this.views.active =
+      shown ??
+      (this.views.active !== null && tabPath(this.views.active) === null
+        ? this.views.active
+        : (this.views.tabs.find((one) => tabPath(one) !== null) ?? null));
+    for (const run of [this.lastRun, this.refusal]) {
+      if (run !== null && hit(run.script)) {
+        const now = at(run.script);
+        if (now !== null) run.script = now;
+      }
+    }
+    if (to === null) {
+      // The results of a script that is gone go with it.
+      if (this.lastRun !== null && hit(this.lastRun.script)) this.clear();
+      if (this.refusal !== null && hit(this.refusal.script)) this.refusal = null;
+    }
+    if (this.now !== null && hit(this.now.path)) this.now = null;
+    if (this.checked !== null && hit(this.checked.script)) this.checked = null;
+    if (this.cursor !== null && hit(this.cursor.path)) this.cursor = null;
+    this.#keep();
+  }
+
+  /**
+   * Give a file or a folder another path in the project: a new name where it stands, or
+   * another folder (open decision #208). What is typed is saved first; what is open follows,
+   * with the results of its run; the engine and the language engine forget the old path and
+   * are given the new; and where a script names the old path, the reader is told which.
+   * Gives the reason, as a sentence, where it cannot be done, and `null` where it was.
+   */
+  async moveTo(from: string, to: string): Promise<string | null> {
+    if (from === to) return null;
+    try {
+      await this.settle();
+      const folder = (await this.project.kind(from)) === "folder";
+      const naming = await this.#naming(from, folder);
+      await this.project.move(from, to);
+      this.#repath(from, to);
+      this.session.gone(from);
+      this.language?.gone(from);
+      await this.refresh();
+      for (const path of this.#under(to)) {
+        this.session.changed(path);
+        this.language?.changed(path);
+        // A script open in the editor is known to the language server by its path.
+        const buffer = this.buffers[path];
+        if (buffer?.loaded) void this.#tell(path, buffer.text);
+      }
+      const at = (script: string) =>
+        script === from || script.startsWith(`${from}/`)
+          ? `${to}${script.slice(from.length)}`
+          : script;
+      this.named =
+        naming.length === 0
+          ? null
+          : { was: from, where: naming.map((one) => ({ script: at(one.script), line: one.line })) };
+      this.status =
+        placeOf(from).parent === placeOf(to).parent
+          ? `renamed to ${placeOf(to).name}`
+          : `moved to ${to}`;
       return null;
     } catch (error) {
       return error instanceof ProjectError ? error.message : String(error);

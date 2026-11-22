@@ -381,6 +381,26 @@ test("a file a run wrote is given back, and passed to the interface, not copied"
     bytes: null,
     id: 9,
   });
+  // A file forgotten is gone for the engine, and said to have been there; one that is not
+  // there, and a path above the project, are said not to have been.
+  worker.postMessage({ type: "remove", path: "data/pay.csv", id: 10 });
+  assert.deepEqual(await next("removed"), {
+    type: "removed",
+    path: "data/pay.csv",
+    was: true,
+    id: 10,
+  });
+  worker.postMessage({ type: "read", path: "data/pay.csv" });
+  assert.equal((await next("read")).bytes, null);
+  worker.postMessage({ type: "remove", path: "data/pay.csv" });
+  assert.deepEqual(await next("removed"), { type: "removed", path: "data/pay.csv", was: false });
+  worker.postMessage({ type: "remove", path: "../secret" });
+  assert.deepEqual(await next("removed"), { type: "removed", path: "../secret", was: false });
+  // A folder goes with what it holds.
+  worker.postMessage({ type: "remove", path: "output" });
+  assert.equal((await next("removed")).was, true);
+  worker.postMessage({ type: "read", path: "output/figure.svg" });
+  assert.equal((await next("read")).bytes, null);
   // Nothing above the project is read or written.
   worker.postMessage({ type: "read", path: "../secret" });
   assert.deepEqual(await next("read"), { type: "read", path: "../secret", bytes: null });

@@ -167,6 +167,7 @@ export type RunEvent =
 export type Request =
   | { type: "open"; name: string; cancel: SharedArrayBuffer | null }
   | { type: "file"; path: string; bytes: Uint8Array }
+  | { type: "remove"; path: string }
   /**
    * `width`: the characters tables are printed at; 0 or none for the engine's own, 118.
    * `only`: the lines of the statements to run alone, the others blanked.
@@ -199,6 +200,7 @@ export type Request =
 export type Reply =
   | { type: "opened"; name: string }
   | { type: "filed"; path: string }
+  | { type: "removed"; path: string; was: boolean }
   | {
       type: "done";
       exit_code: number;

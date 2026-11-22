@@ -140,6 +140,15 @@ export class Engine {
   }
 
   /**
+   * Forget a file of the project, or a folder with all it holds, by its path from the
+   * project's folder: one renamed, moved or deleted in the project itself. The frames of the
+   * last run are kept. Whether the engine had one to forget.
+   */
+  async remove(path: string): Promise<boolean> {
+    return expect(await this.#ask({ type: "remove", path }), "removed").was;
+  }
+
+  /**
    * Run the text of a script of the project (`script` is its path there). `listener` hears
    * the statements of the text first, then each step as it starts and ends, each pass of a
    * loop, and each piece of output. `width` is the characters tables are printed at, 0 for the

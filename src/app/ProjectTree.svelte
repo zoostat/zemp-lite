@@ -5,7 +5,7 @@
   // From 0.2.2 each row has a menu at its end (#208): a file is saved to the computer, a
   // folder as a zip.
   import type { TreeNode } from "../project/projects";
-  import { own } from "../project/files";
+  import { fixed, inside, own, placeOf } from "../project/files";
   import { size } from "./format";
   import RowMenu, { type RowAction } from "./RowMenu.svelte";
   import { fileTab } from "./views";
@@ -41,8 +41,58 @@
     else refused = problem;
   }
 
-  function focus(node: HTMLInputElement): void {
+  function focus(node: HTMLInputElement | HTMLSelectElement): void {
     node.focus();
+  }
+
+  // A file or a folder being renamed or moved, in its own row (`workspace.asking`).
+  /** What is typed as the new name, or chosen as the folder to move into. */
+  let answer = $state("");
+  /** Why that cannot be done, as a sentence. */
+  let problem = $state("");
+  $effect(() => {
+    const asking = workspace.asking;
+    problem = "";
+    if (asking?.kind === "move") answer = moves(asking.path)[0] ?? "";
+  });
+
+  /** The folders a path may be moved into: not where it is, and for a folder not itself or what lies in it. */
+  function moves(path: string): string[] {
+    return workspace.folders.filter(
+      (folder) =>
+        folder !== placeOf(path).parent && folder !== path && !folder.startsWith(`${path}/`),
+    );
+  }
+
+  /**
+   * The name of what is renamed, as its row first shows it: the name without its ending
+   * selected, ready to be typed over.
+   */
+  function stem(node: HTMLInputElement): void {
+    answer = node.value;
+    node.focus();
+    const dot = node.value.lastIndexOf(".");
+    node.setSelectionRange(0, dot > 0 ? dot : node.value.length);
+  }
+
+  async function answered(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    const asking = workspace.asking;
+    if (asking === null || asking.kind === "delete") return;
+    const to =
+      asking.kind === "rename"
+        ? inside(placeOf(asking.path).parent, answer.trim())
+        : inside(answer, placeOf(asking.path).name);
+    const refusal = await workspace.moveTo(asking.path, to);
+    if (refusal === null) workspace.asking = null;
+    else problem = refusal;
+  }
+
+  function leave(event: KeyboardEvent): void {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      workspace.asking = null;
+    }
   }
 
   function addInto(folder: string): void {
@@ -61,8 +111,15 @@
 
   /** What can be done with a row: the items of its menu, in order. */
   function actionsOf(node: TreeNode): RowAction[] {
+    // What the engine and Zemp open by name is not renamed or moved, and has no such items.
+    const placing: RowAction[] = fixed(node.path)
+      ? []
+      : [
+          { name: "Rename…", run: () => (workspace.asking = { kind: "rename", path: node.path }) },
+          { name: "Move to…", run: () => (workspace.asking = { kind: "move", path: node.path }) },
+        ];
     if (node.kind === "file") {
-      return [{ name: "Save a copy…", run: () => void workspace.saveCopy(node.path) }];
+      return [...placing, { name: "Save a copy…", run: () => void workspace.saveCopy(node.path) }];
     }
     return [
       // Nothing is made in the app's own folder or the engine's.
@@ -112,6 +169,51 @@
   {/if}
 {/snippet}
 
+<!-- The row of a file or a folder being renamed or moved: the answer is given where it stands. -->
+{#snippet askingRow(node: TreeNode, depth: number)}
+  {@const asking = workspace.asking}
+  {#if asking !== null && asking.path === node.path && asking.kind !== "delete"}
+    <form
+      class="naming"
+      style:padding-left="{(node.kind === 'folder' ? 8 : 26) + depth * 18}px"
+      onsubmit={answered}
+    >
+      {#if asking.kind === "rename"}
+        <input
+          class="mono"
+          value={node.name}
+          use:stem
+          aria-label="The new name of {node.name}"
+          autocomplete="off"
+          spellcheck="false"
+          maxlength="120"
+          oninput={(event) => {
+            answer = event.currentTarget.value;
+            problem = "";
+          }}
+          onkeydown={leave}
+        />
+        <button class="word" type="submit">Rename</button>
+      {:else}
+        <select
+          bind:value={answer}
+          use:focus
+          aria-label="The folder to move {node.name} into"
+          onkeydown={leave}
+          onchange={() => (problem = "")}
+        >
+          {#each moves(node.path) as folder (folder)}
+            <option value={folder}>{folder === "" ? "the project's own folder" : folder}</option>
+          {/each}
+        </select>
+        <button class="word" type="submit">Move</button>
+      {/if}
+      <button class="word" type="button" onclick={() => (workspace.asking = null)}>Cancel</button>
+    </form>
+    {#if problem}<p class="refused" role="alert">{problem}</p>{/if}
+  {/if}
+{/snippet}
+
 {#snippet rows(nodes: TreeNode[], depth: number, path: string)}
   <ul>
     {#if naming !== null && naming.parent === path}
@@ -133,6 +235,7 @@
             </button>
             <RowMenu label="Actions for {node.path}" actions={actionsOf(node)} />
           </div>
+          {@render askingRow(node, depth)}
           {#if !folded}
             {@render rows(node.children, depth + 1, node.path)}
           {/if}
@@ -156,6 +259,7 @@
             {/if}
             <RowMenu label="Actions for {node.path}" actions={actionsOf(node)} />
           </div>
+          {@render askingRow(node, depth)}
         {/if}
       </li>
     {/each}
@@ -178,6 +282,32 @@
   {@render rows(workspace.tree, 0, "")}
 </div>
 {#if workspace.problem}<p class="problem" role="alert">{workspace.problem}</p>{/if}
+{#if workspace.named !== null}
+  <!-- Scripts that name a path no longer there: said, each a way to its place, none rewritten. -->
+  <div
+    class="named"
+    role="group"
+    aria-label="Scripts that name what is no longer there"
+    aria-live="polite"
+    data-testid="named"
+  >
+    <p>
+      <span class="mono">{workspace.named.was}</span> is named in
+      {workspace.named.where.length === 1 ? "a line" : `${workspace.named.where.length} lines`} of the
+      project's scripts, which {workspace.named.where.length === 1 ? "is" : "are"} not changed:
+    </p>
+    <ul>
+      {#each workspace.named.where as place (`${place.script}:${place.line}`)}
+        <li>
+          <button class="word" onclick={() => void workspace.goTo(place.script, place.line)}
+            >{place.script}, line {place.line}</button
+          >
+        </li>
+      {/each}
+    </ul>
+    <button class="word" onclick={() => (workspace.named = null)}>Dismiss</button>
+  </div>
+{/if}
 
 <style>
   .naming {
@@ -217,6 +347,37 @@
   }
   .word:focus-visible {
     outline: 2px solid var(--accent);
+  }
+  .naming select {
+    background: var(--window);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    color: var(--ink);
+    flex: 1;
+    font: inherit;
+    font-size: 13px;
+    min-width: 0;
+    padding: 3px 4px;
+  }
+  .named {
+    border-top: 1px solid var(--line);
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 6px 8px 0;
+    padding: 10px 8px 12px;
+  }
+  .named p {
+    margin: 0 0 4px;
+    overflow-wrap: anywhere;
+  }
+  .named ul {
+    margin: 0 0 4px;
+  }
+  .named li .word {
+    color: var(--accent);
+    overflow-wrap: anywhere;
+    text-align: left;
   }
   .refused {
     color: var(--warning);

@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import type { Download, Page } from "@playwright/test";
 import { readZip } from "../../src/project/zip";
-import { expect, test, write } from "./support";
+import { expect, scriptText, test, write } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 const LIMITS = { whole: 50_000_000, entries: 1_000 };
@@ -307,4 +307,171 @@ test("by the keyboard alone a folder is made and files are added into it, which 
     .getByLabel("Data files to add")
     .setInputFiles({ name: "more.csv", mimeType: "text/csv", buffer: Buffer.from("id\n7\n") });
   await expect(tree(page).getByRole("button", { name: "Actions for data/more.csv" })).toBeVisible();
+});
+
+test("a script is renamed while it is open and being edited: nothing typed is lost, its results stay with it, and it runs", async ({
+  page,
+  press,
+}) => {
+  await opened(page, press);
+  await press(adding(page));
+  await press(page.getByRole("menuitem", { name: "New script" }));
+  const naming = tree(page).getByRole("textbox", { name: "The name of the new script" });
+  await naming.fill("clean");
+  await naming.press("Enter");
+  await expect(header(page)).toContainText("clean.zeff");
+  await write(page, "let pay = frame(a = [1.0, 2])\nprint(pay.mean(a))\n");
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("printed")).toHaveText("1.5\n");
+  // A line typed, and the rename asked for at once, by the keyboard alone: what is typed is
+  // saved first.
+  await page.getByRole("textbox", { name: "The script", exact: true }).focus();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.insertText("// typed just before the rename");
+  const button = more(page, "scripts/clean.zeff");
+  await button.focus();
+  await page.keyboard.press("Enter");
+  await expect(menu(page, "scripts/clean.zeff").getByRole("menuitem")).toHaveText([
+    "Rename…",
+    "Move to…",
+    "Save a copy…",
+  ]);
+  await page.keyboard.press("Enter");
+  // The name stands in the row, its ending left alone: what is typed takes the name's place.
+  const name = tree(page).getByRole("textbox", { name: "The new name of clean.zeff" });
+  await expect(name).toBeFocused();
+  await expect(name).toHaveValue("clean.zeff");
+  expect(
+    await name.evaluate((box: HTMLInputElement) => [box.selectionStart, box.selectionEnd]),
+  ).toEqual([0, 5]);
+  // A name that is taken is refused in the row, and nothing is renamed.
+  await page.keyboard.type("main");
+  await page.keyboard.press("Enter");
+  await expect(tree(page).getByRole("alert")).toHaveText(
+    "`scripts/main.zeff` is already in this project. Choose another name.",
+  );
+  await expect(more(page, "scripts/clean.zeff")).toBeVisible();
+  await name.fill("tidy.zeff");
+  await expect(tree(page).getByRole("alert")).toHaveCount(0);
+  await name.press("Enter");
+  await expect(name).toHaveCount(0);
+  await expect(page.getByRole("status")).toHaveText("renamed to tidy.zeff");
+  // The file is the same file under its new name: open, marked, with what was typed.
+  await expect(more(page, "scripts/clean.zeff")).toHaveCount(0);
+  await expect(tree(page).getByRole("button", { name: /^tidy\.zeff/ })).toHaveClass(/\bon\b/);
+  await expect(header(page)).toContainText("tidy.zeff");
+  expect(await scriptText(page)).toBe(
+    "let pay = frame(a = [1.0, 2])\nprint(pay.mean(a))\n// typed just before the rename",
+  );
+  // The results of its run are still under its statements.
+  await expect(page.getByTestId("printed")).toHaveText("1.5\n");
+  await expect(page.locator('[data-testid="note"][data-line="1"]')).toContainText("pay");
+  // And it runs under its new name: the engine has it there.
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 2 · /);
+  // Saved to the computer, it is the text as it stands, under its new name.
+  await press(more(page, "scripts/tidy.zeff"));
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    press(menu(page, "scripts/tidy.zeff").getByRole("menuitem", { name: "Save a copy…" })),
+  ]);
+  expect(download.suggestedFilename()).toBe("tidy.zeff");
+  expect(await textOf(download)).toBe(
+    "let pay = frame(a = [1.0, 2])\nprint(pay.mean(a))\n// typed just before the rename",
+  );
+  // Escape leaves a rename; what the engine and Zemp open by name has no such items; ⌘K
+  // renames the file shown, in its row.
+  await press(more(page, "scripts/tidy.zeff"));
+  await press(menu(page, "scripts/tidy.zeff").getByRole("menuitem", { name: "Rename…" }));
+  await tree(page).getByRole("textbox", { name: "The new name of tidy.zeff" }).press("Escape");
+  await expect(tree(page).getByRole("textbox")).toHaveCount(0);
+  await press(more(page, "scripts/main.zeff"));
+  await expect(menu(page, "scripts/main.zeff").getByRole("menuitem")).toHaveText(["Save a copy…"]);
+  await page.keyboard.press("Escape");
+  await press(more(page, "zeff.toml"));
+  await expect(menu(page, "zeff.toml").getByRole("menuitem")).toHaveText(["Save a copy…"]);
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("rename tidy.zeff");
+  await page.keyboard.press("Enter");
+  await expect(
+    tree(page).getByRole("textbox", { name: "The new name of tidy.zeff" }),
+  ).toBeFocused();
+});
+
+test("a data file is moved to another folder: the line of a script that names it is said and gone to, and no script is rewritten", async ({
+  page,
+  press,
+}) => {
+  await opened(page, press);
+  await tree(page)
+    .getByLabel("Data files to add")
+    .setInputFiles({
+      name: "pay.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from("id,wage\n1,23.5\n2,19\n3,31.25\n"),
+    });
+  const script =
+    '// The pay of three workers.\n\nlet pay = import("data/pay.csv")\nprint(pay.mean(wage))\n';
+  await write(page, script);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("printed")).toHaveText("24.5833\n");
+  await press(adding(page));
+  await press(page.getByRole("menuitem", { name: "New folder" }));
+  const folder = tree(page).getByRole("textbox", { name: "The name of the new folder" });
+  await folder.fill("survey");
+  await folder.press("Enter");
+  // Move to… lists the folders it may go to: not the one it is in, and not Zemp's own.
+  await press(more(page, "data/pay.csv"));
+  await press(menu(page, "data/pay.csv").getByRole("menuitem", { name: "Move to…" }));
+  const where = tree(page).getByRole("combobox", { name: "The folder to move pay.csv into" });
+  await expect(where).toBeFocused();
+  await expect(where.locator("option")).toHaveText([
+    "the project's own folder",
+    "scripts",
+    "survey",
+  ]);
+  await where.selectOption("survey");
+  await press(tree(page).getByRole("button", { name: "Move", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("moved to survey/pay.csv");
+  await expect(more(page, "survey/pay.csv")).toBeVisible();
+  await expect(more(page, "data/pay.csv")).toHaveCount(0);
+  // The script that names the old path is said, with its line; a press goes there. The script
+  // is not rewritten.
+  const named = page.getByTestId("named");
+  await expect(named).toContainText(
+    "data/pay.csv is named in a line of the project's scripts, which is not changed:",
+  );
+  await press(named.getByRole("button", { name: "scripts/main.zeff, line 3" }));
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("3");
+  expect(await scriptText(page)).toBe(script);
+  // The engine no longer has the file where the script names it, as `zeff run` would not.
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  // The reader mends his script, and it runs; the language engine has the file at its new place.
+  await write(page, script.replace("data/pay.csv", "survey/pay.csv"));
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("printed")).toHaveText("24.5833\n");
+  await write(page, script.replace("data/pay.csv", "survey/pay.csv").replace("wage)", "wge)"));
+  await expect(page.locator(".cm-lintRange-error")).toHaveText(["wge"]);
+  await press(named.getByRole("button", { name: "Dismiss" }));
+  await expect(named).toHaveCount(0);
+  // Moved back into the project's own folder by ⌘K's way to the row; a place taken is refused.
+  await tree(page)
+    .getByLabel("Data files to add")
+    .setInputFiles({ name: "pay.csv", mimeType: "text/csv", buffer: Buffer.from("other\n") });
+  await press(more(page, "survey/pay.csv"));
+  await press(menu(page, "survey/pay.csv").getByRole("menuitem", { name: "Move to…" }));
+  await where.selectOption("data");
+  await press(tree(page).getByRole("button", { name: "Move", exact: true }));
+  await expect(tree(page).getByRole("alert")).toHaveText(
+    "`data/pay.csv` is already in this project. Choose another name.",
+  );
+  await expect(more(page, "survey/pay.csv")).toBeVisible();
+  await press(tree(page).getByRole("button", { name: "Cancel", exact: true }));
+  await expect(where).toHaveCount(0);
 });

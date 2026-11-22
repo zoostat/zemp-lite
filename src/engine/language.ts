@@ -55,6 +55,22 @@ export class Language {
     this.#session.changed(path);
   }
 
+  /**
+   * A file or a folder is gone from the project: the language worker forgets it, and a script
+   * that was open in the conversation under that path, or in that folder, is closed there.
+   */
+  gone(path: string): void {
+    this.#session.gone(path);
+    for (const open of [...this.#versions.keys()]) {
+      if (open === path || open.startsWith(`${path}/`)) {
+        this.#versions.delete(open);
+        void this.notify("textDocument/didClose", { textDocument: { uri: uriOf(open) } }).catch(
+          () => undefined,
+        );
+      }
+    }
+  }
+
   /** Start the worker, give it the project, and open the conversation. */
   start(): Promise<void> {
     if (this.#started !== null) return this.#started;

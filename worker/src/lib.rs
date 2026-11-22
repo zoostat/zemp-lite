@@ -281,6 +281,18 @@ impl Host {
         }
     }
 
+    /// Forget a file of the project, or a folder with all it holds, by its path from the
+    /// project's folder: the reader renamed, moved or deleted it in the project, and it must
+    /// be gone from the engine's copy too. The frames of the last run are kept. Whether there
+    /// was one to forget; `false` also for a path that would leave the project, and for the
+    /// manifest, without which there is no project.
+    pub fn remove(&self, path: &str) -> bool {
+        match inside(path) {
+            Some(place) if place != Path::new(ROOT).join("zeff.toml") => self.fs.forget(&place),
+            _ => false,
+        }
+    }
+
     /// A file of the project as its bytes, by its path from the project's folder: one the
     /// interface put in, or one a run wrote. `None` where there is no such file, and for a
     /// path that would leave the project.

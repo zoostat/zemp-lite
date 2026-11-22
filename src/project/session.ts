@@ -1,7 +1,8 @@
 // A project open in a window, with the engine it runs in. The project's files are kept in
 // the browser's private file system; the engine has its own copy in the worker's memory. A
 // session keeps the second in step with the first: before a run it gives the engine every
-// file once, and afterwards only the files changed since.
+// file once, and afterwards only the files changed since, and has it forget those that are
+// gone from the project.
 import type { Checked, Needs, Outcome, RunEvent } from "../engine/messages";
 import type { Project } from "./projects";
 
@@ -10,6 +11,7 @@ export interface Runs {
   readonly project: string | null;
   open(name: string): Promise<void>;
   put(path: string, bytes: Uint8Array): Promise<void>;
+  remove(path: string): Promise<boolean>;
   run(
     script: string,
     text: string,
@@ -26,6 +28,8 @@ export class Session {
   readonly #engine: Runs;
   /** The files changed since the engine was last given them. */
   readonly #changed = new Set<string>();
+  /** The files and folders gone from the project since then, which the engine still holds. */
+  readonly #gone = new Set<string>();
   /** Whether the engine must be given the whole project again. */
   #refill = true;
 
@@ -39,7 +43,20 @@ export class Session {
     this.#changed.add(path);
   }
 
-  /** A file was removed or renamed: the engine is given the whole project afresh. */
+  /**
+   * A file or a folder is gone from the project (deleted, or renamed or moved, in which case
+   * what it now is was `changed`): the engine forgets it before the next run, and keeps the
+   * frames of the last one.
+   */
+  gone(path: string): void {
+    this.#gone.add(path);
+    // What lay in a folder that is gone is not given to the engine again.
+    for (const changed of this.#changed) {
+      if (changed === path || changed.startsWith(`${path}/`)) this.#changed.delete(changed);
+    }
+  }
+
+  /** The engine is to be given the whole project afresh, whatever it holds. */
   removed(): void {
     this.#refill = true;
   }
@@ -83,6 +100,8 @@ export class Session {
       }
       this.#refill = false;
     } else {
+      // What is gone is forgotten first: a file moved to a path that was another's is given after.
+      for (const path of this.#gone) await this.#engine.remove(path);
       for (const path of this.#changed) {
         const bytes = await this.project.read(path);
         if (bytes !== null) {
@@ -91,5 +110,6 @@ export class Session {
       }
     }
     this.#changed.clear();
+    this.#gone.clear();
   }
 }
