@@ -39,6 +39,8 @@ import {
   type ViewState,
 } from "./views";
 import { sectionsOf, type Section } from "../editor/sections";
+import { exportProject } from "../project/export";
+import { saveToComputer } from "./save";
 import { notesOf } from "../margin/notes";
 
 /** The lines of the statements of a run that have an output to unfold. */
@@ -570,6 +572,23 @@ export class Workspace {
       this.problem = `What the run wrote could not be kept in the project: ${(error as Error).message}`;
     }
     await this.refresh();
+  }
+
+  /**
+   * Give the project to the computer as a zip (open decision #208): what is typed is saved
+   * first, the zip holds the project as the `zeff` command line would find it, and when it was
+   * exported is remembered.
+   */
+  async exportProject(): Promise<void> {
+    try {
+      await this.settle();
+      const made = await exportProject(this.project, Date.now());
+      saveToComputer(made.name, made.bytes, "application/zip");
+      this.project.noteExported();
+      this.status = `exported as ${made.name}`;
+    } catch (error) {
+      this.status = (error as Error).message;
+    }
   }
 
   /** Write what waits to be written: the view state and the scripts. */

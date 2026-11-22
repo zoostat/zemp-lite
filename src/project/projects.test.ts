@@ -106,6 +106,7 @@ describe("the projects of a browser", () => {
       folder: "returns-to-schooling",
       name: "Returns to schooling",
       opened: null,
+      exported: null,
     });
     expect(await projects.list()).toEqual([made]);
     const project = await projects.open(made.folder);
@@ -134,7 +135,7 @@ describe("the projects of a browser", () => {
   it("has a Scratch project, made once with the example and kept as the user leaves it", async () => {
     const { projects } = empty();
     const scratch = await projects.scratch();
-    expect(scratch).toEqual({ folder: SCRATCH, name: "Scratch", opened: null });
+    expect(scratch).toEqual({ folder: SCRATCH, name: "Scratch", opened: null, exported: null });
     const project = await projects.open(SCRATCH);
     const script = await project!.readText("scripts/main.zeff");
     expect(script).toContain("let wages = dataset(wages)");

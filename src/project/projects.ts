@@ -17,6 +17,8 @@ export interface ProjectInfo {
   name: string;
   /** When it was last opened in this browser, in milliseconds since 1970, or `null` if never. */
   opened: number | null;
+  /** When it was last exported from this browser as a zip, or `null` if never. */
+  exported: number | null;
 }
 
 /** A file or a folder of a project, with what a folder holds. */
@@ -33,6 +35,8 @@ export class ProjectError extends Error {
 
 const ROOT = "projects";
 const OPENED = "zemp-opened";
+/** When each project was last exported, by its folder. */
+const EXPORTED = "zemp-exported";
 /** The examples the Scratch project of this browser has been given, each given once. */
 const GIVEN = "zemp-scratch-examples";
 
@@ -104,18 +108,35 @@ export class Projects {
     this.#now = now;
   }
 
-  #opened(): Record<string, number> {
+  /** A record the browser keeps of a time for each project's folder; empty where it keeps none. */
+  #times(key: string): Record<string, number> {
     try {
-      const read = JSON.parse(this.#kept.getItem(OPENED) ?? "{}") as unknown;
+      const read = JSON.parse(this.#kept.getItem(key) ?? "{}") as unknown;
       return typeof read === "object" && read !== null ? (read as Record<string, number>) : {};
     } catch {
       return {};
     }
   }
 
+  #opened(): Record<string, number> {
+    return this.#times(OPENED);
+  }
+
+  /** Note that a project was exported now: the reminder to export counts from here. */
+  noteExported(folder: string): number {
+    const at = this.#now();
+    try {
+      this.#kept.setItem(EXPORTED, JSON.stringify({ ...this.#times(EXPORTED), [folder]: at }));
+    } catch {
+      // The time is not kept; the export is made all the same.
+    }
+    return at;
+  }
+
   /** The projects, the one opened last first, and those never opened after them by name. */
   async list(): Promise<ProjectInfo[]> {
     const opened = this.#opened();
+    const exported = this.#times(EXPORTED);
     const found: ProjectInfo[] = [];
     for (const entry of await this.#root.list(ROOT)) {
       if (entry.kind !== "folder") continue;
@@ -125,6 +146,7 @@ export class Projects {
         folder: entry.name,
         name: nameIn(decoder.decode(toml)) ?? entry.name,
         opened: opened[entry.name] ?? null,
+        exported: exported[entry.name] ?? null,
       });
     }
     return found.sort(
@@ -150,7 +172,7 @@ export class Projects {
       );
     }
     await this.#fill(folder, wanted, `// ${wanted}\n`);
-    return { folder, name: wanted, opened: null };
+    return { folder, name: wanted, opened: null, exported: null };
   }
 
   /**
@@ -175,7 +197,12 @@ export class Projects {
       }
     }
     this.#kept.setItem(GIVEN, JSON.stringify(EXAMPLES.map(([name]) => name)));
-    return { folder: SCRATCH, name: "Scratch", opened: this.#opened()[SCRATCH] ?? null };
+    return {
+      folder: SCRATCH,
+      name: "Scratch",
+      opened: this.#opened()[SCRATCH] ?? null,
+      exported: this.#times(EXPORTED)[SCRATCH] ?? null,
+    };
   }
 
   /** The examples given before; none remembered where the browser kept no record of them. */
@@ -210,10 +237,30 @@ export class Projects {
     } catch {
       // The time is not kept; the project opens all the same.
     }
-    return new Project(
-      { folder, name: nameIn(decoder.decode(toml)) ?? folder, opened: opened[folder] },
-      new Inside(this.#root, `${ROOT}/${folder}`),
-    );
+    return this.#project(folder, decoder.decode(toml), opened[folder] ?? null);
+  }
+
+  /**
+   * A project by its folder, to read what it holds without opening it: no time is noted, so
+   * the order of the start screen's list is as it was. `null` where there is none.
+   */
+  async peek(folder: string): Promise<Project | null> {
+    const toml = await this.#root.read(`${ROOT}/${folder}/zeff.toml`);
+    return toml === null
+      ? null
+      : this.#project(folder, decoder.decode(toml), this.#opened()[folder] ?? null);
+  }
+
+  #project(folder: string, toml: string, opened: number | null): Project {
+    const info: ProjectInfo = {
+      folder,
+      name: nameIn(toml) ?? folder,
+      opened,
+      exported: this.#times(EXPORTED)[folder] ?? null,
+    };
+    return new Project(info, new Inside(this.#root, `${ROOT}/${folder}`), () => {
+      info.exported = this.noteExported(folder);
+    });
   }
 
   /** Remove a project and all it holds. */
@@ -234,10 +281,18 @@ export class Projects {
 export class Project {
   readonly info: ProjectInfo;
   readonly #files: Folder;
+  readonly #exported: () => void;
 
-  constructor(info: ProjectInfo, files: Folder) {
+  /** `exported` is told when the project has been given to the computer as a zip. */
+  constructor(info: ProjectInfo, files: Folder, exported: () => void = () => {}) {
     this.info = info;
     this.#files = files;
+    this.#exported = exported;
+  }
+
+  /** The project was exported now: when is remembered, for the reminder to export. */
+  noteExported(): void {
+    this.#exported();
   }
 
   /** The files and folders of the project, folders first and each by name, without `.zemp/`. */

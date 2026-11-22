@@ -57,6 +57,11 @@
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
     { name: "Check the script", hint: "nothing is run", run: () => void workspace.check() },
     {
+      name: "Project: export…",
+      hint: "the whole project as a zip, saved to this computer",
+      run: () => void workspace.exportProject(),
+    },
+    {
       name: "Report a problem",
       hint: "a bug report built here, nothing sent",
       run: () => void workspace.reportProblem(),

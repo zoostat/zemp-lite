@@ -2,11 +2,14 @@
   // The welcome screen (Zemp Specification, section 5; the design guide, section 9): with no
   // project open, one quiet screen. On the left what can be done; on the right the projects
   // of this browser, the one opened last first.
+  import { exportProject } from "../project/export";
   import { ProjectError, when, type ProjectInfo, type Projects } from "../project/projects";
   import Logo from "../theme/Logo.svelte";
   import ThemeButton from "../theme/ThemeButton.svelte";
   import Watermark from "../theme/Watermark.svelte";
   import NarrowLine from "./NarrowLine.svelte";
+  import RowMenu from "./RowMenu.svelte";
+  import { saveToComputer } from "./save";
   import { ENGINE, VERSION, shown } from "./version";
 
   let {
@@ -45,6 +48,23 @@
         error instanceof ProjectError
           ? error.message
           : `The project could not be made: ${String(error)}`;
+    }
+  }
+
+  /** What the screen last did with a project, said where a reader of the screen hears it. */
+  let said = $state("");
+
+  /** Give a project to the computer as a zip, without opening it. */
+  async function exported(info: ProjectInfo): Promise<void> {
+    try {
+      const project = await projects.peek(info.folder);
+      if (project === null) return;
+      const made = await exportProject(project, Date.now());
+      saveToComputer(made.name, made.bytes, "application/zip");
+      project.noteExported();
+      said = `${info.name} exported as ${made.name}`;
+    } catch (error) {
+      said = error instanceof Error ? error.message : String(error);
     }
   }
 
@@ -132,14 +152,23 @@
 
   <section class="right" aria-label="Recent projects">
     <h2 class="label">Recent</h2>
-    {#each recent as project (project.folder)}
-      <button class="rec" onclick={() => onopen(project.folder)}>
-        <span class="name">{project.name}</span>
-        <small>in this browser · {when(project.opened, now)}</small>
-      </button>
-    {:else}
-      <p class="none">No project yet. Start with the Scratch project.</p>
-    {/each}
+    <ul class="projects">
+      {#each recent as project (project.folder)}
+        <li>
+          <button class="rec" onclick={() => onopen(project.folder)}>
+            <span class="name">{project.name}</span>
+            <small>in this browser · {when(project.opened, now)}</small>
+          </button>
+          <RowMenu
+            label="Actions for {project.name}"
+            actions={[{ name: "Export project…", run: () => void exported(project) }]}
+          />
+        </li>
+      {:else}
+        <li class="none">No project yet. Start with the Scratch project.</li>
+      {/each}
+    </ul>
+    <p class="said" role="status">{said}</p>
   </section>
 </div>
 
@@ -215,9 +244,30 @@
   .rec {
     background: none;
     border: 0;
-    border-bottom: 1px solid var(--line);
+    flex: 1;
+    min-width: 0;
     text-align: left;
-    width: 100%;
+  }
+  .projects {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .projects li {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    gap: 8px;
+  }
+  .projects li.none {
+    border: 0;
+    padding: 12px 0;
+  }
+  .said {
+    color: var(--ink-2);
+    font-size: 14px;
+    margin: 12px 0 0;
+    min-height: 1.45em;
   }
   .act {
     align-items: baseline;

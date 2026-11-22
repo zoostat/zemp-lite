@@ -41,7 +41,7 @@ test("a project is made, and is still there with its script after the page is re
   // Back on the welcome screen it is listed, opened today; and its name is taken.
   await press(page.getByRole("button", { name: "Projects" }));
   await expect(page).toHaveURL(/\/#?$/);
-  const listed = page.getByRole("button", { name: /Returns to schooling/ });
+  const listed = page.getByRole("button", { name: /^Returns to schooling in this browser/ });
   await expect(listed).toContainText("in this browser · today,");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("returns to schooling");
