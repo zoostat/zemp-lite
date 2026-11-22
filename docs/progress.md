@@ -68,4 +68,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 9 `[function]`.** A project's row has **Rename…**, **Duplicate…**, **Export project…** and **Delete…**, each answered in the row, and the Scratch project **Duplicate…**, **Export project…** and **Reset…**; the same from ⌘K for the project open. A project's name and its folder now part company: names are refused by name, and folders are the first free.
 
-**Next.** Steps 8b to 9 seen green on GitHub; then step 10 `[function]`: the words, the keyboard and the address.
+**Done, step 10 `[function]`.** The start screen says how a project is taken out. ⌘K gained **Project: new script…**, **Project: new folder…** and **Project: add files…**, and lists first the commands that hold the words as typed (so "new project" still finds **New project…**). Every menu, naming row and question is checked from the keyboard, and for size and contrast as painted, in both themes. After each deployment the Scratch project is exported at the address, its zip read, and opened there again.
+
+**Next.** Step 11 `[function]`: the pre-release routine and the notes; then the owner's "Release 0.2.2".

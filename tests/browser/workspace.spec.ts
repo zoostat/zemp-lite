@@ -2,7 +2,7 @@
 // project in the Project pane at the script's left, a file of the project shown in the Script
 // place, the size of code text, the theme, and the line a narrow window is given.
 import type { Page } from "@playwright/test";
-import { editor, expect, scriptText, test, useExample } from "./support";
+import { editor, expect, faintText, scriptText, smallestText, test, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -221,17 +221,83 @@ test("app screens are set at 13.5 pixels and never below 12.5", async ({ page, p
   await expect(page.getByRole("status")).toHaveText("done");
   await expect(page.locator(".cm-zemp-output").first()).toBeVisible();
   expect(await page.evaluate(() => getComputedStyle(document.body).fontSize)).toBe("13.5px");
-  const smallest = await page.evaluate(() => {
-    let least = Infinity;
-    for (const node of document.querySelectorAll("body *")) {
-      if (node.textContent?.trim() && node.children.length === 0) {
-        least = Math.min(least, parseFloat(getComputedStyle(node).fontSize));
-      }
-    }
-    return least;
-  });
-  expect(smallest).toBeGreaterThanOrEqual(12.5);
+  expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
 });
+
+for (const theme of ["light", "dark"] as const) {
+  test(`the menus, the naming rows and the questions of the Project pane and of the start screen are set no smaller than 12.5 pixels and no fainter than 4.5 to 1, in the ${theme} theme`, async ({
+    page,
+    press,
+  }) => {
+    await page.emulateMedia({ colorScheme: theme });
+    await scratch(page, press);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+    const tree = await project(page, press);
+    const sound = async (within: ReturnType<Page["locator"]>) => {
+      await expect(within).toBeVisible();
+      expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
+      expect(await faintText(within)).toEqual([]);
+    };
+    // The pane's own menu, and the row in which a new script is named, with a name refused.
+    await press(tree.getByRole("button", { name: "Add to the project" }));
+    await sound(page.getByRole("menu", { name: "Add to the project" }));
+    await press(page.getByRole("menuitem", { name: "New script" }));
+    await page.getByLabel("The name of the new script").fill("main");
+    await page.keyboard.press("Enter");
+    await expect(tree.getByRole("alert")).toBeVisible();
+    await sound(tree);
+    await page.keyboard.press("Escape");
+    // A file's menu, a copy made, and the copy renamed, moved and deleted: each question.
+    const more = (path: string) =>
+      tree.getByRole("button", { name: `Actions for ${path}`, exact: true });
+    const item = (path: string, name: string) =>
+      page
+        .getByRole("menu", { name: `Actions for ${path}`, exact: true })
+        .getByRole("menuitem", { name, exact: true });
+    await press(more("scripts/main.zeff"));
+    await sound(page.getByRole("menu", { name: "Actions for scripts/main.zeff", exact: true }));
+    await press(item("scripts/main.zeff", "Duplicate"));
+    const copy = "scripts/main copy.zeff";
+    for (const [asks, shown] of [
+      ["Rename…", tree.getByLabel("The new name of main copy.zeff")],
+      ["Move to…", tree.getByLabel("The folder to move main copy.zeff into")],
+      ["Delete…", tree.getByRole("group", { name: "Delete main copy.zeff?" })],
+    ] as const) {
+      await press(more(copy));
+      await press(item(copy, asks));
+      await expect(shown).toBeVisible();
+      await sound(tree);
+      await page.keyboard.press("Escape");
+      await expect(shown).toHaveCount(0);
+    }
+    // The start screen: a project's menu, its name being changed, and its deletion asked.
+    await press(page.getByRole("button", { name: "Projects ▾" }));
+    await press(page.getByRole("button", { name: "New project…" }));
+    await page.getByLabel("The name of the new project").fill("Wages");
+    await press(page.getByRole("button", { name: "Create" }));
+    await expect(page.getByRole("status")).toHaveText(READY);
+    await press(page.getByRole("button", { name: "Projects ▾" }));
+    const recent = page.getByRole("region", { name: "Recent projects" });
+    await sound(page.getByRole("region", { name: "Start" }));
+    for (const [asks, shown] of [
+      ["Rename…", recent.getByLabel("The new name of Wages")],
+      ["Duplicate…", recent.getByLabel("The name of the copy of Wages")],
+      ["Delete…", recent.getByRole("group", { name: "Delete Wages?" })],
+    ] as const) {
+      await press(recent.getByRole("button", { name: "Actions for Wages", exact: true }));
+      const menu = page.getByRole("menu", { name: "Actions for Wages", exact: true });
+      await sound(menu);
+      await press(menu.getByRole("menuitem", { name: asks, exact: true }));
+      await expect(shown).toBeVisible();
+      await sound(recent);
+      await page.keyboard.press("Escape");
+      await expect(shown).toHaveCount(0);
+    }
+    await press(recent.getByRole("button", { name: "Actions for Scratch", exact: true }));
+    await press(page.getByRole("menuitem", { name: "Reset…", exact: true }));
+    await sound(recent);
+  });
+}
 
 test("a project is closed and another opened, each with an engine of its own", async ({
   page,

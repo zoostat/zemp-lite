@@ -17,17 +17,22 @@
   /** The folder the files chosen next are added into. */
   let into = $state("data");
 
-  /** A script or a folder being named, in a row where it will stand. */
-  let naming = $state<{ kind: "script" | "folder"; parent: string } | null>(null);
+  /** A script or a folder being named, in a row where it will stand (`workspace.making`). */
+  const naming = $derived(workspace.making);
   let named = $state("");
   /** Why what was typed cannot be the name, as a sentence. */
   let refused = $state("");
 
-  function name(kind: "script" | "folder", parent: string): void {
-    naming = { kind, parent };
+  /** The naming ended, made or given up: the next begins with an empty field. */
+  function endNaming(): void {
+    workspace.making = null;
     named = "";
     refused = "";
-    workspace.unfoldFolder(parent);
+  }
+
+  function name(kind: "script" | "folder", parent: string): void {
+    endNaming();
+    workspace.make(kind, parent);
   }
 
   async function make(event: SubmitEvent): Promise<void> {
@@ -37,7 +42,7 @@
       naming.kind === "script"
         ? await workspace.newScript(named, naming.parent)
         : await workspace.newFolder(named, naming.parent);
-    if (problem === null) naming = null;
+    if (problem === null) endNaming();
     else refused = problem;
   }
 
@@ -178,12 +183,12 @@
           onkeydown={(event) => {
             if (event.key === "Escape") {
               event.preventDefault();
-              naming = null;
+              endNaming();
             }
           }}
         />
         <button class="word" type="submit">Create</button>
-        <button class="word" type="button" onclick={() => (naming = null)}>Cancel</button>
+        <button class="word" type="button" onclick={endNaming}>Cancel</button>
       </form>
       {#if refused}<p class="refused" role="alert">{refused}</p>{/if}
     </li>

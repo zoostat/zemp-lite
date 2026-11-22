@@ -377,3 +377,73 @@ export async function wheelTo(pane: Locator, top: number): Promise<void> {
     node.scrollTop = to;
   }, top);
 }
+
+/** The smallest size, in pixels, at which any text of the page is set. */
+export async function smallestText(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    let least = Infinity;
+    for (const node of document.querySelectorAll("body *")) {
+      if (node.textContent?.trim() && node.children.length === 0) {
+        least = Math.min(least, parseFloat(getComputedStyle(node).fontSize));
+      }
+    }
+    return least;
+  });
+}
+
+/**
+ * The texts shown inside an element that stand at less than 4.5 to 1 against what is painted
+ * behind them, each with its ratio (WCAG's measure, as `tokens.test` takes it of the tokens):
+ * here it is taken of the page as painted, so a colour set on the wrong ground is found.
+ */
+export async function faintText(within: Locator): Promise<string[]> {
+  return within.evaluate((root) => {
+    type Colour = { r: number; g: number; b: number; a: number };
+    const colourOf = (text: string): Colour => {
+      const parts = (text.match(/[\d.]+/g) ?? []).map(Number);
+      return { r: parts[0] ?? 0, g: parts[1] ?? 0, b: parts[2] ?? 0, a: parts[3] ?? 1 };
+    };
+    const over = (top: Colour, under: Colour): Colour => ({
+      r: top.r * top.a + under.r * (1 - top.a),
+      g: top.g * top.a + under.g * (1 - top.a),
+      b: top.b * top.a + under.b * (1 - top.a),
+      a: 1,
+    });
+    const light = ({ r, g, b }: Colour): number => {
+      const part = (value: number) => {
+        const unit = value / 255;
+        return unit <= 0.03928 ? unit / 12.92 : ((unit + 0.055) / 1.055) ** 2.4;
+      };
+      return 0.2126 * part(r) + 0.7152 * part(g) + 0.0722 * part(b);
+    };
+    /** What is painted behind an element: its grounds and its ancestors', the lowest first. */
+    const groundOf = (element: Element): Colour => {
+      const layers: Colour[] = [];
+      for (let at: Element | null = element; at !== null; at = at.parentElement) {
+        const ground = colourOf(getComputedStyle(at).backgroundColor);
+        if (ground.a > 0) layers.push(ground);
+        if (ground.a === 1) break;
+      }
+      return layers.reduceRight((under, top) => over(top, under), { r: 255, g: 255, b: 255, a: 1 });
+    };
+    const faint: string[] = [];
+    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walk.nextNode()) {
+      const words = walk.currentNode.textContent?.trim() ?? "";
+      const element = walk.currentNode.parentElement;
+      if (words === "" || element === null) continue;
+      const style = getComputedStyle(element);
+      if (style.visibility === "hidden" || element.getClientRects().length === 0) continue;
+      const ground = groundOf(element);
+      let ink = colourOf(style.color);
+      // What is set partly clear, in itself or in what holds it, is fainter by as much.
+      for (let at: Element | null = element; at !== null; at = at.parentElement) {
+        ink = { ...ink, a: ink.a * parseFloat(getComputedStyle(at).opacity) };
+      }
+      const [inked, bare] = [light(over(ink, ground)), light(ground)];
+      const ratio = (Math.max(inked, bare) + 0.05) / (Math.min(inked, bare) + 0.05);
+      if (ratio < 4.5) faint.push(`${words.slice(0, 40)}: ${ratio.toFixed(2)}`);
+    }
+    return faint;
+  });
+}

@@ -10,11 +10,19 @@ export interface Command {
   run: () => void;
 }
 
-/** The commands whose names hold every word of what was typed, in their own order. */
+/**
+ * The commands whose names hold every word of what was typed. Those that hold the words as
+ * they were typed, one after another, come first, so that "new project" finds New project…
+ * before Project: new script…; within each of the two the commands keep their own order.
+ */
 export function matching(commands: Command[], typed: string): Command[] {
   const words = typed.toLowerCase().split(/\s+/).filter(Boolean);
-  return commands.filter((command) => {
+  const phrase = words.join(" ");
+  const held = commands.filter((command) => {
     const name = command.name.toLowerCase();
     return words.every((word) => name.includes(word));
   });
+  if (words.length < 2) return held;
+  const asTyped = (command: Command) => command.name.toLowerCase().includes(phrase);
+  return [...held.filter(asTyped), ...held.filter((command) => !asTyped(command))];
 }

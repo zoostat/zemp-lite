@@ -1726,6 +1726,18 @@ export class Workspace {
   asking = $state<{ kind: "rename" | "move" | "delete"; path: string } | null>(null);
 
   /**
+   * A script or a folder the reader is naming, in the row of the Project pane where it will
+   * stand; `null` where none is. The pane's menus set it, and ⌘K.
+   */
+  making = $state<{ kind: "script" | "folder"; parent: string } | null>(null);
+
+  /** Begin naming a new script or folder in a folder, which is unfolded for it. */
+  make(kind: "script" | "folder", parent: string): void {
+    this.unfoldFolder(parent);
+    this.making = { kind, parent };
+  }
+
+  /**
    * Where the scripts of the project name a path that is no longer there (renamed, moved or
    * deleted). The scripts are not changed: no control of Zemp Lite writes a statement, and a
    * renamed file is not a reason to rewrite a reader's script. The reader is told, and goes

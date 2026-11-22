@@ -49,6 +49,15 @@
   });
 
   let palette = $state(false);
+  /** The files ⌘K adds to the project are chosen here; the Project pane has a chooser of its own. */
+  let chooser = $state<HTMLInputElement | null>(null);
+
+  async function chosen(): Promise<void> {
+    if (chooser?.files) {
+      await workspace.addFiles(chooser.files, "data");
+      chooser.value = "";
+    }
+  }
   let console_ = $state<ReturnType<typeof ConsoleLine> | null>(null);
 
   async function close(): Promise<void> {
@@ -100,6 +109,29 @@
         void workspace.settle().then(() => onask(kind));
       },
     })),
+    // What the Project pane's + makes, in the pane, which is opened for it.
+    ...(["script", "folder"] as const).map((kind) => ({
+      name: `Project: new ${kind}…`,
+      hint:
+        kind === "script"
+          ? "in scripts, named in its row of the Project pane"
+          : "at the project's top, named in its row of the Project pane",
+      run: () => {
+        workspace.show(fileTab(shownFile));
+        workspace.setPane("script", "project", true);
+        workspace.make(kind, kind === "script" ? "scripts" : "");
+      },
+    })),
+    {
+      name: "Project: add files…",
+      hint: "from this computer, into data",
+      run: () => {
+        // The pane is opened, so that what is added, or why it was not, is seen.
+        workspace.show(fileTab(shownFile));
+        workspace.setPane("script", "project", true);
+        chooser?.click();
+      },
+    },
     {
       name: "Project: export…",
       hint: "the whole project as a zip, saved to this computer",
@@ -253,6 +285,14 @@
 {/if}
 
 <ReportWindow {workspace} />
+<input
+  bind:this={chooser}
+  type="file"
+  multiple
+  hidden
+  onchange={chosen}
+  aria-label="Files to add to the project's data"
+/>
 {#if palette}
   <Palette {commands} onclose={() => (palette = false)} />
 {/if}

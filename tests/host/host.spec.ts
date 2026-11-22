@@ -2,7 +2,9 @@
 // isolated, so that a run can be cancelled; the engine of the release starts and runs the
 // example; and the first start, from a browser that has never seen the page to the engine
 // ready, is measured against the Zemp Specification's 2 seconds (section 14).
+import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { readZip } from "../../src/project/zip";
 
 const READY = "engine Zeff 0.8.0 ready";
 
@@ -139,4 +141,44 @@ test("the first drawing of a run's figures is timed at the address", async ({ pa
   const description = `the run's figures first drawn ${await timed} ms after done`;
   test.info().annotations.push({ type: "first drawing", description });
   console.log(`first drawing: ${description}`);
+});
+
+test("a project is exported at the address as a zip, and the zip opened there again", async ({
+  page,
+}) => {
+  // A reader's way out of the browser, and back (open decision #208): what the hosted alpha
+  // gives the computer is read here by the reader of this repository, and then opened at the
+  // address as a new project that runs.
+  await page.goto("/");
+  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  await expect(open).toBeEnabled({ timeout: 30_000 });
+  await open.click();
+  await page.getByRole("button", { name: "Scratch project" }).click();
+  await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("Project: export");
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.keyboard.press("Enter"),
+  ]);
+  expect(download.suggestedFilename()).toBe("Scratch.zip");
+  const path = await download.path();
+  const zip = await readZip(new Uint8Array(readFileSync(path)), {
+    whole: 50_000_000,
+    entries: 1_000,
+  });
+  expect(zip.files.map((file) => file.path)).toEqual([
+    "Scratch/scripts/instruments.zeff",
+    "Scratch/scripts/main.zeff",
+    "Scratch/scripts/plots.zeff",
+    "Scratch/zeff.toml",
+  ]);
+  expect(zip.folders).toEqual(["Scratch/data"]);
+  // Opened again from the start screen: a project of its own name, which runs.
+  await page.getByRole("button", { name: "Projects ▾" }).click();
+  await page.getByLabel("A project's zip to open").setInputFiles(path);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Scratch 2");
+  await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
+  await page.getByRole("button", { name: "Run", exact: true }).click();
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
 });

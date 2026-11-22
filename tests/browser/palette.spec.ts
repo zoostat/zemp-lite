@@ -280,3 +280,171 @@ test("every control of the window can be reached from the keyboard", async ({ pa
     ).toBe(true);
   }
 });
+
+/** The controls shown, each with its name and whether the Tab key stops at it. */
+async function controlsOf(page: Page) {
+  return page
+    .locator(
+      "button, select, input:not([hidden]), [role='separator'], [role='switch'], [contenteditable='true']",
+    )
+    .evaluateAll((nodes) =>
+      nodes
+        .filter((node) => !(node as HTMLButtonElement).disabled)
+        .map((node) => ({
+          name: (
+            node.getAttribute("aria-label") ??
+            node.getAttribute("placeholder") ??
+            node.textContent ??
+            ""
+          ).trim(),
+          stops: (node as HTMLElement).tabIndex >= 0 || (node as HTMLElement).isContentEditable,
+          // An item of a menu is reached from the menu's button with the arrow keys, as the
+          // items of a menu are (`files.spec`, "by the keyboard alone"), not with Tab.
+          item: node.getAttribute("role") === "menuitem",
+          runTo: node.getAttribute("data-testid") === "run-to-here",
+        })),
+    );
+}
+
+test("what release 0.2.2 added is reached from the keyboard: every menu, naming row and question a stop of the Tab key with a name, and a command of ⌘K for what acts on the project open", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  const reached = async (...among: string[]) => {
+    const controls = await controlsOf(page);
+    expect(controls.filter((one) => !one.stops && !one.item && !one.runTo)).toEqual([]);
+    expect(controls.filter((one) => one.name === "")).toEqual([]);
+    for (const name of among) {
+      expect(
+        controls.some((one) => one.name.startsWith(name)),
+        name,
+      ).toBe(true);
+    }
+  };
+  const names = async () => {
+    await page.keyboard.press("ControlOrMeta+k");
+    const listed = await page.getByRole("option").allTextContents();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Commands" })).toHaveCount(0);
+    return listed;
+  };
+  const has = (listed: string[], word: string) => listed.some((name) => name.startsWith(word));
+
+  // ⌘K in the Scratch project, its main script shown: what its menus offer, and no more (the
+  // Scratch project is not renamed or deleted, nor the main script renamed, moved or deleted).
+  const inScratch = await names();
+  for (const word of [
+    "Project: new script…",
+    "Project: new folder…",
+    "Project: add files…",
+    "Project: export…",
+    "Project: duplicate…",
+    "Project: reset…",
+    "File: save a copy of main.zeff",
+    "File: duplicate main.zeff",
+  ]) {
+    expect(has(inScratch, word), word).toBe(true);
+  }
+  for (const word of ["Project: rename…", "Project: delete…", "File: rename", "File: move"]) {
+    expect(has(inScratch, word), word).toBe(false);
+  }
+  expect(has(inScratch, "File: delete"), "File: delete").toBe(false);
+
+  // Project: new script… opens the Project pane with the row in which it is named.
+  const tree = page
+    .getByRole("complementary", { name: "Script: the left pane" })
+    .getByRole("region", { name: "Project" });
+  await command(page, "project new script");
+  const naming = tree.getByLabel("The name of the new script");
+  await expect(naming).toBeFocused();
+  await reached("The name of the new script", "Create", "Cancel", "Add to the project");
+  await page.keyboard.type("wages");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("header.top")).toContainText("wages.zeff");
+  // A script of the reader's own is renamed, moved and deleted from ⌘K too.
+  const inOwn = await names();
+  for (const word of [
+    "File: rename wages.zeff…",
+    "File: move wages.zeff…",
+    "File: duplicate wages.zeff",
+    "File: delete wages.zeff…",
+    "File: save a copy of wages.zeff",
+  ]) {
+    expect(has(inOwn, word), word).toBe(true);
+  }
+  // Each question, asked from ⌘K, stands in the file's row, with its controls.
+  await command(page, "file rename wages");
+  await expect(tree.getByLabel("The new name of wages.zeff")).toBeFocused();
+  await reached("The new name of wages.zeff");
+  await page.keyboard.press("Escape");
+  await command(page, "file move wages");
+  await expect(tree.getByLabel("The folder to move wages.zeff into")).toBeFocused();
+  await reached("The folder to move wages.zeff into");
+  await page.keyboard.press("Escape");
+  await command(page, "file delete wages");
+  const asked = tree.getByRole("group", { name: "Delete wages.zeff?" });
+  await expect(asked.getByRole("button", { name: "Keep" })).toBeFocused();
+  await reached("Delete", "Keep");
+  await page.keyboard.press("Escape");
+  await expect(asked).toHaveCount(0);
+
+  // Project: new folder… names a folder at the project's top; and a menu open has its items.
+  await command(page, "project new folder");
+  await expect(tree.getByLabel("The name of the new folder")).toBeFocused();
+  await page.keyboard.type("notes");
+  await page.keyboard.press("Enter");
+  const more = tree.getByRole("button", { name: "Actions for notes", exact: true });
+  await expect(more).toBeVisible();
+  await more.focus();
+  await page.keyboard.press("Enter");
+  const menu = page.getByRole("menu", { name: "Actions for notes", exact: true });
+  await expect(menu.getByRole("menuitem").first()).toBeFocused();
+  await reached("Actions for notes", "New script", "Rename…", "Save as a zip…");
+  await page.keyboard.press("Escape");
+  await expect(more).toBeFocused();
+
+  // Project: add files… asks the computer for files and puts them into data.
+  const choosing = page.waitForEvent("filechooser");
+  await command(page, "project add files");
+  await (
+    await choosing
+  ).setFiles({ name: "pay.csv", mimeType: "text/csv", buffer: Buffer.from("id,pay\n1,10\n") });
+  await expect(tree.getByRole("button", { name: "Actions for data/pay.csv" })).toBeVisible();
+
+  // The start screen: each project's row and its menu, and each question asked in the row.
+  await command(page, "project duplicate");
+  const recent = page.getByRole("region", { name: "Recent projects" });
+  const copy = recent.getByLabel("The name of the copy of Scratch");
+  await expect(copy).toBeFocused();
+  await reached("The name of the copy of Scratch", "Actions for Scratch", "New project…");
+  await page.keyboard.type("Wages");
+  await page.keyboard.press("Enter");
+  await expect(
+    recent.getByRole("button", { name: "Actions for Wages", exact: true }),
+  ).toBeVisible();
+  await recent.getByRole("button", { name: "Actions for Wages", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(
+    page
+      .getByRole("menu", { name: "Actions for Wages", exact: true })
+      .getByRole("menuitem")
+      .first(),
+  ).toBeFocused();
+  await reached("Rename…", "Duplicate…", "Export project…", "Delete…");
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  const going = recent.getByRole("group", { name: "Delete Wages?" });
+  await expect(going.getByRole("button", { name: "Keep" })).toBeFocused();
+  await reached("Export project… first", "Delete", "Keep");
+  await page.keyboard.press("Escape");
+  await expect(going).toHaveCount(0);
+  // The copy opened has the commands of a project of the reader's own.
+  await press(recent.getByRole("button", { name: /^Wages in this browser/ }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const inWages = await names();
+  for (const word of ["Project: rename…", "Project: duplicate…", "Project: delete…"]) {
+    expect(has(inWages, word), word).toBe(true);
+  }
+  expect(has(inWages, "Project: reset…"), "Project: reset…").toBe(false);
+});

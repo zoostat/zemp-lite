@@ -31,4 +31,25 @@ describe("the command palette", () => {
     expect(names("main")).toEqual(["Open file: scripts/main.zeff"]);
     expect(names("nothing like it")).toEqual([]);
   });
+
+  it("lists first the commands that hold the words as they were typed, one after another", () => {
+    const listed = ["Project: new script…", "Project: new folder…", "New project…"].map((name) => ({
+      name,
+      run: () => undefined,
+    }));
+    const found = (typed: string) => matching(listed, typed).map((command) => command.name);
+    expect(found("new project")).toEqual([
+      "New project…",
+      "Project: new script…",
+      "Project: new folder…",
+    ]);
+    expect(found("project new")).toEqual([
+      "Project: new script…",
+      "Project: new folder…",
+      "New project…",
+    ]);
+    expect(found("NEW   script")).toEqual(["Project: new script…"]);
+    // One word is no phrase: the commands keep their own order.
+    expect(found("new")).toEqual(["Project: new script…", "Project: new folder…", "New project…"]);
+  });
 });

@@ -311,6 +311,10 @@
         <b class="warn">Not kept.</b> This browser gives a page no private storage, so a project lasts
         only until this tab is closed.
       {/if}
+      To take a project out, as a zip saved on this computer, choose
+      <b class="word">Export project…</b>
+      in its menu (⋯) in the list, or in ⌘K while it is open;
+      <b class="word">Open a project's zip…</b> opens it again, here or in another browser.
     </p>
   </section>
 
@@ -611,6 +615,9 @@
   }
   .store b.warn {
     color: var(--warning);
+  }
+  .store b.word {
+    color: var(--ink);
   }
   .label {
     color: var(--ink-3);

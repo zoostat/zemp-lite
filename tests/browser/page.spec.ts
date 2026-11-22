@@ -47,6 +47,10 @@ test("the welcome screen opens, names the release and says where projects are ke
   await expect(
     page.getByText(browserName === "webkit" ? "Not kept." : "Kept on this computer."),
   ).toBeVisible();
+  // And how a project is taken out of the browser, whichever of the two holds.
+  await expect(page.locator(".store")).toContainText(
+    "To take a project out, as a zip saved on this computer, choose Export project… in its menu (⋯) in the list, or in ⌘K while it is open; Open a project's zip… opens it again, here or in another browser.",
+  );
   await expect(page.getByText("No project yet.")).toBeVisible();
   await expect(page.getByText("engine Zeff 0.8.0 · in this browser")).toBeVisible();
   // The shipped fonts are the ones drawn: no outside server is asked for one.
