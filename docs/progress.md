@@ -62,4 +62,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 8b `[function]`, with a piece of the worker.** The worker forgets one file or folder, keeping the last run's frames (`worker/src/written.rs`, the message `remove`, `Session.gone`). **Rename…** and **Move to…** in a file's menu and in ⌘K, answered in the row; what is open follows, with its results; a script that names the old path is said, with its line, and not rewritten.
 
-**Next.** Steps 7, 8a and 8b seen green on GitHub; then step 8c `[function]`: a file duplicated and deleted.
+**Done, step 8c `[function]`.** **Duplicate** and **Delete…** in a file's menu and in ⌘K; a deletion asked once in the row, **Keep** in focus; the editor, the results and the engines follow.
+
+**Next.** Steps 8a to 8c seen green on GitHub; then step 8d `[function]`: the same for a folder.

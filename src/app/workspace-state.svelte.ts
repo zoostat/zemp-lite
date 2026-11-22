@@ -1878,6 +1878,63 @@ export class Workspace {
     }
   }
 
+  /** How many files a path of the project is: one, or those a folder holds. */
+  filesAt(path: string): number {
+    return this.#under(path).length;
+  }
+
+  /**
+   * Make a copy of a file or a folder beside it, under a name with "copy" in it (open decision
+   * #208). What is typed is saved first, so a script copied is the script as it stands.
+   */
+  async duplicate(path: string): Promise<void> {
+    this.problem = "";
+    try {
+      await this.settle();
+      const made = await this.project.duplicate(path);
+      await this.refresh();
+      for (const file of this.#under(made)) {
+        this.session.changed(file);
+        this.language?.changed(file);
+      }
+      this.status = `copied as ${placeOf(made).name}`;
+    } catch (error) {
+      this.problem = error instanceof ProjectError ? error.message : String(error);
+    }
+  }
+
+  /**
+   * Delete a file, or a folder with all it holds (open decision #208). It cannot be brought
+   * back: the browser's storage has no bin, and the reader has confirmed it in the row. What
+   * was open of it leaves the editor, the results of a script deleted go with it, the engine
+   * and the language engine forget it, and where a script names it the reader is told which.
+   * Gives the reason, as a sentence, where it cannot be done, and `null` where it was.
+   */
+  async deleteAt(path: string): Promise<string | null> {
+    try {
+      await this.settle();
+      const folder = (await this.project.kind(path)) === "folder";
+      const naming = (await this.#naming(path, folder)).filter(
+        (one) => one.script !== path && !one.script.startsWith(`${path}/`),
+      );
+      const gone = await this.project.remove(path);
+      this.#repath(path, null);
+      this.session.gone(path);
+      this.language?.gone(path);
+      await this.refresh();
+      // The script now shown, where the one shown went, is read if it was not open before.
+      const shown = this.activePath;
+      if (shown !== null) await this.#load(shown);
+      this.named = naming.length === 0 ? null : { was: path, where: naming };
+      this.status = folder
+        ? `deleted ${placeOf(path).name} and the ${gone === 1 ? "file" : `${gone} files`} in it`
+        : `deleted ${placeOf(path).name}`;
+      return null;
+    } catch (error) {
+      return error instanceof ProjectError ? error.message : String(error);
+    }
+  }
+
   /** Show what a folder holds, where it is folded away. */
   unfoldFolder(path: string): void {
     if (path !== "" && this.views.folded.includes(path)) this.toggleFolder(path);

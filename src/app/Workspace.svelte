@@ -99,6 +99,23 @@
           },
         }))),
     {
+      name: `File: duplicate ${shownFile.split("/").pop()}`,
+      hint: "a copy beside it, under a name with copy in it",
+      run: () => void workspace.duplicate(shownFile),
+    },
+    ...(fixed(shownFile)
+      ? []
+      : [
+          {
+            name: `File: delete ${shownFile.split("/").pop()}…`,
+            hint: "asked once, in its row of the Project pane",
+            run: () => {
+              workspace.setPane("script", "project", true);
+              workspace.asking = { kind: "delete" as const, path: shownFile };
+            },
+          },
+        ]),
+    {
       name: "Report a problem",
       hint: "a bug report built here, nothing sent",
       run: () => void workspace.reportProblem(),

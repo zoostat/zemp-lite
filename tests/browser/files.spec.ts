@@ -50,7 +50,10 @@ test("a file's row has a menu that saves a copy of it to the computer: a script,
   await expect(page.getByRole("status")).toHaveText("done");
   // A script, as it stands: what was typed is saved first.
   await press(more(page, "scripts/main.zeff"));
-  await expect(menu(page, "scripts/main.zeff").getByRole("menuitem")).toHaveText(["Save a copy…"]);
+  await expect(menu(page, "scripts/main.zeff").getByRole("menuitem")).toHaveText([
+    "Duplicate",
+    "Save a copy…",
+  ]);
   const [script] = await Promise.all([
     page.waitForEvent("download"),
     press(menu(page, "scripts/main.zeff").getByRole("menuitem", { name: "Save a copy…" })),
@@ -335,6 +338,8 @@ test("a script is renamed while it is open and being edited: nothing typed is lo
   await expect(menu(page, "scripts/clean.zeff").getByRole("menuitem")).toHaveText([
     "Rename…",
     "Move to…",
+    "Duplicate",
+    "Delete…",
     "Save a copy…",
   ]);
   await page.keyboard.press("Enter");
@@ -381,17 +386,24 @@ test("a script is renamed while it is open and being edited: nothing typed is lo
   expect(await textOf(download)).toBe(
     "let pay = frame(a = [1.0, 2])\nprint(pay.mean(a))\n// typed just before the rename",
   );
-  // Escape leaves a rename; what the engine and Zemp open by name has no such items; ⌘K
+  // Escape leaves a rename; what the engine and Zemp open by name is not renamed, moved or
+  // deleted, and has no such items (a copy of it can be made); ⌘K
   // renames the file shown, in its row.
   await press(more(page, "scripts/tidy.zeff"));
   await press(menu(page, "scripts/tidy.zeff").getByRole("menuitem", { name: "Rename…" }));
   await tree(page).getByRole("textbox", { name: "The new name of tidy.zeff" }).press("Escape");
   await expect(tree(page).getByRole("textbox")).toHaveCount(0);
   await press(more(page, "scripts/main.zeff"));
-  await expect(menu(page, "scripts/main.zeff").getByRole("menuitem")).toHaveText(["Save a copy…"]);
+  await expect(menu(page, "scripts/main.zeff").getByRole("menuitem")).toHaveText([
+    "Duplicate",
+    "Save a copy…",
+  ]);
   await page.keyboard.press("Escape");
   await press(more(page, "zeff.toml"));
-  await expect(menu(page, "zeff.toml").getByRole("menuitem")).toHaveText(["Save a copy…"]);
+  await expect(menu(page, "zeff.toml").getByRole("menuitem")).toHaveText([
+    "Duplicate",
+    "Save a copy…",
+  ]);
   await page.keyboard.press("Escape");
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByRole("combobox", { name: "Type a command" }).fill("rename tidy.zeff");
@@ -474,4 +486,119 @@ test("a data file is moved to another folder: the line of a script that names it
   await expect(more(page, "survey/pay.csv")).toBeVisible();
   await press(tree(page).getByRole("button", { name: "Cancel", exact: true }));
   await expect(where).toHaveCount(0);
+});
+
+test("a file is duplicated beside itself, and deleted after one question in its row", async ({
+  page,
+  press,
+}) => {
+  await opened(page, press);
+  const script = "let pay = frame(a = [1.0, 2])\nprint(pay.mean(a))\n// typed just before the copy";
+  await write(page, script);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  // A copy beside it, under a name with "copy" in it, and a free one each time; what was typed
+  // a moment before is in it. Even the main script can be copied: the copy is an ordinary file.
+  await press(more(page, "scripts/main.zeff"));
+  await press(menu(page, "scripts/main.zeff").getByRole("menuitem", { name: "Duplicate" }));
+  await expect(page.getByRole("status")).toHaveText("copied as main copy.zeff");
+  await press(more(page, "scripts/main.zeff"));
+  await press(menu(page, "scripts/main.zeff").getByRole("menuitem", { name: "Duplicate" }));
+  await expect(page.getByRole("status")).toHaveText("copied as main copy 2.zeff");
+  await expect(more(page, "scripts/main copy.zeff")).toBeVisible();
+  await expect(more(page, "scripts/main copy 2.zeff")).toBeVisible();
+  // The script shown is still the one that was copied, with its results.
+  await expect(header(page)).toContainText("main.zeff");
+  await expect(page.getByTestId("printed")).toHaveText("1.5\n");
+  // The copy opens, holds the text, and runs: the engine has it.
+  await press(tree(page).getByRole("button", { name: /^main copy\.zeff/ }));
+  await expect.poll(() => scriptText(page)).toBe(script);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  // Delete… asks once, in the row: what goes, and that it cannot be brought back.
+  await press(more(page, "scripts/main copy.zeff"));
+  await press(menu(page, "scripts/main copy.zeff").getByRole("menuitem", { name: "Delete…" }));
+  const asked = tree(page).getByRole("group", { name: "Delete main copy.zeff?" });
+  await expect(asked).toContainText("Delete main copy.zeff? It cannot be brought back.");
+  await expect(asked.getByRole("button")).toHaveText(["Delete", "Keep"]);
+  // The safe answer has the focus; Keep, and Escape, delete nothing.
+  await expect(asked.getByRole("button", { name: "Keep" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(asked).toHaveCount(0);
+  await expect(more(page, "scripts/main copy.zeff")).toBeVisible();
+  await press(more(page, "scripts/main copy.zeff"));
+  await press(menu(page, "scripts/main copy.zeff").getByRole("menuitem", { name: "Delete…" }));
+  await page.keyboard.press("Escape");
+  await expect(asked).toHaveCount(0);
+  await expect(more(page, "scripts/main copy.zeff")).toBeVisible();
+  // Delete deletes: the script that was shown gives its place to the main script, its results
+  // going with it, and the status line says what went.
+  await press(more(page, "scripts/main copy.zeff"));
+  await press(menu(page, "scripts/main copy.zeff").getByRole("menuitem", { name: "Delete…" }));
+  await press(asked.getByRole("button", { name: "Delete" }));
+  await expect(page.getByRole("status")).toHaveText("deleted main copy.zeff");
+  await expect(more(page, "scripts/main copy.zeff")).toHaveCount(0);
+  await expect(header(page)).toContainText("main.zeff");
+  await expect(header(page)).not.toContainText("copy");
+  await expect.poll(() => scriptText(page)).toBe(script);
+  await expect(page.getByTestId("printed")).toHaveCount(0);
+  // From ⌘K, for the file shown: the copy of a copy, then its deletion asked in its row.
+  await press(tree(page).getByRole("button", { name: /^main copy 2\.zeff/ }));
+  await expect(header(page)).toContainText("main copy 2.zeff");
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("File: delete main copy 2");
+  await page.keyboard.press("Enter");
+  const second = tree(page).getByRole("group", { name: "Delete main copy 2.zeff?" });
+  await press(second.getByRole("button", { name: "Delete" }));
+  await expect(more(page, "scripts/main copy 2.zeff")).toHaveCount(0);
+  await expect(header(page)).toContainText("main.zeff");
+});
+
+test("a data file a script names is deleted: the script is said, with its line, and is left as it is", async ({
+  page,
+  press,
+  browserName,
+}) => {
+  await opened(page, press);
+  await tree(page)
+    .getByLabel("Data files to add")
+    .setInputFiles({
+      name: "pay.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from("id,wage\n1,23.5\n2,19\n"),
+    });
+  const script = 'let pay = import("data/pay.csv")\nprint(pay.n_rows())\n';
+  await write(page, script);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("printed")).toHaveText("2\n");
+  // By the keyboard alone: the menu, its fourth item, the question, the answer that deletes.
+  await more(page, "data/pay.csv").focus();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await expect(menu(page, "data/pay.csv").getByRole("menuitem", { name: "Delete…" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  const asked = tree(page).getByRole("group", { name: "Delete pay.csv?" });
+  await expect(asked.getByRole("button", { name: "Keep" })).toBeFocused();
+  // (Safari gives a button the Tab key with Option held, unless the reader has set it otherwise.)
+  await page.keyboard.press(browserName === "webkit" ? "Alt+Shift+Tab" : "Shift+Tab");
+  await expect(asked.getByRole("button", { name: "Delete" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status")).toHaveText("deleted pay.csv");
+  await expect(more(page, "data/pay.csv")).toHaveCount(0);
+  // The script that names it is said and gone to, and is as it was; its results stay, being
+  // what the run before printed.
+  const named = page.getByTestId("named");
+  await expect(named).toContainText("data/pay.csv is named in a line of the project's scripts");
+  await expect(named.getByRole("button", { name: "scripts/main.zeff, line 1" })).toBeVisible();
+  await expect.poll(() => scriptText(page)).toBe(script);
+  await expect(page.getByTestId("printed")).toHaveText("2\n");
+  // The engine has forgotten it, as the project has: the next run says there is no such file.
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  // And the folder it lay in, which the engine knows by name, is still there, with no Delete….
+  await press(more(page, "data"));
+  await expect(menu(page, "data").getByRole("menuitem", { name: "Delete…" })).toHaveCount(0);
 });

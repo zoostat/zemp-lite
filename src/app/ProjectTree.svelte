@@ -41,7 +41,7 @@
     else refused = problem;
   }
 
-  function focus(node: HTMLInputElement | HTMLSelectElement): void {
+  function focus(node: HTMLInputElement | HTMLSelectElement | HTMLButtonElement): void {
     node.focus();
   }
 
@@ -88,6 +88,12 @@
     else problem = refusal;
   }
 
+  async function deleted(path: string): Promise<void> {
+    const refusal = await workspace.deleteAt(path);
+    if (refusal === null) workspace.asking = null;
+    else problem = refusal;
+  }
+
   function leave(event: KeyboardEvent): void {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -118,8 +124,20 @@
           { name: "Rename…", run: () => (workspace.asking = { kind: "rename", path: node.path }) },
           { name: "Move to…", run: () => (workspace.asking = { kind: "move", path: node.path }) },
         ];
+    // A copy can be made of anything of the reader's, what is fixed among it: the copy is not.
+    const copying: RowAction[] = own(node.path)
+      ? []
+      : [{ name: "Duplicate", run: () => void workspace.duplicate(node.path) }];
+    const deleting: RowAction[] = fixed(node.path)
+      ? []
+      : [{ name: "Delete…", run: () => (workspace.asking = { kind: "delete", path: node.path }) }];
     if (node.kind === "file") {
-      return [...placing, { name: "Save a copy…", run: () => void workspace.saveCopy(node.path) }];
+      return [
+        ...placing,
+        ...copying,
+        ...deleting,
+        { name: "Save a copy…", run: () => void workspace.saveCopy(node.path) },
+      ];
     }
     return [
       // Nothing is made in the app's own folder or the engine's.
@@ -210,6 +228,32 @@
       {/if}
       <button class="word" type="button" onclick={() => (workspace.asking = null)}>Cancel</button>
     </form>
+    {#if problem}<p class="refused" role="alert">{problem}</p>{/if}
+  {:else if asking !== null && asking.path === node.path}
+    <!-- A deletion is asked once, in the row: what goes, and that it cannot be brought back. -->
+    {@const files = workspace.filesAt(node.path)}
+    <div
+      class="confirm"
+      role="group"
+      aria-label="Delete {node.name}?"
+      style:padding-left="{(node.kind === 'folder' ? 8 : 26) + depth * 18}px"
+    >
+      <p>
+        {#if node.kind === "folder"}
+          Delete <span class="mono">{node.name}</span>
+          {files === 0 ? "" : files === 1 ? "and the file in it" : `and the ${files} files in it`}?
+          It cannot be brought back.
+        {:else}
+          Delete <span class="mono">{node.name}</span>? It cannot be brought back.
+        {/if}
+      </p>
+      <button class="word danger" onkeydown={leave} onclick={() => void deleted(node.path)}
+        >Delete</button
+      >
+      <button class="word" use:focus onkeydown={leave} onclick={() => (workspace.asking = null)}
+        >Keep</button
+      >
+    </div>
     {#if problem}<p class="refused" role="alert">{problem}</p>{/if}
   {/if}
 {/snippet}
@@ -358,6 +402,30 @@
     font-size: 13px;
     min-width: 0;
     padding: 3px 4px;
+  }
+  .confirm {
+    align-items: center;
+    background: var(--soft);
+    border-radius: 7px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 4px;
+    margin: 2px 0 4px;
+    padding-bottom: 6px;
+    padding-right: 6px;
+    padding-top: 6px;
+  }
+  .confirm p {
+    color: var(--ink);
+    flex: 1 1 100%;
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 0 0 2px;
+    overflow-wrap: anywhere;
+  }
+  .word.danger {
+    color: var(--error);
+    font-weight: 600;
   }
   .named {
     border-top: 1px solid var(--line);
