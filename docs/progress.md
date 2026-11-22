@@ -161,3 +161,9 @@ in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 
 **Next.** "Start release 0.2.2" (#208): its checklist, with three questions for the owner. Its first steps are `[engine]`: the zip, written and read. **Still the owner's:** the reader test, on this alpha, for Zeff 0.9.0; the checks by hand; the trademarks (#37) before the address is announced.
 
 **After the tag.** GitHub's run of the release commit for the branch failed one WebKit test by the test's own cursor helper (the tag's run passed whole); run again it passed, and the release is deployed and checked at both addresses, which serve 0.2.1. The helper now sets the cursor until the editor holds it, and the workflow keeps only the page of a failure. The slow ⌘↵ appeared at the release's deployment too, and the first drawing of the figures is ruled out as its cause.
+
+## 22 November 2026, release 0.2.2: planned, waiting for "go"
+
+**Done.** On the owner's "Start release 0.2.2": `v0.2.1` is tagged and the tree clean; the row, #208, #117's paragraph and sections 3, 5 and 10 of the Zemp Specification read, with the code the release touches; `docs/releases/0.2.2.md` written: fourteen steps in five parts (the zip and a project out of the browser and back; the storage kept and the reminder; files and folders; projects; the whole and the close), with five questions for the owner. No code is written.
+
+**Next.** The owner's "go", with his answers; then step 1 `[engine]`, the release opened.
