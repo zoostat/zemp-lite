@@ -163,7 +163,8 @@
   }
 </script>
 
-<svelte:window onkeydown={keys} />
+<!-- A page that is being left writes what waits to be written, as far as the browser lets it. -->
+<svelte:window onkeydown={keys} onpagehide={() => void workspace.settle()} />
 
 <TopBar {workspace} onclose={() => void close()} onpalette={() => (palette = true)} />
 

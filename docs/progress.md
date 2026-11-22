@@ -46,4 +46,8 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Found on GitHub at step 3, and mended.** Step 2b's test failed once in Chromium on step 3's commit: after a page loaded again while its view state was being written, the project opened with its panes forgotten. A file being rewritten cannot be read for an instant, and the storage's reader took that for a file that is gone (as old as 0.1). A read is now tried again where the folder still lists the file (`OpfsFolder.read`, `opfs.test`). Green here: the whole routine in both browsers (30 native, 225 unit and 336 browser tests).
 
-**Next.** Steps 3 and 4 seen green on GitHub with the mend; the export made at the address and run by the released `zeff run`; then step 5 `[function]`: an exported zip opened as a new project.
+**The cause was another, found at step 5.** The same test failed again with that mend in. A probe that read the storage itself showed the view state had never been written: it was written a fifth of a second after the last change, and each change put it off. It is now written a fifth of a second after the first change not yet written (`Workspace.#keep`), with a test that fails on the old code. The first diagnosis is corrected in `docs/decisions.md`; its mend stays, as a guard that is right in itself.
+
+**Done, step 5 `[function]`.** **Open a project's zip…** on the start screen: the zip proved whole, its one folder taken off, the project named for its manifest with a number where the name is taken, written whole or not at all (`src/project/from-zip.ts`, `Projects.adopt`).
+
+**Next.** Steps 3 to 5 seen green on GitHub with the mend; the export and the opening made at the address, and the export run by the released `zeff run`; then step 6 `[function]`: the browser asked to keep the storage, and the reminder to export.

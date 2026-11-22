@@ -379,3 +379,37 @@ test("what a run writes is brought into the project: in the Project pane, in the
     "educ,wage\n10.0,11.0\n12.0,14.0\n14.0,19.0\n16.0,26.0\n",
   );
 });
+
+test("a change of the view is kept though others follow it at once, and the page is loaded again in the middle of them", async ({
+  page,
+  press,
+}) => {
+  // The view state is written a fifth of a second after the first change not yet written.
+  // It was once written after the last, each change putting it off: a reader who opened a
+  // pane and went straight on working found it closed when the page was loaded again.
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "New project…" }));
+  await page.getByLabel("The name of the new project").fill("Kept in the middle");
+  await press(page.getByRole("button", { name: "Create" }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
+  const project = bar.getByRole("button", { name: "Project", exact: true });
+  await expect(project).toHaveAttribute("aria-pressed", "false");
+  await press(project);
+  // A second of changes, each well within a fifth of a second of the one before: the pane's
+  // edge moved by the keyboard, a step at a time.
+  const edge = page.getByRole("separator", { name: "The width of the left pane" });
+  await edge.focus();
+  for (let step = 0; step < 16; step += 1) {
+    await page.keyboard.press(step % 2 === 0 ? "ArrowRight" : "ArrowLeft");
+    await page.waitForTimeout(60);
+  }
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(project).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("complementary", { name: "Script: the left pane" }).getByRole("region", {
+      name: "Project",
+    }),
+  ).toBeVisible();
+});

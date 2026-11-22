@@ -539,8 +539,15 @@ export class Workspace {
     }
   }
 
+  /**
+   * The view state is to be written: a fifth of a second after the first change not yet
+   * written, however many follow it. (It was once after the last change, each new one putting
+   * the writing off: a reader who opened a pane and went straight on working had nothing kept,
+   * and found the pane closed when the page was loaded again; 22 November 2026.) What changes
+   * meanwhile is in the writing, which takes the state as it then stands.
+   */
   #keep(): void {
-    if (this.#keeping !== null) clearTimeout(this.#keeping);
+    if (this.#keeping !== null) return;
     this.#keeping = setTimeout(() => {
       this.#keeping = null;
       const text = writeViews($state.snapshot(this.views));
