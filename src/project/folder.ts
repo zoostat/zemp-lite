@@ -129,12 +129,39 @@ export class MemoryFolder implements Folder {
   }
 }
 
-/** A folder of the browser's private file system, under the handle given. */
+/** How often a file that is there, and for a moment cannot be read, is asked for again. */
+const TRIES = 12;
+
+/**
+ * A folder of the browser's private file system, under the handle given. `pause` waits the
+ * milliseconds given between two tries at a file that is being rewritten; the tests give
+ * their own.
+ */
 export class OpfsFolder implements Folder {
   readonly #root: Promise<FileSystemDirectoryHandle>;
+  readonly #pause: (ms: number) => Promise<void>;
 
-  constructor(root: Promise<FileSystemDirectoryHandle>) {
+  constructor(
+    root: Promise<FileSystemDirectoryHandle>,
+    pause: (ms: number) => Promise<void> = (ms) => new Promise((done) => setTimeout(done, ms)),
+  ) {
     this.#root = root;
+    this.#pause = pause;
+  }
+
+  /**
+   * Whether a folder lists a file of this name, or the swap file a browser keeps beside one
+   * while it is being written (`name.crswap`, in Chromium).
+   */
+  async #listed(folder: FileSystemDirectoryHandle, name: string): Promise<boolean> {
+    try {
+      for await (const entry of folder.keys()) {
+        if (entry === name || entry === `${name}.crswap`) return true;
+      }
+    } catch {
+      // A folder that cannot be listed lists nothing.
+    }
+    return false;
   }
 
   /**
@@ -223,11 +250,20 @@ export class OpfsFolder implements Folder {
     if (name === undefined || folder === null) {
       return null;
     }
-    try {
-      const file = await (await folder.getFileHandle(name)).getFile();
-      return new Uint8Array(await file.arrayBuffer());
-    } catch {
-      return null;
+    // A file being rewritten is, for a moment, one the browser will not read: it says the file
+    // is not found, or has changed since it was looked at. That is not a file that is gone,
+    // and taking it for one opened a project with its script empty and its panes forgotten
+    // (found on GitHub, 22 November 2026, by a page loaded again while its view state was
+    // being written). So a file the folder still lists is asked for again, a little later
+    // each time, for about two seconds in all; one it does not list is gone, and said so at once.
+    for (let tries = 1; ; tries += 1) {
+      try {
+        const file = await (await folder.getFileHandle(name)).getFile();
+        return new Uint8Array(await file.arrayBuffer());
+      } catch {
+        if (tries >= TRIES || !(await this.#listed(folder, name))) return null;
+        await this.#pause(tries * 25);
+      }
     }
   }
 

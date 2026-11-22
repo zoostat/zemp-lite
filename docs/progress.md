@@ -44,4 +44,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 4 `[function]`.** Every row of the Project pane has a menu: **Save a copy…** for a file, **Save as a zip…** for a folder; the file shown is saved from ⌘K. With step 2b, what a script writes can be taken out of the browser.
 
-**Next.** The export made at the address and run by the released `zeff run` (step 3's last condition); then step 5 `[function]`: an exported zip opened as a new project.
+**Found on GitHub at step 3, and mended.** Step 2b's test failed once in Chromium on step 3's commit: after a page loaded again while its view state was being written, the project opened with its panes forgotten. A file being rewritten cannot be read for an instant, and the storage's reader took that for a file that is gone (as old as 0.1). A read is now tried again where the folder still lists the file (`OpfsFolder.read`, `opfs.test`). Green here: the whole routine in both browsers (30 native, 225 unit and 336 browser tests).
+
+**Next.** Steps 3 and 4 seen green on GitHub with the mend; the export made at the address and run by the released `zeff run`; then step 5 `[function]`: an exported zip opened as a new project.
