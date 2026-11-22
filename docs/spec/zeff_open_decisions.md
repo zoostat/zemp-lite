@@ -126,6 +126,10 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 
 **Status (21 November 2026, release 0.9.0, step 11a).** #202 is new: five things the three definitions of `margins` in #88 leave unsaid, met when it was built for `reg`. Each is taken as recommended under the owner's standing instruction of 12 November 2026 and is his to overturn before 1.0: the average over the rows is weighted by the fit's weights; with no variable named `margins` gives the adjusted prediction (built at step 11b); after `reg` the p-values and intervals are from Student's t on the fit's degrees of freedom; the printed table, shown to him at this step; under `type: mem` a category is held at the shares of its levels (built at step 11b). Rows Z0414 and Z0417 of section 11.1 of the Language Reference are extended to `margins` (`docs/spec_changes.md`).
 
+**Status (22 November 2026, release 0.9.0, step 15).** #205 is new: the printed form of `confusion` and how a script reads its shares, taken as recommended under the owner's instruction of 22 November 2026 and his to overturn before 1.0.
+
+**Status (22 November 2026, release 0.9.0, step 14).** #204 is new: three things #112 leaves unsaid of `curve`, met when it was built, each taken as recommended under the owner's instruction of 22 November 2026 ("immediately start next step when a step is completed. I am approving and also take your recommended decision if necessary") and his to overturn before 1.0: `type:` is required; the result is read by `statistic()` (the area), `estimates()` (the points) and `plot()` (the figure); under weights a row counts as its weight.
+
 **Status (22 November 2026, a ruling of the owner's from Zemp Lite).** #203 is new and decided: on 21 November 2026, trying the hosted alpha, the owner proposed one layout of three panes for every place of Zemp Lite in the place of the margin editor's two layouts, approved a mockup drawn twice to his corrections ("looks fine") and placed it in a release of its own: "Yes, record it as 0.2.1 and reader test, your checks by hand etc will move to 0.2.1". The Zemp Lite session, which may not edit this repository, wrote it up in the shared notes; asked in the Zeff session on 22 November 2026 whether to enter it, the owner answered "Yes, enter it", and it is entered here, his words of the 21st as that note gives them. It revises #174 (the margin becomes the Notes pane; a run unfolds every output) and #176, R2 (Panes is removed as a layout), and brings #178's outline and **Run section** to Zemp Lite 0.2.1 in the interface's own reading of the comment. With it the reader test (one test for Zemp and Zeff 0.9.0; step 45 of Zeff 0.9.0) and the acceptance checks left for the hand at Zemp Lite 0.2 move to the hosted 0.2.1; the test's scripts are unchanged. Section 15 of the Zemp Specification gains the row of 0.2.1, and sections 5, 7 and 8 a sentence each (`docs/spec_changes.md`).
 
 ## Summary
@@ -219,8 +223,13 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 85 | The Games–Howell comparison in `posthoc` | Add `games_howell` to `method:` in the first release after 0.7.0 with room; until then Tukey's HSD after Welch's ANOVA prints a note | decided 21 November 2026 (option A, on the recommendation); built at 0.9.0, step 29 |
 | 86 | Folding, snippets and the statement ranges behind **Run** in the language server | At 0.8.0, with Zemp's alpha; formatting through the server is built at 0.7.0 | decided 15 November 2026 (option A); built at 0.8.0, step 8b |
 | 87 | A variable name in an option record | Accept a `Vars` of exactly one variable where a parameter takes a `Var`, so that `{ se: robust, cluster: vars(firm) }` can be named once and spread | decided 15 November 2026 (option A); built at 0.8.0, step 4 |
+| 205 | `confusion`: the printed table and how its shares are read | Recommended A: the observed outcome in the rows and the predicted in the columns, with totals; five shares under it as proportions; `estimates()` gives them and `statistic(name)` one; a row at the cutoff is predicted 1; rows counted by their weights | decided at 0.9.0, step 15, under the standing instruction (A); the owner's to overturn before 1.0 |
+| 206 | What `zeff audit` reads before run records have their schema | Recommended A: from 0.9.0 `zeff run` keeps a small record of each run in `.zeff/runs/` (the engine, the day, the script, the built-in functions it calls with the options written), in a provisional form that the versioned schema of 0.11.0 replaces; `zeff audit` reads it, and is answered by the newest engine installed, whose list knows the most | decided at 0.9.0, step 22, under the standing instruction (A); the owner's to overturn before 0.11.0, when the schema is fixed |
+| 207 | Which machines the archives of 0.9.0 are built for | Recommended A: the three that continuous integration builds and proves on every push, Linux x86-64 and ARM64 (static) and macOS on Apple silicon; Windows and Intel Macs when the tests run there, by 1.0.0 with the installers | decided at 0.9.0, step 23, under the standing instruction (A); the owner's to overturn at any release |
+| 208 | Zemp Lite 0.2.2: a project saved to the computer, and the actions on files, folders and projects | **Export project…** as a zip and the opening of one, persistent storage and the reminder to export (the parts of #117 that need no run record), and the actions a project lacked on screen: a script made, files and folders added, renamed, moved, duplicated, deleted and saved, a project renamed, duplicated and deleted; **Open folder…** placed with the 0.5 desktop beta | decided by the owner on 22 November 2026 ("Yes, into 0.2.2"; "Add file actions, folder actions, project actions"), entered on his word in the Zeff session the same day |
+| 204 | `curve`: `type:` required, how the result is read, weights | Recommended A for each: `type:` has no default; the area by `statistic()`, the points by `estimates()`, the figure by `plot()`; rows counted by their weights, frequency or sampling | decided at 0.9.0, step 14, under the standing instruction (A); the owner's to overturn before 1.0 |
 | 203 | One layout of three panes on every page (Zemp Lite) | Every place (Script, Data, Plots, Help) has a left pane, the place in the middle and a right pane, each pane opened and closed by its own link; the Panes layout, the Margin link and the Objects panel are removed; Run unfolds every output; revises #174 and #176 (R2) | decided 21 November 2026 (the owner's ruling, given in the Zemp Lite session, passed on in the shared notes and confirmed by him in the Zeff session on 22 November 2026); Zemp Lite 0.2.1, on Zeff 0.8.0 |
-| 202 | `margins`: the average under weights, the call with no variable, the reference distribution, the printed table, a category under `type: mem` | Recommended A for each: the average weighted by the fit's weights; with no variable named, the adjusted prediction; Student's t on the fit's degrees of freedom after `reg`; the table of step 11a; a category held at the shares of its levels | (a), (c) and (d) decided at 0.9.0, step 11a, under the standing instruction (A), (d) shown to the owner; (b) and (e) built at step 11b; the owner's to overturn before 1.0 |
+| 202 | `margins`: the average under weights, the call with no variable, the reference distribution, the printed table, a category under `type: mem` | Recommended A for each: the average weighted by the fit's weights; with no variable named, the adjusted prediction; Student's t on the fit's degrees of freedom after `reg`; the table of step 11a; a category held at the shares of its levels | (a), (c) and (d) decided at 0.9.0, step 11a, under the standing instruction (A), (d) shown to the owner; (b) and (e) built at step 11b (22 November 2026); the owner's to overturn before 1.0 |
 | 201 | A `glm` fit in `report` and under `summary(standardized:)` | Recommended A for each: the `R²` row of `report` shows McFadden's R² marked `(McFadden)`; `standardized: true` is refused on a `glm` fit until a standardization is chosen | the first decided at 0.9.0, step 8c, under the standing instruction (A); the second open, deadline 1.0 |
 | 200 | What `predict` and `residuals` give a `glm` fit unless told | Recommended A: the scale of the outcome for both, `type: response`: a probability from `predict`, the outcome less the fitted probability from `residuals`; R's defaults (`link`, `deviance`) one word away | decided at 0.9.0, step 8a, under the standing instruction (A); the owner's to overturn before 1.0 |
 | 199 | Analytic weights on a binary model | Recommended A: `weight_type: analytic` is refused on `glm` with `family: binomial` (Z0410), as Stata refuses `aweight` on `logit`; frequency and sampling weights are taken | decided at 0.9.0, step 7c, under the standing instruction (A); the owner's to overturn before 1.0 |
@@ -1230,6 +1239,8 @@ Raised on 1 November 2026 from the owner's requests for the Zemp interface. Sect
 *Recommendation.* A, at the 0.2 alpha (Zeff 0.8.0), when the language server exists to say what is under the cursor. Deadline: 0.8.0.
 
 **The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A in the margin editor's form: a Help panel at the side of the Script place, hidden until asked for (F1, ⌘K, **Explain** on a warning), following the function under the cursor unless switched off, showing a code's explained page; in Panes, a Help tab. At the Zemp 0.2 alpha.
+
+**The Help page set in type (22 November 2026; passed on in the shared notes by the Zemp Lite session, which records the owner's choice "C, formatted" on a mockup kept outside the repositories).** From Zemp Lite 0.2.1 the Help place shows a function's page and a code's explained page set in type (headings, prose in the app's type and code in the code's, each argument with its type, codes as coloured labels, names and codes as links, the usage and the examples as code) and no longer as the terminal prints it; every word stays the engine's, and Zeff 0.8.0 is unchanged. Nothing normative changes: section 5 of the Zemp Specification says what the Help place shows and how it is opened, not how a page is set. It supersedes Zemp Lite's choice of the same morning that a page be shown character for character, which ran past the middle of the place in a narrow window. Two things follow for the engine. First, the interface takes the print of `zeff help` and `zeff explain` apart by its layout (the first line, the headings in capitals at the first column, the body four characters in, the rows of ARGUMENTS and of WARNINGS AND NOTES, `(shared)` at a line's right edge, backticks, the asterisks of a title in REFERENCES, `> ` before a statement of an example), and a test of Zemp Lite holds every page of the engine to a known shape: the layout of the print is therefore something an interface depends on, recorded in `docs/decisions.md` of this day, and a change to it is announced to Zemp Lite before it ships. Second, a structured form of a help page, as `zeff explain --format json` gives a code's page in parts, would let the interface drop its reader, say which names in the prose are functions, and set a package's list in type; it is a candidate for an entry of its own at the planning of the release that rebuilds help (0.11.0, "Help built from `///`"), and is not raised here.
 
 ### 75. The data viewer and the environment browser, made excellent
 
@@ -2424,6 +2435,8 @@ Raised on 11 November 2026 by the owner, who wants a whole project to be shareab
 *Recommendation.* A. The storage warning is small and protects users from losing work, and `file:` is a few lines on the reader of 0.11.0. On adoption, section 5 of the Zemp Specification (the welcome screen), section 10 (Zemp web's storage), section 6 of the Language Reference (`import`'s `file:`) and the catalogue row of `import` are amended, logged in `docs/spec_changes.md`; the 0.11.0 plan lists the steps. Deadline: 0.11.0.
 
 **The owner's decision (11 November 2026).** "Yes, option A." All four pieces at 0.11.0, with the Zemp 0.5 desktop beta: **Open a replication package…** and **Verify** in both editions, web included; `import(path, file:)`; and persistent browser storage with the export reminder. Sections 5 and 10 of the Zemp Specification are amended the same day, logged in `docs/spec_changes.md`. The amendment of `import` in section 6 of the Language Reference and in its catalogue row is made at the step of 0.11.0 that builds `file:`, since the catalogue is read by the engine's tests; the 0.11.0 plan lists the steps.
+
+**Built in part at Zemp Lite 0.2.2 (22 November 2026, #208).** By the owner's decision of that day, the parts of this entry that need no run record come with Zemp Lite 0.2.2, on Zeff 0.8.0: **Export project…** as a zip, the opening of an exported zip as a new project (without **Verify**, without the package's first page and without a pinned engine, none of which a plain copy of a project has), the request to the browser for persistent storage when a project is first made, and the reminder to export. **Open a replication package…** with **Verify** stays at 0.11.0, with the run record it reads; `import(path, file:)` stays at 0.11.0 with the reader it belongs to.
 
 ### 118. The plot renderer's fixed points before step 21 of 0.7.0
 
@@ -4023,6 +4036,12 @@ Raised on 21 November 2026 at release 0.9.0, step 11a, when `margins` was built 
 
 **Status (21 November 2026).** (a), (c) and (d) are built; (b) and (e) are built at step 11b. Deadline for the owner to overturn any: 1.0.
 
+**Status (22 November 2026, step 11b).** (b) and (e) are built as decided. Of (b): after `fe:` the adjusted prediction is refused, since it would need the level of each fixed effect; the effects of variables are given as before. Of (e): a Bool and a 0/1 number are held at their means, the share of ones, and under weights the means and the shares are weighted. Two further points met and settled the same way, each the owner's to overturn: a 0/1 variable or a category both asked for and held by `at:` is refused, its effect being the difference between its values, while the slope of a number may be asked where the number itself is held; and several values of one variable in `at:` are refused for `reg` until step 12 builds them.
+
+**Status (22 November 2026, step 12a).** After `glm` the table is a z table, with the p-values and the intervals of the normal distribution, as (c) said and as the fit's own table has them; every effect and prediction is on the scale of the probability, and the line above the table says so. At the means the probability is taken at the one point of the means (the link applied to the linear predictor of the means), as Stata's `atmeans` has it, not averaged over the levels of the categories.
+
+**Status (22 November 2026, step 12b).** `at:` takes a list of values for a variable and gives the result at each, and at each combination of several variables' values, the first changing slowest, as Stata's `at(x = (5 10 20))` does. Taken as recommended, the owner's to overturn: the values stand in a column of their own before `variable` (or `quantity`); a row's name carries them, `exper @ exper=5`; a value given twice is refused; the rows are separate statements, with no test between them (`contrasts`, 1.6).
+
 ### 203. One layout of three panes on every page (Zemp Lite)
 
 Raised and decided by the owner on 21 November 2026, in the Zemp Lite session, while trying the hosted alpha of Zemp Lite 0.2; written up by that session in the shared notes and entered here on 22 November 2026 from a Zeff session, which alone edits this register, on the owner's word in that session ("Yes, enter it"). His words of the 21st are given as the note gives them. The mockup he approved (its second draft) is kept outside the repositories; Zemp Lite records the same decision in its own `docs/decisions.md` of that day.
@@ -4043,3 +4062,109 @@ Raised and decided by the owner on 21 November 2026, in the Zemp Lite session, w
 *Also moved to 0.2.1 by the same ruling.* The reader test (one test for Zemp and Zeff 0.9.0, run on the hosted alpha with five to eight readers the owner chooses; step 45 of Zeff 0.9.0) is run on the hosted 0.2.1, not 0.2; the test still serves Zeff 0.9.0 and its scripts are unchanged. So are the acceptance tests left for the hand at Zemp Lite 0.2 (the keyboard alone, VoiceOver, the print at every size and in the dark theme) and the check by hand of the timing of ⌘↵ in Safari.
 
 **Status (22 November 2026).** Decided; nothing in Zeff waits on it. The Zemp Specification is amended with this entry (section 15, the rows of 0.2 and 0.2.1; sections 5, 7 and 8), logged in `docs/spec_changes.md`.
+
+**Added on 22 November 2026.** The Help place of 0.2.1 shows its pages set in type, not as printed (the dated paragraph of that day under #74). Zemp Lite 0.2.2, the release after this one, is #208.
+
+### 204. `curve`: what #112 leaves unsaid
+
+Raised on 22 November 2026 at release 0.9.0, step 14, when `fit.curve(newdata:, type: roc)` was built. #112 fixes the name and the usage, and #120 that the figure is `fit.curve(type: roc).plot()`.
+
+**(a) Is `type:` required?** The usage writes `type: roc` with no default, as it writes `family: binomial` for `glm`.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. Required: `g.curve()` is refused (Z0406), the help naming `type: roc` | A function of several curves says which it draws; when the precision–recall curve arrives no script changes its meaning and none has a default chosen by which curve came first; as `family:` of `glm` | Four more characters while there is one curve |
+| B. `roc` unless given | Shorter today | The first curve built becomes the default for good |
+
+*Recommendation.* A. **Decided (22 November 2026, step 14):** A, under the standing instruction.
+
+**(b) How the result is read.** The result prints the rows, the counts of ones and noughts, and the area. A script needs the area as a number and the points as a frame, and the catalogue gives no new method for either.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. `statistic()` gives the area; `estimates()` gives the points, a frame of `threshold`, `sensitivity` and `specificity` from the highest threshold to the lowest; `plot()` draws the curve; no p-value and no interval | The area is a statistic, the Mann–Whitney statistic of the fitted probabilities over the number of pairs; the points are what the curve estimates; nothing new to learn | `estimates()` of other results has a row for each estimate with its standard error |
+| B. The area by `estimates()`, a frame of one row; the points only through the plot | `estimates()` as elsewhere | No way to the points, which a custom figure or a choice of threshold needs |
+
+*Recommendation.* A. **Decided (22 November 2026, step 14):** A, under the standing instruction.
+
+**(c) Weights.**
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. Each row counts as its weight, frequency or sampling; the rows of `newdata` once each | After frequency weights it is the curve of the rows written out, exactly; after sampling weights it describes the population the fit describes | pROC does not weight; Stata's `lroc` takes frequency weights alone |
+| B. Frequency weights counted, sampling weights refused | Stata's reading | A fit with survey weights has no curve |
+
+*Recommendation.* A. **Decided (22 November 2026, step 14):** A, under the standing instruction.
+
+**Status (22 November 2026).** Built as decided. An interval for the area and a test between two curves wait until after 1.0 (question 3 of #99). Deadline for the owner to overturn any: 1.0.
+
+### 205. `confusion`: the printed table and how its shares are read
+
+Raised on 22 November 2026 at release 0.9.0, step 15, when `fit.confusion(newdata:, cutoff: 0.5)` was built. The catalogue gives the usage and "classification table at a cutoff with sensitivity, specificity and accuracy"; the checklist adds the two predictive values.
+
+| Point | Option taken (A) | The other reading |
+| --- | --- | --- |
+| The table | The observed outcome in the rows (`union 1`, `union 0`), the predicted in the columns (`predicted 1`, `predicted 0`), with the totals of both | Stata's `estat classification` has the observed outcome in the columns |
+| The shares | Five, as proportions to four decimals under the table: sensitivity, specificity, accuracy, positive and negative predictive value | Stata prints percentages, and the false rates too, each one less a share printed here |
+| Reading them | `estimates()` gives the five as a frame; `statistic("sensitivity")` gives one by its name, and `statistic()` the accuracy | A method for each share, which the catalogue does not have |
+| A row at the cutoff | Predicted 1, as Stata's "classified + if predicted Pr(D) >= .5" | Predicted 0 |
+| Weights | A row counts as its weight, as in `curve` (#204 (c)); under sampling weights the cells are sums of the weights scaled to the rows used, printed to one decimal | Sampling weights refused |
+| A share of nothing | `NA` | 0 |
+
+*Recommendation.* A throughout. **Decided (22 November 2026, step 15):** A, under the standing instruction.
+
+**Status (22 November 2026).** Built as decided. Deadline for the owner to overturn: 1.0.
+
+### 206. What `zeff audit` reads before run records have their schema
+
+Raised on 22 November 2026 at release 0.9.0, step 22. Section 11.1 of the Language Reference gives `zeff audit` to 0.9.0 and has it check "the project's run records" against the list of known wrong results ("your run of 12 October used `reg` with `weights:`, affected by issue 123, fixed in 0.9.2"). The build order gives the versioned schema of run records, with `zeff runs`, to 0.11.0, and at 0.9.0 the engine keeps no record of a run at all. Something has to be read.
+
+| Option | What it is | What it costs and buys |
+| --- | --- | --- |
+| A | From 0.9.0 `zeff run` keeps a small record of each run in `.zeff/runs/`: the engine's version and build, the day, the script, and every built-in function the script and the project's functions it reaches call, each with the options written at the call. The form is provisional and says so; the schema of 0.11.0 replaces it, and `zeff audit` reads both from then on. Nothing is printed for it: the closing line `run recorded: ...` of section 2.1 comes with the schema | `zeff audit` does what the specification says from the day patch releases exist, on the runs that were made, each with its day and its engine. The calls are those the script contains, read from the checked script, not traced as it runs: a call in a branch not taken is listed too, which errs on the side of saying so |
+| B | No record before 0.11.0; `zeff audit` reads the scripts as they stand and says which of their calls the pinned engine gets wrong | Nothing is written to the project; and the audit cannot say which run, or that a result made last month on another engine was affected |
+| C | `zeff audit` waits for 0.11.0; 0.9.0 ships the list alone | Contradicts section 11.1, and leaves the first patch releases with no way to tell a user that a result is affected |
+
+Two smaller points go with A. (a) *Which engine answers.* The list of an engine knows the wrong results found until that engine was built, so the newest engine installed knows the most: the launcher hands `zeff audit` to the newest release installed, whatever the project pins, and that engine does not check the pin for this command, as when it is tried by `zeff engine use`. (b) *The numbers of the issues.* The two wrong results found so far (corrected at 0.7.0, before there was a public tracker) are numbered 1 and 2 in the list itself; an issue of the public tracker keeps its tracker number from 1.0.
+
+*Recommendation.* A, with (a) and (b). **Decided (22 November 2026, step 22):** A, under the standing instruction.
+
+**Status (22 November 2026).** Built as decided, in steps 22a (the list), 22b (the record) and 22c (the audit). Deadline for the owner to overturn: 0.11.0, when the schema is fixed.
+
+### 207. Which machines the archives of 0.9.0 are built for
+
+Raised on 22 November 2026 at release 0.9.0, step 23, when the release workflow was written. Section 2.1 of the Engine and Project Specification lists six targets, Linux, macOS and Windows on x86-64 and on ARM64; the checklist's step speaks of "the four targets", which are the four machines of the identity check (two x86-64 machines of different SIMD levels, ARM64 Linux and Apple silicon). No test of the project has ever been run on Windows or on an Intel Mac.
+
+| Option | What it is | What it costs and buys |
+| --- | --- | --- |
+| A | Archives for the three machines that continuous integration builds and proves on every push: `linux-x86-64` (one archive for every x86-64 processor, as section 2.1 has it) and `linux-arm64`, both static, and `macos-arm64`. Windows and Intel Macs get theirs when the whole suite runs there, at the latest with the installers of 1.0.0 | Every archive is of a build whose results are proved identical on its machine. Users on Windows and on Intel Macs wait, or build from source |
+| B | All six at 0.9.0 | The Windows paths of the launcher (the store under the programs folder, `zeff.exe`, the zip) are written and tested as values on other systems, and never once run on Windows; an archive would ship unproved |
+
+The launcher already reads and writes the Windows forms, and the workflow takes a further target as one more line, so B is a matter of runners and of time on them when the owner wants it.
+
+*Recommendation.* A. **Decided (22 November 2026, step 23):** A, under the standing instruction.
+
+**Status (22 November 2026).** Built as decided: the trial run of the workflow made the three archives. Deadline for the owner to overturn: any release.
+
+### 208. Zemp Lite 0.2.2: a project saved to the computer, and the actions on files, folders and projects
+
+Raised by the Zemp Lite session on 22 November 2026 and decided by the owner the same day in the coordinating session, which passed his words on; written up by the Zemp Lite session in the shared notes and entered here from a Zeff session, which alone edits this register, on the owner's word in that session ("Yes, enter it", 22 November 2026). His words are given as the note gives them. Nothing is built yet: 0.2.2 starts after Zemp Lite 0.2.1 is released.
+
+*What was found.* (1) **Open folder…** is on Zemp Lite's welcome screen in section 5 of the Zemp Specification with no release named, and is in no row of the release plan (section 15); Zemp Lite's notes of 0.1 promised it for the alpha, the checklist of 0.2 neither built it nor listed it as left out, and the hosted alpha shows it greyed out. (2) **Export project** (section 10; #117) is placed with Zeff 0.11.0, with the request for persistent storage, the reminder to export and **Open a replication package…**; until then a project lives only in the browser's private storage, which the browser may clear, and a visitor cannot take a copy of it. (3) Only the replication package needs Zeff 0.11.0, for its run record; a plain copy of a project's files does not. (4) Zemp Lite 0.2.1 has no control to make a script, or to rename, move or delete a file, or to delete a project: the Project pane offers only **+**, to add a data file, though the project's own code can already do each.
+
+**Decided (22 November 2026).** Zemp Lite 0.2.2, on Zeff 0.8.0, after 0.2.1. The owner's words: first "Yes, into 0.2.2"; then, widening it the same day, "Add file actions, folder actions, project actions". He named the three groups; the list under each is the Zemp Lite session's reading, recorded in its own `docs/decisions.md`.
+
+- **Projects.** **Export project…** as a zip, downloaded, in every browser the alpha supports; the opening of such a zip as a new project; a project renamed, duplicated and deleted; the request to the browser for persistent storage when a project is first made, and the reminder to export (the parts of #117 that wait on no engine).
+- **Files.** **New script**; files added from the computer into any folder; a file renamed, moved, duplicated and deleted; a copy of a file saved to the computer.
+- **Folders.** A folder made, renamed, moved and deleted with what it holds; a folder saved to the computer as a zip.
+
+No action writes a statement into a script, and renaming or moving a file rewrites none: the app says which scripts name the old path, and changes nothing. `zeff.toml` and the folders the engine knows by name are not renamed, moved or deleted. `.zemp/` is left out of an exported zip.
+
+**Open folder…** comes with the 0.5 desktop beta (Zeff 0.11.0): on the desktop and, on the web, in the browsers that allow a page a folder of the computer (Chrome and Edge; not Safari or Firefox).
+
+*When, and what it needs of the engine.* Nothing: it is on Zeff 0.8.0, and a Zemp fix or addition of this kind needs no engine release (the Zemp Specification, section 15).
+
+*Still to be put to the owner at the plan of 0.2.2,* each with the Zemp Lite session's recommendation; none changes the row. How a deletion is confirmed and whether it can be undone (recommended: asked once, naming what goes and how many files, and saying it cannot be brought back, since the browser's storage has no bin; the deletion of a project offers **Export project…** first). Whether `scripts/main.zeff`, which the engine and the app open by name, may be renamed or deleted (recommended: not). Moving a file by dragging its row (recommended: left out of 0.2.2; **Move to…** in the row's menu does it, and is reached by the keyboard).
+
+**Status (22 November 2026).** Decided; nothing in Zeff waits on it. The Zemp Specification is amended with this entry (section 15: a row for 0.2.2 after that of 0.2.1, and **Open folder…** in the row of the 0.5 desktop beta), and #117 says which of its parts are built at 0.2.2; logged in `docs/spec_changes.md`.
+

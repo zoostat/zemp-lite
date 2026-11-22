@@ -1298,7 +1298,7 @@ Zeff reports problems the way Rust does: a code, the location, a marker under th
 | Z04xx | Arguments |
 | Z05xx | Formulas and model blocks |
 | Z06xx | Data: import, merge, reshape |
-| Z07xx | Projects, paths, data roots, versions, network requests (Z0708), installation and engines (Z0709 to Z0711, section 2.1 of the Engine and Project Specification), resources and reproducibility (W0703 marks a use of `today()` or `now()`) |
+| Z07xx | Projects, paths, data roots, versions, network requests (Z0708), installation and engines (Z0709 to Z0711 and Z0717, section 2.1 of the Engine and Project Specification), resources and reproducibility (W0703 marks a use of `today()` or `now()`) |
 | Z08xx | Estimation: convergence, identification |
 | W0xxx | Warnings, numbered by the same areas (W08xx includes failed resampling draws) |
 | W1xxx | Statistical warnings: the code is right but the result is fragile (section 11.1) |
@@ -1319,7 +1319,7 @@ Zeff reports problems the way Rust does: a code, the location, a marker under th
 | Z0411 | `weights:` of a test whose kind is sampling, the default of `weight_type:`; a test takes frequency or analytic weights (section 6) |
 | Z0412 | `group:` of a two-group test naming a variable with one level or more than two (section 6) |
 | Z0413 | A parameter of a distribution outside its domain, or `NA` |
-| Z0414 | A term name given to a result method that the result does not have; the message lists the fit's terms, and a test's result has none. `margins` raises it for a variable that no term of the model is a function of, and lists the model's variables |
+| Z0414 | A term name given to a result method that the result does not have; the message lists the fit's terms, and a test's result has none. `margins` raises it for a variable, asked for or held by `at:`, that no term of the model is a function of, and lists the model's variables |
 | Z0415 | A restriction given to `test` that is not an equality linear in the coefficients, or restrictions that repeat one another |
 | Z0416 | A `compare` of two regressions on different rows, with the same terms, or not nested |
 | Z0504 | A variable on the left of `~` in `instruments:` that is not a regressor of the formula: an instrumented regressor appears in the formula like any other (section 7.1); the help writes the formula with it added |
@@ -1327,7 +1327,7 @@ Zeff reports problems the way Rust does: a code, the location, a marker under th
 | Z0804 | Fewer excluded instruments than instrumented regressors, counted after an instrument that is also a regressor of the formula is moved to the included instruments: the model is under-identified (section 7.1) |
 | Z0507 | `event` given a `ref:` that is not a relative period of the data; the message lists the periods present |
 | W0701 | A data root's file has changed since the last run: its hash differs from the one the last run recorded, and both modification times are given (section 2 of the Engine and Project Specification, "Data roots") |
-| Z0417 | A definition given to `derive` that it cannot differentiate; a variable whose effect `margins` cannot take (one that enters the model both as a number and as a category, or whose slope is not finite in some row) |
+| Z0417 | A definition given to `derive` that it cannot differentiate; a variable whose effect `margins` cannot take or that it cannot hold at a value or at its mean (one that enters the model both as a number and as a category, a slope that is not finite where it is asked for, or a term with no value at the values asked for) |
 | Z0418 | A `seq` that cannot be built: a zero step, a step pointing away from `to`, an argument that is `NA` or infinite, or more than ten million values |
 | Z0419 | A regular expression that cannot be read: an unclosed group or bracket, a repetition with nothing to repeat, or look-around or a back-reference, which section 3.8 excludes |
 | Z0420 | `alternative: less` or `greater` given to `fisher_test` on a table larger than 2 × 2, whose exact test has no direction (section 6; open decision #91) |
@@ -1348,6 +1348,7 @@ Zeff reports problems the way Rust does: a code, the location, a marker under th
 | Z0323 | A module file that is not one: a statement in a file of `functions/`, or a file whose name is not a name of the language or is a package's (section 5.3, "Modules") |
 | Z0712 to Z0715 | `zeff.toml` is not valid TOML; valid TOML but wrong for Zeff; a script named on the command line that the project lacks; `import` of a project path with no readable file |
 | Z0716 | An export path with no extension, or with one that names no format Zeff writes; the formats are listed |
+| Z0717 | An engine's archive that cannot be installed for a reason other than its checksum or signature, which are Z0711 (section 2.1 of the Engine and Project Specification): a file not named as an archive is, an engine for another kind of machine, a file that cannot be read, or a proved archive that cannot be unpacked; the engine store is left as it was (release 0.9.0) |
 | Z0601 | A panel declaration refused: a unit observed twice at one time, `NA` in the unit or the time variable, or a time variable that is not an Int or a `Date` (section 6, "Panels"; release 0.6.0) |
 | Z0602 | `lag`, `lead`, `diff` or `fill_missing` with `method:` outside `add` or `update`, or on a frame with no panel declaration where the function needs one (section 6, "Panels"; release 0.6.0) |
 | Z0603 | A merge whose keys form a many-to-many relation, or whose `relation:` the data do not have (section 6, "Combine") |

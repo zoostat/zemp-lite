@@ -1297,3 +1297,11 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **The plan's row.** The words of the row for the Zeff session, in the shared note `zemp-lite-saving-a-project-for-the-register.md`, are widened to match.
 
 **Reason.** The owner's decision of the scope; the adjustments keep to rules the app already holds (the keyboard, no dialog, no statement written for the user) and to what the browser's storage can do safely.
+
+## 22 November 2026: The specification's copy is brought to Zeff 3159c99, where release 0.2.2 stands
+
+**What was entered there**, by the Zeff session on the owner's word in it ("Yes, enter it"), from the shared notes of this session: the register's entry #208 (a project saved to the computer and the actions on files, folders and projects, with the three questions still to be put to the owner); the row "0.2.2 | 0.8.0" of section 15 of the Zemp Specification, and **Open folder…** in the row of the 0.5 desktop beta; a dated paragraph under #117 (built at 0.2.2: Export project, the opening of an exported zip without Verify, persistent storage and the reminder; staying at 0.11.0: **Open a replication package…** with Verify); the line in Zeff's `docs/spec_changes.md`. Also, with nothing normative: a paragraph under #74 and a line under #203 on the Help page set in type, and in Zeff's own decisions that the layout of the print of `zeff help` and `zeff explain` is from now on changed only knowingly, said in the release notes and told to Zemp Lite before the engine that carries it is released; a structured form of a help page is a candidate for the planning of Zeff 0.11.0.
+
+**Choice.** `docs/spec/` is the Zeff repository's at commit 3159c99, each of its ten files taken from the commit and compared byte for byte. Four differ from the copy of 1beefc7: the register and the Zemp Specification, by the entries above; the catalogue and the Language Reference, by the work of Zeff 0.9.0 since (three functions' status, the codes Z0414, Z0417 and Z0717), none of which Zemp Lite on Zeff 0.8.0 reads.
+
+**Reason.** The specification is the authority, and a release is planned from its row: the copy must hold the row of 0.2.2 before "Start release 0.2.2".
