@@ -1167,3 +1167,9 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choice.** The statements are asked after the text of the last run, as it ran (`Workspace.askAfter`): the frames the Data place shows are that run's, whichever script is open now and however it has been edited since. Tests: browser (`data.spec`: with the showcase run, the pane's rows and N are the showcase's frame's).
 
 **Reason.** The checklist's step 11 (the examples read by eye in the hosted alpha).
+
+## 22 November 2026: The published notes of 0.2 carry the corrections
+
+**Choice.** On the owner's word ("Yes, correct them"), the text of the GitHub release of v0.2.0 is `docs/releases/0.2-notes.md` as it now stands: the released text unchanged, and under it the section "Corrections, found while 0.2.1 was built" (the notes were not seen; the console line's plots are not listed apart; ⌘↵ on the last statement takes tens of milliseconds). The title, the tag (6c354f6) and the pre-release mark are untouched; nothing of the history is rewritten. Read back from GitHub and held to the file: the same.
+
+**Reason.** A reader of the release page should not be told three things that were found wrong; the corrections stand apart from the released text so that what was said at the release can still be read.
