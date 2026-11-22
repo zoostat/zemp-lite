@@ -224,21 +224,10 @@ export class Projects {
 
   /** Make a project called `name`, with an empty script and the folders of a project. */
   async create(name: string): Promise<ProjectInfo> {
-    const wanted = name.trim();
-    if (wanted === "") {
-      throw new ProjectError("A project needs a name.");
-    }
-    if (wanted.length > 80) {
-      throw new ProjectError("A project's name is at most 80 characters.");
-    }
-    const folder = folderOf(wanted);
-    if ((await this.#root.kind(`${ROOT}/${folder}`)) !== null) {
-      throw new ProjectError(
-        folder === SCRATCH
-          ? "That name is the Scratch project's. Choose another."
-          : `A project called "${wanted}" is already here. Choose another name.`,
-      );
-    }
+    const wanted = await this.#name(name, null);
+    // The folder is the app's own key for the project, made from its name; a project renamed
+    // keeps its folder, so the first free one is taken.
+    const folder = await this.#freeFolder(wanted);
     await this.#fill(folder, wanted, `// ${wanted}\n`);
     return { folder, name: wanted, opened: null, exported: null, made: this.#made(folder) };
   }
@@ -360,6 +349,117 @@ export class Projects {
       throw error;
     }
     return { folder, name, opened: null, exported: null, made: this.#made(folder) };
+  }
+
+  /**
+   * Hold that `name` can be a project's: a name, of 80 characters at most, that no other
+   * project here has, whatever the capitals, and that is not the Scratch project's. `but` is
+   * the folder of the project being named, whose own name does not count against it.
+   */
+  async #name(name: string, but: string | null): Promise<string> {
+    const wanted = name.trim();
+    if (wanted === "") throw new ProjectError("A project needs a name.");
+    if (wanted.length > 80) throw new ProjectError("A project's name is at most 80 characters.");
+    if (wanted.toLowerCase() === "scratch" && but !== SCRATCH) {
+      throw new ProjectError("That name is the Scratch project's. Choose another.");
+    }
+    for (const one of await this.list()) {
+      if (one.folder !== but && one.name.toLowerCase() === wanted.toLowerCase()) {
+        throw new ProjectError(
+          `A project called "${one.name}" is already here. Choose another name.`,
+        );
+      }
+    }
+    return wanted;
+  }
+
+  /**
+   * Give a project another name (open decision #208): the line of the name in its `zeff.toml`
+   * is rewritten, and every other character of the file is as it was. Its folder in the
+   * browser's storage keeps its name: it is the app's own key for the project, a reader does
+   * not meet it, and moving a whole tree there is a copy and a deletion that a closed tab can
+   * leave half done. The Scratch project is not renamed (the owner's answer to question 4).
+   */
+  async rename(folder: string, name: string): Promise<ProjectInfo> {
+    if (folder === SCRATCH) {
+      throw new ProjectError(
+        "The Scratch project keeps its name. Duplicate it to make a project of your own name.",
+      );
+    }
+    const path = `${ROOT}/${folder}/zeff.toml`;
+    const toml = await this.#root.read(path);
+    if (toml === null) throw new ProjectError("That project is no longer here.");
+    const wanted = await this.#name(name, folder);
+    await this.#root.write(path, encoder.encode(renamed(decoder.decode(toml), wanted)));
+    return (await this.list()).find((one) => one.folder === folder) as ProjectInfo;
+  }
+
+  /**
+   * Make a copy of a project under another name: every file of it, the interface's view state
+   * among them, in a folder of its own, its manifest naming it anew. This is the one step by
+   * which the Scratch project's work becomes a named project (Zemp Specification, section 3).
+   * The whole copy or none: what was written is removed if a file cannot be.
+   */
+  async duplicate(folder: string, name: string): Promise<ProjectInfo> {
+    const from = `${ROOT}/${folder}`;
+    const toml = await this.#root.read(`${from}/zeff.toml`);
+    if (toml === null) throw new ProjectError("That project is no longer here.");
+    const wanted = await this.#name(name, null);
+    const made = await this.#freeFolder(wanted);
+    const to = `${ROOT}/${made}`;
+    const copy = async (path: string): Promise<void> => {
+      const entries = await this.#root.list(`${from}${path}`);
+      if (entries.length === 0) await this.#root.make(`${to}${path}`);
+      for (const entry of entries) {
+        const at = `${path}/${entry.name}`;
+        if (entry.kind === "folder") {
+          await copy(at);
+        } else {
+          const bytes = await this.#root.read(`${from}${at}`);
+          if (bytes === null)
+            throw new ProjectError(`\`${at.slice(1)}\` could not be read, and nothing was copied.`);
+          await this.#root.write(
+            `${to}${at}`,
+            at === "/zeff.toml" ? encoder.encode(renamed(decoder.decode(bytes), wanted)) : bytes,
+          );
+        }
+      }
+    };
+    try {
+      await copy("");
+    } catch (error) {
+      await this.#root.remove(to);
+      throw error;
+    }
+    return { folder: made, name: wanted, opened: null, exported: null, made: this.#made(made) };
+  }
+
+  /**
+   * Put the Scratch project back as a first visit has it: what it holds is deleted, and it is
+   * made again with its examples (the owner's answer to question 4: in place of a deletion).
+   */
+  async resetScratch(): Promise<ProjectInfo> {
+    await this.remove(SCRATCH);
+    try {
+      this.#kept.setItem(GIVEN, "[]");
+    } catch {
+      // The examples are given again all the same, the project being made anew.
+    }
+    return this.scratch();
+  }
+
+  /** How many files a project holds, the interface's and the engine's own not counted. */
+  async count(folder: string): Promise<number> {
+    const within = async (path: string): Promise<number> => {
+      let files = 0;
+      for (const entry of await this.#root.list(path)) {
+        if (path === `${ROOT}/${folder}` && (entry.name === ".zemp" || entry.name === ".zeff"))
+          continue;
+        files += entry.kind === "file" ? 1 : await within(`${path}/${entry.name}`);
+      }
+      return files;
+    };
+    return within(`${ROOT}/${folder}`);
   }
 
   /** A folder for a project of this name that no project has: `wages`, then `wages-2`. */

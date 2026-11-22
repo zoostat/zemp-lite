@@ -1,3 +1,11 @@
+<script lang="ts" module>
+  /** A question about a project, asked in its row of the start screen. */
+  export interface Asking {
+    kind: "rename" | "duplicate" | "delete" | "reset";
+    folder: string;
+  }
+</script>
+
 <script lang="ts">
   // The welcome screen (Zemp Specification, section 5; the design guide, section 9): with no
   // project open, one quiet screen. On the left what can be done; on the right the projects
@@ -6,7 +14,13 @@
   import { limitsFor, projectOf } from "../project/from-zip";
   import type { Keeping } from "../project/keeping";
   import { ZipError, readZip } from "../project/zip";
-  import { ProjectError, when, type ProjectInfo, type Projects } from "../project/projects";
+  import {
+    ProjectError,
+    SCRATCH,
+    when,
+    type ProjectInfo,
+    type Projects,
+  } from "../project/projects";
   import Logo from "../theme/Logo.svelte";
   import ThemeButton from "../theme/ThemeButton.svelte";
   import Watermark from "../theme/Watermark.svelte";
@@ -22,6 +36,7 @@
     naming: asked = false,
     onopen,
     onmade,
+    ask = null,
   }: {
     projects: Projects;
     /** Whether the screen opens asking for a new project's name. */
@@ -33,6 +48,8 @@
     onopen: (folder: string) => void;
     /** A project was made here: the browser is then asked to keep the storage. */
     onmade: () => void;
+    /** A question about a project the screen opens with: asked from ⌘K in that project. */
+    ask?: Asking | null;
   } = $props();
 
   let recent = $state<ProjectInfo[]>([]);
@@ -63,6 +80,97 @@
 
   /** What the screen last did with a project, said where a reader of the screen hears it. */
   let said = $state("");
+
+  // A project being renamed, duplicated, deleted or (the Scratch project) reset: asked in its
+  // own row of the list (open decision #208; the owner's answers to questions 1 and 4).
+  // svelte-ignore state_referenced_locally
+  let asking = $state<Asking | null>(ask);
+  /** The name typed, for a rename or a copy. */
+  let answer = $state("");
+  /** Why it cannot be done, as a sentence. */
+  let refusal = $state("");
+  /** How many files the project asked about holds, once counted. */
+  let files = $state<number | null>(null);
+  $effect(() => {
+    const now = asking;
+    refusal = "";
+    files = null;
+    if (now !== null && (now.kind === "delete" || now.kind === "reset")) {
+      void projects.count(now.folder).then((count) => {
+        if (asking === now) files = count;
+      });
+    }
+  });
+
+  /** What can be done with a project, from its row: the Scratch project has its own. */
+  function actionsOf(project: ProjectInfo) {
+    const ask = (kind: Asking["kind"]) => () => (asking = { kind, folder: project.folder });
+    return project.folder === SCRATCH
+      ? [
+          { name: "Duplicate…", run: ask("duplicate") },
+          { name: "Export project…", run: () => void exported(project) },
+          { name: "Reset…", run: ask("reset") },
+        ]
+      : [
+          { name: "Rename…", run: ask("rename") },
+          { name: "Duplicate…", run: ask("duplicate") },
+          { name: "Export project…", run: () => void exported(project) },
+          { name: "Delete…", run: ask("delete") },
+        ];
+  }
+
+  /** The name a field first shows, all of it selected, ready to be typed over. */
+  function whole(node: HTMLInputElement): void {
+    answer = node.value;
+    node.focus();
+    node.select();
+  }
+
+  async function answered(event: SubmitEvent, project: ProjectInfo): Promise<void> {
+    event.preventDefault();
+    if (asking === null) return;
+    try {
+      if (asking.kind === "rename") {
+        const now = await projects.rename(project.folder, answer);
+        said = `${project.name} renamed to ${now.name}`;
+      } else {
+        const copy = await projects.duplicate(project.folder, answer);
+        onmade();
+        said = `${project.name} copied as ${copy.name}`;
+      }
+      asking = null;
+      await refresh();
+    } catch (error) {
+      refusal = error instanceof ProjectError ? error.message : String(error);
+    }
+  }
+
+  async function removed(project: ProjectInfo): Promise<void> {
+    try {
+      if (project.folder === SCRATCH) {
+        await projects.resetScratch();
+        said = "The Scratch project is as a first visit has it";
+      } else {
+        await projects.remove(project.folder);
+        said = `${project.name} deleted`;
+      }
+      asking = null;
+      await refresh();
+    } catch (error) {
+      refusal = error instanceof ProjectError ? error.message : String(error);
+    }
+  }
+
+  function leave(event: KeyboardEvent): void {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      asking = null;
+    }
+  }
+
+  function keep(node: HTMLButtonElement): void {
+    node.focus();
+  }
 
   /** Give a project to the computer as a zip, without opening it. */
   async function exported(info: ProjectInfo): Promise<void> {
@@ -215,11 +323,74 @@
             <span class="name">{project.name}</span>
             <small>in this browser · {when(project.opened, now)}</small>
           </button>
-          <RowMenu
-            label="Actions for {project.name}"
-            actions={[{ name: "Export project…", run: () => void exported(project) }]}
-          />
+          <RowMenu label="Actions for {project.name}" actions={actionsOf(project)} />
         </li>
+        {#if asking !== null && asking.folder === project.folder}
+          <li class="asked">
+            {#if asking.kind === "rename" || asking.kind === "duplicate"}
+              <form class="row" onsubmit={(event) => void answered(event, project)}>
+                <input
+                  value={asking.kind === "rename" ? project.name : `${project.name} copy`}
+                  use:whole
+                  aria-label={asking.kind === "rename"
+                    ? `The new name of ${project.name}`
+                    : `The name of the copy of ${project.name}`}
+                  autocomplete="off"
+                  maxlength="80"
+                  oninput={(event) => {
+                    answer = event.currentTarget.value;
+                    refusal = "";
+                  }}
+                  onkeydown={leave}
+                />
+                <button class="filled" type="submit"
+                  >{asking.kind === "rename" ? "Rename" : "Duplicate"}</button
+                >
+                <button type="button" class="plain" onclick={() => (asking = null)}>Cancel</button>
+              </form>
+            {:else}
+              <div
+                class="confirm"
+                role="group"
+                aria-label={asking.kind === "reset"
+                  ? "Reset the Scratch project?"
+                  : `Delete ${project.name}?`}
+              >
+                <p>
+                  {#if asking.kind === "reset"}
+                    Reset the Scratch project? What it holds{files === null
+                      ? ""
+                      : files === 1
+                        ? ", one file,"
+                        : `, ${files} files,`} is deleted, and its examples are put back as a first visit
+                    has them. It cannot be brought back.
+                  {:else}
+                    Delete {project.name}{files === null || files === 0
+                      ? ""
+                      : files === 1
+                        ? " and the file in it"
+                        : ` and the ${files} files in it`}? It cannot be brought back.
+                  {/if}
+                </p>
+                <div class="row">
+                  <button class="plain" onkeydown={leave} onclick={() => void exported(project)}
+                    >Export project… first</button
+                  >
+                  <button
+                    class="plain danger"
+                    onkeydown={leave}
+                    onclick={() => void removed(project)}
+                    >{asking.kind === "reset" ? "Reset" : "Delete"}</button
+                  >
+                  <button class="plain" use:keep onkeydown={leave} onclick={() => (asking = null)}
+                    >Keep</button
+                  >
+                </div>
+              </div>
+            {/if}
+            {#if refusal}<p class="problem" role="alert">{refusal}</p>{/if}
+          </li>
+        {/if}
       {:else}
         <li class="none">No project yet. Start with the Scratch project.</li>
       {/each}
@@ -314,6 +485,40 @@
     border-bottom: 1px solid var(--line);
     display: flex;
     gap: 8px;
+  }
+  .projects li.asked {
+    display: block;
+    padding: 10px 0 12px;
+  }
+  .asked .row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .asked input {
+    background: var(--window);
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
+    color: var(--ink);
+    flex: 1;
+    font: inherit;
+    font-size: 15px;
+    min-width: 0;
+    padding: 6px 10px;
+  }
+  .asked input:focus-visible {
+    border-color: var(--accent);
+    outline: 1px solid var(--accent);
+  }
+  .confirm p {
+    font-size: 15px;
+    line-height: 1.45;
+    margin: 0 0 8px;
+  }
+  .plain.danger {
+    color: var(--error);
+    font-weight: 600;
   }
   .projects li.none {
     border: 0;

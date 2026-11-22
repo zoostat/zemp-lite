@@ -110,7 +110,7 @@ test("a project's row of the start screen has a menu, by the mouse and by the ke
   // By the mouse.
   await press(more);
   const menu = page.getByRole("menu", { name: "Actions for Scratch" });
-  await expect(menu.getByRole("menuitem")).toHaveText(["Export project…"]);
+  await expect(menu.getByRole("menuitem")).toHaveText(["Duplicate…", "Export project…", "Reset…"]);
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     press(menu.getByRole("menuitem", { name: "Export project…" })),
@@ -125,11 +125,14 @@ test("a project's row of the start screen has a menu, by the mouse and by the ke
   // item in focus; Escape closes it and gives focus back; Enter on the item exports.
   await more.focus();
   await page.keyboard.press("Enter");
-  await expect(menu.getByRole("menuitem", { name: "Export project…" })).toBeFocused();
+  await expect(menu.getByRole("menuitem").first()).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(menu).toHaveCount(0);
   await expect(more).toBeFocused();
   await page.keyboard.press("Enter");
+  await expect(menu.getByRole("menuitem").first()).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(menu.getByRole("menuitem", { name: "Export project…" })).toBeFocused();
   const [again] = await Promise.all([page.waitForEvent("download"), page.keyboard.press("Enter")]);
   expect(again.suggestedFilename()).toBe("Scratch.zip");
   await expect(more).toBeFocused();

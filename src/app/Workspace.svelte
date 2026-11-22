@@ -5,7 +5,7 @@
   import { fixed } from "../project/files";
   import type { Keeping } from "../project/keeping";
   import { browserStorage } from "../theme/theme.svelte";
-  import type { Project } from "../project/projects";
+  import { SCRATCH, type Project } from "../project/projects";
   import { closePopOuts } from "../plots/popout";
   import type { TreeNode } from "../project/projects";
   import { codeLarger, codeSize, codeSmaller, codeUsual } from "../theme/codesize.svelte";
@@ -29,6 +29,7 @@
     language = null,
     keeping = "may-clear",
     onclose,
+    onask = () => {},
   }: {
     project: Project;
     engine: Engine;
@@ -36,6 +37,8 @@
     /** What the browser does with the projects, for the reminder to export. */
     keeping?: Keeping;
     onclose: () => void;
+    /** A question about this project, which the start screen asks in the project's row. */
+    onask?: (kind: "rename" | "duplicate" | "delete" | "reset") => void;
   } = $props();
 
   // One project to a window: this component is made anew for each project it shows.
@@ -73,6 +76,30 @@
   const commands = $derived<Command[]>([
     { name: "Run the script", hint: "⌘↵", run: () => void workspace.run() },
     { name: "Check the script", hint: "nothing is run", run: () => void workspace.check() },
+    // The project itself is renamed, copied and deleted on the start screen, in its own row:
+    // the project is closed first, what is typed being written.
+    ...(project.info.folder === SCRATCH
+      ? ([
+          [
+            "duplicate",
+            "Project: duplicate…",
+            "a project of your own name, with all this one holds",
+          ],
+          ["reset", "Project: reset…", "the Scratch project as a first visit has it"],
+        ] as const)
+      : ([
+          ["rename", "Project: rename…", "another name, typed on the start screen"],
+          ["duplicate", "Project: duplicate…", "a copy under another name"],
+          ["delete", "Project: delete…", "asked once, on the start screen"],
+        ] as const)
+    ).map(([kind, name, hint]) => ({
+      name,
+      hint,
+      run: () => {
+        closePopOuts();
+        void workspace.settle().then(() => onask(kind));
+      },
+    })),
     {
       name: "Project: export…",
       hint: "the whole project as a zip, saved to this computer",

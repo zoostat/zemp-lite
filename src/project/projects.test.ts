@@ -123,8 +123,9 @@ describe("the projects of a browser", () => {
   it("refuses a name already taken, no name, and a name too long", async () => {
     const { projects } = empty();
     await projects.create("Wages");
+    // The sentence names the project that is here, as it is written.
     await expect(projects.create("wages")).rejects.toThrow(
-      'A project called "wages" is already here. Choose another name.',
+      'A project called "Wages" is already here. Choose another name.',
     );
     await expect(projects.create("   ")).rejects.toThrow(ProjectError);
     await expect(projects.create("x".repeat(81))).rejects.toThrow("at most 80 characters");
@@ -203,6 +204,112 @@ describe("the projects of a browser", () => {
     expect(await projects.list()).toEqual([]);
     await projects.create("gone");
     expect((await projects.list())[0]!.opened).toBeNull();
+  });
+});
+
+describe("a project renamed, duplicated and deleted", () => {
+  it("renames by the line of the name in its manifest, and keeps its folder", async () => {
+    const { projects, root } = empty();
+    await projects.create("Wages");
+    const toml = new TextDecoder().decode((await root.read("projects/wages/zeff.toml"))!);
+    const renamed = await projects.rename("wages", "Returns to schooling");
+    expect(renamed).toMatchObject({ folder: "wages", name: "Returns to schooling" });
+    const now = new TextDecoder().decode((await root.read("projects/wages/zeff.toml"))!);
+    // Only the name's line differs, its comment still in its column.
+    expect(now.split("\n").slice(2)).toEqual(toml.split("\n").slice(2));
+    expect(now.split("\n")[1]).toBe('name = "Returns to schooling" # the project\'s name');
+    expect((await projects.list()).map((one) => one.name)).toEqual(["Returns to schooling"]);
+    expect((await projects.open("wages"))?.info.name).toBe("Returns to schooling");
+    // The old name is free again, and takes a folder of its own.
+    expect(await projects.create("Wages")).toMatchObject({ folder: "wages-2", name: "Wages" });
+  });
+
+  it("refuses a name another project has, whatever the capitals, no name, and the Scratch project's", async () => {
+    const { projects } = empty();
+    await projects.create("Wages");
+    await projects.create("Pay");
+    await expect(projects.rename("pay", "WAGES")).rejects.toThrow(
+      'A project called "Wages" is already here. Choose another name.',
+    );
+    await expect(projects.rename("pay", "  ")).rejects.toThrow("A project needs a name.");
+    await expect(projects.rename("pay", "scratch")).rejects.toThrow("the Scratch project's");
+    await expect(projects.rename("none", "x")).rejects.toThrow("That project is no longer here.");
+    // Its own name in other capitals is a rename.
+    expect((await projects.rename("pay", "PAY")).name).toBe("PAY");
+    await projects.scratch();
+    await expect(projects.rename(SCRATCH, "Mine")).rejects.toThrow(
+      "The Scratch project keeps its name",
+    );
+  });
+
+  it("duplicates a project with all it holds, under another name and in a folder of its own", async () => {
+    const { projects, root, clock } = empty();
+    await projects.create("Wages");
+    await root.write("projects/wages/data/pay.csv", bytes("id\n1\n"));
+    await root.write("projects/wages/.zemp/views.json", bytes("{}"));
+    await root.make("projects/wages/output");
+    clock.now = 7_000;
+    const copy = await projects.duplicate("wages", "Wages, second look");
+    expect(copy).toEqual({
+      folder: "wages-second-look",
+      name: "Wages, second look",
+      opened: null,
+      exported: null,
+      made: 7_000,
+    });
+    const text = async (path: string) => new TextDecoder().decode((await root.read(path))!);
+    expect(await text("projects/wages-second-look/data/pay.csv")).toBe("id\n1\n");
+    expect(await text("projects/wages-second-look/scripts/main.zeff")).toBe("// Wages\n");
+    expect(await text("projects/wages-second-look/.zemp/views.json")).toBe("{}");
+    expect(await root.kind("projects/wages-second-look/output")).toBe("folder");
+    expect(await text("projects/wages-second-look/zeff.toml")).toContain(
+      'name = "Wages, second look"',
+    );
+    // The original is as it was.
+    expect(await text("projects/wages/zeff.toml")).toContain('name = "Wages"');
+    await expect(projects.duplicate("wages", "wages")).rejects.toThrow("is already here");
+    await expect(projects.duplicate("none", "x")).rejects.toThrow("no longer here");
+    // The Scratch project becomes a named project by the same step.
+    await projects.scratch();
+    expect(await projects.duplicate(SCRATCH, "My returns")).toMatchObject({ folder: "my-returns" });
+    expect(await text("projects/my-returns/scripts/instruments.zeff")).toContain(
+      "Instrumental variables",
+    );
+  });
+
+  it("copies the whole project or none of it", async () => {
+    class Failing extends MemoryFolder {
+      override write(path: string, data: Uint8Array): Promise<void> {
+        return path === "projects/copy/scripts/main.zeff"
+          ? Promise.reject(new Error("the storage is full"))
+          : super.write(path, data);
+      }
+    }
+    const root = new Failing();
+    const projects = new Projects(root, kept(), () => 1_000);
+    await projects.create("Wages");
+    await expect(projects.duplicate("wages", "Copy")).rejects.toThrow("the storage is full");
+    expect(await root.kind("projects/copy")).toBeNull();
+    expect((await projects.list()).map((one) => one.name)).toEqual(["Wages"]);
+  });
+
+  it("counts a project's files, and puts the Scratch project back as a first visit has it", async () => {
+    const { projects, root } = empty();
+    await projects.scratch();
+    expect(await projects.count(SCRATCH)).toBe(4);
+    await root.write("projects/scratch/scripts/main.zeff", bytes("// mine\n"));
+    await root.write("projects/scratch/data/pay.csv", bytes("id\n1\n"));
+    await root.remove("projects/scratch/scripts/plots.zeff");
+    await root.write("projects/scratch/.zemp/views.json", bytes("{}"));
+    expect(await projects.count(SCRATCH)).toBe(4);
+    const fresh = await projects.resetScratch();
+    expect(fresh).toMatchObject({ folder: SCRATCH, name: "Scratch", opened: null, exported: null });
+    expect(await projects.count(SCRATCH)).toBe(4);
+    expect(await root.kind("projects/scratch/data/pay.csv")).toBeNull();
+    expect(await root.kind("projects/scratch/.zemp")).toBeNull();
+    const main = new TextDecoder().decode((await root.read("projects/scratch/scripts/main.zeff"))!);
+    expect(main).toContain("Returns to schooling");
+    expect(await root.kind("projects/scratch/scripts/plots.zeff")).toBe("file");
   });
 });
 

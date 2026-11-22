@@ -9,7 +9,7 @@
   import { browserStorage } from "../theme/theme.svelte";
   import Start from "./Start.svelte";
   import { ENGINE_SHA256, VERSION } from "./version";
-  import Welcome from "./Welcome.svelte";
+  import Welcome, { type Asking } from "./Welcome.svelte";
   import Workspace from "./Workspace.svelte";
 
   // Projects are kept in the browser's private file system; a browser that gives the page
@@ -95,7 +95,19 @@
   void follow();
 
   function open(folder: string): void {
+    asked = null;
     window.location.hash = `#/p/${encodeURIComponent(folder)}`;
+  }
+
+  /**
+   * A question about the project open, asked from ⌘K in it (to rename, duplicate, delete it):
+   * the project is closed and the start screen opens with the question in its row.
+   */
+  let asked = $state<Asking | null>(null);
+  function ask(kind: Asking["kind"]): void {
+    if (project === null) return;
+    asked = { kind, folder: project.info.folder };
+    window.location.hash = "";
   }
 </script>
 
@@ -105,7 +117,15 @@
   <p class="waiting" role="status">Opening…</p>
 {:else if project === null}
   {#key naming}
-    <Welcome {projects} {lasting} {keeping} {naming} onopen={open} onmade={() => void made()} />
+    <Welcome
+      {projects}
+      {lasting}
+      {keeping}
+      {naming}
+      ask={asked}
+      onopen={open}
+      onmade={() => void made()}
+    />
   {/key}
 {:else}
   {#key project.info.folder}
@@ -114,7 +134,11 @@
       {engine}
       {language}
       {keeping}
-      onclose={() => (window.location.hash = "")}
+      onask={ask}
+      onclose={() => {
+        asked = null;
+        window.location.hash = "";
+      }}
     />
   {/key}
 {/if}

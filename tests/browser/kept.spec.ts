@@ -38,7 +38,8 @@ test("a project is made, and is still there with its script after the page is re
   await press(page.getByRole("button", { name: "Unfold all", exact: true }));
   await expect.poll(() => printed(page)).toBe("kept\n");
 
-  // Back on the welcome screen it is listed, opened today; and its name is taken.
+  // Back on the welcome screen it is listed, opened today; and its name is taken, however the
+  // capitals are typed: the refusal names the project as it is written in the list.
   await press(page.getByRole("button", { name: "Projects" }));
   await expect(page).toHaveURL(/\/#?$/);
   const listed = page.getByRole("button", { name: /^Returns to schooling in this browser/ });
@@ -47,7 +48,7 @@ test("a project is made, and is still there with its script after the page is re
   await page.getByLabel("The name of the new project").fill("returns to schooling");
   await press(page.getByRole("button", { name: "Create" }));
   await expect(page.getByRole("alert")).toHaveText(
-    'A project called "returns to schooling" is already here. Choose another name.',
+    'A project called "Returns to schooling" is already here. Choose another name.',
   );
   await press(listed);
   await expect.poll(() => scriptText(page)).toBe('// Returns to schooling\nprint("kept")\n');

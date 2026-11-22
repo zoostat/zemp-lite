@@ -66,4 +66,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 8d `[function]`.** A folder's menu has **Rename…**, **Move to…**, **Duplicate** and **Delete…**; what it holds follows it, an open script among it; a deletion says how many files go. Found and mended: a row's menu near the window's foot ran off the screen; it now opens over its button where there is no room below.
 
-**Next.** Steps 8b to 8d seen green on GitHub; then step 9 `[function]`: a project renamed, duplicated and deleted, and the Scratch project's own items.
+**Done, step 9 `[function]`.** A project's row has **Rename…**, **Duplicate…**, **Export project…** and **Delete…**, each answered in the row, and the Scratch project **Duplicate…**, **Export project…** and **Reset…**; the same from ⌘K for the project open. A project's name and its folder now part company: names are refused by name, and folders are the first free.
+
+**Next.** Steps 8b to 9 seen green on GitHub; then step 10 `[function]`: the words, the keyboard and the address.
