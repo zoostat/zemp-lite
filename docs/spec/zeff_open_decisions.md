@@ -227,6 +227,9 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 206 | What `zeff audit` reads before run records have their schema | Recommended A: from 0.9.0 `zeff run` keeps a small record of each run in `.zeff/runs/` (the engine, the day, the script, the built-in functions it calls with the options written), in a provisional form that the versioned schema of 0.11.0 replaces; `zeff audit` reads it, and is answered by the newest engine installed, whose list knows the most | decided at 0.9.0, step 22, under the standing instruction (A); the owner's to overturn before 0.11.0, when the schema is fixed |
 | 207 | Which machines the archives of 0.9.0 are built for | Recommended A: the three that continuous integration builds and proves on every push, Linux x86-64 and ARM64 (static) and macOS on Apple silicon; Windows and Intel Macs when the tests run there, by 1.0.0 with the installers | decided at 0.9.0, step 23, under the standing instruction (A); the owner's to overturn at any release |
 | 208 | Zemp Lite 0.2.2: a project saved to the computer, and the actions on files, folders and projects | **Export project…** as a zip and the opening of one, persistent storage and the reminder to export (the parts of #117 that need no run record), and the actions a project lacked on screen: a script made, files and folders added, renamed, moved, duplicated, deleted and saved, a project renamed, duplicated and deleted; **Open folder…** placed with the 0.5 desktop beta | decided by the owner on 22 November 2026 ("Yes, into 0.2.2"; "Add file actions, folder actions, project actions"), entered on his word in the Zeff session the same day |
+| 209 | What the Variables pane shows for each kind of variable, beyond a number, a category and a date (Zemp) | Recommended A: long text shown by its length (a histogram of `n_chars`), its empty and missing rows, five values in full and the values that repeat; text of few values counted as a category is, with a line naming `category()`; a variable whose every value differs said to look like an identifier, with no chart; an ordered category in its levels' order with the cumulative share and the median level; a number on an interval scale as any number, with its unit; an opaque column counted and its first values shown as printed; every figure the engine's | open; raised by the owner on 23 November 2026; due at the plan of Zemp 0.3, on Zeff 0.9.0 |
+| 210 | Symbolic data: interval-, set-, histogram- and distribution-valued variables (Billard and Diday) | Recommended A: a package after 1.0 whose column types carry symbolic values through the interface of section 4.3, rule 1 (intervals, sets of numbers and of categories, histograms, quantiles and distributions, modal categories), made first by aggregating classical rows, with its descriptive statistics, regression, clustering and principal components; nothing before 1.0 | open; raised by the owner on 23 November 2026; due when the roadmap after 1.0 is drawn, at 1.0.0 |
+| 211 | The Help place redesigned: a home page of methods, a page for each method, moving about, and search as one types (Zemp) | Recommended A: in two stages. Stage 1 (Zemp alone, on the engine it has): **Home**, **Back** and **Forward** with a trail of where one is, the left pane listing the pages around the one open, and search that suggests from the second character (names, titles, R and Stata names, codes). Stage 2 (the engine and Zemp): a methods index held in the engine, each method with a few sentences, a minimal example on a shipped dataset and the output the engine printed, checked at every build; the home page lists the methods by area, as a statistics package's features page does | the design decided on 23 November 2026 (the owner, on the mockup: "Yes as drawn, except …"): Home is the **Index of methods**, the left pane **Topics** with five sections (methods, the language, packages, errors and warnings, using Zemp Lite), a page for each package, search in the bar's field; stage 1 placed at Zemp Lite 0.2.3, on Zeff 0.8.0, by the owner on 23 November 2026 ("Yes, enter 0.2.3"), with Home an **Index of functions** until the methods arrive; stage 2 recommended at Zeff 0.10.0, shown by Zemp 0.4, to be put to the owner at the opening of Zeff 0.10.0 |
 | 204 | `curve`: `type:` required, how the result is read, weights | Recommended A for each: `type:` has no default; the area by `statistic()`, the points by `estimates()`, the figure by `plot()`; rows counted by their weights, frequency or sampling | decided at 0.9.0, step 14, under the standing instruction (A); the owner's to overturn before 1.0 |
 | 203 | One layout of three panes on every page (Zemp Lite) | Every place (Script, Data, Plots, Help) has a left pane, the place in the middle and a right pane, each pane opened and closed by its own link; the Panes layout, the Margin link and the Objects panel are removed; Run unfolds every output; revises #174 and #176 (R2) | decided 21 November 2026 (the owner's ruling, given in the Zemp Lite session, passed on in the shared notes and confirmed by him in the Zeff session on 22 November 2026); Zemp Lite 0.2.1, on Zeff 0.8.0 |
 | 202 | `margins`: the average under weights, the call with no variable, the reference distribution, the printed table, a category under `type: mem` | Recommended A for each: the average weighted by the fit's weights; with no variable named, the adjusted prediction; Student's t on the fit's degrees of freedom after `reg`; the table of step 11a; a category held at the shares of its levels | (a), (c) and (d) decided at 0.9.0, step 11a, under the standing instruction (A), (d) shown to the owner; (b) and (e) built at step 11b (22 November 2026); the owner's to overturn before 1.0 |
@@ -1431,6 +1434,8 @@ Raised on 6 November 2026. Catalogue row 195 gives `fit.posthoc(method: tukey | 
 *Recommendation.* A, in the first release after 0.7.0 with room. Deadline: 0.9.0, so that the word is settled well before the names freeze.
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: `games_howell` joins `method:` of `posthoc`, the default staying `tukey`; built at step 29.
+
+**Status (23 November 2026).** Built at step 29 of Zeff 0.9.0, as decided. `method: games_howell` follows the one-way form of `anova` and takes each group's own variance whichever F was computed; after an `anova` of a formula, whose means have one residual variance, it is refused in words. The note that `tukey` prints after Welch's `anova` now names it. The reference is the formula in base R, checked against `rstatix::games_howell_test` where that package is installed; the package is not added to the reference library. Deadline for the owner to overturn: 1.0, when the names freeze.
 
 ### 86. Folding, snippets and the statement ranges behind **Run** in the language server
 
@@ -3173,6 +3178,8 @@ Raised on 16 November 2026 at step 8o of release 0.8.0. That step makes a note t
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: a warning raised word for word in several passes of one loop, or for several items of `map`, `filter` or `reduce`, is said once with the count of passes, never across statements; built at step 30, listed in the notes as a change of printed output.
 
+**Status (23 November 2026).** Built at step 30 of Zeff 0.9.0, as decided: `for i in 1..1000 { let m = d.mean(x) }` prints `warning[W0201]: 1 row with NA in x was skipped; the same for each of 1,000 passes`. A warning whose words differ between passes is not merged; W1006 keeps its own words; to a pragma and to `--deny-warnings` a counted warning is one. Deadline for the owner to overturn: 1.0.
+
 ### 150. The small-sample form of the two-stage standard errors, and Stata's large-sample default
 
 Raised on 16 November 2026 at step 10 of release 0.8.0. The ruling of the release gives two-stage least squares the standard errors of the variance layer unchanged, with the degrees of freedom of `reg`: the classical variance divides the residual sum of squares by N − k, the robust one carries N/(N − k), the clustered one G/(G − 1) · (N − 1)/(N − k), and the table is a t table. R's `ivreg` and fixest do the same, and so does Stata's `ivregress 2sls` with its option `small`. Stata's default, without `small`, divides by N, carries no small-sample factor in the robust form, and prints z statistics: its standard errors are those of Zeff times the square root of (N − k)/N under classical and robust errors, a difference of about one part in a thousand on Card's data (N = 3,010, k = 7) and a visible one in a small sample. The owner's rule of decisions 98 and 99 is that every method R or Stata offers for a procedure is an option in Zeff; his instruction of 11 November 2026 is that nothing is added before 1.0 unless it is necessary, and his decision on question 3 of #99 placed the other alternatives for instrumental variables (LIML, GMM, the conditional likelihood ratio test) after 1.0.
@@ -3397,6 +3404,9 @@ Raised on 19 November 2026 by the review against R. Inside `add`, `len(job)` giv
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A with the name `n_chars(s)` in `text`, the length of each value in code points, `NA` for `NA`, and a note when `len` of a column is spread over the rows of `add`; built at step 31 with its catalogue row.
 
+**Status (23 November 2026).** Built at step 31a of Zeff 0.9.0, as decided: `n_chars(s)` in `text`, held to R's `nchar(type = "chars")`; `add` notes `len` of a text variable written as a whole definition, and names `n_chars`. Catalogue row 698. Deadline for the owner to overturn the name: 1.0.
+
+
 ### 166. A row-wise count of missing values
 
 Raised on 19 November 2026 by the review against R. `n_missing([x1, x2, x3])` inside `add` counts the three columns as the items of a list and gives 0 on every row. The count of missing values across variables in each row, R's `rowSums(is.na(...))` and Stata's `egen rowmiss()`, cannot be written; step 20j makes a list of columns an error.
@@ -3409,6 +3419,9 @@ Raised on 19 November 2026 by the review against R. `n_missing([x1, x2, x3])` in
 **Recommended: A.** Deadline 0.9.0.
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: `row(vars, stat: n_missing)`; built at step 31.
+
+**Status (23 November 2026).** Built at step 31c of Zeff 0.9.0, as decided: `row(vars, stat: n_missing)`, an Int in every row, for variables of any type, held exactly to R's `rowSums(is.na())`. Catalogue row 136 has the wider usage. Open beside it, for the owner: whether the number of values present (Stata's `egen rownonmiss()`) should be a word of `stat:` too. Deadline for the owner to overturn: 1.0.
+
 
 ### 167. A row number
 
@@ -3423,6 +3436,9 @@ Raised on 19 November 2026 by the review against R. `add(id = seq(1, n()))` is r
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A with the name `row_number()` in `data`, within each group under `by:`; built at step 31 with its catalogue row.
 
+**Status (23 November 2026).** Built at step 31b of Zeff 0.9.0, as decided: `row_number()` in `data`, within each group under `by:`, in the order the rows stand; it stands in `add`, `update` and `where`. Held exactly to base R. Catalogue row 699. Deadline for the owner to overturn the name: 1.0.
+
+
 ### 168. One value out of a column
 
 Raised on 19 November 2026 by the review against R. `first(col)`, `last(col)` and `col[1]` are refused for a column, and `to(col, List)` converts each value and gives a Column<List>. One prediction had to be read as `frame(p = m.predict(newdata: b.head(1))).mean(p)`.
@@ -3436,6 +3452,9 @@ Raised on 19 November 2026 by the review against R. `first(col)`, `last(col)` an
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: `first`, `last` and `x[i]` take a column, and `to(column, List)` gives the List of its values; built at step 32.
 
+**Status (23 November 2026).** Built at step 32a of Zeff 0.9.0, as decided: `x[i]`, `first(x)` and `last(x)` take a column, and `to(x, List)` gives the list of its values. A range of rows is not taken from a column, which the message says with the ways to get it. Deadline for the owner to overturn: 1.0.
+
+
 ### 169. Widening a guessed Int to Float on import
 
 Raised on 19 November 2026 by the review against R. `import` guesses each type from the first 1,000 rows and stops when a later value does not fit (Z0606): the bank-marketing file stops at row 7,765, where `nr.employed` holds 5228.1. The message names the fix, but widening Int to Float loses nothing, and R's `read.csv` reads the file as it is.
@@ -3448,6 +3467,9 @@ Raised on 19 November 2026 by the review against R. `import` guesses each type f
 **Recommended: A.** Deadline 0.9.0.
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: a later value with a decimal widens a guessed Int column to Float with a note naming the row; section 6.1's rule is amended at step 32 and logged.
+
+**Status (23 November 2026).** Built at step 32b of Zeff 0.9.0, as decided: a later decimal widens a guessed Int column to Float with a note naming the row; text in a numeric column, a value that is not a date in a Date column, and a decimal in a column declared `Int` stop the import. Sections 4.1, 5.6 and 6.1 of the Language Reference are amended and logged. Deadline for the owner to overturn: 1.0.
+
 
 ### 170. Six smaller refusals with workarounds
 
@@ -3465,6 +3487,9 @@ Raised on 19 November 2026 by the review against R. Each has a workaround; toget
 Deadline 0.9.0.
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Each item as the table recommends; built at step 33.
+
+**Status (23 November 2026).** Built at step 33 of Zeff 0.9.0, each item as the table recommends. Two readings were taken on the way, the owner's to overturn: the frame of `duplicates` is given by `to(t, Frame)`, the conversion, and not by a new function; and `filter` goes over a list with a failed value under the same test by `is` as `map`, so that `filter(fits, fn(f) !f.is(Failed))` keeps the fits that succeeded. Deadline for the owner to overturn: 1.0.
+
 
 ### 171. Six printed layouts the review found
 
@@ -3633,6 +3658,8 @@ Raised on 16 November 2026. A long script has no visible structure: nothing to o
 
 **In Zemp Lite 0.2.1 (21 November 2026, the owner's ruling; #203).** The outline and **Run section** come at Zemp Lite 0.2.1, on Zeff 0.8.0, in the interface's own reading of the comments `// # Title` and `// ## Title`; the interface takes the engine's sections (step 28 of Zeff 0.9.0) once Zemp moves to 0.9.0.
 
+**Status (22 November 2026).** Built at step 28 of Zeff 0.9.0. A heading is a `//` comment alone on its line, of one or two `#`, a space and a title, standing between two statements of the script; a section runs to the next heading of its level or above. The language server gives the sections as the document's outline (`textDocument/documentSymbol`, a subsection inside its section) and folds each; the formatter keeps every heading as written, and a formatted script has the sections it had. The sample script's headings are in the chosen form, and section 3 of the Language Reference and section 12 of the Engine and Project Specification say what a section is (`docs/spec_changes.md`). The engine's reading counts a heading by where it stands, between two statements, where Zemp Lite 0.2.1's own reading asks for the first column; they agree on every formatted script, and Zemp takes the engine's when it moves to 0.9.0.
+
 ### 179. The last run's output shown when a project is opened
 
 Raised on 16 November 2026. In the 0.1 prototype a reloaded project shows the script with no output until Run is pressed; a notebook keeps its outputs in the file.
@@ -3698,6 +3725,8 @@ Raised on 18 November 2026. Since Zeff 0.7.0 an error raised inside a function n
 *Recommendation.* A, at Zemp's 0.2 alpha, beside the list of what the run said. Until the engine gives the pass, the trail shows the chain without it. Deadline: Zemp 0.2 alpha. (R14 of the margin editor's document.)
 
 **The owner's answer (21 November 2026, given in the Zemp Lite session at step 1 of its release 0.2 and passed on in the shared notes; entered from a Zeff session, which alone edits this register).** His words to the seventeen questions of that checklist, each put with a recommendation: "Go, as recommended." Option A (R14), at the Zemp 0.2 alpha; the pass is added to the trail when the engine gives it (C22, placed at Zeff 0.9.0, step 27).
+
+**Status (22 November 2026).** What the trail needs of the engine is built at step 27 of Zeff 0.9.0 (C22 of #175): the record of the error that stopped a run lists each link of the chain as fields, a call with what it was given and where it was called, a pass of a loop with its number, the number of passes and what the loop variable held; the statement that stopped the run carries the record in `zeff run --format json` and in the outcome of the browser build. The printed message is unchanged. It reaches Zemp Lite when Zemp moves to an engine of 0.9.0.
 
 ### 184. Searching the passes of a block, and drawing a field across them
 
@@ -3906,6 +3935,8 @@ What an interface needs: the browser build keeping the plots of a run as it keep
 *Recommendation.* A, since the alpha is the first thing outside readers see and its Plots place is part of the adopted editor (#174). The placing is a priority and the owner's. Deadline: the opening of Zeff 0.9.0.
 
 **The owner's decision (21 November 2026, at the opening of release 0.9.0).** The owner said "go" to the checklist of `docs/releases/0.9.0.md` without changing its answers, so its recommendation is taken under his standing instruction of 12 November 2026, his to overturn. Option A: an engine step at 0.9.0 (step 25) by which the browser build keeps the plots of a run, lays one out at a size and theme without a new run, and hands over the scene (C16 of #175); the owner's priority, as recommended.
+
+**Status (22 November 2026, release 0.9.0, step 25).** Built as decided. The browser build keeps each plot a top-level statement of a run makes and lists them in the run's outcome (`plots`: number, name, line, kind, theme); the message `plot` lays one out on a page of a width and a height in points, under its own theme or `journal`, `minimal` or `slide`, and answers with the SVG, with no new run; the message `scene` gives the engine's JSON of its scene. At the points of a page `export` writes, the SVG is the same byte for byte, so the work-round of an added `export` is no longer needed. A file of the project is read back (`file`). Not built with it: the language services through the worker. A redraw takes under 16 ms up to about 20,000 points and 65 ms at 100,000 (`docs/decisions.md` of this day).
 
 ### 198. The small-sample factor of robust and clustered errors on a likelihood fit
 
@@ -4167,4 +4198,125 @@ No action writes a statement into a script, and renaming or moving a file rewrit
 *Still to be put to the owner at the plan of 0.2.2,* each with the Zemp Lite session's recommendation; none changes the row. How a deletion is confirmed and whether it can be undone (recommended: asked once, naming what goes and how many files, and saying it cannot be brought back, since the browser's storage has no bin; the deletion of a project offers **Export project…** first). Whether `scripts/main.zeff`, which the engine and the app open by name, may be renamed or deleted (recommended: not). Moving a file by dragging its row (recommended: left out of 0.2.2; **Move to…** in the row's menu does it, and is reached by the keyboard).
 
 **Status (22 November 2026).** Decided; nothing in Zeff waits on it. The Zemp Specification is amended with this entry (section 15: a row for 0.2.2 after that of 0.2.1, and **Open folder…** in the row of the 0.5 desktop beta), and #117 says which of its parts are built at 0.2.2; logged in `docs/spec_changes.md`.
+
+### 209. What the Variables pane shows for each kind of variable (Zemp)
+
+Raised by the owner on 23 November 2026 in a Zeff session, from the hosted Zemp Lite: when a variable is chosen in the Data place, the right chart should be shown for it, a histogram or a bar chart; what then belongs in the pane for the other kinds, such as a column of customer reviews, a paragraph to a row? Recorded on his word in that session ("Yes, record both"). Nothing is decided and nothing is built.
+
+*What the pane shows now* (Zemp Lite 0.2.1, #203, by the owner's answer of 22 November 2026; Zemp Lite's `docs/decisions.md` of that day). Every variable: its label, type, the number of distinct values, and the rows without a value with their share. A number: a histogram, and N, mean, sd, min, the quartiles and the median, max. A variable the engine counts value by value in its column's header (a category, a truth value, a text or a whole number of few values): a bar chart and each value's count and share. A date or a time of many values: a histogram and its earliest and latest. Every figure is a cell of what the engine prints; the interface computes and formats none. A text of many values, such as a review, gets the two lines every variable has and nothing else: no chart and no figure of its own.
+
+*Recommendation (A), kind by kind.* The rule of 0.2.1 holds throughout: every figure is the engine's print, and a figure the engine does not print is left out until it does, never computed by the interface.
+
+| Kind | Chart | Figures | Asked of the engine |
+| --- | --- | --- | --- |
+| Long text (many values: reviews, comments, open answers) | A histogram of the lengths, in characters | The rows with text, the rows of empty text (`""`) and the rows missing, each counted, since an empty answer and a missing one are not the same; the shortest, median and longest length; five values in full, the first five rows, wrapped; any value that repeats, with its count (a default answer, or text pasted again) | `n_chars` (0.9.0, step 31a), with `summary` and `quantile` of it; the empty rows counted as the missing ones are; `head(5)`; `duplicates` |
+| Text of few values (a country code kept as text) | A bar chart, as now | As now, and one line: "Text of few values: `category()` would make it a category" (text never becomes a category silently, Language Reference, section 4) | As now |
+| A variable whose every value differs | For text, no chart: "Every value is different: this looks like an identifier", with its first and last values in the order of the rows | For a whole number, the histogram and statistics stay (incomes in whole rupees may all differ), with the same line under them | `n_distinct` against the rows with a value, as now |
+| An ordered category (a Likert item, a level of education) | Bars in the order of the levels, never by count | Each level's count and share, then the cumulative share and the median level | `tabulate`; the cumulative share and the median of an ordered category are not printed by the engine of 0.9.0 (Stata's `tabulate` prints the cumulative column), so until an engine release adds them the pane shows the levels in order only |
+| A number on an interval scale (a temperature in °C, a test score, a sum of Likert items) | A histogram, as any number | As any number: every figure shown is right on an interval scale; what is not (a ratio of two values, the coefficient of variation) the pane does not show | As now; the column's `unit` and `measure` (section 4.3, rule 3) shown under its label where the data carries them |
+| An opaque column (a list, a record, bytes, a file, a geometry, a duration, a period) | None | The rows with a value and without; the first five values as the engine prints them (`<list 3>`, `<file scans/0142.jpg>`) | `head(5)` |
+
+| Option | What it is | What it costs and buys |
+| --- | --- | --- |
+| A | The table above, at Zemp 0.3, on Zeff 0.9.0 | Each kind says something true of itself; one engine function new to Zemp (`n_chars`) and two already there (`head`, `duplicates`); the ordered category waits in part for the engine |
+| B | Long text only (the first row of the table) at Zemp 0.3; the rest when asked | The gap the owner met closed first, with less to test |
+| C | Nothing until the desktop beta | The hosted alpha keeps a pane that says almost nothing of a text |
+
+*Recommendation.* A. Word counts and word frequencies are text analysis, which belongs to a later package, and are left out.
+
+*Deadline.* The plan of Zemp 0.3, which opens on the owner's word after Zeff 0.9.0 is released; the release plan's row of 0.3 (the Zemp Specification, section 15) is amended only when the owner decides.
+
+### 210. Symbolic data: interval-, set-, histogram- and distribution-valued variables
+
+Raised by the owner on 23 November 2026 in a Zeff session, with the taxonomy of Billard and Diday (*Symbolic Data Analysis*, 2006), after asking what the Variables pane should show for interval data (#209). Recorded on his word in that session ("Yes, record both"). Symbolic data is named nowhere in either volume, the catalogue or the decisions; nothing is decided.
+
+*What symbolic data is.* In a classical frame a cell holds one value. In a symbolic one a cell holds a description of many: an interval (a day's temperature, [18, 31]), a finite set of numbers ({0, 1, 2, 3} children per household in a region), a histogram ({[0, 10): 0.2, [10, 20): 0.5, [20, 30]: 0.3}), a vector of quantiles or a boxplot's five numbers, a whole distribution or density; and among categorical variables a set of categories ({Hindi, Bengali, English}), categories with weights or probabilities (modal, bar-chart-valued: {Hindi: 0.6, Bengali: 0.3, English: 0.1}), or with capacities or belief functions in place of probabilities. The classical single value is the special case. Such cells arise mostly by aggregation: many classical rows (a station's hourly readings, a region's households) summarised to one row each, keeping their spread rather than their mean alone.
+
+*Where Zeff stands.* Zeff 1.0 computes on seven column types, one value to a cell (Language Reference, section 4.3). Some symbolic values can be stored now in the opaque types: an interval as a `Column<Record>` of its two ends, a set or a modal value as a `Column<List<T>>` or a list of records. Zeff keeps such a column through the row verbs and prints it, but no function computes on it. R offers symbolic data analysis through packages such as RSDA and symbolicDA; Stata has none.
+
+| Option | What it is | What it costs and buys |
+| --- | --- | --- |
+| A | A package after 1.0 whose column types carry symbolic values through the one interface of section 4.3, rule 1 (each with its Arrow storage and extension name, so Parquet and Arrow files carry them), with no change to the language: intervals, sets of numbers, histograms, quantiles and distributions, sets of categories and modal categories. It starts with the aggregation that makes them from classical rows, then the descriptive statistics (the symbolic mean and variance of Bertrand and Goupil), regression on intervals (the centre method of Billard and Diday; the centre-and-range method of Lima Neto and De Carvalho), principal components (the centres and vertices methods) and clustering. Capacity- and belief-valued modal variables last, or not at all | The methods R offers, as decisions 98 and 99 ask; section 4.3 was written so that types arrive this way. The cost is a package of its own and a reference held to R packages not yet in the reference library |
+| B | Store only: functions that build and take apart symbolic values in the opaque types (an interval as a record of two ends), no methods | Data of this kind can be carried and exported; nothing can be analysed |
+| C | Not in Zeff; a user aggregates to classical summaries (lower and upper ends as two Float columns) and analyses those | Nothing to build; the methods that treat an interval as one value are out of reach |
+
+*How Zemp would show such a variable* (the Variables pane of #209, once the types exist). Each kind has rules of its own that a classical variable has not (an interval's lower end not above its upper, weights adding to one, quantiles in order), and the pane counts the rows that break them.
+
+| Kind | Chart | Figures | Rows that break its rules |
+| --- | --- | --- | --- |
+| Set of numbers | Bars: how often each value appears across the cells | The size of the sets (least, median, greatest); the distinct values over all cells | Empty sets |
+| Interval | The intervals as horizontal segments ordered by their midpoints (the first 50); for more rows, the histogram that spreads each interval evenly over its range | Symbolic mean and variance (Bertrand and Goupil); the mean width; the lowest lower end and the highest upper end | A lower end above the upper; intervals of no width counted |
+| Histogram | The average of the cells' histograms | Symbolic mean and variance; the number of bins in a cell | Weights not adding to one; overlapping bins |
+| Distribution | A sample of the densities drawn over one another | The mean and the spread of the cells' means; the mean of their standard deviations | A parameter out of its range (a standard deviation not above 0) |
+| Quantiles or boxplot | A row of small boxplots (the first 20) | The median of the medians; the least minimum and the greatest maximum | Quantiles out of order |
+| Set of categories | Bars: the share of cells holding each category (the shares may add to more than 100 per cent, and the pane says so) | The size of the sets; the commonest combination | Empty sets |
+| Modal categories | Bars: each category's average weight; the first few cells as stacked bars | The number of categories in a cell | Weights not adding to one |
+| Capacity or belief | Paired bars for each category: the average belief and the average plausibility | As for modal categories | A belief above its plausibility |
+
+*Recommendation.* A, after 1.0; nothing before. Until then a user can carry an interval as two Float columns, which every method of 1.0 takes.
+
+*Deadline.* 1.0.0, when the roadmap after 1.0 is drawn: only the release of the package is decided then, and its column types, functions and options are put to the owner when that release opens.
+
+### 211. The Help place redesigned: a home page of methods, a page for each method, moving about, and search as one types (Zemp)
+
+Raised by the owner on 23 November 2026 in a Zeff session: the Help place of Zemp Lite should have a **Home** button and **Next** and **Previous** buttons, or something better; Home is the landing page of Help and lists the statistical methods, as a statistics package's features page lists its features by area; each method opens on a click and shows a minimal example and its output; and search shows the matching items from the second letter typed. Recorded on his word in that session ("Write this plan properly"). Nothing is decided and nothing is built.
+
+*What the Help place is now* (Zemp Lite 0.2.1; #74, #203, and the owner's choice of 22 November 2026 to set pages in type). The middle shows one page: a function's page as `zeff help` prints it, or a code's as `zeff explain` does, set in type, every word the engine's. The left pane is the page's outline; the right pane its related functions, each with its one line, and a field that opens a page by its exact name. A page is reached from the script (F1 on a name, **Explain** on a warning, ⌘K) or from another page's links. There is no page to start from, no way back to the page before, and no search: a reader must know a function's name to find it.
+
+**The plan, in five parts.**
+
+*1. Home, the landing page.* Opened by a **Home** button at the head of the Help place, and shown whenever Help is opened with no page asked for. It lists what Zeff does by area, each area a heading with its methods under it as links, in two or three columns as space allows. The areas are of the analyst's work, not of the engine's packages; for the engine of 0.9.0 they would be about these (names and order the owner's, on a mockup): Linear regression; Panel data and fixed effects; Instrumental variables; Binary outcomes; Effects and predictions after a fit; Tests of means, proportions and variances; Nonparametric tests; Analysis of variance and comparisons; Association and tables; Distributions and random numbers; Graphics; Tables of results and export; Data: import, cleaning, reshaping and joins; Dates and text; Scripts, functions and reproducibility. A method is what an analyst asks for, which is often an option rather than a function: "clustered standard errors" is `reg(..., cluster:)`, "Welch's test" is `t_test(..., var_equal: false)`. At the head of Home: the search field (part 4), and the engine's version, so a reader knows what the list is of. Home lists only what the engine in use can run; nothing of a later release.
+
+*2. A page for each method.* Short, and in the same type as the function pages: the method's name; two or three sentences in Zeff's own words on what it is and when to use it; the minimal example, a few statements on a shipped dataset; the output exactly as the engine printed it; the function and options it uses, each a link to the full function page; its R and Stata counterparts, so a reader coming from either recognises it; and its neighbours in the area. Two buttons under the example: **Copy** and **Open in a new script**, which makes a script in the Scratch project holding the example and runs it, so the reader can change it. The output shown is the one kept with the example, not a run made on opening, so the page shows at once and is the same for every reader; the engine's tests hold every kept output to what the engine prints, at every build, as they hold the examples of the function pages.
+
+*3. Moving about: Home, Back and Forward, and a trail, in place of Next and Previous.* Next and Previous buttons suppose that a reader goes through the pages in one order, as through a book; a help system is read by jumping (from a method to its function, to a related function, and back). So:
+- **Back** and **Forward** buttons beside **Home**, which go through the pages this reader opened, as a web browser's do; the mouse's own back and forward buttons and ⌘[ and ⌘] do the same.
+- A trail at the head of each page saying where it stands, each step a link: *Help › Panel data and fixed effects › Clustered standard errors*, and for a function page *Help › Linear regression › `reg`*.
+- The left pane, which now gives the open page's outline, lists the area's methods with the open one marked, and the outline under it; so the previous and the next method are always in view and one click away, and a reader sees where the page sits.
+- At the foot of a method page, the previous and the next method of its area, by name, for a reader who does want to read an area through.
+
+*4. Search as one types.* One field, on Home and at the head of every page; `/` puts the cursor in it. From the second character typed, a list opens under the field with up to eight matches, refreshed at each key; arrows move through it, Enter opens one, Esc closes it. Each match shows its kind (method, function, code, dataset), its name and its one line. It matches, best first: a name typed exactly; a name beginning with what is typed; a word of a method's name or of a page's one line beginning with it; an R or a Stata name (`lm`, `xtreg`, `t.test`, `logit`, so a reader finds `reg`, `glm` or `t_test` by the name they know); a code (`Z0402`); and from the fourth character a name one letter away (a slip of the keyboard). Nothing found gives a sentence and the nearest names, never an empty box. Search runs in the browser on the list the engine gives, with no request to any server.
+
+*5. Where the words come from.* The Help place keeps the rule it has: every word and number on its pages is the engine's. The function pages and the codes are the engine's already. The methods index of parts 1 and 2 would be new data held in the engine beside the help pages: for each method its area, its name, its sentences, the function and options it uses, its R and Stata counterparts, its example and the example's kept output. Held there, the same index serves `zeff help` on the command line (with no name, it would list the areas and their methods), the books, and the website at 1.0; its examples are run and checked like every other example. Its sentences follow the own-words rule (never copied from another package's documentation) and the help contract of 0.8.0 (#103).
+
+**Options.**
+
+| Option | What it is | What it costs and buys |
+| --- | --- | --- |
+| A | Two stages. Stage 1, in Zemp alone on the engine it already has: **Home**, **Back**, **Forward**, the trail, the left pane of part 3, search over the function pages, the codes and the R and Stata names that the pages' *Coming from R or Stata* sections give; Home lists the functions by the catalogue's groups until stage 2. Stage 2: the methods index in the engine, its examples checked, at a Zeff release; then Home and the method pages in Zemp at the Zemp release on that engine | Moving about and search, the larger part of the daily use, come without waiting for the engine; the methods, which are new writing (about 120 to 150 methods at 0.9.0, each with sentences, an example and its output), come once and serve the command line, the books and the website as well |
+| B | All at once in Zemp, the methods index kept in Zemp Lite's own files | Sooner; but the examples' outputs are not held by the engine's tests, the index is written again for the command line and the website, and the rule that every word is the engine's is broken |
+| C | Stage 1 only; no methods index | Little to build; the reader who does not know which function does what is not helped |
+
+*Recommendation.* A: stage 1 in the plan of Zemp 0.3 (it needs no engine release, the Zemp Specification, section 15); stage 2 put to the owner when Zeff 0.10.0 is planned, with Zemp 0.4 showing it on that engine. The release rows are amended only when the owner decides.
+
+**Questions only the owner can answer** (each with the recommendation).
+1. *What Home lists:* methods by area (recommended, as the features page of a statistics package and as part 1 says), or functions by package.
+2. *The areas:* their names and their order, on a mockup of Home drawn from the engine of 0.9.0.
+3. *Methods of later releases:* left out (recommended: a reader of Zemp Lite runs one engine, and a link to what it cannot run disappoints), or shown greyed with the release that brings them.
+4. *Levels:* a filter of Basic, Advanced and Research on Home, from the models plan's levels; recommended later, once there are enough methods for it to help.
+5. *Next and Previous:* replaced by Back, Forward, the trail and the left pane, with the previous and next method at a page's foot (recommended), or kept as buttons at the head of a page.
+6. *An example's output:* kept with the example and checked at every build (recommended), or run when the page opens.
+
+*Deadline.* Stage 1: the plan of Zemp 0.3. Stage 2: the opening of Zeff 0.10.0. A mockup of Home and of a method page goes to the owner first, in the look of the design guide.
+
+**Decided (23 November 2026).** A mockup of Home, of search and of a method page was drawn in the look of the design guide (`~/dev/handbook/zemp-lite-help-redesign-mockup.html`, outside the repositories; its method page shows the engine's own print of its example). The owner answered: "Yes as drawn, except change "What Zeff does" with something else which is direct lick Index of methods or something else. after no method will be shown which is planned but not ready. search bar was already there, use it. left pane can be collapsed, button name Topics instead Areas. Add topics sections like packages, Errors/warning, etc". So, with the second draft drawn to it:
+
+1. Home is an index of methods by topic, titled **Index of methods**; the topics, their names and their order as drawn (15 at the engine of 0.9.0: Linear regression; Panel data and fixed effects; Instrumental variables; Binary outcomes; Effects after a fit; Means, proportions and variances; Rank-based tests; Analysis of variance; Tables and association; Describing data; Distributions; Graphics; Tables of results; Data management; Dates and text). "Area" is called "topic" throughout.
+2. A method planned for a later release is not shown until the release that brings it (question 3).
+3. Search is the field already in the Help place's bar, which gains the suggestions of part 4; Home has no second search field.
+4. The left pane is called **Topics**, is opened and closed by its link and its ×, as every pane is (#203), and holds sections that fold: **Methods** (the topics, each with its count; a click scrolls the index to it), **Packages** (each with its functions), **Errors and warnings** (the codes by family, as `zeff explain` lists them), **Datasets**, and **Every function, A to Z**. On a method's page it holds the topic's methods with the open one marked, the page's sections, and **‹ All topics**.
+5. As drawn otherwise: Back, Forward and Home with the trail, and the previous and next method at a page's foot, in place of Next and Previous buttons (question 5); the small green *new* beside what the release added; no filter by level for now (question 4); an example's output kept with it and checked at every build (question 6); the method page as drawn (sentences, example with **Copy** and **Open in a new script**, output, what it uses, R and Stata counterparts, related functions, methods and codes in the right pane).
+
+**Changed the same day (23 November 2026), on the second draft.** The owner: "every function A to Z and datasets both can be accessed from packages. clicking package will show list of functions. I would also like to add zeff specifications (or something else) like types, frame, if-else, for, fn, etc". So, drawn in a third draft:
+
+6. **Topics** holds four sections that fold: **Methods**, **The language**, **Packages** and **Errors and warnings**. *Every function, A to Z* and *Datasets* are no longer sections of their own.
+7. A package opens a page of its own: its one line and the functions this engine has, each with its one line and a link to its page (no function of a later release is listed), and the methods that use it. The shipped datasets are listed on the page of `datasets`, after its two functions.
+8. **The language** (named so, rather than "specification", which is the document for those who build Zeff): a short page for each part of the language a script is written in, as a method has, with a few sentences, a minimal example and its kept output. At the engine of 0.9.0, eighteen: values and types; missing values; names and `let`; operators; text and dates; lists, records and mappings; frames and variables; categories and labels; `if`, `else` and `case`; `for` loops; functions with `fn`; `map`, `filter` and `reduce`; errors and `attempt`; repeating to convergence; formulas; the grammar of plots; comments and sections; projects, scripts and seeds. The engine has no such pages now (`zeff help for` finds nothing); they are written in the engine's own words, from the Language Reference, with the methods of stage 2, and `zeff help` on the command line reads them too.
+
+**Added the same day (23 November 2026), on the third draft.** The owner asked for a page of the language to be drawn, and: "also add a section on zeff-lite use". So, in a fourth draft:
+
+9. **Topics** gains a fifth section, **Using Zemp Lite**: a short page for each thing a reader does in the app (at Zemp Lite 0.2.2, thirteen: getting started; projects, scripts and files; running a script; the notes beside each statement; sections and the outline; the Data place; the Plots place; finding help; commands with ⌘K; keyboard shortcuts; exporting and opening a project; where the work is kept; reporting a problem). These pages describe the app, not the language, so their words are Zemp's own and kept in Zemp, not in the engine: the one exception to the rule that every word of the Help place is the engine's. A picture of the screen stands where a method has its example. They are written with stage 1, and each Zemp release that changes what a page describes changes the page.
+10. A page of the language has the form of a method's page, as drawn for `for` loops: a few sentences, a minimal example with its kept output (the drawn one is the engine's print of a loop making one regression for each of two outcomes, set side by side by `report`), the rules worth knowing, and the R and Stata ways of writing it; the Topics pane lists the language's pages with the open one marked.
+
+**Placed (23 November 2026).** Asked whether the design could be released as Zemp Lite 0.2.3, the owner was told what Zemp Lite, which runs the released Zeff 0.8.0, can build without a new engine and what needs one, and answered "Yes, enter 0.2.3". So stage 1 is Zemp Lite 0.2.3, on Zeff 0.8.0, after 0.2.2: **Home**, **Back**, **Forward** and the trail; the **Topics** pane with three of its sections, **Packages** (each opening the list of its functions from the engine's print, the datasets under `datasets`), **Errors and warnings** (the codes by family, as the engine lists them) and **Using Zemp Lite** (the thirteen pages, in Zemp's words); and search in the bar's field from the second letter, over names, one-line descriptions, packages and codes, finding an R or a Stata name where a page names it. Until the methods arrive, Home is titled **Index of functions** and lists the functions by package; it becomes the **Index of methods** when they do. The lists are those of Zeff 0.8.0 until Zemp moves to a later engine. The sections **Methods** and **The language**, the method and language pages with their kept outputs, the green *new* and the exact matching of R and Stata names need data the engine does not yet carry, and are stage 2: recommended at Zeff 0.10.0 and shown by Zemp 0.4, put to the owner at the opening of Zeff 0.10.0. The Zemp Specification gains the row of 0.2.3 in section 15 and a clause in the Help row of section 7; logged in `docs/spec_changes.md`. Zemp Lite 0.2.3 is planned and built in the Zemp Lite session on the owner's "Start release 0.2.3".
 

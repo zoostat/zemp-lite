@@ -1633,3 +1633,11 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **The release.** The tag `v0.2.2` stands on the commit before this; the mend is on the main branch, and so in the hosted alpha, which is built from it and still shows 0.2.2. The notes in the repository say so under the known issues, and so do the notes published with the GitHub release, which were brought to the repository's on the owner's word the same day ("Yes, add it"): the one item added, nothing else changed. No release is opened for it: that is the owner's to say.
 
 **Reason.** A promise in the record is kept: the second failure was looked for in the app, and it was there.
+
+## 23 November 2026: The specification's copy is brought to Zeff 635f19f, where release 0.2.3 stands
+
+**What was entered there**, by the Zeff session on the owner's word in it ("Yes, enter 0.2.3"): the register's entries #209 (what the Variables pane shows for each kind of variable, due at the plan of Zemp 0.3), #210 (symbolic data, due at 1.0.0) and #211 (the Help place redesigned, decided on four drafts of a mockup kept outside the repositories, and its first stage placed); the row "0.2.3 | 0.8.0" of section 15 of the Zemp Specification, and a clause in the Help row of its section 7; the line in Zeff's `docs/spec_changes.md`.
+
+**Choice.** `docs/spec/` is the Zeff repository's at commit 635f19f, each of its ten files taken from the commit, not from that repository's working folder, and compared byte for byte. Six differ from the copy of 3159c99: the register and the Zemp Specification, by the entries above; the catalogue, the Language Reference, the Engine Specification and the sample script, by the work of Zeff 0.9.0 since (`n_chars`, `row_number`, the sections of a script, and others), none of which Zemp Lite on Zeff 0.8.0 reads. The ruling on Paper of the same day (#172) is not yet entered there; the copy is brought up again when it is.
+
+**Reason.** The specification is the authority, and a release is planned from its row: the copy must hold the row of 0.2.3 before its plan is written.

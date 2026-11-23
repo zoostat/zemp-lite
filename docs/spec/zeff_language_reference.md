@@ -71,8 +71,8 @@ report([m]).export("output/table1.docx")
 | Qualified names | `package::name` picks a function when two share a name: `functions::summary`, `data::summary` |
 | Bare words | The parameter decides: `cluster: firm` expects a variable, `se: robust` a value from a fixed list, `fe: firm + year` formula terms, `re: [school => 1 + x]` a mapping from groups to terms; all are checked before anything runs |
 | Names | Case-sensitive; ASCII letters, digits and `_`; file names that are not valid names in backticks (section 3.6) |
-| Comments | `//` to the end of the line; `///` directly before a function becomes its help text (section 5.3); `// zeff:` begins a pragma (section 11.1). There are no block comments |
-| Indexing | Positions start at 1: `fits[1]`, and `slice(s, 1, 3)` for text; a frame's column by name: `wages["lwage"]`; results by term name, never by position: `m.coef(educ)`, `m.std_errors(educ)`, `t.p_values()`; a record's field by name: `state.loglik` |
+| Comments | `//` to the end of the line; `///` directly before a function becomes its help text (section 5.3); `// zeff:` begins a pragma (section 11.1); `// # Title` on a line of its own between two statements begins a section of the script, and `// ## Title` a subsection, for an editor's outline and folding (to the engine it is a comment like any other). There are no block comments |
+| Indexing | Positions start at 1: `fits[1]`, and `slice(s, 1, 3)` for text; a frame's column by name: `wages["lwage"]`, and one value of a column by its row: `wages["lwage"][1]`; results by term name, never by position: `m.coef(educ)`, `m.std_errors(educ)`, `t.p_values()`; a record's field by name: `state.loglik` |
 | Reserved words | `let`, `fn`, `if`, `else`, `case`, `for`, `in`, `break`, `continue`, `return`, `use`, `model`, `dag`, `as`, `true`, `false`, `NA`, `Inf`; and, reserved for later use so that no edition is needed to add them, `type`, `while`, `match`, `mut`, `pub`, `loop`, `trait`, `impl` (section 3.6) |
 
 ### 3.2 Literals
@@ -222,7 +222,7 @@ DOC         = "///" to the end of the line, directly above the fn it describes (
 | `` ` `` | Quoted name | Column names that are not valid names (section 3.6) |
 | `( )`, `[ ]`, `{ }` | Grouping and calls; lists, indexing, mappings and `[for ...]`; records and blocks | |
 | `,` | Separator | Arguments, list items, arms |
-| `//`, `///`, `// zeff:` | Comment; help text; pragma | Anywhere; directly before `fn`; above or at the end of a statement (section 11.1) |
+| `//`, `///`, `// zeff:`, `// # Title` | Comment; help text; pragma; the heading of a section | Anywhere; directly before `fn`; above or at the end of a statement (section 11.1); on a line of its own between two statements |
 | `r"..."` | Raw string | Regular expressions and Windows paths (section 3.2) |
 
 ### 3.5 Style
@@ -334,12 +334,12 @@ This section fixes the rules an implementation needs beyond the grammar.
 | Comparison | Only between values of one type, with Int and Float compared as numbers. A `Category` compares with a `Str` by label, `industry == "Retail"`, and an ordered category also with `<`, `<=`, `>` and `>=` by level order; a label that is not a level is a check-time error listing the levels (Z0216). An Int column with value labels compares as Int: `female == "female"` is an error (Z0216) suggesting `female == 1`. Ordered categories compare with each other by level order; unordered categories support only `==` and `!=`; text compares by Unicode scalar value (section 3.8). A `Date` never compares with text: `sold > "2020-01-01"` is an error (Z0210) that suggests `date("2020-01-01")` |
 | Compound values | `==` and `!=` are defined for scalars, dates, categories and `NA`; on lists, records, mappings, frames and results they are errors (Z0208) |
 | Identity | Two relations exist, as in Julia. Comparison (`==` and the rest) is three-valued, as above. Identity is what `sort`, `distinct`, `duplicates`, `unique`, `is_in`, `n_distinct`, grouping with `by:`, `tabulate` and `recode` keys use: `NA` is identical to `NA` and `-0.0` to `0.0`, so `is_in(NA, [NA])` is `true`, `unique([NA, NA])` is `[NA]`, and two rows with `NA` keys form one group. Merge keys are the exception and never match on `NA` (section 4.1). Order, for `<` and for `sort`: `false < true`; numbers numerically, with `NA` last in ascending and descending sorts; text by code point; dates chronologically; ordered categories by level order, and unordered categories sort by level order while allowing only `==` and `!=` |
-| `Nothing` | `print`, `warn`, `assert` and an `if` without `else` have the type `Nothing`, which cannot be bound or passed (Z0206) and prints nothing; an `if` used as a value must have an `else` |
+| `Nothing` | `print`, `warn`, `assert` and an `if` without `else` have the type `Nothing`, which cannot be bound or passed (Z0206) and prints nothing; an `if` used as a value must have an `else`. `error` gives nothing because it never comes back, and may stand inside `attempt` |
 | Records | A record literal has a structural type, its field names and their types, inferred from the literal; `r.name` on a record without that field is a check-time error (Z0209). `Record` alone in a signature accepts any record, and the fields the function reads are checked at each call against the argument's type, so `iterate`'s state is checked where `iterate` is called |
 | Mappings | A `Mapping<K, V>` has one key type and one value type: `[0 => "male"]` is `Mapping<Int, Str>`, and the mappings of `re:` have `Var` keys and `Terms` values. Keys are unique and keep insertion order; `m[k]` for an absent key is an error (Z0204), and `is_in(k, keys(m))` tests first |
 | Functions as values | A function type is written `Fn(T1, T2) -> R`. A parameter of that type accepts a named function whose parameter types and return type match exactly, defaults ignored; any other function is an error listing both signatures (Z0205). It also accepts a function literal written where it is used, `fn(i) i / n`: its parameters take the function type's types unless written, `fn(i: Int) ...`, which must then agree; its body is one expression over the parameters and the bindings in sight where the literal stands, whose values it takes with it; a literal anywhere else is an error (Z0205). `map(list, f)`, `filter(list, f)` and `reduce(list, f, start)` of `core` take `f` typed by the list's items, `Fn(T) -> R` giving a `List<R>`, `Fn(T) -> Bool` giving the list's type, and `Fn(S, T) -> S` with `S` the type of `start`, so that `map(seq(1, n - 1), fn(i) i / n)` is the probabilities i/n, each computed exactly |
-| Indexing | `xs[i]` outside `1..len(xs)` is an error naming the index (Z0207); indices are never negative; `xs[2..4]` is the sub-list from 2 to 4; a frame's `wages["lwage"]` names a column (Z0101 when absent) |
-| Conversion | `to(x, T)` follows the table below; a value that cannot convert becomes `NA` with a warning giving the count and three failing values (W0203), never silently |
+| Indexing | `xs[i]` outside `1..len(xs)` is an error naming the index (Z0207); indices are never negative; `xs[2..4]` is the sub-list from 2 to 4; a frame's `wages["lwage"]` names a column (Z0101 when absent); `x[i]` of a column is the value of its row `i`, `NA` where that is missing, with the same error outside `1..` the number of rows; `first(x)` and `last(x)` give the value of a column's first and last row; a column takes no range (Z0221), and `to(x, List)[2..4]` is the sub-list of its values |
+| Conversion | `to(x, T)` follows the table below; a value that cannot convert becomes `NA` with a warning giving the count and three failing values (W0203), never silently. `to(x, List)` of a column is the list of its values, one item for each row |
 | Dates | Date minus Date gives Int days; Date plus Int is not allowed: use `add_time`; two DateTimes are counted apart with `time_between`. This stays so when `Duration` arrives (section 4.3): `DateTime − DateTime`, an error in 1.0, then gives a Duration, and no existing script changes type |
 | Inference | A binding's type is the type of its expression, fixed when the script is checked; a function's result must match its declared return type |
 | `case` | Every arm must give the same type, with Int and Float joining to Float; `NA` fits any type |
@@ -406,7 +406,7 @@ Every other operator and function gives `NA` when an input is `NA`, unless its e
 
 **Variable ranges.** `x1..x9` selects every column from `x1` to `x9` by position in the frame, both ends included, whatever their names. Both ends must exist and `x9` must not come before `x1`; otherwise the range is an error that shows the frame's order. `vars()` lists outside a frame method keep ranges unexpanded until they meet a frame.
 
-**Failed values.** A `Failed` value can sit in a list (section 5.4). Using one anywhere else, as an argument, in arithmetic, in a frame or as a model input, is an error that reports the original failure's code and line. `report`, `len` and other collecting functions skip `Failed` values and count them; `x.is(Failed)` tests for one. A method called on a binding that may hold a `Failed` value, such as `let m = attempt(...)` followed by `m.coef(x)`, is a check-time warning unless the call is guarded by `m.is(Failed)`.
+**Failed values.** A `Failed` value can sit in a list (section 5.4). Using one anywhere else, as an argument, in arithmetic, in a frame or as a model input, is an error that reports the original failure's code and line. `report`, `len` and other collecting functions skip `Failed` values and count them; `x.is(Failed)` tests for one, and `map` and `filter` go over a list that holds one when their function is such a test of its item, `filter(fits, fn(f) !f.is(Failed))`. `attempt(error("..."))` gives the failed value that holds the message. A method called on a binding that may hold a `Failed` value, such as `let m = attempt(...)` followed by `m.coef(x)`, is a check-time warning unless the call is guarded by `m.is(Failed)`.
 
 **Stability.** Error and warning codes, term names (section 7.2) and printed result layouts are stable within an edition; changing them needs a new edition.
 
@@ -418,7 +418,7 @@ The rules of this section settle what language specifications usually settle and
 
 | Rule | Detail |
 | --- | --- |
-| Unit | Text functions count Unicode scalar values (code points), never bytes or grapheme clusters: `len("café")` is 4 and `len("e\u{301}")` is 2, since a combining accent is its own scalar value; `slice`, `pad`, `extract` and `format` use the same unit. Grapheme-aware functions are an open decision (section 15 of the Engine and Project Specification) |
+| Unit | Text functions count Unicode scalar values (code points), never bytes or grapheme clusters: `len("café")` is 4 and `len("e\u{301}")` is 2, since a combining accent is its own scalar value; `slice`, `pad`, `extract` and `format` use the same unit. `len` of a column is the number of its rows; `n_chars(s)` counts as `len` counts one text and applies row by row, so on a column it is the length of each value. Grapheme-aware functions are an open decision (section 15 of the Engine and Project Specification) |
 | Comparison and order | Text compares and sorts by code point, never by locale, so order is identical everywhere; `sort` on a text column follows the same rule. Locale-aware collation is after 1.0 |
 | Case | `upper` and `lower` apply Unicode simple case mapping, one scalar value to one, so a string's length never changes (`"ß"` stays `"ß"`); `ignore_case:` in `contains` uses simple case folding; `trim` removes Unicode white space |
 | Normalisation | None is applied: two strings that differ only in normalisation form are different values, and `import` notes a text column whose values differ only in that way (W0601) |
@@ -533,7 +533,7 @@ Zeff has one missing value, `NA`. Invalid results such as `0/0` become `NA` with
 | Merge keys | `NA` never matches; such rows are reported as unmatched | dplyr matches NA keys |
 | Sorting | `NA` last; `Inf` and `-Inf` sort as numbers | |
 | Testing | `is_missing(x)`, `is_finite(x)`, `n_missing(x)`, `fill_missing(x, 0)`, `coalesce(a, b)` | `x == NA` is always `NA`, so it is flagged as a mistake |
-| Import | `types: {col: Str}` overrides a guessed column type; empty cells, `NA` and `.` are missing; `Inf` and `-Inf` are infinity; `NaN` becomes `NA` with a note; `na_values: [-99, -98]` adds codes. Dates are read only when the form is unambiguous (ISO 8601, `2026-10-16`) or when `types:` names the format, `types: {sold: Date("%d/%m/%Y")}`; a column that looks like dates in any other form (`04/05/2026`) is read as text, with a note that names the column, shows three values and proposes the `types:` entry. A format is never guessed. A UTF-8 byte-order mark at the start of a file is removed with a note; `thousands: ","` reads grouped digits such as `1,234,567`; the CSV dialect, other encodings and Bool spellings are in section 3.8 |
+| Import | `types: {col: Str}` overrides a guessed column type; a column guessed as Int from its first 1,000 rows is read as Float when a later row holds a decimal, with a note naming the row, and every other later value that does not fit its column stops the import (Z0606); empty cells, `NA` and `.` are missing; `Inf` and `-Inf` are infinity; `NaN` becomes `NA` with a note; `na_values: [-99, -98]` adds codes. Dates are read only when the form is unambiguous (ISO 8601, `2026-10-16`) or when `types:` names the format, `types: {sold: Date("%d/%m/%Y")}`; a column that looks like dates in any other form (`04/05/2026`) is read as text, with a note that names the column, shows three values and proposes the `types:` entry. A format is never guessed. A UTF-8 byte-order mark at the start of a file is removed with a note; `thousands: ","` reads grouped digits such as `1,234,567`; the CSV dialect, other encodings and Bool spellings are in section 3.8 |
 | Export | Empty cell in CSV, `.` in Stata files; the full CSV writing rules are in section 3.8 | |
 
 `Inf` stays a value because it has honest uses, such as open ends in `bin(x, breaks: [-Inf, 0, 10, Inf])`. After 1.0, `na_values: [-99 => "refused", -98 => "dont_know"]` will keep the reason while the value still counts as `NA`.
@@ -744,7 +744,7 @@ Every problem that can arise while a correct-looking script runs is one of the f
 | `div(a, 0)` or `mod(a, 0)` with Int | Error | Z0212 |
 | `x / 0` or `log(0)` with Float | `Inf` or `-Inf`, with a warning giving the count and a suggestion (section 4.1) | W0204 |
 | `0/0`, `Inf - Inf`, `Inf * 0`, `sqrt(-1)`, `log(-1)` | `NA`, with a warning giving the cause and the count | W0205 |
-| `xs[i]` outside `1..len(xs)`, `xs[NA]`, `first([])`, `last([])` | Error giving the index and the length | Z0207 |
+| `xs[i]` outside `1..len(xs)`, `xs[NA]`, `first([])`, `last([])`; the same of a column, outside its rows or with no row | Error giving the index and the length | Z0207 |
 | `m[k]` with an absent mapping key | Error naming the key | Z0204 |
 | `to(x, T)` or `date(s)` that cannot convert | `NA`, with a warning giving the count and three failing values; a Float with a fraction converted to Int likewise | W0203, W0202 |
 | A key of `recode` that no row holds, or that is no level of the category | The other keys are applied, with a warning naming the key | W0206 |
@@ -758,7 +758,7 @@ Every problem that can arise while a correct-looking script runs is one of the f
 | A step whose estimated memory exceeds the budget | Error before the step starts, with the estimate (section 8.3 of the Engine and Project Specification) | Z0704 |
 | A step cancelled from the interface | Error; nothing after it runs, and results so far stay in the session | Z0705 |
 | A file missing, unreadable, outside the project or changed since the schema pass | Error naming the path (section 2 of the Engine and Project Specification) | Z0701, Z0702 |
-| A CSV value that does not fit the type guessed from the first 1,000 rows | Error naming the row (section 11) | Z0606 |
+| A CSV value that does not fit the type guessed from the first 1,000 rows: text in a numeric column, a value that is not a date in a Date column, a decimal in a column declared Int. A decimal in a column guessed as Int is not one: the column is read as Float, with a note naming the row | Error naming the row (section 11) | Z0606 |
 | A model that cannot be estimated: no variation, perfect separation, a singular design after collinearity handling, non-convergence | Error with the diagnosis (section 11) | Z08xx |
 | `today()` or `now()` used | Note with the recorded value (section 3.8) | W0703 |
 
@@ -836,7 +836,7 @@ One function, `import(path, ...)`, picks the reader from the extension, or from 
 
 | Format | Extensions | Options beyond the shared ones | What is kept | Release |
 | --- | --- | --- | --- | --- |
-| Delimited text | `.csv`, `.tsv`, `.txt`, `.dat` | `delim:` (`;` and tab detected), `header:`, `skip:`, `quote:`, `decimal: ","` for files with a decimal comma | Types guessed from 1,000 rows and overridable (section 3.8) | 0.1.0, options complete in 0.2.0 |
+| Delimited text | `.csv`, `.tsv`, `.txt`, `.dat` | `delim:` (`;` and tab detected), `header:`, `skip:`, `quote:`, `decimal: ","` for files with a decimal comma | Types guessed from 1,000 rows and overridable (section 3.8); a guessed Int widened to Float by a later decimal, with a note | 0.1.0, options complete in 0.2.0 |
 | Fixed width | `.txt`, `.fwf` | `widths:` or `positions:`, with `names:` | As text | 0.11.0 |
 | Excel | `.xlsx`, `.xlsm`, `.xls` | `sheet:` (name or number), `range: "A2:F500"`, `header:` | Cell types; dates as dates, with both Excel epochs; formulas and merged cells read as their values, with a note | 0.11.0 |
 | OpenDocument | `.ods` | As Excel | As Excel | 0.11.0 |
