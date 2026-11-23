@@ -2,9 +2,11 @@
   // A page of Using Zemp Lite, set in the type of the engine's pages (release 0.2.3, step 8a;
   // open decision #211, item 9): the title; what the page is for, in one line; headings;
   // paragraphs and lists, with a control named as the screen names it, a key as a key, code
-  // as code, and links to another of these pages or to a page of the engine's. The words are
-  // Zemp's, read from the page's own file (`read.ts`).
+  // as code, links to another of these pages or to a page of the engine's, and a picture of
+  // the screen made from the running app (`pictures.ts`). The words are Zemp's, read from the
+  // page's own file (`read.ts`).
   import type { Stop } from "../help/history";
+  import { PICTURE, pictureOf } from "./pictures";
   import type { Piece, UsingDoc } from "./read";
 
   let {
@@ -45,6 +47,20 @@
           <li>{@render line(item)}</li>
         {/each}
       </svelte:element>
+    {:else}
+      <!-- A picture of the screen, fetched when the page is shown; its words are for a reader
+           who cannot see it. The place is kept for it, so the page does not jump when it comes. -->
+      {@const src = pictureOf(block.name)}
+      {#if src !== null}
+        <img
+          {src}
+          alt={block.words}
+          width={PICTURE.width}
+          height={PICTURE.height}
+          loading="lazy"
+          decoding="async"
+        />
+      {/if}
     {/if}
   {/each}
 </article>
@@ -90,6 +106,16 @@
   }
   .control {
     font-weight: 700;
+  }
+  /* A picture of the screen: as wide as the page allows, never wider than it was taken. */
+  img {
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    box-sizing: border-box;
+    display: block;
+    height: auto;
+    margin: 14px 0 16px;
+    max-width: 100%;
   }
   code {
     background: var(--soft);

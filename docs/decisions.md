@@ -1874,3 +1874,23 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Choice.** On this Mac the routine is run with the display kept awake for as long as it runs: `caffeinate -d -u npm run routine` (a tool of macOS that holds the display on while the command runs and changes no setting). Nothing in the repository changes; no test is skipped or weakened.
 
 **Reason.** A failure of the machine's, not of the app or the tests; and a routine that fails at night for no fault of the work would teach its reader to distrust it.
+
+## 24 November 2026: the pictures of the app's own pages (release 0.2.3, step 8b)
+
+**Choice.** A page of Using Zemp Lite shows a picture of the screen where its text has `![words](name)`: the file `src/using/pictures/<name>.webp`, drawn as wide as the page's column allows and never wider than it was taken, with an edge to set it off in either theme, its words those a screen reader says. The picture's place is kept before it arrives (its size is known), so the page does not jump.
+
+**Made by a script, not by hand** (finding 7): `npm run pictures` builds the interface, serves it as the browser tests do, and runs `tools/pictures/pictures.spec.ts` in Chromium, where each picture has a scene: the steps a reader would take to the screen it shows (the Scratch project opened and run; `lm` typed in the search field of Help). The screen is taken in the light theme, in a window of 1,200 by 750 pixels, the narrowest the app is laid out for, and written as WebP, compressed by the test browser itself (a canvas), so that no tool is added to the repository; Safari, Chrome and the web views of the desktop app all show WebP. The scenes use the fixtures of the browser tests. The pictures are committed; they are made afresh when the screen they show has changed, and before a release (added to step 11). They are no part of the routine, and are not held byte for byte: a browser on another machine draws its letters a little differently.
+
+**One size, and how sharp.** Every picture is 1,200 by 750, taken at one pixel to the point. A page shows it at 760 points at the widest, so on a screen of two pixels to the point it has about 1.6 pixels to the point, sharp enough to read the words of the screen, at half the bytes of a picture taken at two.
+
+**Loaded when its page is opened.** The app's first load carries where each picture is (a short address for each) and none of the pictures; the browser fetches a picture when the page that shows it is on the screen and the picture is near. A test watches the requests: none for a picture until its page is opened, then that page's alone.
+
+**Held to the pages** by a unit test: every picture a page names is a file there is, with words enough to say what it shows; no picture is left that no page shows; each page has its picture.
+
+**The build, measured (R4).** The two pictures are 52.6 and 55.3 kB. The app's first load: the script 217.4 kB compressed (217.2 kB at step 8a), the style sheet 10.8 kB. Thirteen pictures of this size would be about 0.7 MB of the build, none of it in the first load. The worker is unchanged.
+
+**Found by the test of the picture's place:** its edge made it two pixels wider than its column; the edge is now counted in its width.
+
+**Tested.** Unit (`src/using/read.test.ts`, one test more). Browser, both engines (`tests/browser/help-using.spec.ts`, one test more and the two of the themes extended): no picture asked for with the app, Help and Home on the screen; opened, the page's picture arrives as it was taken (1,200 by 750) with its words; no wider than its column with the panes open, with them closed and at 1,000 pixels, its shape kept, nothing pushed sideways; the other page's picture fetched when that page is opened; on the page with its edge in both themes.
+
+**Reason.** #211, item 9: "a picture of the screen stands where a method has its example"; finding 7: a picture taken by hand goes stale with each release.

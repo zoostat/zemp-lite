@@ -140,4 +140,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Found: the routine needs the display awake on this Mac.** WebKit's test browser takes no mouse while the display is dark, which failed seven tests at night and explains the five at the close of 0.2.2. The routine is run as `caffeinate -d -u npm run routine` (`docs/decisions.md`).
 
-**Next.** Step 8b `[engine]`: the pictures of the app's own pages.
+**Done, step 8b `[engine]`.** Each page of Using Zemp Lite has a picture of the screen, made from the running app by a script (`npm run pictures`, `tools/pictures/`): 1,200 by 750, light theme, WebP, about 55 kB each, committed, fetched when its page is opened; the first load of the app does not carry them. A unit test holds the pages and the pictures to each other. Green here: the whole routine in both browsers, the display kept awake.
+
+**Next.** Step 9a `[function]`: six pages more of Using Zemp Lite, each with its picture, and the test that every control a page names is on the screen.

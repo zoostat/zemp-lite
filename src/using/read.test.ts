@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { USING, USING_TITLE, usingFiles, usingPage, usingText } from "./pages";
+import { PICTURE, pictureNames, pictureOf } from "./pictures";
 import { UsingError, headingsOf, piecesOf, readUsing, wordsOf, type Piece } from "./read";
 
 const page = `# Running a script
@@ -172,6 +173,29 @@ describe("the pages of Using Zemp Lite", () => {
     }
     expect(usingPage("no-such-page")).toBeNull();
     expect(await usingText("no-such-page")).toBeNull();
+  });
+
+  it("name only pictures there are, each with its words, and leave no picture unused", async () => {
+    const named: string[] = [];
+    for (const one of USING) {
+      const doc = readUsing((await usingText(one.slug)) ?? "");
+      for (const block of doc.blocks) {
+        if (block.kind !== "picture") continue;
+        expect(pictureOf(block.name), `${one.slug} shows ${block.name}`).not.toBeNull();
+        // Words enough to say what the picture shows to a reader who cannot see it.
+        expect(block.words.split(" ").length, block.name).toBeGreaterThanOrEqual(8);
+        named.push(block.name);
+      }
+      // Each page has its picture of the screen.
+      expect(
+        doc.blocks.some((block) => block.kind === "picture"),
+        one.slug,
+      ).toBe(true);
+    }
+    expect([...named].sort()).toEqual(pictureNames());
+    expect(new Set(named).size).toBe(named.length);
+    expect(pictureOf("no-such-picture")).toBeNull();
+    expect(PICTURE).toEqual({ width: 1200, height: 750 });
   });
 
   it("link only to pages there are, and say what each picture shows", async () => {

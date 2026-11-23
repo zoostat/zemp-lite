@@ -15,6 +15,8 @@ Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From t
 
 <kbd>↓</kbd> and <kbd>↑</kbd> move through the list, <kbd>↵</kbd> opens the match marked, and <kbd>Esc</kbd> closes the list.
 
+![The Help place with lm typed in its search field: under the field a list of two functions, reg and anova, each saying it matched R's lm().](search-in-help)
+
 ## Browse
 
 **Home** is the index of functions: every function of the engine, by package. Rest the pointer on a name to see what it does. The **Topics** pane at the left lists the packages and the errors and warnings; beside a page it lists the pages around it.

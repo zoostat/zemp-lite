@@ -36,9 +36,10 @@ const reads = async (page: Page) =>
     .map((text) => text.replace(/\s+/g, " ").trim())
     .join(" ");
 
-/** The words of a text, without the marks of the page's file. */
+/** The words of a text, without the marks of the page's file, or its pictures' own words. */
 const wordsOf = (text: string) =>
   text
+    .replace(/^!\[.*$/gm, " ")
     .replace(/<\/?kbd>/g, " ")
     .replace(/\]\([^)]*\)/g, " ")
     .replace(/^\d+\. |^- |^#+ /gm, " ")
@@ -197,6 +198,75 @@ test("a page's text is fetched when the page is opened, not with the app", async
   expect(texts()).toHaveLength(1);
 });
 
+test("a page's picture is fetched when the page is opened, with its words, and keeps its place", async ({
+  page,
+  press,
+}) => {
+  await page.setViewportSize({ width: 1200, height: 760 });
+  const fetched: string[] = [];
+  page.on("request", (request) => fetched.push(new URL(request.url()).pathname));
+  await scratch(page, press);
+  // With the app, Help and Home on the screen, no picture has been asked for.
+  const pictures = () => fetched.filter((path) => path.endsWith(".webp"));
+  expect(pictures()).toEqual([]);
+  await press(using(page).getByRole("button", { name: "Getting started" }));
+  await expect(title(page)).toHaveText("Getting started");
+  const picture = shown(page).getByRole("img");
+  await expect(picture).toHaveCount(1);
+  // Its words, for a reader who cannot see it.
+  await expect(picture).toHaveAttribute(
+    "alt",
+    /^The Script place after a run: the script with its line numbers, a note beside each statement/,
+  );
+  // Brought into view, it arrives: the picture as it was taken, 1,200 by 750.
+  await picture.scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      picture.evaluate((node: HTMLImageElement) => `${node.naturalWidth}×${node.naturalHeight}`),
+    )
+    .toBe("1200×750");
+  expect(pictures()).toHaveLength(1);
+  expect(pictures()[0]).toMatch(/^\/assets\/the-script-after-a-run-[\w-]+\.webp$/);
+  // It keeps to the page: no wider than its column, its shape kept, and nothing pushed sideways.
+  const fits = async () => {
+    const at = await picture.evaluate((node) => {
+      const box = node.getBoundingClientRect();
+      const column = node.closest("article")!.getBoundingClientRect();
+      const pane = node.closest(".page")!;
+      return {
+        wide: box.width,
+        shape: box.width / box.height,
+        column: column.width,
+        sideways: pane.scrollWidth - pane.clientWidth,
+      };
+    });
+    expect(at.wide).toBeGreaterThan(300);
+    expect(at.wide).toBeLessThanOrEqual(at.column + 0.5);
+    expect(at.shape).toBeCloseTo(1200 / 750, 1);
+    expect(at.sideways).toBeLessThanOrEqual(0);
+    return at.wide;
+  };
+  const beside = await fits();
+  // With the panes closed there is more room, and the picture is never wider than it was taken.
+  await press(bar(page).getByRole("button", { name: "Topics", exact: true }));
+  await press(bar(page).getByRole("button", { name: "Related functions", exact: true }));
+  expect(await fits()).toBeGreaterThanOrEqual(beside);
+  expect(await fits()).toBeLessThanOrEqual(1200);
+  await page.setViewportSize({ width: 1000, height: 760 });
+  await fits();
+  // The other page's picture is its own, fetched when that page is opened.
+  await page.setViewportSize({ width: 1200, height: 760 });
+  await press(shown(page).getByRole("button", { name: "Finding help" }));
+  await expect(title(page)).toHaveText("Finding help");
+  await expect(shown(page).getByRole("img")).toHaveAttribute(
+    "alt",
+    /^The Help place with lm typed in its search field/,
+  );
+  await shown(page).getByRole("img").scrollIntoViewIfNeeded();
+  await expect.poll(() => pictures().length).toBe(2);
+  expect(pictures()[1]).toMatch(/^\/assets\/search-in-help-[\w-]+\.webp$/);
+});
+
 for (const theme of ["light", "dark"] as const) {
   test(`a page of the app's own keeps to the sizes and the contrast, and to its place, in the ${theme} theme`, async ({
     page,
@@ -215,6 +285,15 @@ for (const theme of ["light", "dark"] as const) {
       expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
       expect(await faintText(shown(page))).toEqual([]);
       expect(await faintText(topics(page))).toEqual([]);
+      // The picture is on the page in either theme, with its edge to set it off.
+      const picture = shown(page).getByRole("img");
+      await picture.scrollIntoViewIfNeeded();
+      await expect
+        .poll(() =>
+          picture.evaluate((node: HTMLImageElement) => node.complete && node.naturalWidth),
+        )
+        .toBe(1200);
+      expect(await picture.evaluate((node) => getComputedStyle(node).borderTopWidth)).toBe("1px");
       const pane = page.getByTestId("help").locator(".page");
       expect(
         await pane.evaluate((node) => node.scrollWidth - node.clientWidth),

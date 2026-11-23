@@ -12,5 +12,12 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "tests/**/*.ts", "src/**/*.node.test.ts"]
+  "include": [
+    "vite.config.ts",
+    "playwright.config.ts",
+    "playwright.pictures.config.ts",
+    "tests/**/*.ts",
+    "tools/pictures/*.ts",
+    "src/**/*.node.test.ts"
+  ]
 }
