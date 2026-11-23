@@ -21,6 +21,7 @@
   import HelpPage from "../help/HelpPage.svelte";
   import { tick } from "svelte";
   import { HOME, after, before, called, here } from "../help/history";
+  import HomePage from "../help/HomePage.svelte";
   import ListPage from "../help/ListPage.svelte";
   import { codesPage, packagePage, partsOf } from "../help/pages";
   import { outlineOf, readPage, relatedOf } from "../help/read";
@@ -41,10 +42,16 @@
         : null,
   );
   const page = $derived(list === null ? workspace.help.page : "");
-  const blank = $derived(list === null && page === "");
+  // Home, the index of functions: shown where no page is open, once the engine has given it.
+  const home = $derived(list === null && page === "" ? workspace.helpIndex : null);
+  const blank = $derived(list === null && page === "" && home === null);
   const doc = $derived(readPage(page));
   const sections = $derived(
-    list === null ? outlineOf(doc) : partsOf(list).map((part) => ({ ...part, entry: false })),
+    home !== null
+      ? home.packages.map((one, line) => ({ line, title: one.name, entry: false }))
+      : list === null
+        ? outlineOf(doc)
+        : partsOf(list).map((part) => ({ ...part, entry: false })),
   );
   const trail = $derived(trailOf(shown ?? HOME, workspace.helpIndex, workspace.helpCodes));
 
@@ -253,7 +260,10 @@
     <div class="page" bind:this={pane} onscroll={watch}>
       {#if list !== null}
         <ListPage {list} onopen={(to) => void workspace.showHelpStop(to)} />
+      {:else if home !== null}
+        <HomePage index={home} onopen={(to) => void workspace.showHelpStop(to)} />
       {:else if page === ""}
+        <!-- Home before the engine has given its index, or where it cannot. -->
         <p class="quiet">
           Press F1 on a function's name in the script, press Explain on what a run said, or type a
           name in the field above, to read the engine's page here.

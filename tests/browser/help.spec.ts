@@ -113,9 +113,12 @@ test("the Help place has the page's outline at its left, each section gone to an
   await page.setViewportSize({ width: 1280, height: 600 });
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
-  // With no page open, the place says how one is opened.
-  await expect(page.getByTestId("help")).toContainText("Press F1 on a function's name");
-  await expect(outline(page)).toContainText("No page is open.");
+  // With no page asked for, Help is on Home, the index of functions, whose outline is the
+  // packages (`help-home.spec.ts`).
+  await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText(
+    "Index of functions",
+  );
+  await expect(outline(page).locator("ul").getByRole("button").first()).toHaveText("core");
   const field = bar(page).getByRole("searchbox", {
     name: "Open the page of a function or a code",
   });

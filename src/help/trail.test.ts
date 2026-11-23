@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { CodeFamily, HelpIndex } from "../engine/messages";
 import { HOME, type Stop } from "./history";
-import { codesPage, packagePage, partsOf } from "./pages";
+import { codesPage, countsOf, packagePage, partsOf } from "./pages";
 import { familyOf, homesOf, trailOf } from "./trail";
 
 const fn = (name: string, summary = `what ${name} does`) => ({ name, summary, names: [] });
@@ -156,6 +156,16 @@ describe("a package's page", () => {
   it("is none for a name that is no package, and before the index is given", () => {
     expect(packagePage(index, "t_test")).toBeNull();
     expect(packagePage(null, "stats")).toBeNull();
+  });
+});
+
+describe("the line under Home's title", () => {
+  it("names the engine and counts the functions and the packages of the index", () => {
+    // `summary` is of two packages and is counted in each, as each package counts its own.
+    expect(countsOf(index)).toBe("Zeff 0.8.0 · 9 functions in 5 packages");
+    expect(countsOf({ engine: "0.8.0", packages: [index.packages[2]!], datasets: [] })).toBe(
+      "Zeff 0.8.0 · 1 function in 1 package",
+    );
   });
 });
 

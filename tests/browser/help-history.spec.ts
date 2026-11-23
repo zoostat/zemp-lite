@@ -36,11 +36,13 @@ async function ask(page: Page, name: string) {
   await expect(title(page)).toHaveText(name);
 }
 
-/** Whether Home is the page shown: its button lit, and the place saying how a page is opened. */
+/** Whether Home is the page shown: its button lit, and the index of functions in the middle. */
 async function isHome(page: Page) {
   await expect(home(page)).toHaveAttribute("aria-current", "page");
   await expect(title(page)).toHaveText("Help");
-  await expect(page.getByTestId("help")).toContainText("Press F1 on a function's name");
+  await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText(
+    "Index of functions",
+  );
 }
 
 test("Help opens on Home, and Back and Forward go through the pages opened, greyed at either end", async ({

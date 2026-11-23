@@ -1740,3 +1740,19 @@ The rules are generous on purpose: a name too many is a match low in a list, a n
 **Choice.** Where a look finds anything lacking, the check looks again, every 5 seconds, for a minute at most, and reports what the last look found.
 
 **Reason.** In the first seconds after a deployment the check cannot tell a host still being given the build from a host at fault, whatever the lack is; a minute later it can. A fault of the host or of the build (a header missing, a file not kept, a "not modified" answer without its headers) is there at every look and fails as before, a minute later than it did. Nothing of what is checked changes. Tried against the stand-in host of the local build: whole at once, arriving after 12 seconds, never arriving (fails after the minute).
+
+## 23 November 2026: Home, the Index of functions (release 0.2.3, step 4)
+
+**Choice.** Home, the page Help starts on and **Home** returns to, is the **Index of functions** (`src/help/HomePage.svelte`), set from the index of step 2: the title; under it "Zeff 0.8.0 · 255 functions in 10 packages"; then each package the engine ships, in the tiers' order, a heading with the package's name (a link to its page) and its count, and its functions as links, in the engine's order, in as many columns as the middle has room for (three at 1,200 pixels with both panes open, more with them closed); under `datasets`, after its two functions, the four shipped datasets under **Datasets**. Only what this engine runs is listed. The Outline pane lists the packages, each going to its place, until it becomes Topics at step 5a.
+
+**The names alone, and the one line on resting** (question 2, as the owner answered it). A function's one line, the engine's, is shown in a small box under its name while the pointer rests on it (after a third of a second) or the Tab key does (at once); it goes when the pointer or the key moves on and at Escape, follows its name if the page scrolls, and is tied to the name for a screen reader. It is the app's own box, not the browser's, which shows nothing for the keyboard.
+
+**The counts.** A name two packages have (`summary` of `data` and of `results`) is listed under each and counted in each, as each package's own count has it: 255 is the sum of the ten counts, where the engine has 250 different names. A name a package has twice (`plot`, `histogram`, `density` and `boxplot` of `plot`) is one name, as in the index.
+
+**Before the index is there.** Until the worker has given the index (a moment, the first time Help is shown), and where it cannot, Home shows the sentence it had: how a page is opened by F1, by Explain and by the field.
+
+**A command of ⌘K:** **Help: index of functions**, which opens Home from any place, as a page of the history.
+
+**Tested** (`tests/browser/help-home.spec.ts`, 6 tests in both engines): the title, the line of counts, the ten headings with their counts; the functions of `core`, `data`, `stats` and `regress` name for name what the released `zeff help` prints; the datasets; no function of 0.9.0 or of the roadmap; every one of the 259 names opened in turn, each giving the engine's page headed by that name; a package's heading opening its page; the one line by the pointer and by the keyboard, under its name and inside the window; three columns at 1,200 pixels with both panes, more with them closed, no name cut and nothing sideways at 1,000; 12.5 pixels and 4.5 to 1 in both themes, the box of the one line too; the command.
+
+**Reason.** The row of 0.2.3: "Home an Index of functions by package until the methods arrive with the engine"; #211, part 1: Home lists only what the engine in use can run.

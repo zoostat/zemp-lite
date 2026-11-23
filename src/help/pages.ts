@@ -93,6 +93,18 @@ export function codesPage(families: CodeFamily[] | null): ListPage | null {
   };
 }
 
+/** What Home is called until the methods arrive with the engine (#211, "Placed"). */
+export const HOME_TITLE = "Index of functions";
+
+/**
+ * The line under Home's title: the engine and what the index holds of it. A function is
+ * counted in each package that has one of its name, as each package's own count has it.
+ */
+export function countsOf(index: HelpIndex): string {
+  const functions = index.packages.reduce((sum, one) => sum + one.functions.length, 0);
+  return `Zeff ${index.engine} · ${counted(functions, "function", "functions")} in ${counted(index.packages.length, "package", "packages")}`;
+}
+
 /** The parts of a list that have a heading, for the outline: where each is, and its words. */
 export function partsOf(page: ListPage): { line: number; title: string }[] {
   return page.groups.flatMap((group, line) =>

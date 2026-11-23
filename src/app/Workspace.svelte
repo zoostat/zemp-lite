@@ -201,6 +201,11 @@
       run: () => workspace.openHelp(),
     },
     {
+      name: "Help: index of functions",
+      hint: "Home: every function of this engine, by package",
+      run: () => void workspace.showHelpHome(),
+    },
+    {
       name: "Format the script",
       hint: "as zeff fmt does",
       run: () => void workspace.format(workspace.activePath ?? workspace.scriptPath),

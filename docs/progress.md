@@ -104,4 +104,8 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 3b `[function]`.** A trail in the Help place's bar says where a page stands, each step a link: _Help › Packages › stats › t_test_, _Help › Errors and warnings › Z01xx › Z0101_ (`src/help/trail.ts`). A package has a page of its own, its functions with their one lines from the index, for every package alike and apart from the function of its name; the codes by family are a page, **Errors and warnings** (`src/help/pages.ts`). Green here: the whole routine in both browsers.
 
-**Next.** Step 4 `[function]`: Home, the Index of functions.
+**Found and mended after step 3b.** The deployment of step 3b's commit was again reported failed by the check's timing (a file asked for twice, two seconds after the upload); the check now looks again for a minute wherever anything is lacking (`tools/check-host.mjs`).
+
+**Done, step 4 `[function]`.** Home is the **Index of functions**: "Zeff 0.8.0 · 255 functions in 10 packages", each package with its count and its functions as links in columns, the datasets under `datasets`; a function's one line shows while the pointer or the keyboard rests on its name; **Help: index of functions** in ⌘K (`src/help/HomePage.svelte`). Green here: the whole routine in both browsers.
+
+**Next.** Step 5a `[function]`: the Topics pane and its sections.
