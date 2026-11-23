@@ -8,9 +8,10 @@
 //
 // A deployment is not at every place of the host at the instant the host says it is done: for
 // some seconds a file a script names (the worker, the WebAssembly) may be answered with the
-// page, as a file that is not there. Where neither is found the build has not arrived whole,
-// and the check looks again, for a minute at most; every other lack fails at the first look
-// that finds the build whole, and a build that never arrives fails as before.
+// page, as a file that is not there, and a file asked for again may be answered whole by a
+// place that has only just been given it. So where a look finds anything lacking, the check
+// looks again, for a minute at most, and reports what the last look found. A fault of the
+// host or of the build is there at every look and fails as before, after the minute.
 //
 // Usage: node tools/check-host.mjs <address>      (as https://zemp-lite.pages.dev)
 import fs from "node:fs";
@@ -45,7 +46,7 @@ function wanted() {
 
 const every = wanted();
 
-/** How often the address is looked at again while a build is still arriving, and the pause. */
+/** How often the address is looked at again while anything is lacking, and the pause. */
 const LOOKS = 13;
 const PAUSE_MS = 5000;
 
@@ -157,13 +158,13 @@ async function look() {
 
 let found = await look();
 let looks = 1;
-while (!found.whole && looks < LOOKS) {
+while ((!found.whole || found.problems.length > 0) && looks < LOOKS) {
   await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
   found = await look();
   looks += 1;
 }
 const waited =
-  looks > 1 ? ` The build was there whole at look ${looks}, ${PAUSE_MS / 1000} seconds apart.` : "";
+  looks > 1 ? ` Nothing was lacking at look ${looks}, ${PAUSE_MS / 1000} seconds apart.` : "";
 
 if (found.problems.length > 0) {
   console.error(

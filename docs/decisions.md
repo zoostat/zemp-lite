@@ -1732,3 +1732,11 @@ The rules are generous on purpose: a name too many is a match low in a list, a n
 **Tested.** Unit: the trail of each kind of page, a name of two packages, a package and the function of its name, a dataset, an unknown name, a code with and without its family; the two lists (11 tests, `src/help/trail.test.ts`). The worker's `codes` under Node. Browser, both engines (`tests/browser/help-trail.spec.ts`, 5 tests): each step of a trail opens its page and goes into the history; the pages of `stats`, `results` and `regress` row for row what the released `zeff help` prints; `plot` the function and `plot` the package; `datasets` with its datasets; the 12 families and 144 codes, a family's step at its heading; the bar at 1,200 and 1,000 pixels; 12.5 pixels and 4.5 to 1 in both themes; the keyboard alone.
 
 **Reason.** #211, part 3 and item 7; and step 2's finding that three packages have no page the engine prints.
+
+## 23 November 2026: the check after a deployment looks again for any lack, not one
+
+**Found.** The deployment of step 3b's commit (2eb7df7) was reported failed: two seconds after the host said it was done, the style sheet asked for a second time was answered whole (200) where a browser that has it is answered "not modified" (304). Run from here some minutes later, the check passed at both addresses. It is the fault of this morning in another form: a place of the host that had only just been given the build. The mend of this morning waited only where the worker or the WebAssembly was not found.
+
+**Choice.** Where a look finds anything lacking, the check looks again, every 5 seconds, for a minute at most, and reports what the last look found.
+
+**Reason.** In the first seconds after a deployment the check cannot tell a host still being given the build from a host at fault, whatever the lack is; a minute later it can. A fault of the host or of the build (a header missing, a file not kept, a "not modified" answer without its headers) is there at every look and fails as before, a minute later than it did. Nothing of what is checked changes. Tried against the stand-in host of the local build: whole at once, arriving after 12 seconds, never arriving (fails after the minute).
