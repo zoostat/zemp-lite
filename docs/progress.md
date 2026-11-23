@@ -119,3 +119,13 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 **Done, step 7 `[function]`.** The field of Help's bar suggests as one types: from the second letter a list of up to eight matches, each with what it is, its one line and why it matched ("matched R lm()"); ↑ ↓ ↵ Esc, and `/` to reach the field; nothing found is a sentence and the nearest names; with none marked ↵ opens the name as typed, as before (`src/help/SearchField.svelte`). Two refinements of step 6 from the real index: `lm` gives `reg` before `anova`, and `ttest` no longer guesses `test`. Green here: the whole routine in both browsers.
 
 **Next.** Step 8 `[engine]`: the frame of the app's own pages (Using Zemp Lite).
+
+## 23 November 2026: session closed, release 0.2.3 at step 7
+
+**Done this session.** Release 0.2.3 opened on the owner's "Go, as recommended" and steps 1 to 7 finished, each at a green commit: the index of the help from the worker (2); the history with Home, Back and Forward (3a) and the trail with the pages its steps open (3b); Home, the Index of functions (4); the Topics pane (5a) and Topics beside a page (5b); what search finds (6) and the suggestions under the field (7). Step 3 was split in two. The check after a deployment was mended twice for a fault of its own timing.
+
+**Green.** The whole routine here at every step; at the last, 443 browser tests in both browsers and 334 unit tests. On GitHub: the checks and the deployments of every commit up to step 5b (6d175c1). The checks of step 6 (c06eb38) and step 7 (76843f8) were still running at the close: the next session reads their result first.
+
+**For the owner.** (1) Search keeps #211's order of rules, with two of the eight places kept for an R or Stata name typed exactly, so that `table` finds `tabulate`; say if another order is wanted. (2) For the Zeff session: `zeff help text`, `zeff help plot` and `zeff help datasets` print the function of that name, so no command lists those three packages. (3) Still his from before: the reader test, the checks by hand, the trademarks (#37).
+
+**Next.** Step 8 `[engine]`: the frame of the app's own pages, Using Zemp Lite (the thirteen pages as text files read at build, their pictures made from the running app, loaded only when a page is opened).
