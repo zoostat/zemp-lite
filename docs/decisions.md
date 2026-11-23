@@ -1921,7 +1921,7 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **What the pages say of the engine** was taken from it: the report holds what `zeff report-bug` says it holds, in its own first lines (statements of the script, the names and types of the variables, the names of the files they were read from, no rows of data, and a message may name a value).
 
-**The owner's reading is moved** from this step to a step of its own, 9d: on 24 November 2026 the coordinating session passed the owner's change of the Help place's layout (#211, item 13), which changes what several pictures show; it is step 9c, and the pages are put to him when it is done and the pictures are made again.
+**The owner's reading is moved** from this step to a step of its own, 9e: on 24 November 2026 the coordinating session passed the owner's change of the Help place's layout (#211, item 13), which changes what several pictures show; it is step 9c; the check of his standing rule that the pages agree with the engine (#211, item 12) is step 9d; and the pages are put to him at step 9e, when both are done and the pictures are made again.
 
 **The pictures:** thirteen, 34 to 63 kB, 679 kB together, none in the first load.
 
