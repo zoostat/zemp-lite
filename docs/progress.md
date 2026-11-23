@@ -112,4 +112,8 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 5b `[function]`.** Beside a page Topics holds **‹ All topics**, what the page stands in with its neighbours (a function's package with its functions, a code's family with its codes), the page open marked and in view, and **On this page** under them; All topics returns the pane to its sections without leaving the page (`src/help/around.ts`). Green here: the whole routine in both browsers.
 
-**Next.** Step 6 `[engine]`: what search finds, and in what order.
+**Done, step 6 `[engine]`.** What the search of Help finds, as a tested module with no screen yet (`src/help/search.ts`): from the second letter, up to eight matches in #211's order (a name exact, a name begun, a word of a name or a one line, an R or a Stata name, a code begun, a slip of one key from the fourth letter), each saying why it matched; a sentence and the nearest names where nothing is found. Held on the whole index of 0.8.0: every name finds itself first, 25 R and Stata names find their functions, every keystroke is answered within a frame. Green here: the whole routine in both browsers.
+
+**For the owner to know (step 6).** With eight places, one lines that merely contain a word crowded out an R or Stata name typed exactly (`table` did not find `tabulate`). Two places are now kept for such names; the order of the rules is #211's, unchanged. Say if another order is wanted.
+
+**Next.** Step 7 `[function]`: the suggestions under the bar's field.

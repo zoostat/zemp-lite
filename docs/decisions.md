@@ -1795,3 +1795,35 @@ A name two packages have (`summary` of `data` and of `results`) has both beside 
 **Tested.** Unit (`src/help/around.test.ts`, 6 tests): each kind of page, a name of two packages, a package and the function of its name, a dataset, a code, and the pages with nothing beside them. Browser, both engines (`tests/browser/help-topics.spec.ts`, now 6 tests): the neighbours of a function with the open one marked, a neighbour pressed and gone back from, the package's head, All topics and the page unchanged, On this page folded across pages; both packages of `summary`, a function far down `core` in view with the page's sections, a dataset, a code and its family's head; each of the 10 packages from the sections and each of the 144 codes from beside its family, every page the engine's; the pane as painted beside a code, beside a function and in its sections, in both themes; All topics and a neighbour from the keyboard alone.
 
 **Reason.** #211, item 4: beside a page the reader sees where it sits and has the pages around it one click away; and the sections are one press away without losing the page.
+
+## 23 November 2026: what the search of Help finds, and in what order (release 0.2.3, step 6)
+
+**Choice.** `src/help/search.ts`, a module with no screen yet (the list under the field is step 7): `entriesOf` makes what is searched from the index of the help, the codes by family and the pages of Using Zemp Lite (none until step 8), and `search` answers what was typed. It runs in the browser on what the engine has given; no request leaves the page.
+
+**What is searched.** Each function once, as it is one page: a name two packages have (`min`, `max`, `append`, `quantile`, `summary`) with both packages, the first one's one line and the R and Stata names of both; 250 functions at 0.8.0. Each package (its line "14 functions", there being no one line of a package yet). Each shipped dataset, each code with its title, each page of the app by its title.
+
+**The rules, in the order #211 sets (part 4), best first, from the second letter typed:**
+
+1. a name typed exactly, whatever the capitals: a function's, a package's, a dataset's, a code, a page's title;
+2. a name beginning with what is typed;
+3. a word beginning with it: of a name after its first (`test` in `t_test`, `normal` in `dist.normal`), then of a title or a one line;
+4. an R or a Stata name: one typed exactly, then one begun; typed as the name (`feols`) or as its source writes it (`fixest::feols`), with or without the brackets of a call;
+5. a code begun (`W02`);
+6. from the fourth letter, a name one key's slip away (a letter wrong, missing or added, or two changed over), of a function, a package, a dataset or a code.
+
+A match is entered once, by the best rule that finds it, with why it matched where that is not its name: "R lm()", "Stata regress", as the source writes it; and the word of the name or the one line that matched, for the list to mark. Up to eight matches.
+
+**Choices the register leaves open.**
+
+- _A part of a name_ is counted with "a word of a method's name" of #211, before a word of a one line: `test` finds the tests by their names before the functions whose lines mention a test.
+- _A code typed exactly_ is a name typed exactly (rule 1); only a code begun waits for rule 5.
+- _A slip is not offered beside a name typed exactly._ `W0202` typed is that code, and `W0201`, one key away, is not a guess worth a place.
+- _Ties_ within a rule: by the name as a dictionary has it, and for one name by its kind (function, package, dataset, code, page), so `plot` gives the function and then the package. The same letters give the same list, in whatever order the entries are held.
+- _Two places kept for R and Stata names typed exactly._ The words of one lines are the commonest match and the weakest, and with eight places they crowded the better evidence out: `table` gave the function `table` and seven matches by a word of a one line or a title, and not `tabulate`, which is R's `table()`. Where more than eight are found, the one lines give up two places at the most to R and Stata names typed exactly. The order shown stays the order of the rules; no name gives up a place. This keeps #211's order and its purpose ("so a reader finds `reg` by the name they know").
+- _Names of one letter_ (`E`, `n`) are not searched for, the list opening at the second letter; the field opens them by name with Enter, as before.
+
+**Nothing found** is never an empty answer: the sentence "Nothing here is called or described by “xtreg”. The nearest names:" with up to three names of functions, packages or datasets, nearer first (one slip away for a word of up to four letters, two from the fifth; `xtreg` gives `ivreg` and `reg`); or, where no name is near, "… Try a function's name, a word of what it does, an R or a Stata name, or a code." The sentences are Zemp's words.
+
+**Tested.** Unit (`src/help/search.test.ts`, 22 tests): what is searched; each rule by itself; the order between the rules, with a code begun and a slip; a match entered once; ties, and the same list from the entries turned about; eight at the most; the two places kept, one, none, and never from a name; nothing found, near and far; the measure of slips. On the whole index of Zeff 0.8.0 as the worker gives it (`src/help/search.node.test.ts`, 7 tests): every function, package, dataset and code found first by its own name; 25 names of R and of Stata each finding its function with why (`lm`, `feols`, `t.test`, `ttest`, `left_join`, `mutate`, `xtset`, `rnorm`, `geom_point`, `%in%` and others); a name begun, a part, a word, a code begun, a slip; `table` still finding `tabulate`; `xtreg`; and every keystroke of twenty words (169 different beginnings) answered in under a sixtieth of a second, each timed three times and its best time taken, since another program on the machine can make a timing longer and never shorter (the first form of the test, one timing each, failed once at 42 ms while the whole suite ran beside it).
+
+**Reason.** The row of 0.2.3 and #211, part 4; R10: a reader who cannot find a function by the name they know is a reader lost.
