@@ -13,6 +13,18 @@ import type {
   Rows,
   View,
 } from "../engine/messages";
+import {
+  HOME as HELP_HOME,
+  after,
+  back,
+  before,
+  begun,
+  forward,
+  here,
+  opened,
+  type History as HelpHistory,
+  type Stop,
+} from "../help/history";
 import { once } from "../help/once";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
@@ -161,6 +173,13 @@ export class Workspace {
    * code's as `zeff explain` does, with the name it is known by; none until one is asked for.
    */
   help = $state<{ title: string; page: string }>({ title: "", page: "" });
+  /**
+   * The pages of Help this reader opened, and the one shown (#211, part 3; `help/history.ts`):
+   * what **Back** and **Forward** go through. It lasts as long as the window.
+   */
+  helpHistory = $state<HelpHistory>(begun());
+  /** The last page of Help asked for, counted: a page that arrives late is not shown over it. */
+  #helpAsked = 0;
   /**
    * The index of the help (the row of 0.2.3; #211): the packages the engine ships with
    * their functions, and the shipped datasets; none until the Help place is first shown.
@@ -1104,22 +1123,65 @@ export class Workspace {
 
   /** Open the Help place on a function's page (F1 in the script, a related function, the field). */
   async showHelp(name: string): Promise<void> {
-    const found = await this.helpPage(name);
-    this.help = { title: name, page: found.page ?? found.message };
-    this.openHelp();
+    await this.#openStop({ kind: "name", name });
   }
 
   /** Open the Help place on a code's explained page (Explain, in what a run said). */
   async showCode(code: string): Promise<void> {
-    const page = await this.explain(code).catch((error: Error) => error.message);
-    this.help = { title: code, page };
+    await this.#openStop({ kind: "code", code });
+  }
+
+  /** Open the Help place on Home, where it starts. */
+  async showHelpHome(): Promise<void> {
+    await this.#openStop(HELP_HOME);
+  }
+
+  /** Back to the page of Help opened before the one shown; nothing where this is the first. */
+  async helpBack(): Promise<void> {
+    const to = before(this.helpHistory);
+    if (to === null) return;
+    this.helpHistory = back(this.helpHistory);
+    await this.#showStop(to);
+  }
+
+  /** Forward to the page of Help one went back from; nothing where this is the last. */
+  async helpForward(): Promise<void> {
+    const to = after(this.helpHistory);
+    if (to === null) return;
+    this.helpHistory = forward(this.helpHistory);
+    await this.#showStop(to);
+  }
+
+  /** A page opened: it goes into the history, is read from the engine, and Help is shown. */
+  async #openStop(stop: Stop): Promise<void> {
+    this.helpHistory = opened(this.helpHistory, stop);
+    await this.#showStop(stop);
     this.openHelp();
   }
 
-  /** Show the Help place, on the page it last showed. */
+  /**
+   * Put a page of the history on the screen: Home, or the engine's page read afresh (a page
+   * of the project's own function follows its script). Where another page was asked for
+   * while this one was read, the later one stands.
+   */
+  async #showStop(stop: Stop): Promise<void> {
+    const asked = ++this.#helpAsked;
+    let shown = { title: "", page: "" };
+    if (stop.kind === "name") {
+      const found = await this.helpPage(stop.name);
+      shown = { title: stop.name, page: found.page ?? found.message };
+    } else if (stop.kind === "code") {
+      const page = await this.explain(stop.code).catch((error: Error) => error.message);
+      shown = { title: stop.code, page };
+    }
+    if (asked === this.#helpAsked) this.help = shown;
+  }
+
+  /** Show the Help place, on the page it last showed; on Home where none was opened yet. */
   openHelp(): void {
     Object.assign(this.views, withTab(this.views, HELP));
     this.#keep();
+    if (here(this.helpHistory) === null) this.helpHistory = opened(this.helpHistory, HELP_HOME);
     void this.indexHelp();
   }
 

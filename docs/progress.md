@@ -98,4 +98,8 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Found at step 2, for the Zeff session.** `zeff help text`, `zeff help plot` and `zeff help datasets` print the function of that name, so those three packages' lists are printed by no command; Zemp Lite sets every package's page from the index instead. A way to ask for a package by name would mend it in the engine.
 
-**Next.** Step 3 `[engine]`: Back, Forward, Home and the trail.
+**Step 3 split.** Too large for one session: 3a is the history with Home, Back and Forward; 3b the trail and the pages its steps open (a package's page from the index, the codes by family).
+
+**Done, step 3a `[engine]`.** The Help place has **Back**, **Forward** and **Home** at its head: the pages opened are a history, as a browser's (`src/help/history.ts`); Home is lit while one is there, the arrows greyed at either end and saying where they go; ⌘[ and ⌘] and the mouse's side buttons do the same while Help is shown and are kept from the browser, so Help never leaves the app. Home shows the old sentence until step 4. Green here: the whole routine in both browsers.
+
+**Next.** Step 3b `[function]`: the trail, and the pages its steps open.

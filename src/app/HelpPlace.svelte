@@ -8,7 +8,14 @@
   // ALSO, each with what its own page says it does, a click opening that page. F1 on a name in
   // the script, **Explain** in what a run said, a name or a code in the page itself, and the
   // field here each open a page.
+  //
+  // From 0.2.3 (#211, part 3) the pages opened are a history (`help/history.ts`): **Back** and
+  // **Forward** go through them, **Home** returns to where Help starts and is lit while one is
+  // there. ⌘[ and ⌘] (Ctrl on other keyboards) and the mouse's two side buttons do as Back
+  // and Forward while this place is shown; the browser, whose own Back and Forward they are,
+  // is not given them here, so that reading Help never leaves the app.
   import HelpPage from "../help/HelpPage.svelte";
+  import { after, before, called, here } from "../help/history";
   import { outlineOf, readPage, relatedOf } from "../help/read";
   import { paneOf } from "./panes";
   import Place from "./Place.svelte";
@@ -64,6 +71,30 @@
     inView = line;
   }
 
+  // Where Back and Forward go, and whether Home is the page shown.
+  const earlier = $derived(before(workspace.helpHistory));
+  const later = $derived(after(workspace.helpHistory));
+  const atHome = $derived(here(workspace.helpHistory)?.kind === "home");
+
+  /** ⌘[ and ⌘]: back and forward through the pages of Help, not of the browser. */
+  function keys(event: KeyboardEvent): void {
+    if (!(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
+    if (event.key !== "[" && event.key !== "]") return;
+    event.preventDefault();
+    void (event.key === "[" ? workspace.helpBack() : workspace.helpForward());
+  }
+
+  /**
+   * The mouse's side buttons (the fourth and the fifth): the browser is kept from going back
+   * or forward on them, at the press and at the release, and the release goes through Help.
+   */
+  function side(event: MouseEvent): void {
+    if (event.button !== 3 && event.button !== 4) return;
+    event.preventDefault();
+    if (event.type !== "mouseup") return;
+    void (event.button === 3 ? workspace.helpBack() : workspace.helpForward());
+  }
+
   let asked = $state("");
   function open(event: SubmitEvent): void {
     event.preventDefault();
@@ -117,6 +148,38 @@
 {/snippet}
 
 {#snippet controls()}
+  <div class="nav" role="group" aria-label="Moving through Help">
+    <button
+      class="step"
+      aria-label="Back"
+      title={earlier === null ? "Back" : `Back: ${called(earlier)}`}
+      disabled={earlier === null}
+      onclick={() => void workspace.helpBack()}
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" /></svg>
+    </button>
+    <button
+      class="step"
+      aria-label="Forward"
+      title={later === null ? "Forward" : `Forward: ${called(later)}`}
+      disabled={later === null}
+      onclick={() => void workspace.helpForward()}
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg>
+    </button>
+    <button
+      class="step home"
+      class:on={atHome}
+      aria-current={atHome ? "page" : undefined}
+      title="Home: where Help starts"
+      onclick={() => void workspace.showHelpHome()}
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true"
+        ><path d="M2.5 7.5 8 3l5.5 4.5M4 6.5V13h8V6.5" /></svg
+      >
+      <span>Home</span>
+    </button>
+  </div>
   <h2 class="mono" data-testid="help-title">
     {workspace.help.title === "" ? "Help" : workspace.help.title}
   </h2>
@@ -132,6 +195,8 @@
     <button class="word" type="submit">Open</button>
   </form>
 {/snippet}
+
+<svelte:window onkeydown={keys} onmousedown={side} onmouseup={side} onauxclick={side} />
 
 <div class="help" data-testid="help">
   <Place
@@ -174,6 +239,62 @@
     font-size: 13.5px;
     font-weight: 500;
     margin: 0;
+  }
+  .nav {
+    align-items: center;
+    display: flex;
+    flex: none;
+    gap: 2px;
+  }
+  .step {
+    align-items: center;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    color: var(--ink-2);
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    font-size: 13px;
+    gap: 6px;
+    height: 28px;
+    justify-content: center;
+    padding: 0;
+    width: 30px;
+  }
+  .step svg {
+    fill: none;
+    height: 16px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+    width: 16px;
+  }
+  .step:hover:not(:disabled) {
+    background: var(--soft);
+  }
+  .step:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+  /* Greyed where there is nowhere to go: an arrow with no word, fainter than any text is set. */
+  .step:disabled {
+    color: var(--ink-3);
+    cursor: default;
+  }
+  .step:disabled svg {
+    opacity: 0.45;
+  }
+  .step.home {
+    border-color: var(--line-strong);
+    padding: 0 10px 0 8px;
+    width: auto;
+  }
+  .step.home.on {
+    background: var(--accent-soft);
+    border-color: transparent;
+    color: var(--accent);
+    font-weight: 600;
   }
   .gap {
     flex: 1;
