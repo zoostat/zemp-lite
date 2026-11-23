@@ -1630,6 +1630,6 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 
 **The first failure of that test** (23 November, before the release) was at another line, where the test waited for the computer's chooser to open. That one is still taken to be the test's, as recorded then; it is not shown to be the same fault, and nothing was being written at that point of the test.
 
-**The release.** The tag `v0.2.2` stands on the commit before this; the mend is on the main branch, and so in the hosted alpha, which is built from it and still shows 0.2.2. The notes in the repository say so under the known issues. No release is opened for it: that is the owner's to say.
+**The release.** The tag `v0.2.2` stands on the commit before this; the mend is on the main branch, and so in the hosted alpha, which is built from it and still shows 0.2.2. The notes in the repository say so under the known issues, and so do the notes published with the GitHub release, which were brought to the repository's on the owner's word the same day ("Yes, add it"): the one item added, nothing else changed. No release is opened for it: that is the owner's to say.
 
 **Reason.** A promise in the record is kept: the second failure was looked for in the app, and it was there.
