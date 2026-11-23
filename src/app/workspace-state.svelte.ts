@@ -383,23 +383,28 @@ export class Workspace {
    * replaced, as a paste would, and saved. Nothing changes where the server makes no edit.
    */
   async format(path: string): Promise<void> {
-    const edits = (await this.#ask(path, "textDocument/formatting", {
-      options: { tabSize: 4, insertSpaces: true },
-    })) as { range: Range; newText: string }[] | null;
-    const text = this.buffers[path]?.text;
-    if (edits === null || edits.length === 0 || text === undefined) {
-      this.status = "nothing to format";
+    // The edits are of the text the server was asked about: where the script was changed
+    // while it answered, they are of a text that is gone, and it is asked again.
+    for (let tries = 0; tries < 3; tries++) {
+      const text = this.buffers[path]?.text;
+      const edits = (await this.#ask(path, "textDocument/formatting", {
+        options: { tabSize: 4, insertSpaces: true },
+      })) as { range: Range; newText: string }[] | null;
+      if (text !== undefined && this.buffers[path]?.text !== text) continue;
+      if (edits === null || edits.length === 0 || text === undefined) {
+        this.status = "nothing to format";
+        return;
+      }
+      this.edit(path, applied(text, edits));
+      this.status = "formatted";
       return;
     }
-    this.edit(path, applied(text, edits));
-    this.status = "formatted";
+    this.status = "nothing to format";
   }
 
   /** What the language server knows of the word at a place of a script, as plain text. */
   async hover(path: string, line: number, character: number): Promise<string | null> {
-    if (this.language === null) return null;
-    const found = (await this.language.request("textDocument/hover", {
-      textDocument: { uri: `file:///project/${path}` },
+    const found = (await this.#ask(path, "textDocument/hover", {
       position: { line, character },
     })) as { contents?: unknown } | null;
     const contents = found?.contents;
@@ -1165,17 +1170,8 @@ export class Workspace {
   async showHelpAt(path: string, name: string, line: number, character: number): Promise<void> {
     const forms = formsOf(await this.indexHelp(), name);
     if (forms.length > 1) {
-      // Asked with the script as it stands now, so that a name just typed is known.
-      const found = (await this.#ask(path, "textDocument/hover", {
-        position: { line, character },
-      }).catch(() => null)) as { contents?: unknown } | null;
-      const contents = found?.contents;
-      const hover =
-        typeof contents === "string"
-          ? contents
-          : contents !== null && typeof contents === "object" && "value" in contents
-            ? String((contents as { value: unknown }).value)
-            : null;
+      // Asked of the script as it stands now, so that a name just typed is known.
+      const hover = await this.hover(path, line, character).catch(() => null);
       const one = hover === null ? null : formIn(hover, forms);
       if (one !== null) {
         await this.#openStop({ kind: "name", name, form: one.form });

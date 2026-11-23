@@ -58,4 +58,93 @@ describe("the language worker", () => {
     expect(reads).toBe(2);
     expect(sent).toHaveLength(2);
   });
+
+  /** A project whose one script takes as long to read as the test holds it. */
+  function slowProject() {
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    const project = {
+      info: { name: "Scratch" },
+      files: () => Promise.resolve([{ path: "scripts/main.zeff", bytes: new Uint8Array() }]),
+      // A file written since the worker was last given the project is read again, slowly.
+      read: () => held.then(() => new Uint8Array()),
+    } as unknown as Project;
+    return { project, release };
+  }
+  const methods = (sent: string[]) =>
+    sent.map((body) => {
+      const message = JSON.parse(body) as {
+        method: string;
+        params?: { textDocument?: { text?: string }; contentChanges?: { text: string }[] };
+      };
+      const text = message.params?.textDocument?.text ?? message.params?.contentChanges?.[0]?.text;
+      return text === undefined ? message.method : `${message.method} ${text}`;
+    });
+
+  it("asks the server only once it has every text it was to be told before the question", async () => {
+    const { project, release } = slowProject();
+    const { stand, sent } = engine();
+    const language = new Language(project, stand);
+    await language.update("scripts/main.zeff", "old");
+    // The script is typed anew and saved: the worker is to be given the file before the
+    // next message, and the file is slow to read. A question asked meanwhile waits.
+    language.changed("scripts/main.zeff");
+    const told = language.update("scripts/main.zeff", "new");
+    let answered = false;
+    const asked = language.request("textDocument/formatting", {}).then(() => (answered = true));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(answered).toBe(false);
+    expect(methods(sent)).toEqual(["initialize", "initialized", "textDocument/didOpen old"]);
+    release();
+    await Promise.all([told, asked]);
+    expect(methods(sent)).toEqual([
+      "initialize",
+      "initialized",
+      "textDocument/didOpen old",
+      "textDocument/didChange new",
+      "textDocument/formatting",
+    ]);
+  });
+
+  it("gives the server a script's texts in the order they were given, however long each waits", async () => {
+    const { project, release } = slowProject();
+    const { stand, sent } = engine();
+    const language = new Language(project, stand);
+    await language.update("scripts/main.zeff", "first");
+    language.changed("scripts/main.zeff");
+    // The second is held by the slow file; the third, begun after it, is not sent before it.
+    const second = language.update("scripts/main.zeff", "second");
+    const third = language.update("scripts/main.zeff", "third");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    release();
+    await Promise.all([second, third]);
+    expect(methods(sent).slice(2)).toEqual([
+      "textDocument/didOpen first",
+      "textDocument/didChange second",
+      "textDocument/didChange third",
+    ]);
+  });
+
+  it("is not held up by a telling that failed", async () => {
+    let fail = true;
+    const project = {
+      info: { name: "Scratch" },
+      files: () =>
+        fail
+          ? Promise.reject(new Error("could not be found"))
+          : Promise.resolve([{ path: "scripts/main.zeff", bytes: new Uint8Array() }]),
+    } as unknown as Project;
+    const { stand, sent } = engine();
+    const language = new Language(project, stand);
+    await expect(language.update("scripts/main.zeff", "one")).rejects.toThrow("could not be found");
+    fail = false;
+    await language.update("scripts/main.zeff", "two");
+    await language.request("textDocument/hover", {});
+    expect(methods(sent)).toEqual([
+      "initialize",
+      "initialized",
+      "textDocument/didOpen two",
+      "textDocument/hover",
+    ]);
+  });
 });

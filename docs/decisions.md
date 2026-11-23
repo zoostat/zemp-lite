@@ -2061,3 +2061,27 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Browser, both engines: `palette.spec` (1 test more), `help-whole.spec` (2 tests). Host: `tests/host/host.spec.ts` (1 test more), tried here against the build served on this Mac before it was pushed.
 
 **Reason.** The row of 0.2.3 and the design guide's rules for every release: the whole app from the keyboard, 12.5 pixels, 4.5 to 1.
+
+## 24 November 2026: The owner keeps the nine wordings of #215; the specification's copy is brought to Zeff ca4c070
+
+**The owner's word**, passed by the coordinating session on 24 November 2026 and read in the Zeff repository before it was taken (commits f0ba9ca and ca4c070, on the main branch there under the owner's name): put the words that tell the two functions of each of the nine names apart, as step 9g made them, he answered "Keep them". So `plot` and `summary` of a fitted model read "of a result", and `min` and `max` written before their values "of values".
+
+**Choice.** Nothing is changed in the app. `docs/spec/` is the Zeff repository's at commit ca4c070, compared byte for byte; one file differs from the copy of 860eb63, the register of open decisions (#215: what was built, what the engine owes at 0.10.0, and the owner's answer).
+
+**Reason.** The owner's decision; the copy here is the Zeff repository's at a named commit.
+
+## 24 November 2026: A question to the language server waits for the text it was to be told (found on GitHub at step 10 of 0.2.3)
+
+**Found.** GitHub's check of step 10 failed once, in WebKit, in a test of 0.2.1: **Format the script**, from ⌘K, said "formatted" and left the script as it was typed. What the page held, kept by the check, showed more: the typed lines stood unformatted and under them scraps of the script the project had held before. The test passed here forty times in a row, so the page was read, not the test changed.
+
+**The cause, a fault of the app since 0.2.1.** A script's text is told to the language server a moment after the last key. The telling first brings the language worker in step with the project's files, which takes as long as a file just saved takes to read; only then is the text sent. The workspace noted the text as told when the telling _began_. A question asked meanwhile (formatting, completion, the usage of a call, a hover) was sent at once and overtook the text: the server answered of the text it still held. For formatting the answer is a list of edits, and they were made in the newer text, at places that were another text's. A reader who typed and asked for **Format the script** while the file was still being read could have had the script garbled; it is undone with ⌘Z, but nothing said that it had happened. On this Mac the file is read too fast for it to be seen; on GitHub's machine in WebKit it was slow enough once.
+
+**Choice.**
+
+1. _In the client of the language server_ (`src/engine/language.ts`): the tellings of a text go one after another, in the order they were given, and every question waits for the tellings begun before it. The opening of the conversation, which a telling itself waits for, is sent at once as before. A telling that failed holds up neither the next nor a question.
+2. _In **Format the script**_ (`workspace-state.svelte.ts`): the edits are made in the text the server was asked about; where the script was changed while the server answered, it is asked again (three times at most), and never are the edits of one text made in another.
+3. _The hover under the pointer_ is asked as the other questions are, of the script as it stands; it was asked without the script being told first.
+
+**Tested.** Unit (`src/engine/language.test.ts`, 3 tests more), on a project whose file is slow to read: a question asked while a text is on its way is sent after it (this one fails on the code as it was); texts reach the server in the order given; a telling that failed holds nothing up. The browser test that found it is unchanged.
+
+**Reason.** A formatter must never make edits in a text they were not computed for; and the language server's answers are of the script the reader sees.

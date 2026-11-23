@@ -78,7 +78,7 @@ export class Language {
     const starting = (async () => {
       await this.#engine.start();
       await this.#session.sync();
-      await this.request("initialize", {
+      await this.#request("initialize", {
         processId: null,
         rootUri: ROOT,
         capabilities: {
@@ -100,8 +100,27 @@ export class Language {
     return starting;
   }
 
-  /** The text of a script, as it stands: opened the first time, then sent whole. */
-  async update(path: string, text: string): Promise<void> {
+  /**
+   * The tellings of a script's text begun so far, one after another. Each waits for those
+   * begun before it, and so does every question: a telling first brings the worker in step
+   * with the project's files, which takes as long as the files take to read, and a question
+   * sent meanwhile would be answered of the text the server held before (found at 0.2.3: the
+   * edits of **Format the script** were of an older text, and were made in the newer one).
+   */
+  #told: Promise<void> = Promise.resolve();
+
+  /**
+   * The text of a script, as it stands: opened the first time, then sent whole. The texts
+   * reach the server in the order they were given here.
+   */
+  update(path: string, text: string): Promise<void> {
+    const sent = this.#told.then(() => this.#update(path, text));
+    // A telling that failed does not hold up the next, nor a question.
+    this.#told = sent.catch(() => undefined);
+    return sent;
+  }
+
+  async #update(path: string, text: string): Promise<void> {
     await this.start();
     await this.#session.sync();
     const version = (this.#versions.get(path) ?? 0) + 1;
@@ -118,8 +137,17 @@ export class Language {
     }
   }
 
-  /** Ask the server, and wait for its answer to this request. */
+  /**
+   * Ask the server, and wait for its answer to this request. The server is asked once it has
+   * every text it was to be told before the question.
+   */
   async request(method: string, params: unknown): Promise<unknown> {
+    await this.#told;
+    return this.#request(method, params);
+  }
+
+  /** A request sent at once: the opening of the conversation, which every telling waits for. */
+  async #request(method: string, params: unknown): Promise<unknown> {
     const id = this.#next++;
     const answered = new Promise<unknown>((resolve) => this.#waiting.set(id, resolve));
     await this.#send({ jsonrpc: "2.0", id, method, params });
