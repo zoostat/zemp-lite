@@ -28,7 +28,8 @@
   import ListPage from "../help/ListPage.svelte";
   import SearchField from "../help/SearchField.svelte";
   import TopicsPane from "../help/TopicsPane.svelte";
-  import { codesPage, packagePage, usingList } from "../help/pages";
+  import { homeParts } from "../help/home";
+  import { codesPage, packagePage, packagesPage, usingList } from "../help/pages";
   import { outlineOf, readPage } from "../help/read";
   import { trailOf } from "../help/trail";
   import { headingsOf, readUsing } from "../using/read";
@@ -48,11 +49,13 @@
   const list = $derived(
     shown?.kind === "package"
       ? packagePage(workspace.helpIndex, shown.name)
-      : shown?.kind === "codes"
-        ? codesPage(workspace.helpCodes)
-        : shown?.kind === "using" && shown.page === null
-          ? usingList()
-          : null,
+      : shown?.kind === "packages"
+        ? packagesPage(workspace.helpIndex)
+        : shown?.kind === "codes"
+          ? codesPage(workspace.helpCodes)
+          : shown?.kind === "using" && shown.page === null
+            ? usingList()
+            : null,
   );
   // A page of Using Zemp Lite, read from its text; a slip in a page is said, not hidden.
   const own = $derived.by(() => {
@@ -64,26 +67,32 @@
     }
   });
   const page = $derived(list === null && own === null ? workspace.help.page : "");
-  // Home, the index of functions, once the engine has given it.
+  // Home, the landing page, once the engine has given its index.
   const home = $derived(shown === null || shown.kind === "home" ? workspace.helpIndex : null);
   const blank = $derived(list === null && own === null && page === "" && home === null);
   const doc = $derived(readPage(page));
   // The sections of the page open, for the pane at the right: those of the engine's page, or
-  // of one of the app's own. A page that is a list, and Home, has none (#211, item 13).
+  // of one of the app's own; on Home, its panels (#211, item 14). A page that is a list has
+  // none (item 13).
   const sections = $derived(
     own !== null
       ? own.doc === null
         ? []
         : headingsOf(own.doc).map((part) => ({ ...part, entry: false }))
-      : list === null && home === null
-        ? outlineOf(doc)
-        : [],
+      : home !== null
+        ? homeParts(home, workspace.helpCodes).map((title, line) => ({ line, title, entry: false }))
+        : list === null
+          ? outlineOf(doc)
+          : [],
   );
   const trail = $derived(trailOf(shown ?? HOME, workspace.helpIndex, workspace.helpCodes));
 
   // The section in view: the last whose heading has reached the top of the page's own pane.
+  // A section near the page's end cannot reach the top: one gone to from the pane at the
+  // right stays the section marked while the page stands at its end.
   let pane = $state<HTMLElement | null>(null);
   let inView = $state<number | null>(null);
+  let asked: number | null = null;
   function watch(): void {
     if (pane === null) return;
     const top = pane.getBoundingClientRect().top;
@@ -91,6 +100,9 @@
     for (const part of pane.querySelectorAll<HTMLElement>("[data-line]")) {
       if (part.getBoundingClientRect().top - top <= 8) found = Number(part.dataset["line"]);
     }
+    const atEnd = pane.scrollTop + pane.clientHeight >= pane.scrollHeight - 1;
+    if (atEnd && asked !== null && (found === null || asked > found)) found = asked;
+    else asked = null;
     inView = found;
   }
   // A new page is read from its top; the codes opened at a family, from that family's heading.
@@ -98,6 +110,7 @@
     const now = workspace.help.stop;
     if (pane !== null) pane.scrollTop = 0;
     inView = null;
+    asked = null;
     const family = now?.kind === "codes" ? now.family : null;
     if (family === null) return;
     void tick().then(() => {
@@ -110,6 +123,7 @@
     if (pane === null || part === null || part === undefined) return;
     pane.scrollTop += part.getBoundingClientRect().top - pane.getBoundingClientRect().top;
     inView = line;
+    asked = line;
   }
 
   // Where Back and Forward go, and whether Home is the page shown.
@@ -241,7 +255,11 @@
           <p class="quiet" data-testid="help-page">This page cannot be shown: {own.slip}.</p>
         {/if}
       {:else if home !== null}
-        <HomePage index={home} onopen={(to) => void workspace.showHelpStop(to)} />
+        <HomePage
+          index={home}
+          families={workspace.helpCodes}
+          onopen={(to) => void workspace.showHelpStop(to)}
+        />
       {:else if page === ""}
         <!-- Home before the engine has given its index, or where it cannot. -->
         <p class="quiet">

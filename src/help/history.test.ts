@@ -86,6 +86,12 @@ describe("the history of the Help place", () => {
     expect(called(plot)).toBe("plot");
     expect(called(all)).toBe("Errors and warnings");
     expect(called(names)).toBe("Z01xx");
+    // The list of the packages is a page of its own, and not Home.
+    const packages: Stop = { kind: "packages" };
+    expect(same(packages, { kind: "packages" })).toBe(true);
+    expect(same(packages, HOME)).toBe(false);
+    expect(same(packages, plot)).toBe(false);
+    expect(called(packages)).toBe("Packages");
   });
 
   it("tells a name from a code of the same letters, and Home from both", () => {

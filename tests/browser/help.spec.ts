@@ -116,14 +116,17 @@ test("the Help place has the page's outline at its left, each section gone to an
   await page.setViewportSize({ width: 1280, height: 600 });
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
-  // With no page asked for, Help is on Home, the index of functions, which has no sections
-  // of its own, and the pane at the right says so; the Topics pane holds the packages and the
-  // codes (`help-topics.spec.ts`).
-  await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText(
-    "Index of functions",
-  );
-  await expect(outline(page)).toHaveCount(0);
-  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  // With no page asked for, Help is on Home, the landing page, whose parts are its panels:
+  // the pane at the right lists them; the Topics pane holds the packages and the codes
+  // (`help-home.spec.ts`, `help-topics.spec.ts`).
+  await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText("Help");
+  await expect(outline(page).getByRole("button")).toHaveText([
+    "Zeff",
+    "Zemp Lite",
+    "Packages",
+    "Errors and warnings",
+    "Using Zemp Lite",
+  ]);
   await expect(
     topics(page).getByRole("list", { name: "Packages" }).getByRole("button").first(),
   ).toHaveText(/^core\s*71$/);

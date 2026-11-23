@@ -154,4 +154,10 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 9e `[function]`.** The owner read the thirteen pages: "The pages stand as they are". Nothing is changed.
 
-**Next.** Step 10 `[function]`: the words, the keyboard and the address (every new control a stop of the Tab key with a name and a command of ⌘K where it acts; the check after a deployment opens Home, searches for `lm` and opens `reg`; the notes drafted). Then step 11, the pre-release routine.
+**The owner chose a new Home for Help (24 November 2026, through the coordinating session; #211, item 14, Zeff af5b7a3):** a landing page of soft panels, one under another, and no Index of functions. It is step 9f.
+
+**Done, step 9f `[function]`.** The copy of the specification brought to Zeff af5b7a3. Home is a landing page: a panel for Zeff and one for Zemp Lite, each with its version and a few words, then a panel for each topic (Packages, Errors and warnings, Using Zemp Lite) with its count, a click opening it. The Index of functions is gone with its command; **Packages** has a page of its own, the ten packages; the command of ⌘K is **Help: home**. Home's words are held to the engine. One paragraph of **Finding help** and one name in **Commands with ⌘K** changed after the owner's reading. Every picture made again. The failure of 9c's check on GitHub was the test's own timing, mended. Green here: the whole routine in both browsers.
+
+**For the owner.** Whether he wishes to read again the paragraph of **Finding help** that says what Home is.
+
+**Next.** A step for #215 (a name with two functions, such as `histogram`: one page for each, and a chooser), passed by the coordinating session at Zeff 860eb63, to be entered as step 9g. Then step 10 `[function]`: the words, the keyboard and the address (every new control a stop of the Tab key with a name and a command of ⌘K where it acts; the check after a deployment opens Home, searches for `lm` and opens `reg`; the notes drafted). Then step 11, the pre-release routine.

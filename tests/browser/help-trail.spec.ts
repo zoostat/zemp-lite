@@ -97,15 +97,19 @@ test("the trail says where a page stands, and each step opens its page", async (
   // The trail begins under Home: its first step is Packages, and the word Help is not in it.
   await expect(trail(page).getByRole("listitem").first()).toHaveText("Packages");
   await expect(trail(page).getByText("Help", { exact: true })).toHaveCount(0);
-  // Packages opens Home, where the packages are listed; so does Home's own button.
+  // Packages opens the list of the packages, a page of its own; Home's button opens Home.
   await press(step(page, "Packages"));
-  await expect(trail(page)).toHaveCount(0);
-  await expect(home(page)).toHaveAttribute("aria-current", "page");
-  await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Index of functions");
+  await expect(title(page)).toHaveText("Packages");
+  await expect.poll(() => reads(page)).toBe("Packages");
+  await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Packages");
+  await expect(shown(page).getByRole("row")).toHaveCount(10);
+  await expect(onThisPage(page)).toContainText("This page has no sections.");
   await press(back(page));
   await expect(title(page)).toHaveText("t_test");
   await press(home(page));
   await expect(trail(page)).toHaveCount(0);
+  await expect(home(page)).toHaveAttribute("aria-current", "page");
+  await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Help");
 
   // A name two packages have names both, each a link to its own page.
   await ask(page, "summary");
@@ -339,10 +343,15 @@ test("the bar of Help: Topics, Back, Forward, Home, the trail, the search field 
   await order();
   await ask(page, "proportion_test");
   await order();
+  // A window this narrow says so in a line at its top, which moves the bar down: the bar is
+  // measured once that line stands, and again once it has gone.
+  const narrow = page.getByRole("note").filter({ hasText: "1,200 pixels wide" });
   await page.setViewportSize({ width: 1000, height: 700 });
+  await expect(narrow).toBeVisible();
   await order();
   // With the right pane closed its link is still the last thing of the bar.
   await page.setViewportSize({ width: 1200, height: 700 });
+  await expect(narrow).toHaveCount(0);
   await press(link);
   await expect(link).toHaveAttribute("aria-pressed", "false");
   await order();

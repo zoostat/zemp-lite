@@ -47,7 +47,7 @@ export const HELD: Record<string, Record<string, Held>> = {
       "Run from here",
       "Place: Data",
       "Open file:",
-      "Help: index of functions",
+      "Help: home",
       "Script: show Project",
       "Project: new script…",
       "Project: new folder…",

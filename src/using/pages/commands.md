@@ -13,7 +13,7 @@ Press <kbd>⌘K</kbd> (<kbd>Ctrl K</kbd> on Windows and Linux), or the field **S
 ## What is there
 
 - To run: `Run the script` and `Check the script`; and, with the cursor in the script, `Run the statement at the cursor`, `Run section`, `Run to here` and `Run from here`.
-- To move: `Place: Data` and the other places; `Open file:` with each file of the project; `Help: index of functions`.
+- To move: `Place: Data` and the other places; `Open file:` with each file of the project; `Help: home`.
 - The panes: each is shown and hidden by its command, as `Script: show Project`.
 - The project: `Project: new script…`, `Project: new folder…`, `Project: add files…` and `Project: export…`.
 - The window: `Theme: dark`, `Code text: larger`, `Format the script`, `Output: clear`.

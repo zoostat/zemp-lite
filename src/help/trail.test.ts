@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { CodeFamily, HelpIndex } from "../engine/messages";
 import { HOME, type Stop } from "./history";
-import { codesPage, countsOf, packagePage } from "./pages";
+import { HOME_WORDS, codesIn, countsOf, functionsIn, homeParts, topicPanels } from "./home";
+import { codesPage, packagePage, packagesPage } from "./pages";
 import { familyOf, homesOf, trailOf } from "./trail";
 
 const fn = (name: string, summary = `what ${name} does`) => ({ name, summary, names: [] });
@@ -51,7 +52,11 @@ describe("the trail of a page of Help", () => {
     const trail = trailOf({ kind: "name", name: "t_test" }, index, families);
     // It begins under Home: the word Help is not among its steps.
     expect(trail.map((step) => step.label)).toEqual(["Packages", "stats", "t_test"]);
-    expect(trail.map((step) => step.to)).toEqual([HOME, { kind: "package", name: "stats" }, null]);
+    expect(trail.map((step) => step.to)).toEqual([
+      { kind: "packages" },
+      { kind: "package", name: "stats" },
+      null,
+    ]);
     // The package and the function are names of the engine's; the word is not.
     expect(trail.map((step) => step.name)).toEqual([false, true, true]);
   });
@@ -141,13 +146,69 @@ describe("a package's page", () => {
   });
 });
 
-describe("the line under Home's title", () => {
-  it("names the engine and counts the functions and the packages of the index", () => {
+describe("Home, the landing page", () => {
+  it("counts the functions, the packages and the codes of the engine", () => {
     // `summary` is of two packages and is counted in each, as each package counts its own.
-    expect(countsOf(index)).toBe("Zeff 0.8.0 · 9 functions in 5 packages");
-    expect(countsOf({ engine: "0.8.0", packages: [index.packages[2]!], datasets: [] })).toBe(
-      "Zeff 0.8.0 · 1 function in 1 package",
+    expect(functionsIn(index)).toBe(9);
+    expect(codesIn(families)).toBe(3);
+    expect(codesIn(null)).toBe(0);
+    expect(countsOf(index, families)).toBe("9 functions · 5 packages · 3 codes");
+    expect(countsOf({ engine: "0.8.0", packages: [index.packages[2]!], datasets: [] }, null)).toBe(
+      "1 function · 1 package · 0 codes",
     );
+  });
+
+  it("has a panel for each section of Topics, with its count and the page it opens", () => {
+    const panels = topicPanels(index, families);
+    expect(panels.map((panel) => `${panel.name} ${panel.count}`)).toEqual([
+      "Packages 5",
+      "Errors and warnings 3",
+      `Using Zemp Lite ${panels[2]?.count}`,
+    ]);
+    expect(panels.map((panel) => panel.to)).toEqual([
+      { kind: "packages" },
+      { kind: "codes", family: null },
+      { kind: "using", page: null },
+    ]);
+    // The pages of the app there are, counted.
+    expect(panels[2]?.count).toBe(13);
+  });
+
+  it("lists its panels for the pane at the right, and gives a code as its example", () => {
+    expect(homeParts(index, families)).toEqual([
+      "Zeff",
+      "Zemp Lite",
+      "Packages",
+      "Errors and warnings",
+      "Using Zemp Lite",
+    ]);
+    expect(HOME_WORDS.title).toBe("Help");
+    expect(HOME_WORDS.codes.code).toMatch(/^[WZ]\d{4}$/);
+  });
+});
+
+describe("the page of the packages", () => {
+  it("lists every package of the index, in its order, with its count, each opening its page", () => {
+    const page = packagesPage(index)!;
+    expect(page.title).toBe("Packages");
+    expect(page.named).toBe(false);
+    expect(page.facts).toEqual(["5 packages", "9 functions in Zeff 0.8.0"]);
+    expect(page.groups[0]?.rows.map((row) => `${row.name}: ${row.words}`)).toEqual([
+      "data: 2 functions · tier 1",
+      "results: 2 functions · tier 1",
+      "stats: 1 function · tier 1",
+      "plot: 2 functions · tier 1",
+      "datasets: 2 functions · tier 1",
+    ]);
+    expect(page.groups[0]?.rows[2]?.to).toEqual({ kind: "package", name: "stats" });
+    expect(packagesPage(null)).toBeNull();
+  });
+
+  it("is a step of every trail under it, and a page of the history apart from Home", () => {
+    expect(read({ kind: "packages" })).toBe("Packages.");
+    expect(trailOf({ kind: "package", name: "stats" }, index, families)[0]?.to).toEqual({
+      kind: "packages",
+    });
   });
 });
 

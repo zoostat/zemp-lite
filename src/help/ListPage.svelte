@@ -31,7 +31,7 @@
       data-line={group.heading === null ? undefined : line}
       aria-labelledby={group.heading === null ? undefined : `help-list-${line}`}
       aria-label={group.heading === null
-        ? `The ${list.titles ? "pages" : "functions"} of ${list.title}`
+        ? `The ${list.titles ? "pages" : list.named ? "functions" : "list"} of ${list.title}`
         : undefined}
     >
       {#if group.heading !== null}

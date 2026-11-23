@@ -214,7 +214,10 @@ test("beside a function's page Topics holds its package, the open function marke
   await scratch(page, press);
   // Home has nothing beside it: the sections, and no way back to them to offer.
   await expect(allTopics(page)).toHaveCount(0);
-  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  // Home's own parts, its panels, are in the pane at the right.
+  await expect(
+    onThisPage(page).getByRole("list", { name: "On this page" }).getByRole("button").first(),
+  ).toHaveText("Zeff");
 
   await ask(page, "t_test");
   // All topics; the package with its count, a link to its page; and its functions.

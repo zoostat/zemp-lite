@@ -1,211 +1,237 @@
 <script lang="ts">
-  // Home, the page Help starts on (release 0.2.3, step 4; the row of 0.2.3; #211, part 1 and
-  // "Placed"): the **Index of functions**, until the methods arrive with the engine. Under the
-  // title, the engine and the counts; then each package the engine ships, a heading with its
-  // count, and its functions as links in as many columns as there is room for; the shipped
-  // datasets under `datasets`. Only what this engine runs is listed. The names alone are set
-  // (the owner's answer to question 2): a function's one line is shown while the pointer or
-  // the keyboard rests on its name. Every name and every one line is the engine's.
-  import type { HelpIndex } from "../engine/messages";
+  // Home, the page Help starts on (release 0.2.3, step 9f; open decision #211, item 14, the
+  // owner's choice of 24 November 2026): a landing page of soft panels, one under another.
+  // Under the title **Help**, a panel for Zeff (its version, what it is, its counts) and one
+  // for Zemp Lite (its version, its stage, what it is); then, under **Topics**, a panel for
+  // each section of the Topics pane, with its count, a sentence on what it holds and an
+  // arrow, a click opening it: **Packages**, with the packages' names as small links inside
+  // it; **Errors and warnings**; **Using Zemp Lite**. Zeff's version and every count are the
+  // engine's; the words are Zemp's (`home.ts`). The index of functions that stood here at
+  // step 4 is gone: every function is reached from its package, from search and from links.
+  import { VERSION, shown } from "../app/version";
+  import type { CodeFamily, HelpIndex } from "../engine/messages";
   import type { Stop } from "./history";
-  import { HOME_TITLE, countsOf } from "./pages";
+  import { HOME_WORDS, countsOf, topicPanels } from "./home";
 
   let {
     index,
+    families,
     onopen,
   }: {
     index: HelpIndex;
-    /** Open a page: a function's, a dataset's or a package's. */
+    families: CodeFamily[] | null;
+    /** Open a page: a topic's, or a package's. */
     onopen: (to: Stop) => void;
   } = $props();
 
-  /** How long the pointer rests on a name before its one line is shown, in milliseconds. */
-  const REST = 350;
-
-  // The one line shown, and where: under the name rested on, kept inside the window.
-  let resting = $state<{ words: string; left: number; top: number; of: HTMLElement } | null>(null);
-  let waiting: ReturnType<typeof setTimeout> | null = null;
-
-  function show(of: HTMLElement, words: string): void {
-    const box = of.getBoundingClientRect();
-    const left = Math.max(8, Math.min(box.left, window.innerWidth - 368));
-    resting = { words, left, top: box.bottom + 5, of };
-  }
-  function rest(event: Event, words: string, wait: number): void {
-    const of = event.currentTarget as HTMLElement;
-    if (waiting !== null) clearTimeout(waiting);
-    waiting = setTimeout(() => show(of, words), wait);
-  }
-  function leave(): void {
-    if (waiting !== null) clearTimeout(waiting);
-    waiting = null;
-    resting = null;
-  }
-  function keys(event: KeyboardEvent): void {
-    if (event.key === "Escape" && resting !== null) leave();
-  }
-  /** The page scrolled (a name the Tab key reached is brought into view): the line follows its name. */
-  function follow(): void {
-    if (resting !== null) show(resting.of, resting.words);
-  }
+  const panels = $derived(topicPanels(index, families));
 </script>
 
-<!-- A name of a list: a link, its one line shown while the pointer or the keyboard rests on it. -->
-{#snippet link(name: string, words: string)}
-  <li>
-    <button
-      class="mono name"
-      aria-describedby={resting?.words === words ? "help-home-line" : undefined}
-      onclick={() => onopen({ kind: "name", name })}
-      onpointerenter={(event) => rest(event, words, REST)}
-      onpointerleave={leave}
-      onfocus={(event) => rest(event, words, 0)}
-      onblur={leave}>{name}</button
-    >
-  </li>
-{/snippet}
-
-<svelte:window onkeydown={keys} onscrollcapture={follow} />
-
 <article class="home" data-testid="help-page">
-  <header>
-    <h3>{HOME_TITLE}</h3>
-    <p class="counts" data-testid="help-counts">{countsOf(index)}</p>
-  </header>
-  {#each index.packages as one, line (one.name)}
-    <section data-line={line} aria-labelledby="help-home-{one.name}">
-      <h4 id="help-home-{one.name}">
-        <button
-          class="mono package"
-          title="Open the page of the package {one.name}"
-          onclick={() => onopen({ kind: "package", name: one.name })}>{one.name}</button
-        >
-        <small>{one.functions.length}</small>
+  <h3>{HOME_WORDS.title}</h3>
+
+  <section class="panel" data-line="0" aria-labelledby="help-home-zeff">
+    <h4 id="help-home-zeff">
+      <span class="name">Zeff</span>
+      <span class="version mono" data-testid="help-engine">{index.engine}</span>
+    </h4>
+    <p>{HOME_WORDS.zeff}</p>
+    <p class="counts" data-testid="help-counts">{countsOf(index, families)}</p>
+  </section>
+
+  <section class="panel" data-line="1" aria-labelledby="help-home-zemp">
+    <h4 id="help-home-zemp">
+      <span class="name">Zemp Lite</span>
+      <span class="version mono" data-testid="help-app">{shown(VERSION)}</span>
+      <span class="version stage">{HOME_WORDS.stage}</span>
+    </h4>
+    <p>{HOME_WORDS.zemp}</p>
+  </section>
+
+  <p class="label" id="help-home-topics">{HOME_WORDS.topics}</p>
+
+  {#each panels as panel, at (panel.key)}
+    <section class="panel link" data-line={at + 2} aria-labelledby="help-home-{panel.key}">
+      <h4 id="help-home-{panel.key}">
+        <!-- The button is the whole panel's: it is stretched over it, under the links inside. -->
+        <button class="open" onclick={() => onopen(panel.to)}>
+          <span class="name">{panel.name}</span>
+          <span class="count">{panel.count}</span>
+          <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"
+            ><path d="M3 8h10M9 4l4 4-4 4" /></svg
+          >
+        </button>
       </h4>
-      <ul class="names" aria-label="The functions of {one.name}">
-        {#each one.functions as f (f.name)}
-          {@render link(f.name, f.summary)}
-        {/each}
-      </ul>
-      {#if one.name === "datasets" && index.datasets.length > 0}
-        <h5 id="help-home-shipped">Datasets <small>{index.datasets.length}</small></h5>
-        <ul class="names" aria-labelledby="help-home-shipped">
-          {#each index.datasets as d (d.name)}
-            {@render link(d.name, d.summary)}
+      {#if panel.key === "packages"}
+        <p>{HOME_WORDS.packages}</p>
+        <ul class="packages" aria-label="The packages">
+          {#each index.packages as one (one.name)}
+            <li>
+              <button
+                class="mono package"
+                title="Open the page of the package {one.name}"
+                onclick={() => onopen({ kind: "package", name: one.name })}>{one.name}</button
+              >
+            </li>
           {/each}
         </ul>
+      {:else if panel.key === "codes"}
+        <p>
+          {HOME_WORDS.codes.before}<code class="mono">{HOME_WORDS.codes.code}</code>{HOME_WORDS
+            .codes.after}
+        </p>
+      {:else}
+        <p>{HOME_WORDS.using}</p>
       {/if}
     </section>
   {/each}
 </article>
 
-{#if resting !== null}
-  <div
-    class="line"
-    id="help-home-line"
-    role="tooltip"
-    style:left="{resting.left}px"
-    style:top="{resting.top}px"
-  >
-    {resting.words}
-  </div>
-{/if}
-
 <style>
   .home {
     color: var(--ink);
-    font-size: calc(var(--code-size, 14px) + 1px);
-    line-height: 1.65;
-  }
-  header {
-    margin-bottom: 6px;
+    font-size: calc(var(--code-size, 14px) + 0.5px);
+    line-height: 1.6;
+    max-width: 700px;
   }
   h3 {
-    font-size: calc(var(--code-size, 14px) + 13px);
+    font-size: calc(var(--code-size, 14px) + 17px);
     font-weight: 600;
     line-height: 1.2;
+    margin: 2px 0 16px;
+  }
+  /* A soft panel: the light tint, rounded, one under another. */
+  .panel {
+    background: var(--softer);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    padding: 14px 18px;
+    position: relative;
+  }
+  .panel.link:hover,
+  .panel.link:focus-within {
+    border-color: var(--accent);
+  }
+  h4 {
+    align-items: center;
+    display: flex;
+    font-size: 1.1em;
+    font-weight: 700;
+    gap: 8px;
     margin: 0 0 4px;
   }
-  .counts {
+  p {
     color: var(--ink-2);
     margin: 0;
   }
-  h4,
-  h5 {
-    align-items: baseline;
-    border-bottom: 1px solid var(--line-strong);
-    display: flex;
-    font-size: 1.05em;
-    font-weight: 700;
-    justify-content: space-between;
-    margin: 24px 0 8px;
-    padding-bottom: 5px;
+  .counts {
+    color: var(--ink-3);
+    font-size: 13px;
+    margin-top: 6px;
   }
-  h5 {
-    border-bottom-color: var(--line);
-    font-size: 1em;
-    font-weight: 600;
-    margin-top: 14px;
+  .version {
+    background: var(--accent-soft);
+    border-radius: 20px;
+    color: var(--accent);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 0 8px;
   }
-  small {
+  .version.stage {
+    background: var(--soft);
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+  }
+  .label {
     color: var(--ink-3);
     font-size: 12.5px;
-    font-weight: 400;
-  }
-  /* As many columns as there is room for; a name is never cut across two. */
-  .names {
-    column-gap: 24px;
-    column-width: 150px;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  li {
-    break-inside: avoid;
-    padding: 1px 0;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    margin: 20px 0 8px;
+    text-transform: uppercase;
   }
   button {
     background: none;
     border: 0;
-    border-radius: 4px;
+    color: inherit;
     cursor: pointer;
-    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
-    line-height: inherit;
-    padding: 0 3px;
+    font: inherit;
+    padding: 0;
   }
-  .name {
-    color: var(--accent);
-    font-size: max(12.5px, 0.9em);
-    margin-left: -3px;
-    max-width: 100%;
-    overflow-wrap: anywhere;
+  .open {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    gap: 8px;
     text-align: left;
   }
-  .package {
-    color: var(--ink);
-    font-size: 1em;
-    font-weight: 700;
-    margin-left: -3px;
+  /* The whole panel answers to the pointer as its heading's button does. */
+  .open::after {
+    border-radius: 12px;
+    content: "";
+    inset: 0;
+    position: absolute;
   }
-  button:hover {
-    text-decoration: underline;
+  .open:focus-visible {
+    outline: none;
   }
-  button:focus-visible {
+  .open:focus-visible::after {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
-  .line {
-    background: var(--window);
-    border: 1px solid var(--line-strong);
-    border-radius: 7px;
-    box-shadow: 0 6px 22px rgb(0 0 0 / 14%);
-    color: var(--ink);
+  .name {
+    font-weight: 700;
+  }
+  .count {
+    color: var(--ink-3);
     font-size: 13px;
-    line-height: 1.45;
-    max-width: 360px;
-    padding: 5px 10px;
-    pointer-events: none;
-    position: fixed;
-    z-index: 30;
+    font-weight: 400;
+  }
+  .arrow {
+    color: var(--accent);
+    fill: none;
+    height: 16px;
+    margin-left: auto;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+    width: 16px;
+  }
+  .packages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+  }
+  /* The packages' links stand over the panel's own button. */
+  .package {
+    background: var(--window);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--accent);
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+    font-size: max(12.5px, 0.9em);
+    padding: 0 7px;
+    position: relative;
+    z-index: 1;
+  }
+  .package:hover {
+    border-color: var(--accent);
+  }
+  .package:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  code {
+    background: var(--window);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: max(12.5px, 0.86em);
+    padding: 0 4px;
   }
 </style>

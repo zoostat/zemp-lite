@@ -7,7 +7,7 @@
 // function of a later release, a name mistyped) is its own name alone.
 import type { CodeFamily, HelpIndex } from "../engine/messages";
 import { USING_TITLE, usingPage } from "../using/pages";
-import { CODES, HOME, type Stop } from "./history";
+import { CODES, type Stop } from "./history";
 
 /**
  * A step of the trail: its words; the page it opens, or none for the page shown, which is
@@ -53,19 +53,20 @@ export function trailOf(
   index: HelpIndex | null,
   families: CodeFamily[] | null,
 ): Step[] {
-  // In this stage Home is the index by package, so it is the page of the packages too.
-  const packages = word("Packages", HOME);
+  const packages = (last: boolean) => word("Packages", last ? null : { kind: "packages" });
   const codes = (last: boolean) => word(CODES, last ? null : { kind: "codes", family: null });
   switch (stop.kind) {
     case "home":
       return [];
+    case "packages":
+      return [packages(true)];
     case "package":
-      return [packages, name(stop.name, null)];
+      return [packages(false), name(stop.name, null)];
     case "name": {
       const homes = homesOf(index, stop.name);
       if (homes.length === 0) return [name(stop.name, null)];
       return [
-        packages,
+        packages(false),
         ...homes.map((home, at) => name(home, { kind: "package", name: home }, at > 0)),
         name(stop.name, null),
       ];

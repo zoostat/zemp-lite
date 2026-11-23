@@ -14,6 +14,8 @@ import { USING_TITLE, usingPage } from "../using/pages";
 export type Stop =
   | { kind: "home" }
   | { kind: "name"; name: string }
+  /** The list of the packages the engine ships. */
+  | { kind: "packages" }
   | { kind: "package"; name: string }
   | { kind: "codes"; family: string | null }
   | { kind: "code"; code: string }
@@ -44,6 +46,8 @@ export function same(a: Stop, b: Stop): boolean {
   switch (a.kind) {
     case "home":
       return b.kind === "home";
+    case "packages":
+      return b.kind === "packages";
     case "name":
       return b.kind === "name" && a.name === b.name;
     case "package":
@@ -98,6 +102,8 @@ export function called(stop: Stop): string {
   switch (stop.kind) {
     case "home":
       return "Home";
+    case "packages":
+      return "Packages";
     case "name":
     case "package":
       return stop.name;

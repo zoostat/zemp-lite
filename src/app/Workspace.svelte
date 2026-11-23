@@ -201,8 +201,8 @@
       run: () => workspace.openHelp(),
     },
     {
-      name: "Help: index of functions",
-      hint: "Home: every function of this engine, by package",
+      name: "Help: home",
+      hint: "where Help starts: Zeff, Zemp Lite and the topics",
       run: () => void workspace.showHelpHome(),
     },
     {

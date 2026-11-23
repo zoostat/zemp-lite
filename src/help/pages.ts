@@ -120,14 +120,27 @@ export function usingList(): ListPage {
   };
 }
 
-/** What Home is called until the methods arrive with the engine (#211, "Placed"). */
-export const HOME_TITLE = "Index of functions";
-
-/**
- * The line under Home's title: the engine and what the index holds of it. A function is
- * counted in each package that has one of its name, as each package's own count has it.
- */
-export function countsOf(index: HelpIndex): string {
+/** The page of the packages: each package the engine ships, in its order, with its count. */
+export function packagesPage(index: HelpIndex | null): ListPage | null {
+  if (index === null) return null;
   const functions = index.packages.reduce((sum, one) => sum + one.functions.length, 0);
-  return `Zeff ${index.engine} · ${counted(functions, "function", "functions")} in ${counted(index.packages.length, "package", "packages")}`;
+  return {
+    title: "Packages",
+    named: false,
+    facts: [
+      counted(index.packages.length, "package", "packages"),
+      `${counted(functions, "function", "functions")} in Zeff ${index.engine}`,
+    ],
+    groups: [
+      {
+        key: "packages",
+        heading: null,
+        rows: index.packages.map((one) => ({
+          name: one.name,
+          words: `${counted(one.functions.length, "function", "functions")} · tier ${one.tier}`,
+          to: { kind: "package", name: one.name },
+        })),
+      },
+    ],
+  };
 }

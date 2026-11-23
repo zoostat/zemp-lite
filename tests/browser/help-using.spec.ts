@@ -201,7 +201,7 @@ test("the pages are found by search and by the trail, and listed on a page of th
   await press(shown(page).getByRole("button", { name: "Getting started" }));
   await expect(title(page)).toHaveText("Getting started");
   await press(bar(page).getByRole("button", { name: "Home" }));
-  await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Index of functions");
+  await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Help");
 });
 
 test("a page's text is fetched when the page is opened, not with the app", async ({

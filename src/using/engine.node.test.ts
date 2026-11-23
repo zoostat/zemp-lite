@@ -9,6 +9,7 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type { CodeFamily, HelpIndex } from "../engine/messages";
+import { HOME_WORDS, countsOf, topicPanels } from "../help/home";
 import { entriesOf, search } from "../help/search";
 import { HELD } from "./held";
 import { readUsing, type Piece } from "./read";
@@ -16,6 +17,7 @@ import { readUsing, type Piece } from "./read";
 const at = (path: string) => fileURLToPath(new URL(`../../${path}`, import.meta.url));
 
 interface Built {
+  explain(code: string): string;
   helpIndex(): string;
   codesExplained(): string;
   engineVersion(): string;
@@ -126,5 +128,46 @@ describe("the pages of Using Zemp Lite, held to the engine the app carries", () 
     expect(search(entries, "summ").matches[0]?.name).toBe("summary");
     // And a code a page gives as an example is a code of this engine, a warning.
     expect(codes.has("W0201")).toBe(true);
+  });
+});
+
+// Home of Help is a page Zemp keeps too (step 9f; open decision #211, items 12 and 14): its
+// words are Zemp's, and what they say of the engine is read from the engine here.
+describe("Home of Help, held to the engine the app carries", () => {
+  const built = engine();
+  const index = JSON.parse(built.helpIndex()) as HelpIndex;
+  const families = (JSON.parse(built.codesExplained()) as { families: CodeFamily[] }).families;
+
+  it("gives as its example a code of this engine, whose page has what Home says it has", () => {
+    const code = HOME_WORDS.codes.code;
+    expect(families.flatMap((family) => family.codes.map((one) => one.code))).toContain(code);
+    const answer = JSON.parse(built.explain(code)) as {
+      type: string;
+      page: { meaning: string; causes: string[]; example: string[]; fix: string; markdown: string };
+    };
+    expect(answer.type).toBe("explained");
+    // "Its page gives the meaning, the usual causes, an example and the fix."
+    expect(HOME_WORDS.codes.after).toContain(
+      "the meaning, the usual causes, an example and the fix",
+    );
+    expect(answer.page.meaning).not.toBe("");
+    expect(answer.page.causes.length).toBeGreaterThan(0);
+    expect(answer.page.example.length).toBeGreaterThan(0);
+    expect(answer.page.fix).not.toBe("");
+    expect(answer.page.markdown.match(/^## .+$/gm)).toEqual([
+      "## Meaning",
+      "## Common causes",
+      "## Example",
+      "## Fix",
+    ]);
+  });
+
+  it("counts what this engine has, and what the app has pages for", () => {
+    expect(countsOf(index, families)).toBe("255 functions · 10 packages · 144 codes");
+    expect(topicPanels(index, families).map((panel) => panel.count)).toEqual([10, 144, 13]);
+    // "A package's page lists its functions, each with one line": every function has its line.
+    for (const one of index.packages) {
+      for (const each of one.functions) expect(each.summary, each.name).not.toBe("");
+    }
   });
 });

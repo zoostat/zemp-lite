@@ -1988,3 +1988,32 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Also put to him at 9c, and not answered apart:** that a page which is a list (the codes by family among them) says "This page has no sections." in the pane at the right, as the register has it for a list; it stands so.
 
 **Reason.** The owner's decision.
+
+## 24 November 2026: The specification's copy is brought to Zeff af5b7a3, where the owner's Home for Help stands
+
+**What came.** On 24 November 2026 the coordinating session passed the owner's choice of a new Home for Help in 0.2.3 (#211, item 14): of five drawings he chose the soft panels ("Soft panel is final and record it"), one panel under another and never side by side, with no Index of functions ("not required", as every function is reached from its package). It is recorded in the Zeff repository at commit af5b7a3, which was read through Git before anything was done: it is on the main branch there, under the owner's name.
+
+**Choice.** `docs/spec/` is the Zeff repository's at commit af5b7a3, each file taken from the commit and compared byte for byte. Two differ from the copy of 58c3c2d: the register of open decisions (#211, item 14) and the Zemp Specification (the row of 0.2.3 in section 15).
+
+**Reason.** The specification is the authority, and the copy here is the Zeff repository's at a named commit.
+
+## 24 November 2026: Home of Help is a landing page of soft panels (release 0.2.3, step 9f)
+
+**The owner's choice** (#211, item 14): a landing page with a few words on Zeff and on Zemp Lite, their versions, and every main topic with a few words; one after another, not side by side; no Index of functions; of five drawings, the soft panels.
+
+**What Home is.** Under the title **Help**: a panel for **Zeff** (its version, three sentences, and the counts "255 functions · 10 packages · 144 codes") and one for **Zemp Lite** (its version, its stage **alpha**, two sentences); then, under the label **Topics**, a panel for each section of the Topics pane, with its count, a sentence and an arrow: **Packages** (with the ten packages' names as small links inside it, in the engine's order), **Errors and warnings**, **Using Zemp Lite**. The panels keep one width, at most 700 pixels, and stand one under another at every width of the window. Zeff's version and every count are read from the engine; Zemp Lite's version is the app's own; the words are those of the drawing the owner chose (`src/help/home.ts`).
+
+**Engineering choices.**
+
+1. _The Index of functions is removed whole_, with its columns, its one line on resting the pointer on a name, and its command of ⌘K. A test goes through the ten packages and opens every one of the 255 functions from its package's page, so that nothing is lost with the index; search and links reach them as before.
+2. _A page of the packages._ The panel **Packages** has to open something, as the other two open the codes by family and the list of the app's pages. It opens a new page, **Packages**: the ten packages, each with its count of functions and its tier, a click opening the package. It is a page of the history as any other, and it is now where the first step of the trail of a package and of a function leads (that step led to Home while Home was the index).
+3. _A panel answers anywhere on it._ The panel's heading holds its button, which is stretched over the whole panel; the packages' links inside the Packages panel stand over it. So the keyboard and a screen reader meet one button for each panel, named by the topic and its count, and then the ten links.
+4. _The command of ⌘K is renamed_, **Help: home**, in place of **Help: index of functions**: it opens Home from any place, as before. The page **Commands with ⌘K** and one paragraph of **Finding help** (what Home is) are changed to match, after the owner's reading of step 9e; this is said to him.
+5. _On this page lists Home's panels_: Zeff, Zemp Lite, Packages, Errors and warnings, Using Zemp Lite. A panel near the page's end cannot reach the top of the page, so the pane now keeps the section gone to marked while the page stands at its end, on every page of Help (before, the mark fell back to an earlier section).
+6. _Home's words are held to the engine_ by the rule of item 12 (`src/using/engine.node.test.ts`): the code Home gives as its example (Z0103) is a code of the engine the app carries, and its page has the four parts Home says it has (meaning, common causes, example, fix); the counts are the engine's; every function has its one line. What Home says in prose of Zeff (that the same script gives the same numbers on every computer, that every function is checked against R and Stata) is the owner's wording and is read by a person, as any prose is.
+
+**Found on GitHub while this step was made: the check of step 9c failed once, in Chromium on Linux**, in the test of the order of Help's bar. The fault was the test's: in a window narrower than 1,200 pixels the app shows a line at its top, which moves the bar down, and the test measured the first control before that line stood and the rest after. The test now waits for the line, and for its going. The app was right: the two commits after it, which carry the same layout, passed GitHub's check as they stood, the race not showing again, and it is they that were deployed.
+
+**Tested.** Unit (`src/help/trail.test.ts`, `history.test.ts`): the counts, the panels and what each opens, the page of the packages, the trail under it. Node, on the built engine (`src/using/engine.node.test.ts`, 2 tests more). Browser, both engines (`tests/browser/help-home.spec.ts`, 6 tests): the panels with their versions, counts and words; one under another at one width; each topic's panel and each package's link opening its page, the panel answering anywhere on it; all 255 functions reached from the packages, and no Index of functions nor a command for it; **Help: home**; the sizes, the contrast and the keyboard in both themes. The pictures made again (`npm run pictures`); six changed.
+
+**Reason.** The owner's decision; the choices under it keep every function one click from its package and every panel a single plain control.
