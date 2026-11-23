@@ -6,7 +6,8 @@
 use serde_json::Value;
 use std::cell::RefCell;
 use zemp_worker::{
-    Asked, Host, Shown, engine_version, explain, explained_codes, only, statements, statements_json,
+    Asked, Host, Shown, engine_version, explain, explained_codes, help_index, only, statements,
+    statements_json,
 };
 
 fn never() -> bool {
@@ -1107,4 +1108,235 @@ fn the_reader_tests_scripts_each_run_without_an_error() {
             "{name} printed nothing"
         );
     }
+}
+
+/// The packages of the index, each with its functions.
+fn indexed() -> Vec<(String, u64, Vec<Value>)> {
+    let index: Value = serde_json::from_str(&help_index()).unwrap();
+    index["packages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|package| {
+            (
+                package["name"].as_str().unwrap().to_string(),
+                package["tier"].as_u64().unwrap(),
+                package["functions"].as_array().unwrap().clone(),
+            )
+        })
+        .collect()
+}
+
+/// A function of the index, by its package and name.
+fn indexed_function(package: &str, name: &str) -> Value {
+    indexed()
+        .into_iter()
+        .find(|(of, _, _)| of == package)
+        .and_then(|(_, _, functions)| functions.into_iter().find(|f| f["name"] == name))
+        .unwrap_or_else(|| panic!("{package}.{name} is not in the index"))
+}
+
+/// The names of one language a function of the index has, each with where it was read.
+fn names_of(function: &Value, of: &str) -> Vec<(String, String, String)> {
+    function["names"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|name| name["of"] == of)
+        .map(|name| {
+            (
+                name["name"].as_str().unwrap().to_string(),
+                name["shown"].as_str().unwrap().to_string(),
+                name["from"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect()
+}
+
+fn name(name: &str, shown: &str, from: &str) -> (String, String, String) {
+    (name.to_string(), shown.to_string(), from.to_string())
+}
+
+#[test]
+fn the_index_of_the_help_lists_the_packages_shipped_in_the_tiers_order_and_the_datasets() {
+    let index: Value = serde_json::from_str(&help_index()).unwrap();
+    assert_eq!(index["type"], "helpIndex");
+    assert_eq!(index["engine"], "0.8.0");
+    let packages: Vec<(String, u64)> = indexed()
+        .into_iter()
+        .map(|(name, tier, _)| (name, tier))
+        .collect();
+    let expected = [
+        ("core", 0),
+        ("time", 1),
+        ("text", 1),
+        ("data", 1),
+        ("dist", 1),
+        ("results", 1),
+        ("stats", 1),
+        ("plot", 1),
+        ("datasets", 1),
+        ("regress", 2),
+    ];
+    assert_eq!(
+        packages,
+        expected.map(|(name, tier)| (name.to_string(), tier))
+    );
+    // The datasets, each with the one line its page begins with.
+    let datasets = index["datasets"].as_array().unwrap();
+    let names: Vec<&str> = datasets
+        .iter()
+        .map(|d| d["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(names, ["firms", "sleep", "staff", "wages"]);
+    let host = Host::new("demo");
+    for dataset in datasets {
+        let name = dataset["name"].as_str().unwrap();
+        let summary = dataset["summary"].as_str().unwrap();
+        assert!(!dataset["title"].as_str().unwrap().is_empty(), "{name}");
+        let found: Value = serde_json::from_str(&host.help(name)).unwrap();
+        let page = found["page"].as_str().unwrap();
+        assert!(
+            page.lines().next().unwrap().contains(summary),
+            "{name}: {summary}"
+        );
+    }
+}
+
+#[test]
+fn each_package_s_functions_are_those_zeff_help_prints_for_it_in_its_order() {
+    // What the released `zeff help <package>` of 0.8.0 printed (`tests/scripts/packages/`).
+    // Three packages have a function of their own name (`text`, `plot`, `datasets`), whose
+    // page the command prints in place of the list: the list of those is not printed anywhere.
+    for package in [
+        "core", "time", "data", "dist", "results", "stats", "regress",
+    ] {
+        let printed = read(&format!("tests/scripts/packages/{package}.txt"));
+        let mut lines = printed.lines();
+        let head = lines.next().unwrap();
+        assert!(head.starts_with(&format!("{package} · tier ")), "{head}");
+        let listed: Vec<(String, String)> = lines
+            .filter(|line| line.starts_with("  "))
+            .map(|line| {
+                let (name, summary) = line.trim().split_once(' ').unwrap();
+                (name.to_string(), summary.trim().to_string())
+            })
+            .collect();
+        // The count the page gives is the count of its lines.
+        let count: usize = head
+            .split(" · ")
+            .nth(2)
+            .and_then(|words| words.split(' ').next())
+            .and_then(|count| count.parse().ok())
+            .unwrap();
+        assert_eq!(listed.len(), count, "{package}");
+        let (_, tier, functions) = indexed()
+            .into_iter()
+            .find(|(name, _, _)| name == package)
+            .unwrap();
+        assert!(head.contains(&format!("tier {tier} ")), "{head}");
+        let ours: Vec<(String, String)> = functions
+            .iter()
+            .map(|f| {
+                (
+                    f["name"].as_str().unwrap().to_string(),
+                    f["summary"].as_str().unwrap().to_string(),
+                )
+            })
+            .collect();
+        assert_eq!(ours, listed, "{package}");
+    }
+}
+
+#[test]
+fn the_index_holds_every_function_this_engine_runs_and_none_of_a_later_release() {
+    let registry = zeff_engine::registry::registry().unwrap();
+    let catalogue = registry.catalogue();
+    let host = Host::new("demo");
+    let mut ours: Vec<(String, String)> = Vec::new();
+    for (package, _, functions) in indexed() {
+        assert!(!functions.is_empty(), "{package}");
+        for function in functions {
+            let name = function["name"].as_str().unwrap().to_string();
+            // The catalogue has it as implemented, and it opens a page.
+            let row = catalogue
+                .find(&package, &name)
+                .unwrap_or_else(|| panic!("{package}.{name} is not in the catalogue"));
+            assert_eq!(row.status, "implemented", "{package}.{name}");
+            assert!(!function["summary"].as_str().unwrap().is_empty(), "{name}");
+            let found: Value = serde_json::from_str(&host.help(&name)).unwrap();
+            assert!(found["page"].is_string(), "{package}.{name} has no page");
+            assert!(
+                !ours.contains(&(package.clone(), name.clone())),
+                "{package}.{name} is listed twice"
+            );
+            ours.push((package.clone(), name));
+        }
+    }
+    // Every function the catalogue has as implemented is there, once.
+    let mut theirs: Vec<(String, String)> = catalogue
+        .rows()
+        .iter()
+        .filter(|row| row.status == "implemented")
+        .map(|row| (row.package.clone(), row.name.clone()))
+        .collect();
+    theirs.sort();
+    theirs.dedup();
+    ours.sort();
+    assert_eq!(ours, theirs);
+    // Functions of Zeff 0.9.0 and of the roadmap, which the catalogue lists, are not.
+    for later in ["n_chars", "row_number", "xtreg", "logit_reg"] {
+        assert!(ours.iter().all(|(_, name)| name != later), "{later}");
+    }
+}
+
+#[test]
+fn a_function_s_r_and_stata_names_come_from_its_page_and_from_the_catalogue() {
+    // Neither page has the table: every name is the catalogue's.
+    let t_test = indexed_function("stats", "t_test");
+    assert_eq!(
+        names_of(&t_test, "R"),
+        [name("t.test", "t.test()", "catalogue")]
+    );
+    assert_eq!(
+        names_of(&t_test, "Stata"),
+        [name("ttest", "ttest", "catalogue")]
+    );
+    let reg = indexed_function("regress", "reg");
+    assert_eq!(
+        names_of(&reg, "R"),
+        [
+            name("lm", "lm()", "catalogue"),
+            name("feols", "fixest::feols()", "catalogue")
+        ]
+    );
+    assert_eq!(
+        names_of(&reg, "Stata"),
+        [
+            name("regress", "regress", "catalogue"),
+            name("reghdfe", "reghdfe", "catalogue")
+        ]
+    );
+    // A page with the table: its names first, then the catalogue's it did not give.
+    let error = indexed_function("core", "error");
+    assert_eq!(names_of(&error, "R"), [name("stop", "stop()", "page")]);
+    assert_eq!(
+        names_of(&error, "Stata"),
+        [
+            name("display", "display", "page"),
+            name("exit", "exit", "page"),
+            name("error", "error", "catalogue")
+        ]
+    );
+    let max = indexed_function("core", "max");
+    assert_eq!(
+        names_of(&max, "R"),
+        [name("pmax", "pmax()", "page"), name("max", "max()", "page")]
+    );
+    // A function with no equivalent has no name, and is listed all the same.
+    let h0 = indexed_function("results", "h0");
+    assert_eq!(h0["names"].as_array().unwrap().len(), 0);
+    // A name with two homes is listed in each.
+    assert_eq!(indexed_function("data", "summary")["name"], "summary");
+    assert_eq!(indexed_function("results", "summary")["name"], "summary");
 }

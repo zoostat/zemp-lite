@@ -8,6 +8,7 @@
 import type { Project } from "../project/projects";
 import { Session } from "../project/session";
 import type { Engine } from "./engine";
+import type { HelpIndex } from "./messages";
 
 /** A place in a document, as the protocol has it: lines and UTF-16 columns from 0. */
 export interface Position {
@@ -135,6 +136,12 @@ export class Language {
     await this.start();
     await this.#session.sync();
     return this.#engine.help(name);
+  }
+
+  /** The index of the help, from the language worker. */
+  async helpIndex(): Promise<HelpIndex> {
+    await this.start();
+    return this.#engine.helpIndex();
   }
 
   /** A code's explained page, from the language worker. */

@@ -1136,6 +1136,7 @@ dependencies = [
  "zeff-ir",
  "zeff-lsp",
  "zeff-plot",
+ "zeff-registry",
  "zeff-web",
 ]
 

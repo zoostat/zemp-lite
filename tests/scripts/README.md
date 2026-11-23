@@ -42,6 +42,11 @@ to them; `:clear`, which the console line has and `zeff repl` does not, is named
 (`platform: aarch64 macos`). The worker's report of each is held to them byte for byte; the
 browser's, which names its platform `wasm32 browser`, differs in that line alone.
 
+`packages/<package>.txt` is what the released command line prints for `zeff help <package>` (0.8.0),
+for the seven packages it lists: the functions with their one lines, in the engine's order. The index
+of the help the worker gives is held to them. `text`, `plot` and `datasets` have none: for those
+`zeff help` prints the page of the function of that name.
+
 `help-add.txt` is what the released command line prints for `zeff help add` (0.8.0): a page with every
 kind of part a function's page has (a list, sub-headings, a table of R and Stata, an example in the
 prose, another function of the name to come). The browser tests hold the words of the formatted Help

@@ -1,0 +1,14 @@
+regress · tier 2 · 10 of 10 functions in this release
+
+  reg           Linear regression by least squares, with fixed effects
+  ivreg         Two-stage least squares: a regression with instrumented regressors
+  first_stage   The first stage of a fit by instrumental variables, with its diagnostics
+  ar_test       The Anderson–Rubin test and confidence set, valid with weak instruments
+  interact      Every interaction of some variables up to an order, inside a formula
+  event         Event-study leads and lags inside a formula
+  r_squared     R squared and adjusted R squared
+  influence     Leverage, Cook's distance and studentized residuals by observation
+  vif           Variance inflation factors for the regressors
+  design        The design a regression was computed on, as a frame
+
+the rest arrive with later releases; `zeff help <name>` says when

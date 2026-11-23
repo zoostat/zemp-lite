@@ -75,6 +75,51 @@ export interface ExplainedPage {
 }
 
 /**
+ * A name of R or of Stata that a function answers to for a reader coming from either: what is
+ * typed (`feols`), how the engine's page or catalogue writes it (`fixest::feols()`), and
+ * which of the two gave it: the page's table under Coming from R or Stata, or the
+ * catalogue's column of equivalents.
+ */
+export interface ForeignName {
+  of: "R" | "Stata";
+  name: string;
+  shown: string;
+  from: "page" | "catalogue";
+}
+
+/** A function of the index of the help: its name, its one line, and its R and Stata names. */
+export interface IndexedFunction {
+  name: string;
+  summary: string;
+  names: ForeignName[];
+}
+
+/** A package of the index: its tier, and its functions in the order `zeff help` lists them. */
+export interface IndexedPackage {
+  name: string;
+  tier: number;
+  functions: IndexedFunction[];
+}
+
+/** A shipped dataset: the name `dataset` takes, and the title and one line of its page. */
+export interface IndexedDataset {
+  name: string;
+  title: string;
+  summary: string;
+}
+
+/**
+ * The index of the help (Zemp Specification, section 15, the row of 0.2.3; #211): the
+ * engine's version, the packages it ships in the tiers' order, and the shipped datasets.
+ * Every word is the engine's.
+ */
+export interface HelpIndex {
+  engine: string;
+  packages: IndexedPackage[];
+  datasets: IndexedDataset[];
+}
+
+/**
  * The small distribution in a column's header, from the engine: for a number, a date or a
  * time, the count in each bin of the histogram it draws where a script asks for none, with
  * where the bins begin and how wide each is; for a category, a truth value, or a text or a
@@ -177,6 +222,7 @@ export type Request =
   | { type: "explain"; code: string }
   | { type: "language"; body: string }
   | { type: "help"; name: string }
+  | { type: "helpIndex" }
   | {
       type: "rows";
       name: string;
@@ -224,6 +270,7 @@ export type Reply =
   | { type: "explained"; page: ExplainedPage }
   | { type: "language"; messages: string[] }
   | { type: "help"; page: string | null; message: string }
+  | ({ type: "helpIndex" } & HelpIndex)
   | ({ type: "rows" } & Omit<Rows, "filter">)
   | ({ type: "filter" } & Filtered)
   | { type: "vars"; printed: string; said: string }

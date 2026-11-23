@@ -1,0 +1,75 @@
+core · tier 0 · 71 of 74 functions in this release
+
+  print        Print values
+  abs          Absolute value
+  sign         -1, 0 or 1
+  sqrt         Square root
+  floor        Largest whole number not above x
+  ceil         Smallest whole number not below x
+  truncate     Drop the fractional part
+  round        Round to decimal places or significant digits
+  min          Smallest of two or more values, row by row
+  max          Largest of two or more values, row by row
+  div          Floored division
+  mod          Remainder after floored division
+  is_finite    True unless x is NA, Inf or -Inf
+  PI           The constant pi
+  exp          e raised to x
+  log          Logarithm
+  log2         Logarithm base 2
+  log10        Logarithm base 10
+  log1p        log(1 + x), accurate near zero
+  expm1        exp(x) - 1, accurate near zero
+  sin          Sine, x in radians
+  cos          Cosine, x in radians
+  tan          Tangent, x in radians
+  asin         Inverse sine
+  acos         Inverse cosine
+  atan         Inverse tangent
+  atan2        Angle of the point (x, y)
+  E            The constant e
+  factorial    n! as a Float, so factorial(25) is finite
+  choose       Number of ways to choose k of n, as a Float
+  gamma        Gamma function (the distribution is dist.gamma)
+  log_gamma    Logarithm of the gamma function
+  beta         Beta function (the distribution is dist.beta)
+  n_missing    Number of NA values
+  is_missing   True where x is NA
+  coalesce     First non-missing value
+  attempt      Run an expression and carry on if it fails
+  iterate      Iterate to convergence without mutation
+  map          Apply a function to each item of a list
+  filter       Keep the items of a list a function answers true for
+  reduce       Fold a list into one value with a function
+  seed         Script-wide seed; per-method seeds derive from it
+  warn         Print a warning and continue
+  note         Print a note and continue
+  name_of      The name of a variable as text
+  error        End the script with an error
+  to           Convert a value or a column to another type
+  is           True when a value has the type named
+  type_of      The name of a value's type
+  category     Make a categorical variable, with its levels in order
+  levels       A category's levels, in order
+  base         The reference level of a category
+  any          True if any item is true
+  all          True if every item is true
+  seq          Numeric sequence with any step
+  unique       Items with duplicates removed
+  sorted       Sorted copy of a list
+  is_in        True where x is one of the listed values
+  keys         Field names of a record, or keys of a mapping
+  equal        True when two values are identical
+  vars         Variable list outside a frame method, for loops and functions that build lists
+  len          Items in a list, or code points in a string
+  first        First item of a list
+  last         Last item of a list
+  append       A new list with an item added
+  reversed     Reversed copy of a list
+  table        A table from named lists or columns
+  clamp        Limit x to a range
+  logit        Log odds of a probability
+  inv_logit    Probability from log odds
+  assert       Stop if a condition is false
+
+the rest arrive with later releases; `zeff help <name>` says when

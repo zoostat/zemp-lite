@@ -1,0 +1,18 @@
+stats · tier 1 · 14 of 15 functions in this release
+
+  t_test            t-tests for one mean, two groups or paired measurements
+  proportion_test   Test of one or two proportions
+  chi2_test         Chi-squared test of independence or of goodness of fit
+  wilcoxon_test     Wilcoxon signed-rank and rank-sum tests
+  kruskal_test      Kruskal–Wallis rank-sum test across several groups
+  variance_test     Test of equal variances across groups
+  fisher_test       Fisher's exact test of independence in a cross-table
+  shapiro_test      Shapiro–Wilk test of normality
+  ks_test           Kolmogorov–Smirnov test of a variable against a distribution
+  anova             Analysis of variance: one-way across groups, or factorial from a formula
+  p_adjust          Adjust p-values for multiple testing
+  posthoc           Pairwise comparisons after an ANOVA
+  correlation       Correlation matrix, N per pair, optional p-values; Kendall is tau-b
+  covariance        Covariance matrix
+
+the rest arrive with later releases; `zeff help <name>` says when

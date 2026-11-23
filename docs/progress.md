@@ -92,4 +92,10 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 1 `[engine]`.** The release opened: version `0.2.3-dev`; the answers and what the reading found recorded. Nothing of the app changes. Green here: the whole routine in both browsers.
 
-**Next.** Step 2 `[engine]`: the index of the help, from the worker (the message `helpIndex`).
+**Found and mended after step 1.** The deployment of step 1's commit was reported failed though the build had arrived: the check after a deployment looked one second after the host said it was done. It now looks again, for a minute at most, where the build has not arrived whole (`tools/check-host.mjs`).
+
+**Done, step 2 `[engine]`.** The worker answers `helpIndex`: the 10 packages of Zeff 0.8.0 in the tiers' order, their 255 functions each with its one line and its R and Stata names (from the page's table and from the catalogue, each saying which), and the 4 datasets (`worker/src/index.rs`); held to the catalogue and to what the released `zeff help <package>` prints. The workspace asks once, when Help is first shown, and keeps it. Nothing on the screen changes yet. The worker is 7 kB larger (2,928.5 kB of 5,000). Green here: the whole routine in both browsers (the browser tests were run a second time whole, five of WebKit's having run out of time in the first while the Zeff repository's tests held the machine).
+
+**Found at step 2, for the Zeff session.** `zeff help text`, `zeff help plot` and `zeff help datasets` print the function of that name, so those three packages' lists are printed by no command; Zemp Lite sets every package's page from the index instead. A way to ask for a package by name would mend it in the engine.
+
+**Next.** Step 3 `[engine]`: Back, Forward, Home and the trail.

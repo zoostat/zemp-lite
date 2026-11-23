@@ -224,6 +224,46 @@ test("a code's explained page is given without a project, as `zeff explain` prin
   assert.match((await next("error")).message, /no code `Q9999` has an explained page/);
 });
 
+test("the index of the help is given without a project: the packages, their functions, the datasets", async (t) => {
+  const root = path.resolve(here, "..", "..");
+  const { worker, next } = started(t, 0);
+  await next("ready");
+  worker.postMessage({ type: "helpIndex", id: 6 });
+  const index = await next("helpIndex");
+  assert.equal(index.id, 6);
+  assert.equal(index.engine, "0.8.0");
+  assert.deepEqual(
+    index.packages.map((one) => one.name),
+    ["core", "time", "text", "data", "dist", "results", "stats", "plot", "datasets", "regress"],
+  );
+  // A package's functions are those the released `zeff help stats` lists, in its order.
+  const printed = fs
+    .readFileSync(path.join(root, "tests/scripts/packages/stats.txt"), "utf8")
+    .split("\n")
+    .filter((line) => line.startsWith("  "))
+    .map((line) => line.trim().split(/\s+/)[0]);
+  const stats = index.packages.find((one) => one.name === "stats");
+  assert.deepEqual(
+    stats.functions.map((one) => one.name),
+    printed,
+  );
+  // A function with its one line, and the names a reader of R or of Stata knows it by.
+  const reg = index.packages
+    .find((one) => one.name === "regress")
+    .functions.find((one) => one.name === "reg");
+  assert.ok(reg.summary.length > 0);
+  assert.deepEqual(reg.names, [
+    { of: "R", name: "lm", shown: "lm()", from: "catalogue" },
+    { of: "R", name: "feols", shown: "fixest::feols()", from: "catalogue" },
+    { of: "Stata", name: "regress", shown: "regress", from: "catalogue" },
+    { of: "Stata", name: "reghdfe", shown: "reghdfe", from: "catalogue" },
+  ]);
+  assert.deepEqual(
+    index.datasets.map((one) => one.name),
+    ["firms", "sleep", "staff", "wages"],
+  );
+});
+
 test("the engine's language server is spoken to through the worker, over the project", async (t) => {
   const { worker, next } = await opened(t, 0);
   const send = (id, body) =>

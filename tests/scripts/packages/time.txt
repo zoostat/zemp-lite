@@ -1,0 +1,20 @@
+time · tier 1 · 16 of 16 functions in this release
+
+  date           Parse text into a date
+  datetime       Parse text into a date and time
+  year           Year of a date
+  month          Month of a date, 1 to 12
+  day            Day of the month
+  weekday        Day of the week, 1 (Monday) to 7 (Sunday)
+  quarter        Quarter, 1 to 4
+  week           ISO week number
+  hour           Hour of a date and time, 0 to 23
+  minute         Minute of a date and time, 0 to 59
+  second         Whole second of a date and time, 0 to 59
+  start_of       Start of the hour, day, week, month, quarter or year a date falls in
+  add_time       Date or time a number of days, weeks, months or years later
+  time_between   Whole units of time from start to end
+  today          Current date, read from the clock and noted
+  now            Current date and time, the machine's local wall-clock time with no zone
+
+the rest arrive with later releases; `zeff help <name>` says when

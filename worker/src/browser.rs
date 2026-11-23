@@ -170,6 +170,12 @@ pub fn codes_explained() -> String {
     crate::explained_codes()
 }
 
+/// The index of the help, as a line of JSON: the packages, their functions and the datasets.
+#[wasm_bindgen(js_name = helpIndex)]
+pub fn help_index() -> String {
+    crate::help_index()
+}
+
 /// The version of the Zeff engine in the worker.
 #[wasm_bindgen(js_name = engineVersion)]
 pub fn engine_version() -> String {

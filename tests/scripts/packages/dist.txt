@@ -1,0 +1,23 @@
+dist · tier 1 · 19 of 22 functions in this release
+
+  dist.normal        The normal distribution with a mean and a standard deviation
+  dist.lognormal     The log-normal distribution
+  dist.uniform       The uniform distribution on an interval
+  dist.exponential   The exponential distribution
+  dist.t             Student's t distribution
+  dist.chi2          Chi-square distribution
+  dist.f             F distribution
+  dist.tukey         Studentized range distribution, for Tukey's honest significant difference
+  dist.gamma         Gamma distribution
+  dist.beta          Beta distribution
+  dist.binomial      Binomial distribution
+  dist.poisson       Poisson distribution
+  dist.negbinomial   Negative binomial distribution, by success probability or by its mean (NB2)
+  dist.truncated     A distribution truncated to an interval, exact in every method
+  dist.mixture       A finite mixture of distributions with mixing probabilities probs:
+  pdf                Density, or probability for discrete distributions
+  cdf                P(X ≤ x); upper: true gives P(X > x) accurately in the tail
+  quantile           Value with cumulative probability p
+  draw               n random draws; the seed is recorded
+
+the rest arrive with later releases; `zeff help <name>` says when

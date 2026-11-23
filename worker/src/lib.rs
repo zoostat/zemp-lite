@@ -33,6 +33,7 @@ use zeff_web::{default_budget, event_json};
 
 #[cfg(target_arch = "wasm32")]
 mod browser;
+pub mod index;
 mod view;
 mod written;
 
@@ -114,6 +115,20 @@ pub fn explain(code: &str) -> String {
 /// Every code with an explained page, by family, as a line of JSON of type `codes`.
 pub fn explained_codes() -> String {
     zeff_web::explained_codes()
+}
+
+/// The index of the help, as a line of JSON of type `helpIndex` (`index::help_index`): the
+/// packages shipped with their functions, each with its one-line summary and its R and Stata
+/// names, and the shipped datasets. It needs no project. Where the registry did not build,
+/// which stops every run too, the index is empty.
+pub fn help_index() -> String {
+    match zeff_engine::registry::registry() {
+        Ok(registry) => index::help_index(registry, engine_version()),
+        Err(_) => format!(
+            "{{\"type\": \"helpIndex\", \"engine\": {}, \"packages\": [], \"datasets\": []}}",
+            json_string(engine_version())
+        ),
+    }
 }
 
 /// The statements of a text as a JSON array of `{line, end, kind}`.

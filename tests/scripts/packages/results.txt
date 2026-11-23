@@ -1,0 +1,27 @@
+results · tier 1 · 23 of 24 functions in this release
+
+  summary        The printed summary of a result as a table
+  estimates      The estimates of a result as a frame
+  std_errors     Standard errors of the estimates
+  p_values       p-values of the estimates
+  ci             Confidence intervals of the estimates
+  n_obs          The observations a result rests on
+  statistic      The statistic of a test
+  df             The degrees of freedom of a test
+  effect_size    The effect size of a test
+  h0             The null hypothesis of a test
+  h1             The alternative hypothesis of a test
+  alternative    The alternative a test was computed for
+  coef           The estimated coefficients
+  vcov           The variance matrix of the estimates
+  fit_measures   Fit statistics of a model
+  predict        Predictions of a model on new data
+  residuals      The residuals of a fitted model
+  fitted         The fitted values of a model
+  test           Wald test of linear restrictions on the coefficients
+  compare        Compare two nested regressions on the same rows
+  derive         Nonlinear combinations of the estimates with delta-method standard errors
+  export         Write a table, a result or a plot to a file
+  report         Publication table of several regressions
+
+the rest arrive with later releases; `zeff help <name>` says when

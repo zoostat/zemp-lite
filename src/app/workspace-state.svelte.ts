@@ -3,7 +3,17 @@
 // the workspace reads this one object and changes it through its methods.
 import type { Engine } from "../engine/engine";
 import { Language, type Diagnostic, type Range } from "../engine/language";
-import type { Checked, FrameInfo, Outcome, Ranged, Report, Rows, View } from "../engine/messages";
+import type {
+  Checked,
+  FrameInfo,
+  HelpIndex,
+  Outcome,
+  Ranged,
+  Report,
+  Rows,
+  View,
+} from "../engine/messages";
+import { once } from "../help/once";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
@@ -151,6 +161,11 @@ export class Workspace {
    * code's as `zeff explain` does, with the name it is known by; none until one is asked for.
    */
   help = $state<{ title: string; page: string }>({ title: "", page: "" });
+  /**
+   * The index of the help (the row of 0.2.3; #211): the packages the engine ships with
+   * their functions, and the shipped datasets; none until the Help place is first shown.
+   */
+  helpIndex = $state<HelpIndex | null>(null);
   /** What floats over the window about the last run: its facts, or what it said. */
   panel = $state<"facts" | "said" | null>(null);
   /** A line to be brought into view, with the cursor on it (`goTo`). */
@@ -1105,7 +1120,24 @@ export class Workspace {
   openHelp(): void {
     Object.assign(this.views, withTab(this.views, HELP));
     this.#keep();
+    void this.indexHelp();
   }
+
+  /**
+   * The index of the help, asked of the worker the first time it is wanted and kept; null
+   * where the worker cannot give it, and then the Help place works on without it.
+   */
+  async indexHelp(): Promise<HelpIndex | null> {
+    try {
+      this.helpIndex = await this.#indexed();
+    } catch {
+      // The worker is not there: the next call asks again.
+    }
+    return this.helpIndex;
+  }
+  readonly #indexed = once(() =>
+    this.language !== null ? this.language.helpIndex() : this.engine.helpIndex(),
+  );
 
   /**
    * What a check found, shown as a run the check refused: under the lines it names, the

@@ -11,6 +11,7 @@ import type {
   Checked,
   ExplainedPage,
   FromWorker,
+  HelpIndex,
   Needs,
   Outcome,
   Ranged,
@@ -285,6 +286,15 @@ export class Engine {
   async help(name: string): Promise<{ page: string | null; message: string }> {
     const found = expect(await this.#ask({ type: "help", name }), "help");
     return { page: found.page, message: found.message };
+  }
+
+  /**
+   * The index of the help: the packages the engine ships, their functions with their one
+   * lines and their R and Stata names, and the shipped datasets. It needs no project.
+   */
+  async helpIndex(): Promise<HelpIndex> {
+    const found = expect(await this.#ask({ type: "helpIndex" }), "helpIndex");
+    return { engine: found.engine, packages: found.packages, datasets: found.datasets };
   }
 
   /** A code's explained page, as `zeff explain` gives it. It needs no project. */

@@ -385,6 +385,42 @@ describe("a function's help page", () => {
   });
 });
 
+describe("the index of the help", () => {
+  it("is asked for without a project's name, and given as the engine lists it", async () => {
+    const { engine: made, worker } = await opened();
+    const asked = made.helpIndex();
+    await settle();
+    expect(worker.last).toMatchObject({ type: "helpIndex" });
+    const index = {
+      engine: "0.8.0",
+      packages: [
+        {
+          name: "regress",
+          tier: 2,
+          functions: [
+            {
+              name: "reg",
+              summary: "Linear regression",
+              names: [
+                { of: "R" as const, name: "lm", shown: "lm()", from: "catalogue" as const },
+                {
+                  of: "Stata" as const,
+                  name: "regress",
+                  shown: "regress",
+                  from: "catalogue" as const,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      datasets: [{ name: "wages", title: "wages", summary: "Synthetic hourly wages" }],
+    };
+    worker.answer({ type: "helpIndex", ...index });
+    expect(await asked).toEqual(index);
+  });
+});
+
 describe("rows of a frame", () => {
   const page = {
     name: "pay",

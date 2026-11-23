@@ -32,6 +32,8 @@
 //   { type: "help", name }              the help page of a function, as `zeff help` prints it
 //   { type: "explain", code }           the explained page of a code (needs no project)
 //   { type: "codes" }                   every code with an explained page (needs no project)
+//   { type: "helpIndex" }               the index of the help: the packages shipped, their
+//                                       functions and the datasets (needs no project)
 //   { type: "frame", name }             a frame of the last run, by the name of its binding
 //   { type: "read", path }              a file of the project: one put in, or one a run wrote
 //   { type: "remove", path }            forget a file of the project, or a folder with all it
@@ -62,6 +64,11 @@
 //   { type: "explained", page }         the answer to `explain`: the page, as `zeff explain
 //                                       --format json` gives it, its `text` what it prints
 //   { type: "codes", families }         the answer to `codes`
+//   { type: "helpIndex", engine, packages, datasets }   the answer to `helpIndex`: each
+//                                       package { name, tier, functions }, each function
+//                                       { name, summary, names }, each name of R or of Stata
+//                                       { of, name, shown, from }; each dataset { name, title,
+//                                       summary }
 //   { type: "dependencies", statements } the answer to `dependencies`:
 //                                       [{ line, makes, reads, seeds, needs }]
 //   { type: "frame", name, bytes }      the frame as an Arrow stream, in a Uint8Array whose
@@ -105,6 +112,10 @@ export function serve(engine, port, deviceBytes) {
     }
     if (said.type === "codes") {
       answer(JSON.parse(engine.codesExplained()));
+      return;
+    }
+    if (said.type === "helpIndex") {
+      answer(JSON.parse(engine.helpIndex()));
       return;
     }
     if (said.type === "statements") {
