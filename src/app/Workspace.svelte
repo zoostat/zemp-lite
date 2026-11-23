@@ -11,6 +11,7 @@
   import { codeLarger, codeSize, codeSmaller, codeUsual } from "../theme/codesize.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
   import { sectionAt } from "../editor/sections";
+  import { after, before, called } from "../help/history";
   import type { Command } from "./commands";
   import ConsoleLine from "./ConsoleLine.svelte";
   import MarginPane from "./MarginPane.svelte";
@@ -80,6 +81,9 @@
 
   // The file the Script place shows, which ⌘K offers to save to the computer.
   const shownFile = $derived(workspace.activePath ?? workspace.scriptPath);
+  // Where Back and Forward of Help would go, for their commands.
+  const helpEarlier = $derived(before(workspace.helpHistory));
+  const helpLater = $derived(after(workspace.helpHistory));
 
   // The commands of ⌘K: every control of the window, and what has no button of its own.
   const commands = $derived<Command[]>([
@@ -205,6 +209,36 @@
       hint: "where Help starts: Zeff, Zemp Lite and the topics",
       run: () => void workspace.showHelpHome(),
     },
+    {
+      name: "Help: search",
+      hint: "the cursor in the search field of Help; / in Help",
+      run: () => workspace.searchHelp(),
+    },
+    // Back and Forward through the pages of Help opened, where there is one to go to.
+    ...(helpEarlier === null
+      ? []
+      : [
+          {
+            name: "Help: back",
+            hint: `to ${called(helpEarlier)}; ⌘[ in Help`,
+            run: () => {
+              workspace.openHelp();
+              void workspace.helpBack();
+            },
+          },
+        ]),
+    ...(helpLater === null
+      ? []
+      : [
+          {
+            name: "Help: forward",
+            hint: `to ${called(helpLater)}; ⌘] in Help`,
+            run: () => {
+              workspace.openHelp();
+              void workspace.helpForward();
+            },
+          },
+        ]),
     {
       name: "Format the script",
       hint: "as zeff fmt does",

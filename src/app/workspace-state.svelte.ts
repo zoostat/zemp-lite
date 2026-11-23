@@ -1200,6 +1200,18 @@ export class Workspace {
     await this.#openStop(HELP_HOME);
   }
 
+  /**
+   * Asked for from ⌘K (**Help: search**): the cursor is to go to the search field of Help,
+   * which takes it once it is on the screen and sets this down again.
+   */
+  helpSearchAsked = $state(false);
+
+  /** Show the Help place with the cursor in its search field, as `/` puts it there. */
+  searchHelp(): void {
+    this.openHelp();
+    this.helpSearchAsked = true;
+  }
+
   /** Back to the page of Help opened before the one shown; nothing where this is the first. */
   async helpBack(): Promise<void> {
     const to = before(this.helpHistory);

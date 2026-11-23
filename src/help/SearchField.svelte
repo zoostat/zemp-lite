@@ -93,6 +93,18 @@
     }
   }
 
+  // **Help: search**, of ⌘K, puts the cursor in the field from any place: once the field is
+  // on the screen and the list of commands has closed.
+  $effect(() => {
+    const input = field;
+    if (!workspace.helpSearchAsked || input === null) return;
+    workspace.helpSearchAsked = false;
+    requestAnimationFrame(() => {
+      input.focus();
+      input.select();
+    });
+  });
+
   /** `/`, typed where nothing is being typed, puts the cursor in the field. */
   function slash(event: KeyboardEvent): void {
     if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;

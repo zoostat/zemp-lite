@@ -29,6 +29,51 @@ test("the page is isolated, and the engine starts and runs the example", async (
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
 });
 
+test("Help opens on Home, the search finds reg by R's lm, and a page of the app has its picture", async ({
+  page,
+}) => {
+  // Release 0.2.3 (step 10): the Help place at the address, on the engine it carries.
+  await page.goto("/");
+  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  await expect(open).toBeEnabled({ timeout: 30_000 });
+  await open.click();
+  await page.getByRole("button", { name: "Scratch project" }).click();
+  await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
+  await page
+    .getByRole("navigation", { name: "Places" })
+    .getByRole("button", { name: "Help", exact: true })
+    .click();
+  // Home, with the engine's version and its counts, read from the engine at the address.
+  const shown = page.getByTestId("help-page");
+  await expect(shown.getByRole("heading", { level: 3 })).toHaveText("Help", { timeout: 30_000 });
+  await expect(page.getByTestId("help-engine")).toHaveText("0.8.0");
+  await expect(page.getByTestId("help-counts")).toHaveText(
+    "259 functions · 10 packages · 144 codes",
+  );
+  // The search, by a name of R: `lm` finds `reg`, and its page opens.
+  const field = page.getByRole("combobox", { name: /^Search Help/ });
+  await field.fill("lm");
+  const first = page.getByRole("listbox", { name: "What was found" }).getByRole("option").first();
+  await expect(first).toContainText("reg");
+  await expect(first).toContainText("matched R lm()");
+  await field.press("ArrowDown");
+  await field.press("Enter");
+  await expect(page.getByTestId("help-title")).toHaveText("reg");
+  await expect(shown).toContainText("Linear regression by least squares");
+  // A page of the app's own: its text and its picture are files of the address.
+  await page.getByRole("button", { name: "Home", exact: true }).click();
+  await shown.getByRole("heading", { name: "Using Zemp Lite" }).getByRole("button").click();
+  await shown.getByRole("button", { name: "Finding help" }).click();
+  await expect(page.getByTestId("help-title")).toHaveText("Finding help");
+  const picture = shown.getByRole("img").first();
+  await expect(picture).toBeVisible({ timeout: 30_000 });
+  await expect
+    .poll(() => picture.evaluate((node) => (node as HTMLImageElement).naturalWidth), {
+      timeout: 30_000,
+    })
+    .toBe(1200);
+});
+
 test("what is counted, and what is never collected, is said on a page of its own", async ({
   page,
 }) => {

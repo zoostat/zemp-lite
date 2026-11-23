@@ -448,3 +448,110 @@ test("what release 0.2.2 added is reached from the keyboard: every menu, naming 
   }
   expect(has(inWages, "Project: reset…"), "Project: reset…").toBe(false);
 });
+
+test("what release 0.2.3 added is reached from the keyboard: every control of the Help place a stop of the Tab key with a name, and a command of ⌘K for Home, Back, Forward and the search", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  const reached = async (...among: string[]) => {
+    const controls = await controlsOf(page);
+    expect(controls.filter((one) => !one.stops && !one.item && !one.runTo)).toEqual([]);
+    expect(controls.filter((one) => one.name === "")).toEqual([]);
+    for (const name of among) {
+      expect(
+        controls.some((one) => one.name.startsWith(name)),
+        name,
+      ).toBe(true);
+    }
+  };
+  const names = async () => {
+    await page.keyboard.press("ControlOrMeta+k");
+    const listed = await page.getByRole("option").allTextContents();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "Commands" })).toHaveCount(0);
+    return listed;
+  };
+  const has = (listed: string[], word: string) => listed.some((name) => name.startsWith(word));
+  const shown = page.getByTestId("help-page");
+  const title = page.getByTestId("help-title");
+  const field = page.getByRole("combobox", { name: /^Search Help/ });
+  const ask = async (name: string) => {
+    await field.fill(name);
+    await field.press("Enter");
+    await expect(title).toHaveText(name);
+  };
+
+  // Before any page of Help was opened there is nowhere back or forward to go.
+  const first = await names();
+  expect(has(first, "Help: home")).toBe(true);
+  expect(has(first, "Help: search")).toBe(true);
+  expect(has(first, "Help: back")).toBe(false);
+  expect(has(first, "Help: forward")).toBe(false);
+
+  // Help: search, from the script: Help is shown, on Home, with the cursor in its field.
+  await command(page, "help search");
+  await expect(shown.getByRole("heading", { level: 3 })).toHaveText("Help");
+  await expect(field).toBeFocused();
+  // Home: the bar, the panels and the packages' links, the Topics pane and On this page.
+  await reached(
+    "Topics",
+    "Home",
+    "Search Help",
+    "On this page",
+    "Packages 10",
+    "Errors and warnings 144",
+    "Using Zemp Lite 13",
+    "regress",
+    "Close Topics",
+    "Close On this page",
+    "Zemp Lite",
+  );
+
+  // A function's page: the trail's steps, its neighbours and All topics, its sections.
+  await page.keyboard.type("reg");
+  await page.keyboard.press("Enter");
+  await expect(title).toHaveText("reg");
+  await reached("Back", "Packages", "regress", "‹ All topics", "ivreg", "Usage", "Examples");
+  // A package's page, the chooser of a name with two functions, and one of the two.
+  await command(page, "help search");
+  await expect(field).toBeFocused();
+  await ask("histogram");
+  await reached("histogram · of a plot", "histogram · of a frame");
+  await shown.getByRole("button", { name: "histogram · of a frame", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(title).toHaveText("of a frame");
+  await reached("histogram", "plot", "Usage");
+  // The codes by family, a code, and a page of the app's own.
+  await ask("W0201");
+  await reached("Errors and warnings", "W0xxx", "W0202", "Meaning");
+  await command(page, "help home");
+  await shown.getByRole("heading", { name: "Using Zemp Lite" }).getByRole("button").focus();
+  await page.keyboard.press("Enter");
+  await expect(title).toHaveText("Using Zemp Lite");
+  await reached("Getting started", "Keyboard shortcuts");
+
+  // Help: home, Help: back and Help: forward, each saying where it goes, from any place.
+  await command(page, "help home");
+  await expect(shown.getByRole("heading", { level: 3 })).toHaveText("Help");
+  const onHome = await names();
+  expect(onHome.find((name) => name.startsWith("Help: back"))).toContain("to Using Zemp Lite");
+  expect(has(onHome, "Help: forward")).toBe(false);
+  await command(page, "help back");
+  await expect(title).toHaveText("Using Zemp Lite");
+  const gone = await names();
+  expect(gone.find((name) => name.startsWith("Help: forward"))).toContain("to Home");
+  expect(gone.find((name) => name.startsWith("Help: back"))).toContain("to Home");
+  await command(page, "help forward");
+  await expect(shown.getByRole("heading", { level: 3 })).toHaveText("Help");
+  // From the Script place the commands show Help and go.
+  await command(page, "place script");
+  await expect(page.getByTestId("help")).toHaveCount(0);
+  await command(page, "help back");
+  await expect(page.getByTestId("help")).toBeVisible();
+  await expect(title).toHaveText("Using Zemp Lite");
+  await command(page, "place script");
+  await command(page, "help search");
+  await expect(field).toBeFocused();
+  await expect(title).toHaveText("Using Zemp Lite");
+});
