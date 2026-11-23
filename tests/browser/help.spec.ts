@@ -67,10 +67,12 @@ async function holdsPrint(page: Page, print: string) {
 
 const places = (page: Page) => page.getByRole("navigation", { name: "Places" });
 const bar = (page: Page) => page.getByRole("toolbar", { name: "Help: its panes and its controls" });
-const outline = (page: Page) =>
+const topics = (page: Page) =>
   page
     .getByRole("complementary", { name: "Help: the left pane" })
-    .getByRole("region", { name: "Outline" });
+    .getByRole("region", { name: "Topics" });
+/** The sections of the page open, in the Topics pane (the Outline pane, until 0.2.3). */
+const outline = (page: Page) => topics(page).getByRole("list", { name: "On this page" });
 const related = (page: Page) =>
   page
     .getByRole("complementary", { name: "Help: the right pane" })
@@ -113,12 +115,15 @@ test("the Help place has the page's outline at its left, each section gone to an
   await page.setViewportSize({ width: 1280, height: 600 });
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
-  // With no page asked for, Help is on Home, the index of functions, whose outline is the
-  // packages (`help-home.spec.ts`).
+  // With no page asked for, Help is on Home, the index of functions, which has no sections
+  // of its own: the Topics pane holds the packages and the codes (`help-topics.spec.ts`).
   await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText(
     "Index of functions",
   );
-  await expect(outline(page).locator("ul").getByRole("button").first()).toHaveText("core");
+  await expect(outline(page)).toHaveCount(0);
+  await expect(
+    topics(page).getByRole("list", { name: "Packages" }).getByRole("button").first(),
+  ).toHaveText(/^core\s*71$/);
   const field = bar(page).getByRole("searchbox", {
     name: "Open the page of a function or a code",
   });
@@ -126,7 +131,7 @@ test("the Help place has the page's outline at its left, each section gone to an
   await field.press("Enter");
   await expect(page.getByTestId("help-title")).toHaveText("summary");
   // `summary` is a function of a frame and of a result: the outline names each, over its sections.
-  const entries = outline(page).locator("ul").getByRole("button");
+  const entries = outline(page).getByRole("button");
   await expect(entries).toHaveText([
     "summary · data",
     "Usage",
@@ -160,13 +165,13 @@ test("the Help place has the page's outline at its left, each section gone to an
     })
     .toBeLessThan(30);
   await expect(outline(page).locator('[aria-current="location"]')).toHaveCount(1);
-  // The outline closes and opens by its link, and by its own ×.
-  const link = bar(page).getByRole("button", { name: "Outline", exact: true });
+  // The pane that holds them closes and opens by its link, and by its own ×.
+  const link = bar(page).getByRole("button", { name: "Topics", exact: true });
   await expect(link).toHaveAttribute("aria-pressed", "true");
   await press(link);
-  await expect(outline(page)).toHaveCount(0);
+  await expect(topics(page)).toHaveCount(0);
   await press(link);
-  await press(outline(page).getByRole("button", { name: "Close Outline" }));
+  await press(topics(page).getByRole("button", { name: "Close Topics" }));
   await expect(link).toHaveAttribute("aria-pressed", "false");
 });
 
@@ -198,7 +203,7 @@ test("the Help place has the page's related functions at its right, each with wh
   await expect(page.getByTestId("help-page")).toContainText(
     "Linear regression by least squares, with fixed effects",
   );
-  await expect(outline(page).locator("ul").getByRole("button").first()).toHaveText("Usage");
+  await expect(outline(page).getByRole("button").first()).toHaveText("Usage");
   await expect(related(page).locator("ul").getByRole("button")).toHaveText([
     /^category/,
     /^base/,
@@ -234,7 +239,7 @@ test("a code's explained page opens in the Help place from what the run said, an
   const help = page.getByTestId("help");
   await expect(help.getByTestId("help-title")).toHaveText("W0201");
   await holdsPrint(page, file("tests/scripts/explain-W0201.txt"));
-  await expect(outline(page).locator("ul").getByRole("button")).toHaveText([
+  await expect(outline(page).getByRole("button")).toHaveText([
     "Meaning",
     "Common causes",
     "Example",
@@ -389,7 +394,7 @@ test("a help page stays inside its place and never under 12.5 pixels, at every c
   await page.setViewportSize({ width: 1200, height: 800 });
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
-  await expect(outline(page)).toBeVisible();
+  await expect(topics(page)).toBeVisible();
   await expect(related(page)).toBeVisible();
   const field = bar(page).getByRole("searchbox", {
     name: "Open the page of a function or a code",

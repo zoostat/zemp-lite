@@ -25,10 +25,10 @@ const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const functionsOf = (page: Page, name: string) =>
   home(page).getByRole("list", { name: `The functions of ${name}`, exact: true });
 const line = (page: Page) => page.getByRole("tooltip");
-const outline = (page: Page) =>
+const topics = (page: Page) =>
   page
     .getByRole("complementary", { name: "Help: the left pane" })
-    .getByRole("region", { name: "Outline" });
+    .getByRole("region", { name: "Topics" });
 
 /** The names the released `zeff help <package>` printed, in its order. */
 const printed = (name: string) =>
@@ -82,11 +82,10 @@ test("Home is the index of functions: the engine, the counts, and every package 
   for (const later of ["n_chars", "row_number", "a_learning"]) {
     await expect(home(page).getByRole("button", { name: later, exact: true })).toHaveCount(0);
   }
-  // The outline of Home is the packages, each going to its place.
-  const entries = outline(page).locator("ul").getByRole("button");
-  await expect(entries).toHaveText(PACKAGES.map(([name]) => name));
-  await press(entries.nth(9));
-  await expect(home(page).getByRole("heading", { level: 4, name: /^regress/ })).toBeInViewport();
+  // The Topics pane lists the same packages with the same counts (`help-topics.spec.ts`).
+  await expect(topics(page).getByRole("list", { name: "Packages" }).getByRole("button")).toHaveText(
+    PACKAGES.map(([name, count]) => new RegExp(`^${name}\\s*${count}$`)),
+  );
 });
 
 test("every name on Home opens its page", async ({ page, press }) => {
@@ -230,12 +229,12 @@ for (const theme of ["light", "dark"] as const) {
     expect(open.sideways).toBeLessThanOrEqual(0);
     expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
     expect(await faintText(home(page))).toEqual([]);
-    await press(bar(page).getByRole("button", { name: "Outline" }));
+    await press(bar(page).getByRole("button", { name: "Topics" }));
     await press(bar(page).getByRole("button", { name: "Related functions" }));
     const closed = await columns(page);
     expect(closed.count).toBeGreaterThan(open.count);
     expect(closed.sideways).toBeLessThanOrEqual(0);
-    await press(bar(page).getByRole("button", { name: "Outline" }));
+    await press(bar(page).getByRole("button", { name: "Topics" }));
     await press(bar(page).getByRole("button", { name: "Related functions" }));
     await page.setViewportSize({ width: 1000, height: 700 });
     const narrow = await columns(page);

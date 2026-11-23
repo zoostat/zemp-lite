@@ -7,12 +7,14 @@
 //
 // From Zemp Lite 0.2.1 every place has a left pane, the place itself and a right pane, each
 // pane opened and closed by its own link (open decision #203), and the file says which panes
-// of each place are open and how wide the two sides are.
+// of each place are open and how wide the two sides are. From 0.2.3 the left pane of Help is
+// **Topics** (open decision #211; it was **Outline**), and the file says which of its sections
+// the reader folded or unfolded.
 
 import type { View } from "../engine/messages";
 
 /** The version of the view state this build writes; a file without one is of version 1. */
-export const VIEWS_VERSION = 3;
+export const VIEWS_VERSION = 4;
 
 /**
  * The panes of each place, and whether each is open in a project opened for the first time
@@ -23,7 +25,7 @@ export const PANES = {
   script: { project: false, outline: false, notes: true },
   data: { frames: true, variables: false },
   plots: { list: true, about: true },
-  help: { outline: true, related: true },
+  help: { topics: true, related: true },
 } as const;
 export type PlaceName = keyof typeof PANES;
 export type PaneName<P extends PlaceName> = keyof (typeof PANES)[P];
@@ -53,6 +55,12 @@ export interface ViewState {
     hidden: Record<string, string[]>;
     shown: Record<string, View>;
   };
+  /**
+   * The Topics pane of Help (#211): the sections the reader folded or unfolded, by their
+   * keys, each `true` where it is open. A section not named stands as it first does
+   * (`topicOpen`).
+   */
+  help: { topics: Record<string, boolean> };
   /** The parts of the file this build does not know, kept as they were (a later build's). */
   others: Record<string, unknown>;
   /** The left pane of a place: its width, in pixels. */
@@ -123,6 +131,7 @@ export function usual(): ViewState {
     right: { width: RIGHT_WIDTH.usual },
     script: { unfolded: {} },
     data: { frame: null, variable: null, hidden: {}, shown: {} },
+    help: { topics: {} },
     others: {},
     left: { width: LEFT_WIDTH.usual },
     tabs: [fileTab("scripts/main.zeff")],
@@ -167,6 +176,19 @@ export function readViews(text: string | null): ViewState {
       for (const pane of Object.keys(PANES[place])) {
         if (typeof said[pane] === "boolean") open[pane] = said[pane];
       }
+    }
+    // The left pane of Help was Outline until 0.2.3: a reader's choice of it is that of Topics.
+    const help = panes["help"] as Record<string, unknown> | undefined;
+    if (typeof help === "object" && help !== null) {
+      if (typeof help["topics"] !== "boolean" && typeof help["outline"] === "boolean") {
+        state.panes.help.topics = help["outline"];
+      }
+    }
+  }
+  const topics = (from["help"] as Record<string, unknown> | undefined)?.["topics"];
+  if (typeof topics === "object" && topics !== null && !Array.isArray(topics)) {
+    for (const [key, open] of Object.entries(topics as Record<string, unknown>)) {
+      if (typeof open === "boolean") state.help.topics[key] = open;
     }
   }
   const right = from["right"] as Record<string, unknown> | undefined;
@@ -257,6 +279,19 @@ export function readViews(text: string | null): ViewState {
 export function writeViews(state: ViewState): string {
   const { others, ...known } = state;
   return `${JSON.stringify({ ...others, version: VIEWS_VERSION, ...known }, null, 2)}\n`;
+}
+
+/** The sections of the Topics pane, by their keys; a family of codes is `codes:` and its name. */
+export const TOPICS = { page: "page", packages: "packages", codes: "codes" } as const;
+/** The key of a family of codes in the Topics pane. */
+export const familyTopic = (family: string) => `codes:${family}`;
+
+/**
+ * Whether a section of the Topics pane is open: as the reader left it, or as it first stands:
+ * the sections open, and each family of codes folded to its name.
+ */
+export function topicOpen(state: ViewState, key: string): boolean {
+  return state.help.topics[key] ?? !key.startsWith("codes:");
 }
 
 /** The lines unfolded in `path` with the output of the statement at `line` unfolded or folded. */

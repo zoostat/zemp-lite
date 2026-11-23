@@ -193,7 +193,7 @@
     paneCommand(workspace, "data", "variables"),
     paneCommand(workspace, "plots", "list"),
     paneCommand(workspace, "plots", "about"),
-    paneCommand(workspace, "help", "outline"),
+    paneCommand(workspace, "help", "topics"),
     paneCommand(workspace, "help", "related"),
     {
       name: "Place: Help",

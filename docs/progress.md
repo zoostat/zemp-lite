@@ -108,4 +108,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 4 `[function]`.** Home is the **Index of functions**: "Zeff 0.8.0 · 255 functions in 10 packages", each package with its count and its functions as links in columns, the datasets under `datasets`; a function's one line shows while the pointer or the keyboard rests on its name; **Help: index of functions** in ⌘K (`src/help/HomePage.svelte`). Green here: the whole routine in both browsers.
 
-**Next.** Step 5a `[function]`: the Topics pane and its sections.
+**Done, step 5a `[function]`.** The left pane of Help is **Topics**, with sections that fold, each with its count: **On this page** (the page's sections, as Outline held them), **Packages** (each opening its page) and **Errors and warnings** (the families, each folding to its codes); what is folded is kept with the project, and a reader's choice of the old Outline pane is carried over (`src/help/TopicsPane.svelte`, `src/app/views.ts`). Found and mended: a project reloaded while in Help came back with Help empty. Green here: the whole routine in both browsers.
+
+**Next.** Step 5b `[function]`: Topics beside a page.

@@ -55,6 +55,7 @@ import {
   rightWidth,
   readViews,
   tabPath,
+  topicOpen,
   unfoldToggled,
   usual,
   withTab,
@@ -518,6 +519,14 @@ export class Workspace {
   /** Open or close a pane of a place (#203); kept with the project. */
   setPane<P extends PlaceName>(place: P, pane: PaneName<P>, open: boolean): void {
     this.views.panes[place] = { ...this.views.panes[place], [pane]: open };
+    this.#keep();
+  }
+
+  /** Fold or unfold a section of the Topics pane of Help (#211); kept with the project. */
+  toggleTopic(key: string): void {
+    this.views.help = {
+      topics: { ...this.views.help.topics, [key]: !topicOpen(this.views, key) },
+    };
     this.#keep();
   }
 
@@ -1209,6 +1218,14 @@ export class Workspace {
   openHelp(): void {
     Object.assign(this.views, withTab(this.views, HELP));
     this.#keep();
+    this.readyHelp();
+  }
+
+  /**
+   * The Help place is on the screen, by its button or as the place a project was left in:
+   * it stands on Home where no page was opened yet, and its index is asked for.
+   */
+  readyHelp(): void {
     if (here(this.helpHistory) === null) {
       this.helpHistory = opened(this.helpHistory, HELP_HOME);
       this.help = { title: "", page: "", stop: HELP_HOME };

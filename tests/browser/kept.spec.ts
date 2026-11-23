@@ -467,3 +467,76 @@ test("a change of the view made as the page is left is kept: the page loaded aga
     )
     .toBe("true true");
 });
+
+test("what is folded in Topics is kept with the project, and a project whose Outline pane of Help was closed opens with Topics closed", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: "New project…" }));
+  await page.getByLabel("The name of the new project").fill("Topics kept");
+  await press(page.getByRole("button", { name: "Create" }));
+  await expect(page).toHaveURL(/#\/p\/topics-kept$/);
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const places = page.getByRole("navigation", { name: "Places" });
+  const topics = page
+    .getByRole("complementary", { name: "Help: the left pane" })
+    .getByRole("region", { name: "Topics" });
+  const packages = topics
+    .getByRole("heading", { level: 3 })
+    .getByRole("button", { name: /Packages/ });
+  const family = topics.getByRole("button", { name: /Z01xx / });
+  await press(places.getByRole("button", { name: "Help" }));
+  await press(packages);
+  await press(family);
+  await expect(packages).toHaveAttribute("aria-expanded", "false");
+  await expect(topics.getByRole("list", { name: "The codes of Z01xx" })).toBeVisible();
+  await page.waitForTimeout(1500);
+
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(packages).toHaveAttribute("aria-expanded", "false");
+  await expect(family).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    topics.getByRole("list", { name: "The codes of Z01xx" }).getByRole("button"),
+  ).toHaveCount(10);
+
+  // The project as Zemp Lite 0.2.2 left it, the left pane of Help called Outline and closed.
+  // (A family of codes has the word in its name: the button is asked for by what it says it does.)
+  await press(page.getByTitle("Back to the projects of this browser"));
+  await expect(page).toHaveURL(/\/#?$/);
+  await page.waitForTimeout(1000);
+  await page.evaluate(async () => {
+    let folder = await navigator.storage.getDirectory();
+    for (const part of ["projects", "topics-kept", ".zemp"]) {
+      folder = await folder.getDirectoryHandle(part);
+    }
+    const file = await (
+      await folder.getFileHandle("views.json", { create: true })
+    ).createWritable();
+    await file.write(
+      JSON.stringify({
+        version: 3,
+        panes: { help: { outline: false, related: true } },
+        tabs: ["file:scripts/main.zeff", "view:help"],
+        active: "view:help",
+      }),
+    );
+    await file.close();
+  });
+  await press(page.getByRole("button", { name: /^Topics kept in this browser/ }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const link = page
+    .getByRole("toolbar", { name: "Help: its panes and its controls" })
+    .getByRole("button", { name: "Topics", exact: true });
+  await expect(link).toHaveAttribute("aria-pressed", "false");
+  await expect(topics).toHaveCount(0);
+  await expect(
+    page.getByRole("complementary", { name: "Help: the right pane" }).getByRole("region", {
+      name: "Related functions",
+    }),
+  ).toBeVisible();
+  // Opened by its link, it holds its sections as they first stand.
+  await press(link);
+  await expect(packages).toHaveAttribute("aria-expanded", "true");
+});

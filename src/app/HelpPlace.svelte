@@ -3,8 +3,9 @@
   // is a place, not a panel beside the script, and its page is set in type, not shown as the
   // terminal prints it). In the middle the engine's page, a function's or a code's, read from
   // its print (`help/read.ts`) and formatted (`help/HelpPage.svelte`), every word the engine's.
-  // At its left the pane **Outline**: the page's sections, each going to its place, the one in
-  // view marked. At its right the pane **Related functions**: those the page names under SEE
+  // At its left the pane **Topics** (`help/TopicsPane.svelte`; it was **Outline** until
+  // 0.2.3): the page's sections, each going to its place, the one in view marked, and under
+  // them the packages and the codes by family, in sections that fold. At its right the pane **Related functions**: those the page names under SEE
   // ALSO, each with what its own page says it does, a click opening that page. F1 on a name in
   // the script, **Explain** in what a run said, a name or a code in the page itself, and the
   // field here each open a page.
@@ -19,10 +20,11 @@
   // the engine's index (`help/pages.ts`, `help/ListPage.svelte`), so that every step of a
   // trail has a page to open.
   import HelpPage from "../help/HelpPage.svelte";
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { HOME, after, before, called, here } from "../help/history";
   import HomePage from "../help/HomePage.svelte";
   import ListPage from "../help/ListPage.svelte";
+  import TopicsPane from "../help/TopicsPane.svelte";
   import { codesPage, packagePage, partsOf } from "../help/pages";
   import { outlineOf, readPage, relatedOf } from "../help/read";
   import { trailOf } from "../help/trail";
@@ -31,6 +33,9 @@
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
+
+  // A project left in the Help place opens in it again, with no press of its button.
+  onMount(() => workspace.readyHelp());
 
   // The page shown: a list (a package's functions, the codes by family), or the engine's print.
   const shown = $derived(workspace.help.stop);
@@ -47,11 +52,7 @@
   const blank = $derived(list === null && page === "" && home === null);
   const doc = $derived(readPage(page));
   const sections = $derived(
-    home !== null
-      ? home.packages.map((one, line) => ({ line, title: one.name, entry: false }))
-      : list === null
-        ? outlineOf(doc)
-        : partsOf(list).map((part) => ({ ...part, entry: false })),
+    list === null ? outlineOf(doc) : partsOf(list).map((part) => ({ ...part, entry: false })),
   );
   const trail = $derived(trailOf(shown ?? HOME, workspace.helpIndex, workspace.helpCodes));
 
@@ -139,24 +140,8 @@
   }
 </script>
 
-{#snippet outline()}
-  {#if sections.length === 0}
-    <p class="none">
-      {blank ? "No page is open." : "This page has no sections."}
-    </p>
-  {:else}
-    <ul class="outline">
-      {#each sections as section (section.line)}
-        <li class:entry={section.entry} class:sub={!section.entry}>
-          <button
-            class:on={section.line === inView}
-            aria-current={section.line === inView ? "location" : undefined}
-            onclick={() => goTo(section.line)}>{section.title}</button
-          >
-        </li>
-      {/each}
-    </ul>
-  {/if}
+{#snippet topics()}
+  <TopicsPane {workspace} sections={home === null ? sections : []} {inView} onsection={goTo} />
 {/snippet}
 
 {#snippet relatedFunctions()}
@@ -253,7 +238,7 @@
   <Place
     {workspace}
     name="Help"
-    left={[paneOf(workspace, "help", "outline", outline)]}
+    left={[paneOf(workspace, "help", "topics", topics)]}
     right={[paneOf(workspace, "help", "related", relatedFunctions)]}
     bar={controls}
   >
@@ -483,14 +468,6 @@
   }
   li button:focus-visible {
     outline: 2px solid var(--accent);
-  }
-  .outline .entry button {
-    font-weight: 600;
-  }
-  .outline .on {
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 600;
   }
   .related .name {
     display: block;

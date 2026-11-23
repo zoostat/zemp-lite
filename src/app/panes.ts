@@ -29,7 +29,7 @@ export const WORDS: { [P in PlaceName]: { [N in PaneName<P>]: Words } } = {
     about: { label: "The plot", holds: "the plot's statement and size" },
   },
   help: {
-    outline: { label: "Outline", holds: "the sections of the help page" },
+    topics: { label: "Topics", holds: "the topics of Help" },
     related: { label: "Related functions", holds: "the functions related to this one" },
   },
 };

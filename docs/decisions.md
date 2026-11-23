@@ -1756,3 +1756,24 @@ The rules are generous on purpose: a name too many is a match low in a list, a n
 **Tested** (`tests/browser/help-home.spec.ts`, 6 tests in both engines): the title, the line of counts, the ten headings with their counts; the functions of `core`, `data`, `stats` and `regress` name for name what the released `zeff help` prints; the datasets; no function of 0.9.0 or of the roadmap; every one of the 259 names opened in turn, each giving the engine's page headed by that name; a package's heading opening its page; the one line by the pointer and by the keyboard, under its name and inside the window; three columns at 1,200 pixels with both panes, more with them closed, no name cut and nothing sideways at 1,000; 12.5 pixels and 4.5 to 1 in both themes, the box of the one line too; the command.
 
 **Reason.** The row of 0.2.3: "Home an Index of functions by package until the methods arrive with the engine"; #211, part 1: Home lists only what the engine in use can run.
+
+## 23 November 2026: the Topics pane and its sections (release 0.2.3, step 5a)
+
+**Choice.** The left pane of the Help place is **Topics** (it was **Outline**): the link over it, its heading with its ×, and its command of ⌘K (**Help: show Topics**, **Help: hide Topics**) say so, from the one table of the panes (`src/app/panes.ts`). It holds sections that fold, each headed by a button with its mark (▾ open, ▸ folded), its words and its count (`src/help/TopicsPane.svelte`):
+
+- **On this page**, where the page open has sections: what the Outline pane held, each section going to its place, the one in view marked. Home has none. It stands first so that nothing the pane did before is lost at this step; step 5b puts the page's neighbours over it and **‹ All topics** beside them.
+- **Packages** (10): each package the engine ships, in its order, with its count; a click opens the package's page, and the package whose page is shown is marked.
+- **Errors and warnings** (144): the 12 families as the engine lists them, each with its pattern, what it is of and its count; a family folds to its codes, each with its title, a click opening the code's page, the code shown marked.
+- **Using Zemp Lite** is not listed until its pages exist (step 8).
+
+**As they first stand:** the three sections open, every family folded to its name (144 codes unfolded would bury the pane). **Kept with the project:** which sections and families the reader folded or unfolded, as the part `help.topics` of `.zemp/views.json`, each by its key (`page`, `packages`, `codes`, `codes:Z01xx`) with whether it is open; a key the file does not name stands as it first does (`topicOpen`).
+
+**The view state is of version 4.** The pane of Help is `panes.help.topics`. A file of 0.2.1 or 0.2.2, which says `panes.help.outline`, is read with the reader's choice carried over: a project whose Outline pane of Help was closed opens with Topics closed. An earlier build that reads a file of this one finds no `outline` and opens the pane, and keeps `help` as a part it does not know.
+
+**Found and mended: a project left in Help opened in it empty.** The index of the help was asked for when the Help button was pressed; a project reloaded while Help was the place shown never pressed it, and came back with Home blank and, now, Topics without its sections. The Help place asks for its index and takes its stand on Home when it comes on the screen, however it came (`Workspace.readyHelp`). The test of what is kept reloads the page in Help.
+
+**A row rested on.** The count and the mark of a row are set in the faintest ink, which on the darker ground a row takes under the pointer stood at 4.47 to 1; under the pointer they are one step stronger. Found by the test of the pane as painted.
+
+**Tested.** Unit (`src/app/views.test.ts`): the old choice carried over, both ways, and gone when written back; the folded sections written, read and defaulted; a damaged part passed over. Browser, both engines (`tests/browser/help-topics.spec.ts`, 5 tests): the heads with their counts; a section and a family folded and unfolded by the mouse and by Enter and Space; what is folded standing after the Script place and back; each of the 10 packages and each of the 144 codes pressed in turn, each opening the engine's page, the row marked; **On this page** first, its sections as the Outline pane's tests had them; the pane closed by its ×, opened by its link and by ⌘K, the middle wider by the pane; 12.5 pixels and 4.5 to 1 in both themes; nothing off the pane's side. In `kept.spec.ts`: what is folded after a reload, and a project written as 0.2.2 left it, its Outline pane closed, opening with Topics closed.
+
+**Reason.** The row of 0.2.3 and #211, items 4 and 9: the left pane lists what there is to read, in sections that fold, and is opened and closed as every pane is (#203).

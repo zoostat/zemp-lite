@@ -28,10 +28,12 @@ const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
 const field = (page: Page) =>
   bar(page).getByRole("searchbox", { name: "Open the page of a function or a code" });
+/** The sections of the page open, in the Topics pane. */
 const outline = (page: Page) =>
   page
     .getByRole("complementary", { name: "Help: the left pane" })
-    .getByRole("region", { name: "Outline" });
+    .getByRole("region", { name: "Topics" })
+    .getByRole("list", { name: "On this page" });
 
 /** The trail as it reads, its marks between the steps as drawn. */
 const reads = async (page: Page) =>
@@ -162,7 +164,7 @@ test("a package has a page of its own, apart from the function of its name", asy
     "staff",
     "wages",
   ]);
-  await expect(outline(page).locator("ul").getByRole("button")).toHaveText(["Datasets"]);
+  await expect(outline(page).getByRole("button")).toHaveText(["Datasets"]);
   await press(parts.nth(1).getByRole("button", { name: "wages" }));
   await expect.poll(() => reads(page)).toBe("Help › Packages › datasets › wages");
   await expect(shown(page)).toContainText("Synthetic hourly wages");
@@ -195,7 +197,7 @@ test("the codes by family are a page, and a code stands under its family", async
     "no such name",
   ]);
   // The outline lists the families, each going to its place.
-  const entries = outline(page).locator("ul").getByRole("button");
+  const entries = outline(page).getByRole("button");
   await expect(entries).toHaveCount(12);
   await expect(entries.nth(1)).toHaveText(
     "Z01xx · Names: variables, bindings, functions, packages",

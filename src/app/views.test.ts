@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  TOPICS,
+  familyTopic,
   fileTab,
   leftWidth,
   readViews,
   rightWidth,
   tabPath,
+  topicOpen,
   unfoldToggled,
   usual,
   withTab,
@@ -19,7 +22,7 @@ describe("the view state of a project", () => {
       script: { project: true, outline: true, notes: false },
       data: { frames: false, variables: true },
       plots: { list: false, about: false },
-      help: { outline: false, related: false },
+      help: { topics: false, related: false },
     };
     state.right = { width: 400 };
     state.left = { width: 312 };
@@ -97,7 +100,7 @@ describe("the view state of a project", () => {
       script: { project: false, outline: false, notes: true },
       data: { frames: true, variables: false },
       plots: { list: true, about: true },
-      help: { outline: true, related: true },
+      help: { topics: true, related: true },
     });
     expect(usual().right).toEqual({ width: 310 });
   });
@@ -119,7 +122,7 @@ describe("the view state of a project", () => {
       script: { project: true, outline: false, notes: true },
       data: { frames: true, variables: false },
       plots: { list: true, about: false },
-      help: { outline: true, related: true },
+      help: { topics: true, related: true },
     });
     expect(read.right).toEqual({ width: 560 });
   });
@@ -162,10 +165,51 @@ describe("the view state of a project", () => {
     }
   });
 
+  it("carries a reader's choice of the Outline pane of Help over to Topics", () => {
+    // A file of 0.2.1 or 0.2.2, which called the left pane of Help Outline.
+    const closed = readViews(
+      JSON.stringify({ version: 3, panes: { help: { outline: false, related: true } } }),
+    );
+    expect(closed.panes.help).toEqual({ topics: false, related: true });
+    const open = readViews(JSON.stringify({ version: 3, panes: { help: { outline: true } } }));
+    expect(open.panes.help).toEqual({ topics: true, related: true });
+    // A file of this build says Topics, and that is what stands, whatever an old key says.
+    const now = readViews(
+      JSON.stringify({ version: 4, panes: { help: { topics: true, outline: false } } }),
+    );
+    expect(now.panes.help.topics).toBe(true);
+    // Written back, the old key is gone.
+    const written = JSON.parse(writeViews(closed)) as { panes: { help: object } };
+    expect(written.panes.help).toEqual({ topics: false, related: true });
+  });
+
+  it("keeps which sections of Topics the reader folded and unfolded, and opens the others as they first stand", () => {
+    const state = usual();
+    // As they first stand: the sections open, each family of codes folded to its name.
+    expect(topicOpen(state, TOPICS.page)).toBe(true);
+    expect(topicOpen(state, TOPICS.packages)).toBe(true);
+    expect(topicOpen(state, TOPICS.codes)).toBe(true);
+    expect(topicOpen(state, familyTopic("Z01xx"))).toBe(false);
+    state.help.topics = { packages: false, "codes:Z01xx": true };
+    const read = readViews(writeViews(state));
+    expect(read.help).toEqual({ topics: { packages: false, "codes:Z01xx": true } });
+    expect(topicOpen(read, TOPICS.packages)).toBe(false);
+    expect(topicOpen(read, familyTopic("Z01xx"))).toBe(true);
+    expect(topicOpen(read, familyTopic("W0xxx"))).toBe(false);
+    // What is not a truth value, or not a list of them, is passed over.
+    expect(
+      readViews(JSON.stringify({ help: { topics: { packages: "no", codes: false } } })).help,
+    ).toEqual({
+      topics: { codes: false },
+    });
+    expect(readViews(JSON.stringify({ help: { topics: [true] } })).help).toEqual({ topics: {} });
+    expect(readViews(JSON.stringify({ help: "all" })).help).toEqual({ topics: {} });
+  });
+
   it("writes its version, and keeps what a later build wrote that this one does not know", () => {
-    const read = readViews(JSON.stringify({ version: 4, paper: { file: "p.zmd" } }));
+    const read = readViews(JSON.stringify({ version: 5, paper: { file: "p.zmd" } }));
     const written = JSON.parse(writeViews(read)) as Record<string, unknown>;
-    expect(written["version"]).toBe(3);
+    expect(written["version"]).toBe(4);
     expect(written["paper"]).toEqual({ file: "p.zmd" });
     expect(Object.keys(written)).not.toContain("others");
   });
