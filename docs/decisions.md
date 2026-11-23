@@ -1657,3 +1657,11 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choices of this step.** Version `0.2.3-dev` in `package.json`, `worker/Cargo.toml` and their lock files. Nothing of the app changes.
 
 **Reason.** The owner's decisions.
+
+## 23 November 2026: the check after a deployment waits for the build to arrive whole
+
+**Found.** The deployment of the commit that opened 0.2.3 (52a0332) was reported failed: `tools/check-host.mjs` said that neither the worker nor the engine's WebAssembly was found from the page. The build had been sent whole; the check looked one second after the host said "deployment complete", when the files a script names were still answered with the page, as files not yet there. The same check, run from here some minutes later, passed at both addresses. It had happened once before, on 21 November, at the alpha's address.
+
+**Choice.** Where neither the worker nor the WebAssembly is found, the build has not arrived whole and the check looks again, every 5 seconds, for a minute at most; then it reports what the last look found. Every other lack (a header missing, a file not kept, a "not modified" answer without its headers) fails as before at the first look that finds the build whole, and a build that never arrives fails after the minute, with the same two sentences.
+
+**Reason.** A fault of timing in the check, not of the host or the build. Nothing is weakened: the conditions are unchanged, and only the one sign of a build still arriving is waited for. Tried against a stand-in host of the local build: whole at once (passes at the first look), arriving after 12 seconds (passes at the fourth), never arriving (fails after 60 seconds).
