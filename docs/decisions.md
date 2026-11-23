@@ -1599,3 +1599,21 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **The release.** Version 0.2.2 in `package.json`, `worker/Cargo.toml` and their lock files; the commit "Release 0.2.2"; the tag `v0.2.2`; a GitHub release marked a pre-release, as 0.2 and 0.2.1 were, carrying `docs/releases/0.2.2-notes.md`.
 
 **What comes next for Zemp Lite** is not begun: the next row of section 15 of the Zemp Specification waits for the engine it names, and for the owner's "Start release".
+
+## 23 November 2026: Paper for `.typ` files moves into Zemp 0.3, with Typst fetched on first use (#172, option A)
+
+**The owner's ruling**, given in the coordinating session and passed to this one by it. He was asked: "Shall Paper start at Zemp 0.3, with Typst fetched on first use?" His answer, word for word: "Yes, as planned".
+
+**What was decided.** Open decision #172 is decided as its option A: Typst inside Zemp is a module of Zemp's own, about 7 MB, fetched the first time a paper is opened and never part of the start bundle, built with a copy of the hyphenation crate that holds only the 33 languages under permissive licences. And Paper comes in three stages:
+
+1. **At Zemp 0.3, with Zeff 0.9.0:** Paper for `.typ` files. The source and the live page side by side; a click on the page finds the source; an outline; tables and figures come from scripts through `export` (`.typ` and SVG) and are refreshed by Run; the PDF set by Typst in the browser, the same bytes everywhere; **Export script with output** as PDF.
+2. **At Zemp 0.4, with Zeff 0.10.0:** the settings file beside the paper (#124), `refs.bib` with citations and cross-references checked as they are typed, and the Article template.
+3. **After 1.0, unchanged:** `.zmd` with Zeff chunks.
+
+**The specification.** The register and the Zemp Specification (sections 8 and 15) are the Zeff repository's, and the Zeff 0.9.0 session is entering the ruling there with the change logged. At the time of this entry it has not landed: the register committed there still shows #172 open. The copy in `docs/spec/` here is brought to that commit when it lands, each file taken from the commit and compared byte for byte, as was done for 0.2.2 (the entry of 22 November on Zeff 3159c99). Nothing in `docs/spec/` is changed by this entry.
+
+**What this session does with it, and when.** Nothing of 0.3 is begun: a release is opened by the owner's "Start release", and 0.3 stands on Zeff 0.9.0, which is not yet released. When 0.3 is opened, stage 1 is planned in its checklist, and its first step is the spike of the Typst module, `[engine]`, which settles four things before anything is built on it: the licences of everything linked and shipped, the default font of the Article template (New Computer Modern) among them; the built size as it travels, compressed; the time to set a page in the browser; and the PDF's bytes against those of the desktop Typst for the same document.
+
+**Still the owner's, from 0.2.2:** the reader test and the checks by hand.
+
+**Reason.** The owner's ruling. The spike comes first because each of the four could change the plan: a licence that cannot ship, a module too large to fetch, a page too slow to keep live, or bytes that differ from the desktop's would each have to be known before the place is designed around them.
