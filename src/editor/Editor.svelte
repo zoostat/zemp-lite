@@ -91,8 +91,8 @@
     oncomplete?: (line: number, character: number) => Promise<CompletionItem[]>;
     /** The usage of the call at a place, from the language server. */
     onusage?: (line: number, character: number) => Promise<Omit<Usage, "pos"> | null>;
-    /** F1: the help page of the name at the cursor. */
-    onhelp?: (name: string) => void;
+    /** F1: the help page of the name at the cursor, with where the name begins (from 0). */
+    onhelp?: (name: string, line: number, character: number) => void;
   } = $props();
 
   let host: HTMLDivElement;
@@ -308,7 +308,11 @@
                 const line = target.state.doc.lineAt(head);
                 const name =
                   functionAt(line.text, head - line.from) ?? wordAt(line.text, head - line.from);
-                if (name !== null) onhelp(name);
+                if (name !== null) {
+                  // The name holds the cursor: it begins at or before it.
+                  const from = Math.max(0, line.text.lastIndexOf(name, head - line.from));
+                  onhelp(name, line.number - 1, from);
+                }
                 return true;
               },
             },

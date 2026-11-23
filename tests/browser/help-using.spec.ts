@@ -138,6 +138,8 @@ test("links go from one page to another and to the engine's pages, each into the
     "↵",
     "Esc",
     "F1",
+    // The section on a name with two functions names the key once more.
+    "F1",
     "⌘[",
     "⌘]",
   ]);

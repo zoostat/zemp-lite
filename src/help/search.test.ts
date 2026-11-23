@@ -15,7 +15,14 @@ const stata = (name: string, shown = name): ForeignName => ({
   shown,
   from: "page",
 });
-const fn = (name: string, summary: string, names: ForeignName[] = []) => ({ name, summary, names });
+const fn = (name: string, summary: string, names: ForeignName[] = [], on = "Frame") => ({
+  name,
+  summary,
+  usage: `${on === "Frame" ? "data" : on.toLowerCase()}.${name}()`,
+  method: true,
+  first: { name: on === "Frame" ? "data" : on.toLowerCase(), type: on },
+  names,
+});
 
 const index: HelpIndex = {
   engine: "0.8.0",
@@ -41,7 +48,7 @@ const index: HelpIndex = {
       name: "results",
       tier: 1,
       functions: [
-        fn("summary", "The full table of a result", [r("summary")]),
+        fn("summary", "The full table of a result", [r("summary")], "Result"),
         fn("coef", "The coefficients of a fit", [r("coef")]),
       ],
     },
@@ -107,26 +114,42 @@ const pages: OwnPage[] = [
 ];
 const entries = entriesOf(index, families, pages);
 
-/** A search as it reads: each match as `kind name` with its rule, and why where it is said. */
+/**
+ * A search as it reads: each match as `kind name` with its rule, and why where it is said; a
+ * function of a name that has two says which it is.
+ */
 const read = (typed: string, among: Entry[] = entries) =>
   search(among, typed).matches.map(
-    (one) => `${one.kind} ${one.name} [${one.rule}${one.why === null ? "" : `: ${one.why}`}]`,
+    (one) =>
+      `${one.kind} ${one.name}${one.of === undefined ? "" : ` (${one.of})`} [${one.rule}${one.why === null ? "" : `: ${one.why}`}]`,
   );
 
 describe("what the search looks through", () => {
-  it("has every function once, with the packages that have it and the names of both", () => {
+  it("has every function, and the two of one name apart, each with its own words and names (#215)", () => {
     const summary = entries.filter((one) => one.name === "summary");
-    expect(summary).toHaveLength(1);
+    expect(summary).toHaveLength(2);
     expect(summary[0]).toMatchObject({
       kind: "function",
       words: "Table of N, missing, mean, SD, min and max",
-      packages: ["data", "results"],
-      to: { kind: "name", name: "summary" },
+      packages: ["data"],
+      of: "of a frame",
+      to: { kind: "name", name: "summary", form: { package: "data", on: "Frame" } },
     });
     expect(summary[0]?.foreign.map((name) => `${name.of} ${name.name}`)).toEqual([
       "R summary",
       "Stata summarize",
     ]);
+    expect(summary[1]).toMatchObject({
+      words: "The full table of a result",
+      packages: ["results"],
+      of: "of a result",
+      to: { kind: "name", name: "summary", form: { package: "results", on: "Result" } },
+    });
+    expect(summary[1]?.foreign.map((name) => `${name.of} ${name.name}`)).toEqual(["R summary"]);
+    // A name of one function says nothing more, and opens the name's page.
+    const sum = entries.find((one) => one.name === "sum");
+    expect(sum?.of).toBeUndefined();
+    expect(sum?.to).toEqual({ kind: "name", name: "sum" });
   });
 
   it("has the packages, the datasets, the codes and the app's own pages", () => {
@@ -176,12 +199,14 @@ describe("the rules of the search, each by itself", () => {
     // The names begun come first; what the other rules find follows them.
     expect(read("tab")).toEqual([
       "function tabulate [begins]",
-      "function summary [words]",
+      "function summary (of a frame) [words]",
+      "function summary (of a result) [words]",
       "function chi2_test [foreign: Stata tabulate]",
     ]);
     expect(read("su")).toEqual([
       "function sum [begins]",
-      "function summary [begins]",
+      "function summary (of a frame) [begins]",
+      "function summary (of a result) [begins]",
       "code Z0101 [words]",
       "function where [foreign: R subset()]",
     ]);
@@ -205,7 +230,10 @@ describe("the rules of the search, each by itself", () => {
     expect(read("skipped")).toEqual(["code W0201 [words]"]);
     expect(read("hourly")).toEqual(["dataset wages [words]"]);
     // A part of a name comes before a word of a one line.
-    expect(read("mea")).toEqual(["function summary [words]", "function t_test [words]"]);
+    expect(read("mea")).toEqual([
+      "function summary (of a frame) [words]",
+      "function t_test [words]",
+    ]);
   });
 
   it("4: an R or a Stata name, said as its source writes it; one typed exactly before one begun", () => {
@@ -224,7 +252,7 @@ describe("the rules of the search, each by itself", () => {
     // One typed exactly comes before one begun, whatever their names.
     expect(read("regh")).toEqual(["function reg [foreign: Stata reghdfe]"]);
     expect(read("chisq")).toEqual(["function chi2_test [foreign: R chisq.test()]"]);
-    expect(read("summarize")).toEqual(["function summary [foreign: Stata summarize]"]);
+    expect(read("summarize")).toEqual(["function summary (of a frame) [foreign: Stata summarize]"]);
     // A function that has the name itself is found by its own name, not by R's of the same.
     expect(read("coef")).toEqual(["function coef [exact]"]);
   });
@@ -238,7 +266,10 @@ describe("the rules of the search, each by itself", () => {
   it("6: a name one key's slip away, from the fourth letter and not before", () => {
     // A letter added, wrong, missing, and two changed over.
     expect(read("regg")).toEqual(["function reg [slip]"]);
-    expect(read("sumnary")).toEqual(["function summary [slip]"]);
+    expect(read("sumnary")).toEqual([
+      "function summary (of a frame) [slip]",
+      "function summary (of a result) [slip]",
+    ]);
     expect(read("mrge")).toEqual(["function merge [slip]"]);
     expect(read("wehre")).toEqual(["function where [slip]"]);
     expect(read("stata")).toEqual(["package stats [slip]"]);
@@ -361,7 +392,11 @@ describe("the order of the search", () => {
   it("enters a match once, by the best rule that finds it", () => {
     // `summary`: its own name, R's of the same name, and a word of other one lines.
     const found = read("summary");
-    expect(found.filter((one) => one.includes(" summary "))).toEqual(["function summary [exact]"]);
+    // It names two functions, and each is entered once, the two apart (#215).
+    expect(found.filter((one) => one.includes(" summary "))).toEqual([
+      "function summary (of a frame) [exact]",
+      "function summary (of a result) [exact]",
+    ]);
     // `tabulate` is a name and Stata's name of two functions: its own first, the other by Stata.
     expect(read("tabulate")).toEqual([
       "function tabulate [exact]",
@@ -382,6 +417,7 @@ describe("the order of the search", () => {
       "function reg [begins]",
       "package regress [begins]",
       "package results [begins]",
+      "function summary (of a result) [words]",
     ]);
   });
 
@@ -530,9 +566,9 @@ describe("where nothing is found", () => {
     );
     // Both are two keys away: by the name's order between them.
     expect(found.nothing?.nearest.map((one) => one.name)).toEqual(["ivreg", "reg"]);
-    expect(search(entries, "sumnarry").nothing?.nearest.map((one) => one.name)).toEqual([
-      "summary",
-    ]);
+    expect(
+      search(entries, "sumnarry").nothing?.nearest.map((one) => `${one.name} ${one.of}`),
+    ).toEqual(["summary of a frame", "summary of a result"]);
     // As it was typed, capitals and all.
     expect(search(entries, " XTReg ").nothing?.sentence).toContain("“XTReg”");
   });

@@ -25,6 +25,10 @@ Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From t
 
 Put the cursor on a function's name in the script and press <kbd>F1</kbd>: Help opens at its page. When a run gives a warning or an error, press **Explain** beside it for the page of its code.
 
+## A name with two functions
+
+A few names are two functions: `histogram` draws a variable of a frame in one call, and it is also a layer added to a plot. Each has a page of its own, and the title says which by what the function is called on: histogram · of a frame, histogram · of a plot. The search, the **Topics** pane and a package's page list the two apart. The name alone, typed in the field or met as a link, opens a short page with both, each with its usage and its one line, to choose from. <kbd>F1</kbd> in the script opens the one your call runs.
+
 ## Moving about
 
 **Back** and **Forward** go through the pages you have opened, as in a web browser; <kbd>⌘[</kbd> and <kbd>⌘]</kbd> do the same. The trail beside them says where a page stands, and each of its steps is a link.

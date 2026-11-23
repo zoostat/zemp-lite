@@ -1254,6 +1254,7 @@ fn the_index_holds_every_function_this_engine_runs_and_none_of_a_later_release()
     let catalogue = registry.catalogue();
     let host = Host::new("demo");
     let mut ours: Vec<(String, String)> = Vec::new();
+    let mut apart: Vec<(String, String, String)> = Vec::new();
     for (package, _, functions) in indexed() {
         assert!(!functions.is_empty(), "{package}");
         for function in functions {
@@ -1266,13 +1267,34 @@ fn the_index_holds_every_function_this_engine_runs_and_none_of_a_later_release()
             assert!(!function["summary"].as_str().unwrap().is_empty(), "{name}");
             let found: Value = serde_json::from_str(&host.help(&name)).unwrap();
             assert!(found["page"].is_string(), "{package}.{name} has no page");
+            // A name is listed once for each function it names (open decision #215): two of
+            // a package differ in the type of the value they are called on.
+            let on = function["first"]["type"].as_str().unwrap_or("").to_string();
             assert!(
-                !ours.contains(&(package.clone(), name.clone())),
-                "{package}.{name} is listed twice"
+                !apart.contains(&(package.clone(), name.clone(), on.clone())),
+                "{package}.{name} of {on} is listed twice"
             );
+            assert!(
+                function["usage"]
+                    .as_str()
+                    .unwrap()
+                    .contains(&format!("{name}(")),
+                "{package}.{name}: {}",
+                function["usage"]
+            );
+            apart.push((package.clone(), name.clone(), on));
             ours.push((package.clone(), name));
         }
     }
+    // Every registered function is there: 259, of 255 names by package.
+    assert_eq!(apart.len(), 259);
+    assert_eq!(
+        apart.len(),
+        zeff_engine::registry::registry().unwrap().functions().len()
+    );
+    ours.sort();
+    ours.dedup();
+    assert_eq!(ours.len(), 255);
     // Every function the catalogue has as implemented is there, once.
     let mut theirs: Vec<(String, String)> = catalogue
         .rows()
@@ -1288,6 +1310,81 @@ fn the_index_holds_every_function_this_engine_runs_and_none_of_a_later_release()
     for later in ["n_chars", "row_number", "xtreg", "logit_reg"] {
         assert!(ours.iter().all(|(_, name)| name != later), "{later}");
     }
+}
+
+#[test]
+fn a_name_with_two_functions_is_listed_twice_each_with_what_it_is_called_on() {
+    // Open decision #215: the Help place gives each a page of its own, told apart by the type
+    // of the value it is called on, and by its usage.
+    let of = |package: &str, name: &str| -> Vec<(String, String, bool, String)> {
+        let (_, _, functions) = indexed()
+            .into_iter()
+            .find(|(one, _, _)| one == package)
+            .unwrap();
+        functions
+            .iter()
+            .filter(|f| f["name"] == name)
+            .map(|f| {
+                (
+                    f["first"]["name"].as_str().unwrap_or("").to_string(),
+                    f["first"]["type"].as_str().unwrap_or("").to_string(),
+                    f["method"].as_bool().unwrap(),
+                    f["usage"].as_str().unwrap().to_string(),
+                )
+            })
+            .collect()
+    };
+    let histogram = of("plot", "histogram");
+    assert_eq!(histogram.len(), 2);
+    assert_eq!(
+        (
+            histogram[0].0.as_str(),
+            histogram[0].1.as_str(),
+            histogram[0].2
+        ),
+        ("p", "Plot", true)
+    );
+    assert!(
+        histogram[0].3.starts_with("p.histogram("),
+        "{}",
+        histogram[0].3
+    );
+    assert_eq!(
+        (
+            histogram[1].0.as_str(),
+            histogram[1].1.as_str(),
+            histogram[1].2
+        ),
+        ("data", "Frame", true)
+    );
+    assert!(
+        histogram[1].3.starts_with("data.histogram(var"),
+        "{}",
+        histogram[1].3
+    );
+    // A function written before its values: its first parameter, and no receiver.
+    let min = of("core", "min");
+    assert_eq!(min.len(), 1);
+    assert_eq!(
+        (min[0].0.as_str(), min[0].2, min[0].3.as_str()),
+        ("a", false, "min(a, b, ...)")
+    );
+    assert_eq!(of("data", "min")[0].1, "Frame");
+    // The usage is the line the page gives under Usage, where it fits on one line.
+    let host = Host::new("demo");
+    let found: Value = serde_json::from_str(&host.help("append")).unwrap();
+    let page = found["page"].as_str().unwrap();
+    for (package, on) in [("core", "List"), ("data", "Frame")] {
+        let one = &of(package, "append")[0];
+        assert_eq!(one.1, on);
+        assert!(page.contains(&format!("    {}\n", one.3)), "{}", one.3);
+    }
+    // A function that takes no value has none.
+    let (_, _, core) = indexed()
+        .into_iter()
+        .find(|(one, _, _)| one == "core")
+        .unwrap();
+    assert!(core.iter().any(|f| f["first"].is_null()));
 }
 
 #[test]

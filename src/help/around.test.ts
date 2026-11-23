@@ -3,12 +3,24 @@ import type { CodeFamily, HelpIndex } from "../engine/messages";
 import { aroundOf } from "./around";
 import { HOME } from "./history";
 
-const fn = (name: string, summary = `what ${name} does`) => ({ name, summary, names: [] });
+/** A function of the index: called on a value of the type `on`, as `data.name()` is. */
+const fn = (name: string, summary = `what ${name} does`, on = "Frame") => ({
+  name,
+  summary,
+  usage: `${on === "Frame" ? "data" : on.toLowerCase()}.${name}()`,
+  method: true,
+  first: { name: on === "Frame" ? "data" : on.toLowerCase(), type: on },
+  names: [],
+});
 const index: HelpIndex = {
   engine: "0.8.0",
   packages: [
     { name: "data", tier: 1, functions: [fn("summary"), fn("mean")] },
-    { name: "results", tier: 1, functions: [fn("summary"), fn("coef")] },
+    {
+      name: "results",
+      tier: 1,
+      functions: [fn("summary", "what summary does of a result", "Result"), fn("coef")],
+    },
     { name: "stats", tier: 1, functions: [fn("t_test", "t-tests for one mean"), fn("anova")] },
     { name: "plot", tier: 1, functions: [fn("plot"), fn("text")] },
     { name: "datasets", tier: 1, functions: [fn("dataset"), fn("datasets")] },

@@ -138,7 +138,7 @@
         <p class="nothing" role="status">{found.nothing.sentence}</p>
       {/if}
       <ul id="help-found" role="listbox" aria-label="What was found">
-        {#each offered as one, at (`${one.kind} ${one.name}`)}
+        {#each offered as one, at (`${one.kind} ${one.name} ${one.packages.join(" ")} ${one.of ?? ""}`)}
           {@const [before, word, after] = cut(one)}
           <!-- The keyboard chooses from the field above; the list answers the pointer. -->
           <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -153,6 +153,8 @@
             <span class="kind">{KINDS[one.kind]}</span>
             <span class="what">
               <span class="name" class:mono={one.kind !== "page"}>{one.name}</span>
+              <!-- A function of a name that has two says which it is, before its package (#215). -->
+              {#if one.of !== undefined}<span class="form">{one.of}</span>{/if}
               {#if one.packages.length > 0}
                 <span class="of">{one.packages.join(" · ")}</span>
               {/if}
@@ -263,6 +265,12 @@
   }
   .of {
     color: var(--ink-3);
+    font-size: 12.5px;
+    margin-left: 6px;
+  }
+  /* Which function of its name: said beside the name, before the package. */
+  .form {
+    color: var(--ink-2);
     font-size: 12.5px;
     margin-left: 6px;
   }

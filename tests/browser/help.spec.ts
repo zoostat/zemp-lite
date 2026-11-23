@@ -53,9 +53,12 @@ const printed = (text: string) => ({
 const shown = async (page: Page) =>
   page.getByTestId("help-page").evaluate((node) => {
     const marks = [...node.querySelectorAll<HTMLElement>(".shared")];
-    for (const mark of marks) mark.hidden = true;
+    // What a title says of which function of its name the page is of ("· of a frame", #215)
+    // is the app's, made from the engine's type: it is not among the print's words.
+    const which = [...node.querySelectorAll<HTMLElement>("h3 .of")];
+    for (const mark of [...marks, ...which]) mark.hidden = true;
     const text = (node as HTMLElement).innerText;
-    for (const mark of marks) mark.hidden = false;
+    for (const mark of [...marks, ...which]) mark.hidden = false;
     return { text, shared: marks.length };
   });
 
@@ -95,18 +98,25 @@ test("F1 on a function's name opens the Help place at its page, every word the e
     "aria-current",
     "page",
   );
-  await expect(help.getByTestId("help-title")).toHaveText("summary");
-  // The page is the engine's, word for word and in its order, however the place sets it: a
-  // page of two functions, each with its name as a heading over its sections.
-  await holdsPrint(page, file("tests/scripts/help-summary.txt"));
-  await expect(help.getByRole("heading", { level: 3, name: "summary" })).toHaveCount(2);
-  await expect(help.getByRole("heading", { level: 4, name: "Usage" })).toHaveCount(2);
+  // `summary` names two functions (#215): the call is on a frame, so the page is that one's,
+  // as the engine's hover has it, and its title says so.
+  await expect(help.getByTestId("help-title")).toHaveText("of a frame");
+  const shownPage = page.getByTestId("help-page");
+  await expect(shownPage.getByRole("heading", { level: 3 })).toHaveText(/^summary\s*· of a frame$/);
+  // The page is the engine's, word for word and in its order, however the place sets it: the
+  // engine prints both functions one after the other, and this is the first's part, whole.
+  const print = file("tests/scripts/help-summary.txt");
+  const second = print.indexOf("\nsummary — ", 1);
+  expect(second).toBeGreaterThan(0);
+  await holdsPrint(page, print.slice(0, second + 1));
+  await expect(shownPage.getByRole("heading", { level: 3 })).toHaveCount(1);
+  await expect(shownPage.getByRole("heading", { level: 4, name: "Usage" })).toHaveCount(1);
   await press(places(page).getByRole("button", { name: "Script" }));
   await expect(help).toHaveCount(0);
   await expect(page.getByRole("textbox", { name: "The script", exact: true })).toBeVisible();
   // Back in Help, the page is still the one that was open.
   await press(places(page).getByRole("button", { name: "Help" }));
-  await expect(help.getByTestId("help-title")).toHaveText("summary");
+  await expect(help.getByTestId("help-title")).toHaveText("of a frame");
 });
 
 test("the Help place has the page's outline at its left, each section gone to and marked", async ({
@@ -134,10 +144,13 @@ test("the Help place has the page's outline at its left, each section gone to an
   await field.fill("summary");
   await field.press("Enter");
   await expect(page.getByTestId("help-title")).toHaveText("summary");
-  // `summary` is a function of a frame and of a result: the outline names each, over its sections.
+  // `summary` is a function of a frame and of a result (#215): the bare name is the chooser
+  // of the two, which has no sections; each has a page of its own, with its own sections alone.
+  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  await press(page.getByTestId("help-page").getByRole("button", { name: "summary · of a frame" }));
+  await expect(page.getByTestId("help-title")).toHaveText("of a frame");
   const entries = outline(page).getByRole("button");
   await expect(entries).toHaveText([
-    "summary · data",
     "Usage",
     "Description",
     "Arguments",
@@ -148,17 +161,9 @@ test("the Help place has the page's outline at its left, each section gone to an
     "References",
     "See also",
     "Examples",
-    "summary · results",
-    "Usage",
-    "Description",
-    "Arguments",
-    "Value",
-    "Accuracy",
-    "See also",
-    "Examples",
   ]);
   // A section gone to stands at the top of the page's own pane, and is the one marked.
-  const examples = entries.nth(10);
+  const examples = entries.nth(9);
   await press(examples);
   await expect(examples).toHaveAttribute("aria-current", "location");
   await expect
@@ -200,15 +205,21 @@ test("the related functions are the links of the page's own See also, and there 
   await page.getByRole("combobox", { name: "Type a command" }).fill("related");
   await expect(page.getByRole("dialog", { name: "Commands" }).getByRole("option")).toHaveCount(0);
   await page.keyboard.press("Escape");
-  // Those the page names under See also are links of the page, in its order: `summary` is of
-  // two packages, and each of its two pages has its own.
+  // Those the page names under See also are links of the page, in its order: `summary` is two
+  // functions, and each of its two pages has its own.
   const also = page
     .getByTestId("help-page")
     .getByRole("region", { name: "See also" })
     .getByRole("button");
-  await expect(also).toHaveText(["mean", "sd", "describe", "estimates", "export", "reg"]);
+  const chosen = (which: string) =>
+    page.getByTestId("help-page").getByRole("button", { name: `summary · ${which}` });
+  await press(chosen("of a frame"));
+  await expect(also).toHaveText(["mean", "sd", "describe"]);
+  await press(bar(page).getByRole("button", { name: "Back" }));
+  await press(chosen("of a result"));
+  await expect(also).toHaveText(["estimates", "export", "reg"]);
   // One opened: its page, its own sections at the right and its own See also.
-  await press(also.nth(5));
+  await press(also.nth(2));
   await expect(page.getByTestId("help-title")).toHaveText("reg");
   await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText("reg");
   await expect(page.getByTestId("help-page")).toContainText(
@@ -412,6 +423,14 @@ test("a help page stays inside its place and never under 12.5 pixels, at every c
     expect(usual.sideways, name).toBe(0);
     expect(usual.least, name).toBeGreaterThanOrEqual(12.5);
   }
+  // `plot` names two functions: the chooser was measured, and now the page of the first.
+  await press(
+    page.getByTestId("help-page").getByRole("button", { name: "plot · of a frame", exact: true }),
+  );
+  await expect(page.getByTestId("help-title")).toHaveText("of a frame");
+  const one = await sizes();
+  expect(one.sideways).toBe(0);
+  expect(one.least).toBeGreaterThanOrEqual(12.5);
   // `plot` has an example 500 characters wide: its block scrolls, the page does not.
   const wide = page.getByTestId("help-page").getByRole("group", { name: "Example" }).last();
   expect(await wide.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeGreaterThan(0);

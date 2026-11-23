@@ -23,13 +23,14 @@
   // trail has a page to open.
   import HelpPage from "../help/HelpPage.svelte";
   import { onMount, tick } from "svelte";
+  import { shownOf } from "../help/forms";
   import { HOME, after, before, called, here } from "../help/history";
   import HomePage from "../help/HomePage.svelte";
   import ListPage from "../help/ListPage.svelte";
   import SearchField from "../help/SearchField.svelte";
   import TopicsPane from "../help/TopicsPane.svelte";
   import { homeParts } from "../help/home";
-  import { codesPage, packagePage, packagesPage, usingList } from "../help/pages";
+  import { chooserPage, codesPage, packagePage, packagesPage, usingList } from "../help/pages";
   import { outlineOf, readPage } from "../help/read";
   import { trailOf } from "../help/trail";
   import { headingsOf, readUsing } from "../using/read";
@@ -46,7 +47,7 @@
   // The page shown: a list (a package's functions, the codes by family, the app's own pages),
   // a page of the app's own, Home, or the engine's print.
   const shown = $derived(workspace.help.stop);
-  const list = $derived(
+  const listed = $derived(
     shown?.kind === "package"
       ? packagePage(workspace.helpIndex, shown.name)
       : shown?.kind === "packages"
@@ -66,11 +67,27 @@
       return { doc: null, slip: error instanceof Error ? error.message : String(error) };
     }
   });
-  const page = $derived(list === null && own === null ? workspace.help.page : "");
+  const page = $derived(listed === null && own === null ? workspace.help.page : "");
   // Home, the landing page, once the engine has given its index.
   const home = $derived(shown === null || shown.kind === "home" ? workspace.helpIndex : null);
+  // The engine's print, read. A name with two functions (#215) has a page for each, cut
+  // from the print, told apart in its title by what it is called on; the bare name is the
+  // chooser of the two, a list as a package's page is.
+  const read = $derived(readPage(page));
+  const named = $derived(
+    shown?.kind === "name" && page !== "" && read.plain === null
+      ? shownOf(read, workspace.helpIndex, shown.name, shown.form)
+      : null,
+  );
+  const chooser = $derived(
+    named?.kind === "chooser" && shown?.kind === "name"
+      ? chooserPage(workspace.helpIndex, shown.name)
+      : null,
+  );
+  const list = $derived(listed ?? chooser);
+  const doc = $derived(named?.kind === "one" ? named.doc : read);
+  const of = $derived(named?.kind === "one" ? named.of.words : undefined);
   const blank = $derived(list === null && own === null && page === "" && home === null);
-  const doc = $derived(readPage(page));
   // The sections of the page open, for the pane at the right: those of the engine's page, or
   // of one of the app's own; on Home, its panels (#211, item 14). A page that is a list has
   // none (item 13).
@@ -272,6 +289,7 @@
       {:else}
         <HelpPage
           {doc}
+          {of}
           onname={(name) => void workspace.showHelp(name)}
           oncode={(code) => void workspace.showCode(code)}
         />

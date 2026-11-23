@@ -27,6 +27,7 @@ import {
   type History as HelpHistory,
   type Stop,
 } from "../help/history";
+import { formIn, formsOf } from "../help/forms";
 import { once } from "../help/once";
 import { homesOf } from "../help/trail";
 import { usingText } from "../using/pages";
@@ -1153,6 +1154,35 @@ export class Workspace {
       homesOf(index, name).length === 0 &&
       index.packages.some((one) => one.name === name);
     await this.#openStop(packaged ? { kind: "package", name } : { kind: "name", name });
+  }
+
+  /**
+   * F1 on a name in a script. Where the name has two functions (#215) the page opened is that
+   * of the one the call at the cursor would run: the engine's hover there is that function's
+   * page, whose first line says which it is. Where the hover is of neither, and for every
+   * other name, as `showHelp`.
+   */
+  async showHelpAt(path: string, name: string, line: number, character: number): Promise<void> {
+    const forms = formsOf(await this.indexHelp(), name);
+    if (forms.length > 1) {
+      // Asked with the script as it stands now, so that a name just typed is known.
+      const found = (await this.#ask(path, "textDocument/hover", {
+        position: { line, character },
+      }).catch(() => null)) as { contents?: unknown } | null;
+      const contents = found?.contents;
+      const hover =
+        typeof contents === "string"
+          ? contents
+          : contents !== null && typeof contents === "object" && "value" in contents
+            ? String((contents as { value: unknown }).value)
+            : null;
+      const one = hover === null ? null : formIn(hover, forms);
+      if (one !== null) {
+        await this.#openStop({ kind: "name", name, form: one.form });
+        return;
+      }
+    }
+    await this.showHelp(name);
   }
 
   /** Open the Help place on a page of its own: a step of the trail, a row of a list. */

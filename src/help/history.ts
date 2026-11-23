@@ -4,16 +4,18 @@
 // lay forward, and the same page opened twice in a row is there once. It lasts as long as
 // the window; nothing of it is kept with the project.
 import { USING_TITLE, usingPage } from "../using/pages";
+import { sameForm, wordsOn, type Form } from "./forms";
 
 /**
  * A page of the Help place: Home, where Help starts; what `zeff help <name>` prints for a
- * name (a function's page or a dataset's); a package's page, its functions listed from the
+ * name (a function's page or a dataset's), and, where the name has two functions (#215),
+ * one of them by its `form`, the bare name being the chooser of the two; a package's page, its functions listed from the
  * index of the help; the codes by family, shown from one family where one is named; a
  * code's explained page; or a page of the app's own, Using Zemp Lite.
  */
 export type Stop =
   | { kind: "home" }
-  | { kind: "name"; name: string }
+  | { kind: "name"; name: string; form?: Form }
   /** The list of the packages the engine ships. */
   | { kind: "packages" }
   | { kind: "package"; name: string }
@@ -49,7 +51,7 @@ export function same(a: Stop, b: Stop): boolean {
     case "packages":
       return b.kind === "packages";
     case "name":
-      return b.kind === "name" && a.name === b.name;
+      return b.kind === "name" && a.name === b.name && sameForm(a.form, b.form);
     case "package":
       return b.kind === "package" && a.name === b.name;
     case "codes":
@@ -105,6 +107,7 @@ export function called(stop: Stop): string {
     case "packages":
       return "Packages";
     case "name":
+      return stop.form === undefined ? stop.name : `${stop.name} · ${wordsOn(stop.form.on)}`;
     case "package":
       return stop.name;
     case "codes":

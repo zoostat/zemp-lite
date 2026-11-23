@@ -20,6 +20,7 @@
 <article class="formatted" data-testid="help-page">
   <header>
     <h3 class:mono={list.named}>{list.title}</h3>
+    {#if list.lead !== undefined}<p class="lead">{list.lead}</p>{/if}
     {#if list.facts.length > 0}
       <ul class="facts" aria-label="Facts of {list.title}">
         {#each list.facts as fact (fact)}<li>{fact}</li>{/each}
@@ -42,22 +43,29 @@
       {/if}
       <table>
         <tbody>
-          {#each group.rows as row (row.name)}
+          {#each group.rows as row, at (at)}
+            {@const called = row.of === undefined ? row.name : `${row.name} · ${row.of}`}
             <tr>
               <th scope="row">
+                <!-- A function of a name that has two says which it is, after its name (#215). -->
                 <button
                   class="link"
-                  class:mono={!list.titles}
                   class:title={list.titles}
-                  title="Open the page of {row.name}"
-                  onclick={() => onopen(row.to)}>{row.name}</button
+                  aria-label={called}
+                  title="Open the page of {called}"
+                  onclick={() => onopen(row.to)}
+                  ><span class:mono={!list.titles}>{row.name}</span>{#if row.of !== undefined}<span
+                      class="of">{row.of}</span
+                    >{/if}</button
                 >
               </th>
               <!-- The one line as the engine words it, what it sets between backticks as code. -->
               <td
                 >{#each pieces(row.words) as piece, at (at)}{#if piece.kind === "text"}{piece.text}{:else}<code
                       class="mono">{piece.text}</code
-                    >{/if}{/each}</td
+                    >{/if}{/each}{#if row.usage !== undefined}<code class="mono usage"
+                    >{row.usage}</code
+                  >{/if}</td
               >
             </tr>
           {/each}
@@ -85,6 +93,11 @@
     line-height: 1.2;
     margin: 0 0 10px;
     overflow-wrap: anywhere;
+  }
+  /* The sentence under the title of a page that needs one. */
+  .lead {
+    color: var(--ink-2);
+    margin: 0;
   }
   .facts {
     display: flex;
@@ -154,6 +167,23 @@
     font-size: max(12.5px, 0.86em);
     line-height: inherit;
     padding: 0 5px;
+  }
+  button.link .mono {
+    font-family: inherit;
+  }
+  /* Which function of its name a row is: in the app's type, after the name. */
+  button.link .of {
+    font-family: Inter, system-ui, sans-serif;
+    margin-left: 7px;
+  }
+  /* A function's usage under its one line, on the chooser of a name's functions. */
+  td code.usage {
+    display: block;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+    padding: 2px 6px;
+    white-space: pre-wrap;
+    width: fit-content;
   }
   /* A title, not a name of the engine's: in the app's type. */
   button.link.title {

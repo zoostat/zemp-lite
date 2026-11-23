@@ -316,7 +316,8 @@
                 onhover={(line, character) => workspace.hover(path, line, character)}
                 oncomplete={(line, character) => workspace.complete(path, line, character)}
                 onusage={(line, character) => workspace.signature(path, line, character)}
-                onhelp={(name) => void workspace.showHelp(name)}
+                onhelp={(name, line, character) =>
+                  void workspace.showHelpAt(path, name, line, character)}
               />
             {/key}
           {/if}

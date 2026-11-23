@@ -96,10 +96,19 @@ export interface ForeignName {
   from: "page" | "catalogue";
 }
 
-/** A function of the index of the help: its name, its one line, and its R and Stata names. */
+/**
+ * A function of the index of the help: its name, its one line, and its R and Stata names;
+ * and what tells it from another function of its name (open decision #215): the line its page
+ * gives under Usage, whether it is written after the value it is called on
+ * (`data.histogram(var)`) or before its values (`min(a, b, ...)`), and that first value, by
+ * the name the usage writes it with and its type; none where the function takes no value.
+ */
 export interface IndexedFunction {
   name: string;
   summary: string;
+  usage: string;
+  method: boolean;
+  first: { name: string; type: string } | null;
   names: ForeignName[];
 }
 

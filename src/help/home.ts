@@ -40,7 +40,7 @@ export const functionsIn = (index: HelpIndex): number =>
 export const codesIn = (families: CodeFamily[] | null): number =>
   (families ?? []).reduce((sum, one) => sum + one.codes.length, 0);
 
-/** The line of counts under Zeff's words: "255 functions · 10 packages · 144 codes". */
+/** The line of counts under Zeff's words: "259 functions · 10 packages · 144 codes". */
 export function countsOf(index: HelpIndex, families: CodeFamily[] | null): string {
   return [
     counted(functionsIn(index), "function", "functions"),

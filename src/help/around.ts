@@ -6,6 +6,7 @@
 // the index does not know have nothing around them, and the pane keeps to its sections.
 import type { CodeFamily, HelpIndex } from "../engine/messages";
 import { USING, USING_TITLE } from "../using/pages";
+import { formsOf, onOf, sameForm, severalOf, type Form } from "./forms";
 import type { Stop } from "./history";
 import { familyOf, homesOf } from "./trail";
 
@@ -15,6 +16,8 @@ export interface Neighbour {
   words: string;
   to: Stop;
   here: boolean;
+  /** Which function of its name it is, where the name has two: "of a frame" (#215). */
+  of?: string;
 }
 
 /**
@@ -35,30 +38,45 @@ export interface Around {
 function packageAround(
   index: HelpIndex,
   name: string,
-  open: string | null,
+  open: { name: string; form?: Form } | null,
   own: boolean,
 ): Around[] {
   const found = index.packages.find((one) => one.name === name);
   if (found === undefined) return [];
+  const several = severalOf(index);
   return [
     {
       name,
       words: "",
       to: own ? null : { kind: "package", name },
       kind: "functions",
-      rows: found.functions.map((f) => ({
-        name: f.name,
-        words: f.summary,
-        to: { kind: "name", name: f.name },
-        here: f.name === open,
-      })),
+      rows: found.functions.map((f): Neighbour => {
+        if (!several.has(f.name)) {
+          return {
+            name: f.name,
+            words: f.summary,
+            to: { kind: "name", name: f.name },
+            here: f.name === open?.name,
+          };
+        }
+        // A function of a name that has two: listed apart, marked where it is the one open;
+        // beside the chooser of the name, both are.
+        const form = { package: name, on: onOf(f) };
+        return {
+          name: f.name,
+          words: f.summary,
+          to: { kind: "name", name: f.name, form },
+          here: f.name === open?.name && (open.form === undefined || sameForm(open.form, form)),
+          of: formsOf(index, f.name).find((one) => sameForm(one.form, form))?.words ?? "",
+        };
+      }),
       datasets:
         name === "datasets"
           ? index.datasets.map((d) => ({
               name: d.name,
               words: d.summary,
               to: { kind: "name", name: d.name },
-              here: d.name === open,
+              here: d.name === open?.name,
             }))
           : [],
     },
@@ -77,9 +95,12 @@ export function aroundOf(
   }
   if (stop.kind === "name") {
     if (index === null) return [];
-    return homesOf(index, stop.name).flatMap((home) =>
-      packageAround(index, home, stop.name, false),
-    );
+    // One function of a name that has two stands in its own package alone.
+    const homes =
+      stop.form !== undefined && formsOf(index, stop.name).length > 1
+        ? [stop.form.package]
+        : homesOf(index, stop.name);
+    return homes.flatMap((home) => packageAround(index, home, stop, false));
   }
   if (stop.kind === "code") {
     const family = families?.find((one) => one.name === familyOf(families, stop.code));

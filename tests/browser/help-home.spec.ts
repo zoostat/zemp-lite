@@ -45,7 +45,7 @@ const PACKAGES = [
   ["dist", 19],
   ["results", 23],
   ["stats", 14],
-  ["plot", 31],
+  ["plot", 35],
   ["datasets", 2],
   ["regress", 10],
 ] as const;
@@ -71,7 +71,7 @@ test("Home is a landing page: Zeff and Zemp Lite with their versions, and a pane
   );
   await expect(page.getByTestId("help-engine")).toHaveText("0.8.0");
   await expect(page.getByTestId("help-counts")).toHaveText(
-    "255 functions · 10 packages · 144 codes",
+    "259 functions · 10 packages · 144 codes",
   );
   // Zemp Lite: its version is the app's own, and its stage.
   await expect(page.getByTestId("help-app")).toHaveText(VERSION);
@@ -145,7 +145,7 @@ test("each topic's panel opens its page, and a package's link its package", asyn
   await expect(home(page).getByRole("heading", { level: 3 })).toHaveText("Packages");
   await expect(
     home(page).getByRole("list", { name: "Facts of Packages" }).getByRole("listitem"),
-  ).toHaveText(["10 packages", "255 functions in Zeff 0.8.0"]);
+  ).toHaveText(["10 packages", "259 functions in Zeff 0.8.0"]);
   await expect(home(page).getByRole("row")).toHaveText(
     PACKAGES.map(([name, count]) => new RegExp(`^${name}\\s*${count} functions · tier \\d$`)),
   );
@@ -225,16 +225,21 @@ test("there is no Index of functions: every function is reached from its package
       ];
       const count = rows().length;
       for (let at = 0; at < count; at++) {
-        const called = rows()[at]!.innerText;
+        // A function of a name that has two says which it is beside its name (#215): its
+        // page is that function's alone, the last step of the trail saying which.
+        const [called = "", which] = [...rows()[at]!.querySelectorAll("span")].map((one) =>
+          one.innerText.trim(),
+        );
         rows()[at]!.click();
         const there = await settled(
           () =>
-            title() === called &&
+            title() === (which ?? called) &&
             [...(shown()?.querySelectorAll("h3") ?? [])].some(
-              (h) => h.textContent?.trim() === called,
-            ),
+              (h) => (h.querySelector(".mono") ?? h).textContent?.trim() === called,
+            ) &&
+            (which === undefined || shown()?.querySelectorAll("h3").length === 1),
         );
-        if (!there) missing.push(`${name}.${called}`);
+        if (!there) missing.push(`${name}.${called}${which === undefined ? "" : ` ${which}`}`);
         functions += 1;
         press("Back");
         await settled(() => title() === name && rows().length === count);
@@ -244,7 +249,7 @@ test("there is no Index of functions: every function is reached from its package
     }
     return { packages: packages.length, functions, missing };
   });
-  expect(reached).toEqual({ packages: 10, functions: 255, missing: [] });
+  expect(reached).toEqual({ packages: 10, functions: 259, missing: [] });
 
   // From search, and from a link of a page.
   const field = bar(page).getByRole("combobox", { name: /^Search Help/ });

@@ -58,7 +58,7 @@ const PACKAGES = [
   ["dist", 19],
   ["results", 23],
   ["stats", 14],
-  ["plot", 31],
+  ["plot", 35],
   ["datasets", 2],
   ["regress", 10],
 ] as const;
@@ -306,9 +306,13 @@ test("a name of two packages has both beside it, a dataset its package, and a co
       .getByRole("region", { name: /^Beside this page/ })
       .getByRole("heading", { level: 3 }),
   ).toHaveText([/^data\s*56$/, /^results\s*23$/]);
-  for (const name of ["data", "results"]) {
+  for (const [name, which] of [
+    ["data", "of a frame"],
+    ["results", "of a result"],
+  ] as const) {
+    // Each package lists its own `summary`, which says what it is called on (#215).
     const marked = listOf(page, `The functions of ${name}`).locator('[aria-current="page"]');
-    await expect(marked).toHaveText("summary");
+    await expect(marked).toHaveText(new RegExp(`^summary\\s*${which}$`));
     // In a package of many functions the open one is brought into view in the list.
     await expect(marked).toBeInViewport();
   }

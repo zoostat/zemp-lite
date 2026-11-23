@@ -90,12 +90,17 @@ test("the field suggests from the second letter: what each match is, its one lin
     "function ks_test stats Kolmogorov–Smirnov test of a variable against a distribution",
   );
   await expect(options(page).first().locator("b")).toHaveText("Kolmogorov");
-  // A name of two packages names both; a package, a dataset and the function of a name.
+  // A name with two functions lists the two apart, each saying which it is and its package
+  // (#215); a package, a dataset and the functions of a name.
   await field(page).fill("summary");
-  expect(await reads(options(page).first())).toMatch(/^function summary data · results Table of N/);
+  expect(await reads(options(page).nth(0))).toMatch(/^function summary of a frame data Table of N/);
+  expect(await reads(options(page).nth(1))).toMatch(
+    /^function summary of a result results The printed summary/,
+  );
   await field(page).fill("plot");
-  expect(await reads(options(page).nth(0))).toMatch(/^function plot plot /);
-  expect(await reads(options(page).nth(1))).toBe("package plot 31 functions");
+  expect(await reads(options(page).nth(0))).toMatch(/^function plot of a frame plot /);
+  expect(await reads(options(page).nth(1))).toMatch(/^function plot of a result plot /);
+  expect(await reads(options(page).nth(2))).toBe("package plot 35 functions");
   await field(page).fill("wages");
   expect(await reads(options(page).first())).toMatch(/^dataset wages Synthetic hourly wages/);
   await page.keyboard.press("ArrowDown");
@@ -250,7 +255,8 @@ test("no request leaves the page while one types and opens what was found", asyn
   }
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
-  await expect(title(page)).toHaveText("summary");
+  // The first found is one of the two functions `summary` names: its own page.
+  await expect(title(page)).toHaveText("of a frame");
   expect(asked).toEqual([]);
 });
 

@@ -410,8 +410,7 @@ enum From {
     Catalogue,
 }
 
-/// The R and Stata names of the functions of one name in one package (two, where a package
-/// has a function of a frame and a function of a plot of that name): the pages' first, row
+/// The R and Stata names of a function (or of several taken together): the pages' first, row
 /// by row, then the catalogue's that the pages did not give.
 fn names_of(homes: &[&Registered]) -> Vec<(Name, From)> {
     let mut page = Vec::new();
@@ -454,8 +453,15 @@ fn names_of(homes: &[&Registered]) -> Vec<(Name, From)> {
 /// The index as a line of JSON of type `helpIndex`: the engine's version; `packages`, each
 /// with its `name`, its `tier` and its `functions` (`name`, `summary`, and `names`: each
 /// `{of, name, shown, from}`, where `of` is `R` or `Stata` and `from` is `page` or
-/// `catalogue`); and `datasets`, each with its `name`, `title` and `summary`. A name with two
-/// functions in one package is listed once, where `zeff help <package>` first prints it.
+/// `catalogue`); and `datasets`, each with its `name`, `title` and `summary`.
+///
+/// Every registered function is listed, so a name with two functions (open decision #215:
+/// `histogram` of a frame and of a plot, `min` of values and of a frame's column) is there
+/// twice, in one package or in two. What tells the two apart is the engine's own: `usage`,
+/// the line a page gives under Usage; and `first`, the value the function is called on, with
+/// the `name` the usage writes it by and its `type`, which is the receiver of a method
+/// (`method` true: `data.histogram(var)`) and the first parameter of a function written before
+/// its values (`min(a, b, ...)`); `null` where a function takes no value.
 pub fn help_index(registry: &Registry, version: &str) -> String {
     let packages: Vec<String> = registry
         .packages_shipped()
@@ -467,19 +473,9 @@ pub fn help_index(registry: &Registry, version: &str) -> String {
                 .filter(|f| f.spec.package == package)
                 .collect();
             let tier = of_package.first().map_or(0, |f| f.row.tier);
-            let mut listed: Vec<&str> = Vec::new();
             let mut functions: Vec<String> = Vec::new();
             for f in &of_package {
-                if listed.contains(&f.spec.name) {
-                    continue;
-                }
-                listed.push(f.spec.name);
-                let homes: Vec<&Registered> = of_package
-                    .iter()
-                    .copied()
-                    .filter(|other| other.spec.name == f.spec.name)
-                    .collect();
-                let names: Vec<String> = names_of(&homes)
+                let names: Vec<String> = names_of(&[f])
                     .into_iter()
                     .map(|(name, from)| {
                         format!(
@@ -494,10 +490,20 @@ pub fn help_index(registry: &Registry, version: &str) -> String {
                         )
                     })
                     .collect();
+                let first = match f.spec.params.first() {
+                    Some(param) => format!(
+                        "{{\"name\": {}, \"type\": {}}}",
+                        json_string(param.name),
+                        json_string(param.ty)
+                    ),
+                    None => "null".to_string(),
+                };
                 functions.push(format!(
-                    "{{\"name\": {}, \"summary\": {}, \"names\": [{}]}}",
+                    "{{\"name\": {}, \"summary\": {}, \"usage\": {}, \"method\": {}, \"first\": {first}, \"names\": [{}]}}",
                     json_string(f.spec.name),
                     json_string(&f.doc.summary),
+                    json_string(&f.spec.usage()),
+                    f.spec.method,
                     names.join(", ")
                 ));
             }

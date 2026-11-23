@@ -12,10 +12,13 @@
 
   let {
     doc,
+    of,
     onname,
     oncode,
   }: {
     doc: HelpDoc;
+    /** Which function of its name the page is of, where the name has two: "of a frame" (#215). */
+    of?: string;
     /** Open the page of a function. */
     onname: (name: string) => void;
     /** Open the page of a code. */
@@ -173,7 +176,10 @@
   {#each doc.entries as entry (entry.line)}
     <section class="entry">
       <header data-line={entry.line}>
-        <h3 class="mono">{entry.name}</h3>
+        <h3>
+          <span class="mono">{entry.name}</span>{#if of !== undefined}<span class="of">· {of}</span
+            >{/if}
+        </h3>
         <p class="does">{entry.does}</p>
         {#if entry.facts.length > 0}
           <ul class="facts" aria-label="Facts of {entry.name}">
@@ -220,6 +226,12 @@
     line-height: 1.2;
     margin: 0;
     overflow-wrap: anywhere;
+  }
+  /* Which function of its name the page is of: in the app's type, lighter than the name. */
+  h3 .of {
+    color: var(--ink-2);
+    font-weight: 400;
+    margin-left: 0.4em;
   }
   .does {
     color: var(--ink-2);

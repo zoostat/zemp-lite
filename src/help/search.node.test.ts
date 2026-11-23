@@ -36,18 +36,32 @@ describe("the search, on the whole index of Zeff 0.8.0", () => {
   it("looks through every function, package, dataset and code the engine has", () => {
     const count = (kind: string) => entries.filter((one) => one.kind === kind).length;
     expect(index.engine).toBe("0.8.0");
-    // 255 functions by package are 250 names: five are of two packages.
-    expect(count("function")).toBe(250);
+    // Every function the engine registers: 250 names, nine of which name two functions (#215).
+    expect(count("function")).toBe(259);
+    expect(
+      new Set(entries.filter((one) => one.kind === "function").map((one) => one.name)).size,
+    ).toBe(250);
     expect(count("package")).toBe(10);
     expect(count("dataset")).toBe(4);
     expect(count("code")).toBe(144);
-    expect(entries.filter((one) => one.packages.length === 2).map((one) => one.name)).toEqual([
-      "min",
-      "max",
+    // The two of a name are apart, each saying which it is and opening its own page.
+    const formed = entries.filter((one) => one.of !== undefined);
+    expect([...new Set(formed.map((one) => one.name))].sort()).toEqual([
       "append",
+      "boxplot",
+      "density",
+      "histogram",
+      "max",
+      "min",
+      "plot",
       "quantile",
       "summary",
     ]);
+    expect(formed).toHaveLength(18);
+    expect(
+      formed.filter((one) => one.name === "histogram").map((one) => `${one.of}, ${one.packages}`),
+    ).toEqual(["of a plot, plot", "of a frame, plot"]);
+    for (const one of formed) expect(one.to).toMatchObject({ kind: "name", form: {} });
   });
 
   it("finds every function, package and dataset by its own name, first, and every code by its code", () => {
@@ -130,12 +144,17 @@ describe("the search, on the whole index of Zeff 0.8.0", () => {
     expect(first("regg")).toMatchObject({ name: "reg", rule: "slip" });
     expect(first("sumary")).toMatchObject({ name: "summary", rule: "slip" });
     expect(first("wages")).toMatchObject({ kind: "dataset", rule: "exact" });
-    // The function and the package of one name, the function first.
+    // The functions and the package of one name, the functions first, each saying which it is.
     expect(
       search(entries, "plot")
+        .matches.slice(0, 3)
+        .map((one) => `${one.kind} ${one.of ?? ""}`.trim()),
+    ).toEqual(["function of a frame", "function of a result", "package"]);
+    expect(
+      search(entries, "min")
         .matches.slice(0, 2)
-        .map((one) => one.kind),
-    ).toEqual(["function", "package"]);
+        .map((one) => `${one.name} ${one.of}, ${one.packages}`),
+    ).toEqual(["min of values, core", "min of a frame, data"]);
   });
 
   it("keeps a place for an R or a Stata name typed exactly among many one lines with the word", () => {

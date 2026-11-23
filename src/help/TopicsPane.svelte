@@ -68,7 +68,7 @@
 
 <!-- A neighbour of the page open: a link to its page, marked where it is the page itself. -->
 {#snippet neighbour(
-  row: { name: string; words: string; to: Stop; here: boolean },
+  row: { name: string; words: string; to: Stop; here: boolean; of?: string },
   kind: "functions" | "codes" | "pages",
 )}
   <li>
@@ -81,7 +81,9 @@
       onclick={() => void workspace.showHelpStop(row.to)}
     >
       <span class:mono={kind !== "pages"}>{row.name}</span>
-      {#if kind === "codes"}<span class="title">{row.words}</span>{/if}
+      <!-- A code has its title; a function of a name that has two says which it is (#215). -->
+      {#if kind === "codes"}<span class="title">{row.words}</span
+        >{:else if row.of !== undefined}<span class="of">{row.of}</span>{/if}
     </button>
   </li>
 {/snippet}
@@ -117,7 +119,7 @@
         <!-- Two packages share the pane, each in a list of its own, the open name in view in each. -->
         <div class="around" style:max-height="{Math.round(72 / around.length)}vh">
           <ul aria-label="The {group.kind} of {group.name}">
-            {#each group.rows as row (row.name)}
+            {#each group.rows as row, at (at)}
               {@render neighbour(row, group.kind)}
             {/each}
           </ul>
@@ -318,6 +320,11 @@
   }
   .row.family {
     padding-left: 8px;
+  }
+  /* Which function of its name a row is: smaller, after the name. */
+  .row .of {
+    color: var(--ink-3);
+    font-size: 12.5px;
   }
   .row.family .mono {
     color: var(--ink-2);

@@ -7,6 +7,7 @@
 // function of a later release, a name mistyped) is its own name alone.
 import type { CodeFamily, HelpIndex } from "../engine/messages";
 import { USING_TITLE, usingPage } from "../using/pages";
+import { formed } from "./forms";
 import { CODES, type Stop } from "./history";
 
 /**
@@ -63,6 +64,17 @@ export function trailOf(
     case "package":
       return [packages(false), name(stop.name, null)];
     case "name": {
+      // One function of a name that has two: under its own package, then the name, which
+      // opens the chooser of the two, then what this one is called on.
+      const one = stop.form === undefined ? null : formed(index, stop.name, stop.form);
+      if (one !== null) {
+        return [
+          packages(false),
+          name(one.form.package, { kind: "package", name: one.form.package }),
+          name(stop.name, { kind: "name", name: stop.name }),
+          word(one.words, null),
+        ];
+      }
       const homes = homesOf(index, stop.name);
       if (homes.length === 0) return [name(stop.name, null)];
       return [

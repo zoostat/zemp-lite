@@ -6,13 +6,20 @@
 // `datasets` it prints the function of that name, so every package's page is set here alike.
 import type { CodeFamily, HelpIndex } from "../engine/messages";
 import { USING, USING_TITLE } from "../using/pages";
+import { formsOf, onOf, severalOf, wordsOn } from "./forms";
 import { CODES, type Stop } from "./history";
 
-/** A row of a list: a name that opens a page, and its one line. */
+/**
+ * A row of a list: a name that opens a page, and its one line. A function of a name that has
+ * two says which it is after its name (`of`: "of a frame"), and the chooser gives each its
+ * usage under its one line (`usage`).
+ */
 export interface Row {
   name: string;
   words: string;
   to: Stop;
+  of?: string;
+  usage?: string;
 }
 
 /**
@@ -34,6 +41,8 @@ export interface ListPage {
   title: string;
   named: boolean;
   titles?: boolean;
+  /** A sentence under the title, where the page needs one (the chooser of a name's functions). */
+  lead?: string;
   facts: string[];
   groups: Group[];
 }
@@ -49,15 +58,25 @@ const counted = (count: number, one: string, many: string) =>
 export function packagePage(index: HelpIndex | null, name: string): ListPage | null {
   const found = index?.packages.find((one) => one.name === name);
   if (index === null || found === undefined) return null;
+  const several = severalOf(index);
   const groups: Group[] = [
     {
       key: "functions",
       heading: null,
-      rows: found.functions.map((f) => ({
-        name: f.name,
-        words: f.summary,
-        to: { kind: "name", name: f.name },
-      })),
+      rows: found.functions.map((f): Row => {
+        // A function of a name that has two is listed apart, and opens its own page.
+        if (!several.has(f.name)) return { name: f.name, words: f.summary, to: nameStop(f.name) };
+        const form = { package: name, on: onOf(f) };
+        const words = formsOf(index, f.name).find(
+          (one) => one.form.package === name && one.form.on === form.on,
+        )?.words;
+        return {
+          name: f.name,
+          words: f.summary,
+          to: { kind: "name", name: f.name, form },
+          of: words ?? wordsOn(form.on),
+        };
+      }),
     },
   ];
   const facts = [
@@ -77,6 +96,39 @@ export function packagePage(index: HelpIndex | null, name: string): ListPage | n
     facts.push(counted(index.datasets.length, "dataset", "datasets"));
   }
   return { title: name, named: true, facts, groups };
+}
+
+const nameStop = (name: string): Stop => ({ kind: "name", name });
+
+const NUMBERS = ["no", "one", "two", "three", "four", "five", "six"];
+
+/**
+ * The chooser of a name that has several functions (#215): each with what it is called on,
+ * its one line and its usage, a click opening its page. None where the name has one function.
+ */
+export function chooserPage(index: HelpIndex | null, name: string): ListPage | null {
+  const forms = formsOf(index, name);
+  if (forms.length < 2) return null;
+  const count = NUMBERS[forms.length] ?? String(forms.length);
+  return {
+    title: name,
+    named: true,
+    lead: `${name} is ${count} functions. Choose one by what it is called on.`,
+    facts: [],
+    groups: [
+      {
+        key: "forms",
+        heading: null,
+        rows: forms.map((one) => ({
+          name,
+          of: one.words,
+          words: one.function.summary,
+          usage: one.function.usage,
+          to: { kind: "name", name, form: one.form },
+        })),
+      },
+    ],
+  };
 }
 
 /** The page of the codes by family, as `zeff explain` lists them. None until they are given. */

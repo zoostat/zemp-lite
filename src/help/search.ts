@@ -26,6 +26,7 @@
 // is the first name of `reg`, and the fifth of `anova`, which R writes `anova(lm())`. Where nothing is
 // found the answer is a sentence and the nearest names, never an empty list.
 import type { CodeFamily, ForeignName, HelpIndex } from "../engine/messages";
+import { formsOf, severalOf } from "./forms";
 import type { Stop } from "./history";
 
 /** What a match is. */
@@ -60,6 +61,8 @@ export interface Entry {
   to: Stop;
   packages: string[];
   foreign: ForeignName[];
+  /** Which function of its name it is, where the name has two: "of a frame" (#215). */
+  of?: string;
 }
 
 /** The rule by which a match was found, in the order of #211. */
@@ -87,18 +90,25 @@ export interface Found {
 const KINDS: Kind[] = ["function", "package", "dataset", "code", "page"];
 const lower = (text: string) => text.toLowerCase();
 
-/** The order within a rule: by the name as a dictionary has it, then by kind. */
+/**
+ * The order within a rule: by the name as a dictionary has it, then by kind; two functions
+ * of one name (#215) by their package, then by what each is called on.
+ */
 function byName(a: Entry, b: Entry): number {
   const [x, y] = [lower(a.name), lower(b.name)];
   if (x !== y) return x < y ? -1 : 1;
   if (a.name !== b.name) return a.name < b.name ? -1 : 1;
-  return KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind);
+  if (a.kind !== b.kind) return KINDS.indexOf(a.kind) - KINDS.indexOf(b.kind);
+  const [p, q] = [a.packages.join(" "), b.packages.join(" ")];
+  if (p !== q) return p < q ? -1 : 1;
+  const [f, g] = [a.of ?? "", b.of ?? ""];
+  return f === g ? 0 : f < g ? -1 : 1;
 }
 
 /**
  * Everything the search looks through, from the index, the codes and the app's own pages.
- * A function two packages have is one entry, as it is one page: its one line the first
- * package's, its R and Stata names those of both.
+ * Every function is an entry: a name with two functions (#215) is two, each with its own
+ * line, its own R and Stata names, the words that say which it is, and its own page.
  */
 export function entriesOf(
   index: HelpIndex | null,
@@ -106,29 +116,26 @@ export function entriesOf(
   pages: OwnPage[] = [],
 ): Entry[] {
   const entries: Entry[] = [];
-  const functions = new Map<string, Entry>();
+  const several = severalOf(index);
   for (const one of index?.packages ?? []) {
     for (const f of one.functions) {
-      const held = functions.get(f.name);
-      if (held === undefined) {
-        const entry: Entry = {
-          kind: "function",
-          name: f.name,
-          words: f.summary,
-          to: { kind: "name", name: f.name },
-          packages: [one.name],
-          foreign: [...f.names],
-        };
-        functions.set(f.name, entry);
-        entries.push(entry);
-      } else {
-        held.packages.push(one.name);
-        for (const name of f.names) {
-          if (!held.foreign.some((had) => had.of === name.of && had.name === name.name)) {
-            held.foreign.push(name);
-          }
-        }
-      }
+      const form = several.has(f.name)
+        ? formsOf(index, f.name).find(
+            (each) => each.form.package === one.name && each.function === f,
+          )
+        : undefined;
+      entries.push({
+        kind: "function",
+        name: f.name,
+        words: f.summary,
+        to:
+          form === undefined
+            ? { kind: "name", name: f.name }
+            : { kind: "name", name: f.name, form: form.form },
+        packages: [one.name],
+        foreign: [...f.names],
+        ...(form === undefined ? {} : { of: form.words }),
+      });
     }
     const count = one.functions.length;
     entries.push({

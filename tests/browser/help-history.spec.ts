@@ -57,10 +57,16 @@ test("Help opens on Home, and Back and Forward go through the pages opened, grey
   await expect(back(page)).toBeEnabled();
   await expect(back(page)).toHaveAttribute("title", "Back: Home");
   await expect(forward(page)).toBeDisabled();
+  // `summary` names two functions (#215): the chooser of the two is a page of the history,
+  // and so is the one chosen from it.
+  await press(page.getByTestId("help-page").getByRole("button", { name: "summary · of a result" }));
+  await expect(title(page)).toHaveText("of a result");
+  await expect(back(page)).toHaveAttribute("title", "Back: summary");
   await press(
     page.getByTestId("help-page").getByRole("button", { name: "reg", exact: true }).first(),
   );
   await expect(title(page)).toHaveText("reg");
+  await expect(back(page)).toHaveAttribute("title", "Back: summary · of a result");
   await ask(page, "W0201");
 
   // Back through them, to Home; each button says where it goes.
@@ -70,7 +76,11 @@ test("Help opens on Home, and Back and Forward go through the pages opened, grey
   await expect(page.getByTestId("help-page")).toContainText("Linear regression by least squares");
   await expect(forward(page)).toHaveAttribute("title", "Forward: W0201");
   await press(back(page));
+  await expect(title(page)).toHaveText("of a result");
+  await expect(forward(page)).toHaveAttribute("title", "Forward: reg");
+  await press(back(page));
   await expect(title(page)).toHaveText("summary");
+  await expect(forward(page)).toHaveAttribute("title", "Forward: summary · of a result");
   await press(back(page));
   await isHome(page);
   await expect(back(page)).toBeDisabled();
@@ -79,6 +89,8 @@ test("Help opens on Home, and Back and Forward go through the pages opened, grey
   // And forward again, to the last.
   await press(forward(page));
   await expect(title(page)).toHaveText("summary");
+  await press(forward(page));
+  await expect(title(page)).toHaveText("of a result");
   await press(forward(page));
   await press(forward(page));
   await expect(title(page)).toHaveText("W0201");
@@ -134,18 +146,19 @@ test("a page opened by F1 from the script is the first of the history, and Help 
   await cursorTo(page, 2);
   for (let at = 1; at < 4; at++) await page.keyboard.press("ArrowRight");
   await page.keyboard.press("F1");
-  await expect(title(page)).toHaveText("summary");
+  // `summary` called on a frame: that function's page, opened directly (#215).
+  await expect(title(page)).toHaveText("of a frame");
   // Nothing was opened before it: there is nowhere back to go, and Home is one press away.
   await expect(back(page)).toBeDisabled();
   await expect(home(page)).not.toHaveAttribute("aria-current", "page");
   await ask(page, "reg");
   await press(back(page));
-  await expect(title(page)).toHaveText("summary");
+  await expect(title(page)).toHaveText("of a frame");
   // The Script place and back: the page, and what lies back and forward of it, are as left.
   await press(places(page).getByRole("button", { name: "Script" }));
   await expect(page.getByTestId("help")).toHaveCount(0);
   await press(places(page).getByRole("button", { name: "Help" }));
-  await expect(title(page)).toHaveText("summary");
+  await expect(title(page)).toHaveText("of a frame");
   await expect(back(page)).toBeDisabled();
   await expect(forward(page)).toHaveAttribute("title", "Forward: reg");
 });

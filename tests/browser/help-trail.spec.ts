@@ -49,11 +49,17 @@ async function ask(page: Page, name: string) {
 
 /** The rows of the list shown: each name with its one line. */
 const rows = async (page: Page, within = shown(page)) =>
-  within
-    .getByRole("row")
-    .evaluateAll((all) =>
-      all.map((row) => [...row.children].map((cell) => (cell as HTMLElement).innerText.trim())),
-    );
+  within.getByRole("row").evaluateAll((all) =>
+    all.map((row) =>
+      [...row.children].map((cell, at) =>
+        // The name alone: a function of a name that has two says which it is beside it.
+        (
+          (at === 0 ? cell.querySelector<HTMLElement>("button span") : null) ??
+          (cell as HTMLElement)
+        ).innerText.trim(),
+      ),
+    ),
+  );
 
 /** What the released `zeff help <package>` printed: each function with its one line. */
 const printed = (name: string) =>
@@ -127,23 +133,25 @@ test("a package has a page of its own, apart from the function of its name", asy
   press,
 }) => {
   await scratch(page, press);
-  // `plot` typed is the function, as `zeff help plot` prints it; its package is a step away.
+  // `plot` typed is the name of the functions, as `zeff help plot` prints them: it names two
+  // (#215), and the chooser of the two is shown; its package is a step away.
   await ask(page, "plot");
   await expect.poll(() => reads(page)).toBe("Packages › plot › plot");
-  await expect(shown(page).getByRole("heading", { level: 4, name: "Usage" }).first()).toBeVisible();
+  await expect(shown(page)).toContainText("plot is two functions.");
   await press(step(page, "plot"));
   await expect.poll(() => reads(page)).toBe("Packages › plot");
   await expect(
     shown(page).getByRole("list", { name: "Facts of plot" }).getByRole("listitem"),
-  ).toHaveText(["package · tier 1", "31 functions in Zeff 0.8.0"]);
+  ).toHaveText(["package · tier 1", "35 functions in Zeff 0.8.0"]);
   const listed = await rows(page);
-  expect(listed).toHaveLength(31);
+  expect(listed).toHaveLength(35);
   expect(listed.map(([name]) => name)).toEqual(expect.arrayContaining(["plot", "text", "points"]));
-  // No name is listed twice, though the package has two functions called `plot`.
+  // Four names are listed twice, the package having two functions of each, every one a row.
   expect(new Set(listed.map(([name]) => name)).size).toBe(31);
-  // The function from its package's page, and back: two pages of the history.
-  await press(shown(page).getByRole("button", { name: "plot", exact: true }));
-  await expect.poll(() => reads(page)).toBe("Packages › plot › plot");
+  expect(listed.filter(([name]) => name === "plot")).toHaveLength(2);
+  // One of the two functions from its package's page, and back: pages of the history.
+  await press(shown(page).getByRole("button", { name: "plot · of a frame", exact: true }));
+  await expect.poll(() => reads(page)).toBe("Packages › plot › plot › of a frame");
   await press(back(page));
   await expect.poll(() => reads(page)).toBe("Packages › plot");
   await press(back(page));
