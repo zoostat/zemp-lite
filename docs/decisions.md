@@ -1777,3 +1777,21 @@ The rules are generous on purpose: a name too many is a match low in a list, a n
 **Tested.** Unit (`src/app/views.test.ts`): the old choice carried over, both ways, and gone when written back; the folded sections written, read and defaulted; a damaged part passed over. Browser, both engines (`tests/browser/help-topics.spec.ts`, 5 tests): the heads with their counts; a section and a family folded and unfolded by the mouse and by Enter and Space; what is folded standing after the Script place and back; each of the 10 packages and each of the 144 codes pressed in turn, each opening the engine's page, the row marked; **On this page** first, its sections as the Outline pane's tests had them; the pane closed by its ×, opened by its link and by ⌘K, the middle wider by the pane; 12.5 pixels and 4.5 to 1 in both themes; nothing off the pane's side. In `kept.spec.ts`: what is folded after a reload, and a project written as 0.2.2 left it, its Outline pane closed, opening with Topics closed.
 
 **Reason.** The row of 0.2.3 and #211, items 4 and 9: the left pane lists what there is to read, in sections that fold, and is opened and closed as every pane is (#203).
+
+## 23 November 2026: Topics beside a page (release 0.2.3, step 5b)
+
+**Choice.** Beside a page that has neighbours the Topics pane holds, in place of the packages and the codes (`src/help/around.ts`, `src/help/TopicsPane.svelte`):
+
+- **‹ All topics**, at its head;
+- what the page stands in, as a heading with its count, and its neighbours under it, each a link, the page open marked and brought into view: beside a function, its package (the heading a link to the package's page) with the package's functions, a function's one line shown on resting; beside a shipped dataset, `datasets` with its two functions and, under **Datasets**, the four datasets; beside a package's page, its own functions, none marked, the heading plain; beside a code, its family (its pattern and what it is of, a link to the codes at that family) with the family's codes and their titles;
+- **On this page**, the page's sections, as before, folding as before.
+
+A name two packages have (`summary` of `data` and of `results`) has both beside it, each with the name marked. Home, the codes by family and a name the index does not know have nothing beside them, and the pane keeps to its sections.
+
+**‹ All topics** returns the pane to its sections (On this page, Packages, Errors and warnings) without leaving the page: the page, the trail and the history are as they were. The next page opened has its neighbours beside it again. There is no button from the sections back to the neighbours of the same page: the package or the code open is marked in the sections, and any page opened brings its neighbours.
+
+**The neighbours keep to a box of their own.** The plan and the mockup put the neighbours over **On this page**; a package has up to 71 functions, where the mockup's topics had five or ten methods, and a list of that length would push the page's own sections, the pane's commonest use, out of sight. So the neighbours scroll inside a box of at most 38 hundredths of the window's height (two packages share it), the page open brought to its middle, and **On this page** stays in view under it.
+
+**Tested.** Unit (`src/help/around.test.ts`, 6 tests): each kind of page, a name of two packages, a package and the function of its name, a dataset, a code, and the pages with nothing beside them. Browser, both engines (`tests/browser/help-topics.spec.ts`, now 6 tests): the neighbours of a function with the open one marked, a neighbour pressed and gone back from, the package's head, All topics and the page unchanged, On this page folded across pages; both packages of `summary`, a function far down `core` in view with the page's sections, a dataset, a code and its family's head; each of the 10 packages from the sections and each of the 144 codes from beside its family, every page the engine's; the pane as painted beside a code, beside a function and in its sections, in both themes; All topics and a neighbour from the keyboard alone.
+
+**Reason.** #211, item 4: beside a page the reader sees where it sits and has the pages around it one click away; and the sections are one press away without losing the page.

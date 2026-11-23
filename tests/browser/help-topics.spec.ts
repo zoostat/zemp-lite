@@ -2,7 +2,10 @@
 // #211, items 4 and 9): the left pane, which was Outline, holds sections that fold, each with
 // its count: the sections of the page open; the packages, each opening its page; the errors
 // and warnings by family, each family folding to its codes. It opens and closes by its link
-// and its ×, as every pane does.
+// and its ×, as every pane does. Beside a page that has neighbours (step 5b) it holds those in
+// place of the packages and the codes: a function's package with its functions, the open one
+// marked; a code's family with its codes; and **‹ All topics**, which returns it to its
+// sections without leaving the page.
 import type { Locator, Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
@@ -31,6 +34,8 @@ const head = (page: Page, name: string) =>
 const listOf = (page: Page, name: string) => topics(page).getByRole("list", { name, exact: true });
 const family = (page: Page, name: string) =>
   listOf(page, "Errors and warnings").getByRole("button", { name: new RegExp(`${name} `) });
+const allTopics = (page: Page) => topics(page).getByRole("button", { name: "All topics" });
+const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
 const field = (page: Page) =>
@@ -126,104 +131,232 @@ test("Topics holds sections that fold, each with its count, by the mouse and by 
 test("every package and every code of Topics opens its page", async ({ page, press }) => {
   test.slow();
   await scratch(page, press);
-  // The packages, one by one: each its own page, marked in the pane while it is shown.
+  // The packages, one by one, each from the sections: its own page, and its row marked there.
   for (const [name, count] of PACKAGES) {
     const row = listOf(page, "Packages").getByRole("button", { name: new RegExp(`^${name}\\s`) });
     await press(row);
     await expect(title(page)).toHaveText(name);
     await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText(name);
     await expect(shown(page).locator("section").first().getByRole("row")).toHaveCount(count);
+    // Beside its page the pane holds the package's functions; All topics brings the sections back.
+    await expect(listOf(page, `The functions of ${name}`).getByRole("button")).toHaveCount(count);
+    await press(allTopics(page));
     await expect(row).toHaveAttribute("aria-current", "page");
+    await expect(listOf(page, "Packages").locator('[aria-current="page"]')).toHaveCount(1);
   }
-  await expect(listOf(page, "Packages").locator('[aria-current="page"]')).toHaveCount(1);
 
-  // Every family unfolded, every code pressed: each opens the engine's page of that code.
-  for (const one of await listOf(page, "Errors and warnings").locator("> li > button").all()) {
-    await press(one);
+  // The codes: a family unfolded in the sections, its first code pressed; then, beside that
+  // page, every code of the family in turn. Each opens the engine's page of that code.
+  const families = await listOf(page, "Errors and warnings")
+    .locator("> li > button .mono")
+    .allInnerTexts();
+  expect(families).toHaveLength(12);
+  let pressed = 0;
+  for (const name of families) {
+    if ((await allTopics(page).count()) > 0) await press(allTopics(page));
+    await press(family(page, name));
+    await press(listOf(page, `The codes of ${name}`).getByRole("button").first());
+    await expect(allTopics(page)).toBeVisible();
+    const wrong = await page.evaluate(async () => {
+      const pane = document.querySelector('[data-testid="help"]')!;
+      const rows = () => [
+        ...pane.querySelectorAll<HTMLButtonElement>('[data-pane="topics"] .around button'),
+      ];
+      const settled = (done: () => boolean) =>
+        new Promise<boolean>((resolve) => {
+          const started = Date.now();
+          const look = () =>
+            done()
+              ? resolve(true)
+              : Date.now() - started > 4000
+                ? resolve(false)
+                : setTimeout(look, 5);
+          look();
+        });
+      const wrong: string[] = [];
+      const count = rows().length;
+      for (let at = 0; at < count; at++) {
+        const row = rows()[at]!;
+        const code = row.querySelector(".mono")!.textContent!.trim();
+        const words = row.querySelector(".title")!.textContent!.trim();
+        row.click();
+        const title = () => pane.querySelector('[data-testid="help-title"]')?.textContent?.trim();
+        const page = () => pane.querySelector<HTMLElement>('[data-testid="help-page"]');
+        const marked = () => rows()[at]?.getAttribute("aria-current") === "page";
+        const there = await settled(
+          () =>
+            title() === code &&
+            page()?.querySelector("h3")?.textContent?.trim() === code &&
+            marked() &&
+            rows().length === count,
+        );
+        // The page is that code's, with the title the pane gave it among its words.
+        const flat = (text: string) => text.replaceAll("`", "").replace(/\s+/g, " ");
+        if (!there || !flat(page()?.innerText ?? "").includes(flat(words))) wrong.push(code);
+      }
+      return { wrong, count };
+    });
+    expect(wrong.wrong).toEqual([]);
+    pressed += wrong.count;
   }
-  const rows = listOf(page, "Errors and warnings").locator("ul button");
-  await expect(rows).toHaveCount(144);
-  const missing = await page.evaluate(async () => {
-    const pane = document.querySelector('[data-testid="help"]')!;
-    const rows = () => [
-      ...pane.querySelectorAll<HTMLButtonElement>('[data-pane="topics"] ul ul button'),
-    ];
-    const settled = (done: () => boolean) =>
-      new Promise<boolean>((resolve) => {
-        const started = Date.now();
-        const look = () =>
-          done()
-            ? resolve(true)
-            : Date.now() - started > 4000
-              ? resolve(false)
-              : setTimeout(look, 5);
-        look();
-      });
-    const wrong: string[] = [];
-    const count = rows().length;
-    for (let at = 0; at < count; at++) {
-      const row = rows()[at]!;
-      const code = row.querySelector(".mono")!.textContent!.trim();
-      const words = row.querySelector(".title")!.textContent!.trim();
-      row.click();
-      const title = () => pane.querySelector('[data-testid="help-title"]')?.textContent?.trim();
-      const page = () => pane.querySelector<HTMLElement>('[data-testid="help-page"]');
-      const there = await settled(
-        () => title() === code && page()?.querySelector("h3")?.textContent?.trim() === code,
-      );
-      // The page is that code's, the title the pane gave it among its words, and the row marked.
-      const marked = rows()[at]!.getAttribute("aria-current") === "page";
-      const flat = (text: string) => text.replaceAll("`", "").replace(/\s+/g, " ");
-      if (!there || !marked || !flat(page()?.innerText ?? "").includes(flat(words)))
-        wrong.push(code);
-    }
-    return wrong;
-  });
-  expect(missing).toEqual([]);
-  // The last of them is the page left open.
-  await expect(title(page)).toHaveText(/^W1\d{3}$/);
+  expect(pressed).toBe(144);
 });
 
-test("the sections of the page open stand first in Topics, and fold as the others do", async ({
+test("beside a function's page Topics holds its package, the open function marked, and the page's sections", async ({
   page,
   press,
 }) => {
-  await page.setViewportSize({ width: 1280, height: 640 });
+  await page.setViewportSize({ width: 1280, height: 700 });
   await scratch(page, press);
-  // Home has no sections of its own.
+  // Home has nothing beside it: the sections, and no way back to them to offer.
+  await expect(allTopics(page)).toHaveCount(0);
   await expect(topics(page).getByRole("region", { name: "On this page" })).toHaveCount(0);
+
   await ask(page, "t_test");
+  // All topics; the package with its count, a link to its page; its functions; On this page.
+  await expect(allTopics(page)).toBeVisible();
+  const holder = topics(page).getByRole("region", { name: "Beside this page: stats" });
+  await expect(holder.getByRole("heading", { level: 3 })).toHaveText(/^stats\s*14$/);
+  const functions = listOf(page, "The functions of stats").getByRole("button");
+  await expect(functions).toHaveCount(14);
+  await expect(functions.first()).toHaveText("t_test");
+  await expect(listOf(page, "The functions of stats").locator('[aria-current="page"]')).toHaveText(
+    "t_test",
+  );
+  // The packages and the codes give way to them; the page's sections stand under them.
+  await expect(listOf(page, "Packages")).toHaveCount(0);
+  await expect(listOf(page, "Errors and warnings")).toHaveCount(0);
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
+    /^stats\s*14$/,
     /^▾\s*On this page\s*\d+$/,
-    /^▾\s*Packages\s*10$/,
-    /^▾\s*Errors and warnings\s*144$/,
   ]);
   const sections = listOf(page, "On this page").getByRole("button");
   await expect(sections.first()).toHaveText("Usage");
-  const count = await sections.count();
-  await expect(head(page, "On this page")).toHaveText(
-    new RegExp(`^▾\\s*On this page\\s*${count}$`),
-  );
-  // One goes to its place and is marked, as in the Outline pane it was.
+  await expect(sections.first()).toBeInViewport();
+  // A section goes to its place and is marked, as in the Outline pane it was.
   await press(sections.filter({ hasText: /^Examples$/ }));
   await expect(sections.filter({ hasText: /^Examples$/ })).toHaveAttribute(
     "aria-current",
     "location",
   );
   await expect(shown(page).getByRole("heading", { level: 4, name: "Examples" })).toBeInViewport();
-  // Folded, the packages come up under its head; it stays folded on the next page.
+
+  // A neighbour opens its page, is marked in its turn, and went into the history.
+  await press(
+    listOf(page, "The functions of stats").getByRole("button", { name: "anova", exact: true }),
+  );
+  await expect(title(page)).toHaveText("anova");
+  await expect(listOf(page, "The functions of stats").locator('[aria-current="page"]')).toHaveText(
+    "anova",
+  );
+  await press(back(page));
+  await expect(title(page)).toHaveText("t_test");
+  await expect(listOf(page, "The functions of stats").locator('[aria-current="page"]')).toHaveText(
+    "t_test",
+  );
+  // The package's head opens the package's page: its functions beside it, none marked.
+  await press(holder.getByRole("heading", { level: 3 }).getByRole("button"));
+  await expect(title(page)).toHaveText("stats");
+  await expect(listOf(page, "The functions of stats").getByRole("button")).toHaveCount(14);
+  await expect(listOf(page, "The functions of stats").locator('[aria-current="page"]')).toHaveCount(
+    0,
+  );
+
+  // All topics: the sections again, the page as it was; the next page has its neighbours.
+  await press(back(page));
+  await press(allTopics(page));
+  await expect(title(page)).toHaveText("t_test");
+  await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("t_test");
+  await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
+    /^▾\s*On this page\s*\d+$/,
+    /^▾\s*Packages\s*10$/,
+    /^▾\s*Errors and warnings\s*144$/,
+  ]);
+  await expect(allTopics(page)).toHaveCount(0);
+  // Folded, On this page stays folded on the next page, where the neighbours are back.
   await press(head(page, "On this page"));
   await expect(listOf(page, "On this page")).toHaveCount(0);
   await ask(page, "reg");
+  await expect(allTopics(page)).toBeVisible();
+  await expect(
+    listOf(page, "The functions of regress").locator('[aria-current="page"]'),
+  ).toHaveText("reg");
   await expect(head(page, "On this page")).toHaveAttribute("aria-expanded", "false");
   await press(head(page, "On this page"));
   await expect(sections.first()).toHaveText("Usage");
+});
+
+test("a name of two packages has both beside it, a dataset its package, and a code its family", async ({
+  page,
+  press,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await scratch(page, press);
+  // `summary` is of `data` and of `results`: both, each with the name marked.
+  await ask(page, "summary");
+  await expect(
+    topics(page)
+      .getByRole("region", { name: /^Beside this page/ })
+      .getByRole("heading", { level: 3 }),
+  ).toHaveText([/^data\s*56$/, /^results\s*23$/]);
+  for (const name of ["data", "results"]) {
+    const marked = listOf(page, `The functions of ${name}`).locator('[aria-current="page"]');
+    await expect(marked).toHaveText("summary");
+    // In a package of many functions the open one is brought into view in the list.
+    await expect(marked).toBeInViewport();
+  }
+  // The two share the room one package has, and the page's sections are in view under them.
+  await expect(listOf(page, "On this page").getByRole("button").first()).toBeInViewport();
+  // A function far down a long package is in view too, and the page's sections still are.
+  await ask(page, "assert");
+  const far = listOf(page, "The functions of core").locator('[aria-current="page"]');
+  await expect(far).toHaveText("assert");
+  await expect(far).toBeInViewport();
+  await expect(listOf(page, "On this page").getByRole("button").first()).toBeInViewport();
+
+  // A dataset stands among the datasets of `datasets`, after its two functions.
+  await ask(page, "wages");
+  await expect(listOf(page, "The functions of datasets").getByRole("button")).toHaveText([
+    "dataset",
+    "datasets",
+  ]);
+  const shipped = listOf(page, "The datasets of datasets");
+  await expect(shipped.getByRole("button")).toHaveText(["firms", "sleep", "staff", "wages"]);
+  await expect(shipped.locator('[aria-current="page"]')).toHaveText("wages");
+  await press(shipped.getByRole("button", { name: "sleep" }));
+  await expect(title(page)).toHaveText("sleep");
+  await expect(shipped.locator('[aria-current="page"]')).toHaveText("sleep");
+
+  // A code has its family's codes beside it, with their titles; the family's head opens the
+  // codes at that family, which has nothing beside it: the sections are back.
+  await ask(page, "W0201");
+  const holder = topics(page).getByRole("region", { name: "Beside this page: W0xxx" });
+  await expect(holder.getByRole("heading", { level: 3 })).toHaveText(
+    /^W0xxx\s+Warnings, numbered by the same areas\s*26$/,
+  );
+  const codes = listOf(page, "The codes of W0xxx");
+  await expect(codes.getByRole("button")).toHaveCount(26);
+  await expect(codes.locator('[aria-current="page"]')).toHaveText(
+    /^W0201\s*missing values skipped by a statistic$/,
+  );
+  await press(codes.getByRole("button", { name: /^W0101/ }));
+  await expect(title(page)).toHaveText("W0101");
+  await expect(codes.locator('[aria-current="page"]')).toHaveText(/^W0101/);
+  await press(holder.getByRole("heading", { level: 3 }).getByRole("button"));
+  await expect(title(page)).toHaveText("W0xxx");
+  await expect(allTopics(page)).toHaveCount(0);
+  await expect(head(page, "Errors and warnings")).toBeVisible();
+  // A name the engine has no page for has nothing beside it either.
+  await ask(page, "a_learning");
+  await expect(allTopics(page)).toHaveCount(0);
+  await expect(head(page, "Packages")).toBeVisible();
 });
 
 for (const theme of ["light", "dark"] as const) {
   test(`Topics closes and opens by its link, its × and ⌘K, the middle taking its width; sizes and contrast in the ${theme} theme`, async ({
     page,
     press,
+    browserName,
   }) => {
     await page.setViewportSize({ width: 1200, height: 760 });
     await scratch(page, press);
@@ -258,16 +391,48 @@ for (const theme of ["light", "dark"] as const) {
     await box.press("Enter");
     await expect(topics(page)).toBeVisible();
 
-    // As painted, with a page's sections, a family unfolded and a code marked.
+    const painted = async () => {
+      expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
+      expect(await faintText(topics(page))).toEqual([]);
+      // Nothing of the pane runs off its side.
+      const sideways = await topics(page).evaluate((node) => node.scrollWidth - node.clientWidth);
+      expect(sideways).toBeLessThanOrEqual(0);
+    };
+    // As painted beside a code, its family's codes with the open one marked, the pointer on a row.
     await ask(page, "W0201");
-    await press(family(page, "W0xxx"));
     await expect(listOf(page, "The codes of W0xxx").locator('[aria-current="page"]')).toHaveText(
       /^W0201/,
     );
-    expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
-    expect(await faintText(topics(page))).toEqual([]);
-    // Nothing of the pane runs off its side.
-    const sideways = await topics(page).evaluate((node) => node.scrollWidth - node.clientWidth);
-    expect(sideways).toBeLessThanOrEqual(0);
+    await listOf(page, "The codes of W0xxx").getByRole("button").nth(1).hover();
+    await painted();
+    // Beside a function, its package's functions; and in the sections, a family unfolded.
+    await ask(page, "summary");
+    await painted();
+    await press(allTopics(page));
+    await press(family(page, "W0xxx"));
+    await family(page, "W0xxx").hover();
+    await painted();
+
+    // From the keyboard alone: All topics and a neighbour are stops of the Tab key and answer
+    // to Enter. (Safari gives a button the Tab key with Option held.)
+    const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
+    await ask(page, "t_test");
+    await allTopics(page).focus();
+    await page.keyboard.press(tab);
+    await expect(
+      topics(page)
+        .getByRole("region", { name: "Beside this page: stats" })
+        .getByRole("heading", { level: 3 })
+        .getByRole("button"),
+    ).toBeFocused();
+    await page.keyboard.press(tab);
+    await expect(listOf(page, "The functions of stats").getByRole("button").first()).toBeFocused();
+    await page.keyboard.press(tab);
+    await page.keyboard.press("Enter");
+    await expect(title(page)).toHaveText("proportion_test");
+    await allTopics(page).focus();
+    await page.keyboard.press("Enter");
+    await expect(head(page, "Packages")).toBeVisible();
+    await expect(title(page)).toHaveText("proportion_test");
   });
 }

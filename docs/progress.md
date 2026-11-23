@@ -110,4 +110,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 5a `[function]`.** The left pane of Help is **Topics**, with sections that fold, each with its count: **On this page** (the page's sections, as Outline held them), **Packages** (each opening its page) and **Errors and warnings** (the families, each folding to its codes); what is folded is kept with the project, and a reader's choice of the old Outline pane is carried over (`src/help/TopicsPane.svelte`, `src/app/views.ts`). Found and mended: a project reloaded while in Help came back with Help empty. Green here: the whole routine in both browsers.
 
-**Next.** Step 5b `[function]`: Topics beside a page.
+**Done, step 5b `[function]`.** Beside a page Topics holds **‹ All topics**, what the page stands in with its neighbours (a function's package with its functions, a code's family with its codes), the page open marked and in view, and **On this page** under them; All topics returns the pane to its sections without leaving the page (`src/help/around.ts`). Green here: the whole routine in both browsers.
+
+**Next.** Step 6 `[engine]`: what search finds, and in what order.

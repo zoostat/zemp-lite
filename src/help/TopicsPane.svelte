@@ -6,9 +6,16 @@
   // warnings**, the families as the engine lists them, each folding to its codes with their
   // titles, a click opening a code's page. Which sections are folded is kept with the project.
   // Every name, family and title is the engine's.
+  //
+  // Beside a page that has neighbours (step 5b; `around.ts`) the pane holds those in place of
+  // the packages and the codes: a function's package with its functions, the open one marked
+  // and in view; a package's own functions; a code's family with its codes; and under them
+  // **On this page**. **‹ All topics** returns the pane to its sections without leaving the
+  // page; the next page opened has its neighbours beside it again.
   import { familyTopic, TOPICS, topicOpen } from "../app/views";
   import type { Workspace } from "../app/workspace-state.svelte";
-  import { CODES } from "./history";
+  import { aroundOf } from "./around";
+  import { CODES, type Stop } from "./history";
 
   let {
     workspace,
@@ -30,6 +37,28 @@
   const codes = $derived((families ?? []).reduce((sum, one) => sum + one.codes.length, 0));
   const shown = $derived(workspace.help.stop);
   const open = (key: string) => topicOpen(workspace.views, key);
+
+  // What stands around the page, shown beside it until the reader asks for all the topics.
+  const around = $derived(aroundOf(shown, index, families));
+  let all = $state(false);
+  $effect(() => {
+    void workspace.help.stop;
+    all = false;
+  });
+  const beside = $derived(around.length > 0 && !all);
+
+  // The page open is brought into view among its neighbours, inside their own list.
+  let pane = $state<HTMLElement | null>(null);
+  $effect(() => {
+    void around;
+    if (!beside || pane === null) return;
+    for (const here of pane.querySelectorAll<HTMLElement>(".around [aria-current='page']")) {
+      const box = here.closest<HTMLElement>(".around");
+      if (box === null) continue;
+      const top = here.getBoundingClientRect().top - box.getBoundingClientRect().top;
+      box.scrollTop += top - (box.clientHeight - here.offsetHeight) / 2;
+    }
+  });
 </script>
 
 <!-- The head of a section: a button that folds and unfolds it, with its count. -->
@@ -48,7 +77,70 @@
   </h3>
 {/snippet}
 
-<div class="topics">
+<!-- A neighbour of the page open: a link to its page, marked where it is the page itself. -->
+{#snippet neighbour(row: { name: string; words: string; to: Stop; here: boolean }, titled: boolean)}
+  <li>
+    <button
+      class="row"
+      class:code={titled}
+      class:on={row.here}
+      aria-current={row.here ? "page" : undefined}
+      title={titled ? undefined : row.words}
+      onclick={() => void workspace.showHelpStop(row.to)}
+    >
+      <span class="mono">{row.name}</span>
+      {#if titled}<span class="title">{row.words}</span>{/if}
+    </button>
+  </li>
+{/snippet}
+
+<div class="topics" bind:this={pane}>
+  {#if beside}
+    <button class="all" onclick={() => (all = true)}>
+      <span aria-hidden="true">‹</span> All topics
+    </button>
+    {#each around as group (group.name)}
+      <section aria-label="Beside this page: {group.name}">
+        <h3 class="holder">
+          {#if group.to !== null}
+            <button
+              class="fold"
+              title="Open the page of {group.name}"
+              onclick={() => group.to !== null && void workspace.showHelpStop(group.to)}
+            >
+              <span class="words"
+                ><span class="mono">{group.name}</span>{group.words === ""
+                  ? ""
+                  : ` ${group.words}`}</span
+              >
+              <span class="count">{group.rows.length}</span>
+            </button>
+          {:else}
+            <span class="fold here">
+              <span class="words mono">{group.name}</span>
+              <span class="count">{group.rows.length}</span>
+            </span>
+          {/if}
+        </h3>
+        <!-- Two packages share the room one has, so that the page's sections stay in view. -->
+        <div class="around" style:max-height="{Math.round(38 / around.length)}vh">
+          <ul aria-label="The {group.kind} of {group.name}">
+            {#each group.rows as row (row.name)}
+              {@render neighbour(row, group.kind === "codes")}
+            {/each}
+          </ul>
+          {#if group.datasets.length > 0}
+            <h4>Datasets <span class="count">{group.datasets.length}</span></h4>
+            <ul aria-label="The datasets of {group.name}">
+              {#each group.datasets as row (row.name)}
+                {@render neighbour(row, false)}
+              {/each}
+            </ul>
+          {/if}
+        </div>
+      </section>
+    {/each}
+  {/if}
   {#if sections.length > 0}
     <section aria-label="On this page">
       {@render head(TOPICS.page, "On this page", sections.length)}
@@ -67,7 +159,7 @@
       {/if}
     </section>
   {/if}
-  {#if index !== null}
+  {#if index !== null && !beside}
     <section aria-label="Packages">
       {@render head(TOPICS.packages, "Packages", index.packages.length)}
       {#if open(TOPICS.packages)}
@@ -91,7 +183,7 @@
       {/if}
     </section>
   {/if}
-  {#if families !== null}
+  {#if families !== null && !beside}
     <section aria-label={CODES}>
       {@render head(TOPICS.codes, CODES, codes)}
       {#if open(TOPICS.codes)}
@@ -178,6 +270,30 @@
     align-items: baseline;
     display: flex;
     gap: 6px;
+  }
+  /* All topics: the way from a page's neighbours back to the sections. */
+  .all {
+    color: var(--accent);
+    font-size: 13.5px;
+    margin-top: 4px;
+  }
+  /* The holder of the neighbours, where it is the page open: a heading, not a link. */
+  .fold.here {
+    padding: 5px 8px;
+  }
+  /* The neighbours keep to a box of their own, so that the page's sections stay in view. */
+  .around {
+    max-height: 38vh;
+    overflow: auto;
+  }
+  h4 {
+    align-items: baseline;
+    color: var(--ink-2);
+    display: flex;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 4px 0 0;
+    padding: 5px 8px 5px 26px;
   }
   .fold {
     font-weight: 700;
