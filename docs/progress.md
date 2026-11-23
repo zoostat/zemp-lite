@@ -152,4 +152,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 9d `[engine]`.** The owner's standing rule (#211, item 12) has its check: every piece of code in the thirteen pages is held to the engine or to the running app (`src/using/held.ts`): a name of the engine's is looked for in its index; what a page says the search finds is searched for; a command is read from ⌘K; what a page quotes from the screen is made in the app and read there, in both browsers. A piece held in no way fails the build. Green here: the whole routine in both browsers.
 
-**Next.** Step 9e `[function]`: the owner reads the thirteen pages of Using Zemp Lite, in the app, and they are changed on his word. **This step waits for the owner.**
+**Done, step 9e `[function]`.** The owner read the thirteen pages: "The pages stand as they are". Nothing is changed.
+
+**Next.** Step 10 `[function]`: the words, the keyboard and the address (every new control a stop of the Tab key with a name and a command of ⌘K where it acts; the check after a deployment opens Home, searches for `lm` and opens `reg`; the notes drafted). Then step 11, the pre-release routine.

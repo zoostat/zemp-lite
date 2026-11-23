@@ -1978,3 +1978,13 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Unit, on the engine as the worker carries it (`src/using/engine.node.test.ts`, 4 tests): the links of every page; every piece of code of every page held; nothing listed that a page no longer gives; the four things the search is said to find. Browser, both engines (`tests/browser/using-engine.spec.ts`, 12 tests): the ten scenes, each with the pieces the pages quote from it, and none made for nothing; the commands the pages name (twenty-one namings, nineteen commands), each in the list.
 
 **Reason.** #211, item 12: no release ships a page that the engine it carries would contradict.
+
+## 24 November 2026: the owner has read the thirteen pages of Using Zemp Lite (release 0.2.3, step 9e)
+
+**The owner's word:** put the thirteen pages to read (question 3 of the plan, as he answered it), he answered: "The pages stand as they are".
+
+**Choice.** No page is changed and no picture is made again for this step. The pages are those of steps 8a, 9a and 9b, as corrected at 9c for the layout of Help; their pictures are those made at 9c, and are made again from the app as it is released, at step 11.
+
+**Also put to him at 9c, and not answered apart:** that a page which is a list (the codes by family among them) says "This page has no sections." in the pane at the right, as the register has it for a list; it stands so.
+
+**Reason.** The owner's decision.
