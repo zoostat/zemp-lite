@@ -154,12 +154,18 @@
     ];
   }
 
+  /**
+   * The files chosen are taken, with the folder they were chosen for, before anything waits:
+   * the chooser and the folder are then free for the next choice, which may come while these
+   * are still being written. (Read after the wait, a second choice went into the first's
+   * folder, and emptying the chooser could cut the second short.)
+   */
   async function chosen(): Promise<void> {
-    if (chooser?.files) {
-      await workspace.addFiles(chooser.files, into);
-      chooser.value = "";
-    }
+    const files = [...(chooser?.files ?? [])];
+    const folder = into;
     into = "data";
+    if (chooser !== null) chooser.value = "";
+    if (files.length > 0) await workspace.addFiles(files, folder);
   }
 </script>
 

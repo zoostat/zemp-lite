@@ -52,11 +52,11 @@
   /** The files ⌘K adds to the project are chosen here; the Project pane has a chooser of its own. */
   let chooser = $state<HTMLInputElement | null>(null);
 
+  // The files are taken before anything waits, so that a next choice finds the chooser free.
   async function chosen(): Promise<void> {
-    if (chooser?.files) {
-      await workspace.addFiles(chooser.files, "data");
-      chooser.value = "";
-    }
+    const files = [...(chooser?.files ?? [])];
+    if (chooser !== null) chooser.value = "";
+    if (files.length > 0) await workspace.addFiles(files, "data");
   }
   let console_ = $state<ReturnType<typeof ConsoleLine> | null>(null);
 

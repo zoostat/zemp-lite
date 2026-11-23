@@ -322,6 +322,44 @@ test("by the keyboard alone a folder is made and files are added into it, which 
   await expect(tree(page).getByRole("button", { name: "Actions for data/more.csv" })).toBeVisible();
 });
 
+test("files added to two folders one straight after the other each go where they were sent", async ({
+  page,
+  press,
+}) => {
+  // Found on GitHub on 23 November 2026, in the test above: files chosen while an earlier
+  // choice was still being written went into the earlier choice's folder. Here the first
+  // choice is large, so that it is still being written when the second is made.
+  await opened(page, press);
+  await press(adding(page));
+  await press(page.getByRole("menuitem", { name: "New folder" }));
+  const folder = tree(page).getByRole("textbox", { name: "The name of the new folder" });
+  await folder.fill("survey");
+  await folder.press("Enter");
+  await expect(more(page, "survey")).toBeVisible();
+  const [chooser] = await Promise.all([
+    page.waitForEvent("filechooser"),
+    (async () => {
+      await press(more(page, "survey"));
+      await press(menu(page, "survey").getByRole("menuitem", { name: "Add files…" }));
+    })(),
+  ]);
+  const large = Buffer.alloc(12_000_000, "1,2,3\n");
+  await chooser.setFiles([
+    { name: "large.csv", mimeType: "text/csv", buffer: large },
+    { name: "small.csv", mimeType: "text/csv", buffer: Buffer.from("id\n1\n") },
+  ]);
+  // At once, by the pane's own chooser, which adds into `data/`.
+  await tree(page)
+    .getByLabel("Data files to add")
+    .setInputFiles({ name: "more.csv", mimeType: "text/csv", buffer: Buffer.from("id\n7\n") });
+  for (const path of ["survey/large.csv", "survey/small.csv", "data/more.csv"]) {
+    await expect(more(page, path)).toBeVisible({ timeout: 20_000 });
+  }
+  await expect(more(page, "survey/more.csv")).toHaveCount(0);
+  await expect(more(page, "data/large.csv")).toHaveCount(0);
+  await expect(tree(page).getByRole("alert")).toHaveCount(0);
+});
+
 test("a script is renamed while it is open and being edited: nothing typed is lost, its results stay with it, and it runs", async ({
   page,
   press,

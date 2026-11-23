@@ -1617,3 +1617,19 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Still the owner's, from 0.2.2:** the reader test and the checks by hand.
 
 **Reason.** The owner's ruling. The spike comes first because each of the four could change the plan: a licence that cannot ship, a module too large to fetch, a page too slow to keep live, or bytes that differ from the desktop's would each have to be known before the place is designed around them.
+
+## 23 November 2026: Files chosen while an earlier choice was being written went into the wrong folder (found after release 0.2.2)
+
+**Found.** GitHub's run of the commit after the release (`ab9a8f3`, which changed two documents and no code) failed one test in Chromium, the same test of step 8a that failed once on 23 November before the release ("by the keyboard alone a folder is made and files are added into it", `files.spec`), this time at its last lines: a file chosen with the pane's own chooser, for `data/`, was not in `data/`. The entry of that day said that a second failure in this place would be taken as the app's and looked for there. It is the app's.
+
+**The fault** (`ProjectTree.svelte`, in the app since step 8a, and so in the released 0.2.2). When files are chosen the pane wrote them and only afterwards emptied its chooser and set the folder for the next choice back to `data`. A second choice made while the first was still being written therefore went into the first choice's folder; and the emptying of the chooser, when the first finished, could cut the second choice short, since the browser's list of chosen files is emptied with it. A reader meets it only by choosing files twice in quick succession, the first lot large enough to take a while: then the second lot lands in the first's folder, or part of it is not added. Nothing on the computer is harmed, and the pane shows where each file went. The chooser of ⌘K, added at step 10, emptied itself after the wait in the same way.
+
+**Choice.** Both choosers take the list of files, and the pane the folder they were chosen for, before anything waits; the chooser is emptied and the folder set back at once. Each choice is then its own.
+
+**Tests.** Browser (`files.spec`, both browsers): a large file and a small one chosen for a new folder, and at once a file chosen for `data/`: each is where it was sent, none in the other's folder, nothing refused. Before the mend it failed in both browsers in each of six trials; with it, it passes. The test that found the fault is unchanged.
+
+**The first failure of that test** (23 November, before the release) was at another line, where the test waited for the computer's chooser to open. That one is still taken to be the test's, as recorded then; it is not shown to be the same fault, and nothing was being written at that point of the test.
+
+**The release.** The tag `v0.2.2` stands on the commit before this; the mend is on the main branch, and so in the hosted alpha, which is built from it and still shows 0.2.2. The notes in the repository say so under the known issues. No release is opened for it: that is the owner's to say.
+
+**Reason.** A promise in the record is kept: the second failure was looked for in the app, and it was there.
