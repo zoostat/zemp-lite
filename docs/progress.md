@@ -83,3 +83,9 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 **Found and mended after the release, 23 November 2026.** GitHub's check of a commit of documents failed a test of the Project pane; the fault was the app's, in the released 0.2.2: files chosen while an earlier, large choice was still being written went into that choice's folder. Mended on the main branch with a test; the tag stands where it was, and the notes in the repository say so.
 
 **Next.** Nothing is begun. Zemp 0.3 is opened by the owner's "Start release 0.3", after Zeff 0.9.0 is released; its plan holds stage 1 of Paper, and its first step is the spike of the Typst module `[engine]` (the licences, the size, the time to set a page, the PDF's bytes against the desktop Typst). Before that: the copy of the specification brought to the Zeff commit that enters the ruling. **Still the owner's:** the reader test, on this alpha, for Zeff 0.9.0; the checks by hand; the trademarks (#37) before the address is announced.
+
+## 23 November 2026, release 0.2.3: planned, waiting for "go"
+
+**Done.** On the owner's "Start release zemp-lite 0.2.3": `v0.2.2` is tagged and the tree clean; the copy of the specification brought to Zeff 635f19f, where the row of 0.2.3 and #211 stand; the row, #211 with its mockup, section 7's Help row, the Help place's code and what the engine of 0.8.0 gives read; `docs/releases/0.2.3.md` written: twelve steps in seven parts (opening; what the engine gives; moving about; Home and Topics; search; Using Zemp Lite; the whole and the close), with three questions for the owner. No code is written.
+
+**Next.** On "go": step 1 `[engine]`, the release opened.
