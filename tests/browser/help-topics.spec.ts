@@ -68,6 +68,7 @@ test("Topics holds sections that fold, each with its count, by the mouse and by 
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
     /^▾\s*Packages\s*10$/,
     /^▾\s*Errors and warnings\s*144$/,
+    /^▾\s*Using Zemp Lite\s*\d+$/,
   ]);
   await expect(listOf(page, "Packages").getByRole("button")).toHaveText(
     PACKAGES.map(([name, count]) => new RegExp(`^${name}\\s*${count}$`)),
@@ -270,6 +271,7 @@ test("beside a function's page Topics holds its package, the open function marke
     /^▾\s*On this page\s*\d+$/,
     /^▾\s*Packages\s*10$/,
     /^▾\s*Errors and warnings\s*144$/,
+    /^▾\s*Using Zemp Lite\s*\d+$/,
   ]);
   await expect(allTopics(page)).toHaveCount(0);
   // Folded, On this page stays folded on the next page, where the neighbours are back.

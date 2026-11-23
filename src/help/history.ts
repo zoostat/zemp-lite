@@ -3,19 +3,22 @@
 // **Forward** go through it as a web browser's do: a page opened after going back drops what
 // lay forward, and the same page opened twice in a row is there once. It lasts as long as
 // the window; nothing of it is kept with the project.
+import { USING_TITLE, usingPage } from "../using/pages";
 
 /**
  * A page of the Help place: Home, where Help starts; what `zeff help <name>` prints for a
  * name (a function's page or a dataset's); a package's page, its functions listed from the
- * index of the help; the codes by family, shown from one family where one is named; or a
- * code's explained page.
+ * index of the help; the codes by family, shown from one family where one is named; a
+ * code's explained page; or a page of the app's own, Using Zemp Lite.
  */
 export type Stop =
   | { kind: "home" }
   | { kind: "name"; name: string }
   | { kind: "package"; name: string }
   | { kind: "codes"; family: string | null }
-  | { kind: "code"; code: string };
+  | { kind: "code"; code: string }
+  /** A page of Using Zemp Lite, by the name of its file; or, with none, the list of them. */
+  | { kind: "using"; page: string | null };
 
 /** What the page of the codes by family is called, in the trail and on its buttons. */
 export const CODES = "Errors and warnings";
@@ -49,6 +52,8 @@ export function same(a: Stop, b: Stop): boolean {
       return b.kind === "codes" && a.family === b.family;
     case "code":
       return b.kind === "code" && a.code === b.code;
+    case "using":
+      return b.kind === "using" && a.page === b.page;
   }
 }
 
@@ -100,5 +105,7 @@ export function called(stop: Stop): string {
       return stop.family ?? CODES;
     case "code":
       return stop.code;
+    case "using":
+      return stop.page === null ? USING_TITLE : (usingPage(stop.page)?.title ?? stop.page);
   }
 }

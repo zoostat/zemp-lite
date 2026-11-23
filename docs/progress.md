@@ -129,3 +129,15 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 **For the owner.** (1) Search keeps #211's order of rules, with two of the eight places kept for an R or Stata name typed exactly, so that `table` finds `tabulate`; say if another order is wanted. (2) For the Zeff session: `zeff help text`, `zeff help plot` and `zeff help datasets` print the function of that name, so no command lists those three packages. (3) Still his from before: the reader test, the checks by hand, the trademarks (#37).
 
 **Next.** Step 8 `[engine]`: the frame of the app's own pages, Using Zemp Lite (the thirteen pages as text files read at build, their pictures made from the running app, loaded only when a page is opened).
+
+## 24 November 2026: release 0.2.3, steps 8a onward
+
+**On GitHub at the start:** step 6 (c06eb38) passed its checks and was deployed; the check of step 7 (76843f8) was still running when step 8a was committed.
+
+**Step 8 split.** 8a is the frame of the app's own pages with the first two; 8b their pictures, made by a script. 9a and 9b have the eleven pages that remain.
+
+**Done, step 8a `[engine]`.** The pages of Using Zemp Lite are text files of the repository (`src/using/pages/`), in a small part of Markdown, read into the type of the engine's pages (`src/using/read.ts`): controls, keys, code, lists and links to another page or to the engine's. They are pages of Help as any other: in Topics, in search, with a trail and a list of their own; a page's text is fetched when it is opened. **Getting started** and **Finding help** are written. The first load grew 3.3 kB compressed for the reader and the page. Green here: the whole routine in both browsers.
+
+**Found: the routine needs the display awake on this Mac.** WebKit's test browser takes no mouse while the display is dark, which failed seven tests at night and explains the five at the close of 0.2.2. The routine is run as `caffeinate -d -u npm run routine` (`docs/decisions.md`).
+
+**Next.** Step 8b `[engine]`: the pictures of the app's own pages.

@@ -9,11 +9,18 @@
   // the page of the name or the code as typed, as the field did before. A screen reader is
   // told a combobox and its list. Nothing is asked of any server.
   import type { Workspace } from "../app/workspace-state.svelte";
-  import { entriesOf, search, LEAST, type Entry, type Match } from "./search";
+  import { USING } from "../using/pages";
+  import { entriesOf, search, LEAST, type Entry, type Match, type OwnPage } from "./search";
 
   let { workspace }: { workspace: Workspace } = $props();
 
-  const entries = $derived(entriesOf(workspace.helpIndex, workspace.helpCodes));
+  // The app's own pages are searched with the engine's: by their titles and their one lines.
+  const own: OwnPage[] = USING.map((page) => ({
+    title: page.title,
+    words: page.line,
+    to: { kind: "using", page: page.slug },
+  }));
+  const entries = $derived(entriesOf(workspace.helpIndex, workspace.helpCodes, own));
   let typed = $state("");
   let open = $state(false);
   /** The match marked, by its place in the list; none until an arrow marks one. */

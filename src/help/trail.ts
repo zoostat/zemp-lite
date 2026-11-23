@@ -1,9 +1,10 @@
 // The trail at the head of a page of Help (release 0.2.3, step 3b; open decision #211, part
 // 3): where the page stands, each step before the last a link. _Help › Packages › stats ›
-// t_test_; _Help › Errors and warnings › Z01xx › Z0101_. The steps are worked out from the
+// t_test_; _Help › Errors and warnings › Z01xx › Z0101_; _Help › Using Zemp Lite › Finding help_. The steps are worked out from the
 // index of the help and the codes by family, which are the engine's; a page the index does
 // not know (a function of a later release, a name mistyped) stands under Help alone.
 import type { CodeFamily, HelpIndex } from "../engine/messages";
+import { USING_TITLE, usingPage } from "../using/pages";
 import { CODES, HOME, type Stop } from "./history";
 
 /**
@@ -73,6 +74,14 @@ export function trailOf(
       return stop.family === null
         ? [help(false), codes(true)]
         : [help(false), codes(false), name(stop.family, null)];
+    case "using":
+      return stop.page === null
+        ? [help(false), word(USING_TITLE, null)]
+        : [
+            help(false),
+            word(USING_TITLE, { kind: "using", page: null }),
+            word(usingPage(stop.page)?.title ?? stop.page, null),
+          ];
     case "code": {
       const family = familyOf(families, stop.code);
       return [

@@ -30,7 +30,9 @@
     <section
       data-line={group.heading === null ? undefined : line}
       aria-labelledby={group.heading === null ? undefined : `help-list-${line}`}
-      aria-label={group.heading === null ? `The functions of ${list.title}` : undefined}
+      aria-label={group.heading === null
+        ? `The ${list.titles ? "pages" : "functions"} of ${list.title}`
+        : undefined}
     >
       {#if group.heading !== null}
         <h4 id="help-list-{line}">
@@ -44,7 +46,9 @@
             <tr>
               <th scope="row">
                 <button
-                  class="mono link"
+                  class="link"
+                  class:mono={!list.titles}
+                  class:title={list.titles}
                   title="Open the page of {row.name}"
                   onclick={() => onopen(row.to)}>{row.name}</button
                 >
@@ -150,6 +154,14 @@
     font-size: max(12.5px, 0.86em);
     line-height: inherit;
     padding: 0 5px;
+  }
+  /* A title, not a name of the engine's: in the app's type. */
+  button.link.title {
+    background: none;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 600;
+    padding: 0;
   }
   button.link:hover {
     text-decoration: underline;

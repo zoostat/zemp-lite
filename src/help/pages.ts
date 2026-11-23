@@ -5,6 +5,7 @@
 // <package>` prints such a list for seven of the ten packages; for `plot`, `text` and
 // `datasets` it prints the function of that name, so every package's page is set here alike.
 import type { CodeFamily, HelpIndex } from "../engine/messages";
+import { USING, USING_TITLE } from "../using/pages";
 import { CODES, type Stop } from "./history";
 
 /** A row of a list: a name that opens a page, and its one line. */
@@ -24,10 +25,15 @@ export interface Group {
   rows: Row[];
 }
 
-/** A page that is a list: its title, in the code's type where it is a name; its facts; its parts. */
+/**
+ * A page that is a list: its title, in the code's type where it is a name; its facts; its
+ * parts. The rows are names of the engine's, set in the code's type, unless the list is of
+ * titles (`titles`), set in the app's.
+ */
 export interface ListPage {
   title: string;
   named: boolean;
+  titles?: boolean;
   facts: string[];
   groups: Group[];
 }
@@ -90,6 +96,27 @@ export function codesPage(families: CodeFamily[] | null): ListPage | null {
         to: { kind: "code", code: one.code },
       })),
     })),
+  };
+}
+
+/** The list of the pages of Using Zemp Lite: each title with its one line. */
+export function usingList(): ListPage {
+  return {
+    title: USING_TITLE,
+    named: false,
+    titles: true,
+    facts: [counted(USING.length, "page", "pages"), "on the app itself, in Zemp's own words"],
+    groups: [
+      {
+        key: "pages",
+        heading: null,
+        rows: USING.map((page) => ({
+          name: page.title,
+          words: page.line,
+          to: { kind: "using", page: page.slug },
+        })),
+      },
+    ],
   };
 }
 

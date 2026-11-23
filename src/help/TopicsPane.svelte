@@ -4,8 +4,9 @@
   // sections of the page open, each going to its place, the one in view marked; **Packages**,
   // each package the engine ships with its count, a click opening its page; **Errors and
   // warnings**, the families as the engine lists them, each folding to its codes with their
-  // titles, a click opening a code's page. Which sections are folded is kept with the project.
-  // Every name, family and title is the engine's.
+  // titles, a click opening a code's page; **Using Zemp Lite**, the app's own pages by their
+  // titles. Which sections are folded is kept with the project. Every name, family and title
+  // of the first three is the engine's.
   //
   // Beside a page that has neighbours (step 5b; `around.ts`) the pane holds those in place of
   // the packages and the codes: a function's package with its functions, the open one marked
@@ -15,6 +16,7 @@
   import { familyTopic, TOPICS, topicOpen } from "../app/views";
   import type { Workspace } from "../app/workspace-state.svelte";
   import { aroundOf } from "./around";
+  import { USING, USING_TITLE } from "../using/pages";
   import { CODES, type Stop } from "./history";
 
   let {
@@ -78,18 +80,21 @@
 {/snippet}
 
 <!-- A neighbour of the page open: a link to its page, marked where it is the page itself. -->
-{#snippet neighbour(row: { name: string; words: string; to: Stop; here: boolean }, titled: boolean)}
+{#snippet neighbour(
+  row: { name: string; words: string; to: Stop; here: boolean },
+  kind: "functions" | "codes" | "pages",
+)}
   <li>
     <button
       class="row"
-      class:code={titled}
+      class:code={kind === "codes"}
       class:on={row.here}
       aria-current={row.here ? "page" : undefined}
-      title={titled ? undefined : row.words}
+      title={kind === "codes" ? undefined : row.words}
       onclick={() => void workspace.showHelpStop(row.to)}
     >
-      <span class="mono">{row.name}</span>
-      {#if titled}<span class="title">{row.words}</span>{/if}
+      <span class:mono={kind !== "pages"}>{row.name}</span>
+      {#if kind === "codes"}<span class="title">{row.words}</span>{/if}
     </button>
   </li>
 {/snippet}
@@ -109,7 +114,7 @@
               onclick={() => group.to !== null && void workspace.showHelpStop(group.to)}
             >
               <span class="words"
-                ><span class="mono">{group.name}</span>{group.words === ""
+                ><span class:mono={group.kind !== "pages"}>{group.name}</span>{group.words === ""
                   ? ""
                   : ` ${group.words}`}</span
               >
@@ -126,14 +131,14 @@
         <div class="around" style:max-height="{Math.round(38 / around.length)}vh">
           <ul aria-label="The {group.kind} of {group.name}">
             {#each group.rows as row (row.name)}
-              {@render neighbour(row, group.kind === "codes")}
+              {@render neighbour(row, group.kind)}
             {/each}
           </ul>
           {#if group.datasets.length > 0}
             <h4>Datasets <span class="count">{group.datasets.length}</span></h4>
             <ul aria-label="The datasets of {group.name}">
               {#each group.datasets as row (row.name)}
-                {@render neighbour(row, false)}
+                {@render neighbour(row, "functions")}
               {/each}
             </ul>
           {/if}
@@ -222,6 +227,29 @@
                   {/each}
                 </ul>
               {/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </section>
+  {/if}
+  {#if USING.length > 0 && !beside}
+    <section aria-label={USING_TITLE}>
+      {@render head(TOPICS.using, USING_TITLE, USING.length)}
+      {#if open(TOPICS.using)}
+        <ul id="help-topic-{TOPICS.using}" aria-label={USING_TITLE}>
+          {#each USING as one (one.slug)}
+            {@const here = shown?.kind === "using" && shown.page === one.slug}
+            <li>
+              <button
+                class="row"
+                class:on={here}
+                aria-current={here ? "page" : undefined}
+                title={one.line}
+                onclick={() => void workspace.showHelpStop({ kind: "using", page: one.slug })}
+              >
+                <span>{one.title}</span>
+              </button>
             </li>
           {/each}
         </ul>

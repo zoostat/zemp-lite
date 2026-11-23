@@ -1,9 +1,11 @@
 // What stands around a page of Help, for the Topics pane (release 0.2.3, step 5b; open
 // decision #211, item 4): beside a function's page, its package with its functions, the open
 // one marked; beside a package's page, its functions; beside a code's page, its family's
-// codes. A name two packages have has both around it. Home, the codes by family and a name
+// codes; beside a page of Using Zemp Lite, all of those pages. A name two packages have has
+// both around it. Home, the codes by family and a name
 // the index does not know have nothing around them, and the pane keeps to its sections.
 import type { CodeFamily, HelpIndex } from "../engine/messages";
+import { USING, USING_TITLE } from "../using/pages";
 import type { Stop } from "./history";
 import { familyOf, homesOf } from "./trail";
 
@@ -25,7 +27,7 @@ export interface Around {
   name: string;
   words: string;
   to: Stop | null;
-  kind: "functions" | "codes";
+  kind: "functions" | "codes" | "pages";
   rows: Neighbour[];
   datasets: Neighbour[];
 }
@@ -93,6 +95,24 @@ export function aroundOf(
           words: one.title,
           to: { kind: "code", code: one.code },
           here: one.code === stop.code,
+        })),
+        datasets: [],
+      },
+    ];
+  }
+  if (stop.kind === "using" && stop.page !== null) {
+    // Beside a page of the app's own: all of them, in their order.
+    return [
+      {
+        name: USING_TITLE,
+        words: "",
+        to: { kind: "using", page: null },
+        kind: "pages",
+        rows: USING.map((page) => ({
+          name: page.title,
+          words: page.line,
+          to: { kind: "using", page: page.slug },
+          here: page.slug === stop.page,
         })),
         datasets: [],
       },

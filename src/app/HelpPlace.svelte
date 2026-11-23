@@ -27,9 +27,11 @@
   import ListPage from "../help/ListPage.svelte";
   import SearchField from "../help/SearchField.svelte";
   import TopicsPane from "../help/TopicsPane.svelte";
-  import { codesPage, packagePage, partsOf } from "../help/pages";
+  import { codesPage, packagePage, partsOf, usingList } from "../help/pages";
   import { outlineOf, readPage, relatedOf } from "../help/read";
   import { trailOf } from "../help/trail";
+  import { headingsOf, readUsing } from "../using/read";
+  import UsingPage from "../using/UsingPage.svelte";
   import { paneOf } from "./panes";
   import Place from "./Place.svelte";
   import type { Workspace } from "./workspace-state.svelte";
@@ -39,22 +41,40 @@
   // A project left in the Help place opens in it again, with no press of its button.
   onMount(() => workspace.readyHelp());
 
-  // The page shown: a list (a package's functions, the codes by family), or the engine's print.
+  // The page shown: a list (a package's functions, the codes by family, the app's own pages),
+  // a page of the app's own, Home, or the engine's print.
   const shown = $derived(workspace.help.stop);
   const list = $derived(
     shown?.kind === "package"
       ? packagePage(workspace.helpIndex, shown.name)
       : shown?.kind === "codes"
         ? codesPage(workspace.helpCodes)
-        : null,
+        : shown?.kind === "using" && shown.page === null
+          ? usingList()
+          : null,
   );
-  const page = $derived(list === null ? workspace.help.page : "");
-  // Home, the index of functions: shown where no page is open, once the engine has given it.
-  const home = $derived(list === null && page === "" ? workspace.helpIndex : null);
-  const blank = $derived(list === null && page === "" && home === null);
+  // A page of Using Zemp Lite, read from its text; a slip in a page is said, not hidden.
+  const own = $derived.by(() => {
+    if (shown?.kind !== "using" || shown.page === null || workspace.help.page === "") return null;
+    try {
+      return { doc: readUsing(workspace.help.page), slip: "" };
+    } catch (error) {
+      return { doc: null, slip: error instanceof Error ? error.message : String(error) };
+    }
+  });
+  const page = $derived(list === null && own === null ? workspace.help.page : "");
+  // Home, the index of functions, once the engine has given it.
+  const home = $derived(shown === null || shown.kind === "home" ? workspace.helpIndex : null);
+  const blank = $derived(list === null && own === null && page === "" && home === null);
   const doc = $derived(readPage(page));
   const sections = $derived(
-    list === null ? outlineOf(doc) : partsOf(list).map((part) => ({ ...part, entry: false })),
+    own !== null
+      ? own.doc === null
+        ? []
+        : headingsOf(own.doc).map((part) => ({ ...part, entry: false }))
+      : list === null
+        ? outlineOf(doc)
+        : partsOf(list).map((part) => ({ ...part, entry: false })),
   );
   const trail = $derived(trailOf(shown ?? HOME, workspace.helpIndex, workspace.helpCodes));
 
@@ -229,6 +249,12 @@
     <div class="page" bind:this={pane} onscroll={watch}>
       {#if list !== null}
         <ListPage {list} onopen={(to) => void workspace.showHelpStop(to)} />
+      {:else if own !== null}
+        {#if own.doc !== null}
+          <UsingPage doc={own.doc} onopen={(to) => void workspace.showHelpStop(to)} />
+        {:else}
+          <p class="quiet" data-testid="help-page">This page cannot be shown: {own.slip}.</p>
+        {/if}
       {:else if home !== null}
         <HomePage index={home} onopen={(to) => void workspace.showHelpStop(to)} />
       {:else if page === ""}

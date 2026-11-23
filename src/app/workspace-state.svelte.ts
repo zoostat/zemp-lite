@@ -29,6 +29,7 @@ import {
 } from "../help/history";
 import { once } from "../help/once";
 import { homesOf } from "../help/trail";
+import { usingText } from "../using/pages";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
@@ -1210,6 +1211,10 @@ export class Workspace {
     } else if (stop.kind === "code") {
       const page = await this.explain(stop.code).catch((error: Error) => error.message);
       shown = { title: stop.code, page, stop };
+    } else if (stop.kind === "using" && stop.page !== null) {
+      // A page of the app's own: its text, a file of the app fetched when the page is opened.
+      const page = await usingText(stop.page).catch(() => null);
+      shown = { title: called(stop), page: page ?? "", stop };
     }
     if (asked === this.#helpAsked) this.help = shown;
   }

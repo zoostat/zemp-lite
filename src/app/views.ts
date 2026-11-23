@@ -282,7 +282,12 @@ export function writeViews(state: ViewState): string {
 }
 
 /** The sections of the Topics pane, by their keys; a family of codes is `codes:` and its name. */
-export const TOPICS = { page: "page", packages: "packages", codes: "codes" } as const;
+export const TOPICS = {
+  page: "page",
+  packages: "packages",
+  codes: "codes",
+  using: "using",
+} as const;
 /** The key of a family of codes in the Topics pane. */
 export const familyTopic = (family: string) => `codes:${family}`;
 
