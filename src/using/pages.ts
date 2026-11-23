@@ -23,6 +23,36 @@ export const USING: UsingPage[] = [
     line: "Open the Scratch project, run a script, and read what each statement made.",
   },
   {
+    slug: "projects-scripts-and-files",
+    title: "Projects, scripts and files",
+    line: "A project is a folder of scripts and data kept in this browser: make one, fill it, and take it out as a zip.",
+  },
+  {
+    slug: "running-a-script",
+    title: "Running a script",
+    line: "Run the whole script, one statement, or a part of it, and see how the run went.",
+  },
+  {
+    slug: "the-notes",
+    title: "The notes beside each statement",
+    line: "Beside each statement a note says what it made; press one to see what the statement printed.",
+  },
+  {
+    slug: "sections-and-the-outline",
+    title: "Sections and the outline",
+    line: "A comment that begins with a hash makes a section; the Outline pane lists them, goes to them and runs them.",
+  },
+  {
+    slug: "the-data-place",
+    title: "The Data place",
+    line: "Look at the frames a run made: sort them, keep some rows, search them, and read about each variable.",
+  },
+  {
+    slug: "the-plots-place",
+    title: "The Plots place",
+    line: "See every plot of the last run, compare them side by side, and save one at the size a journal or a slide asks for.",
+  },
+  {
     slug: "finding-help",
     title: "Finding help",
     line: "Search by a name you know, browse the functions by package, or press F1 on a name in the script.",

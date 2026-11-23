@@ -1894,3 +1894,21 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Unit (`src/using/read.test.ts`, one test more). Browser, both engines (`tests/browser/help-using.spec.ts`, one test more and the two of the themes extended): no picture asked for with the app, Help and Home on the screen; opened, the page's picture arrives as it was taken (1,200 by 750) with its words; no wider than its column with the panes open, with them closed and at 1,000 pixels, its shape kept, nothing pushed sideways; the other page's picture fetched when that page is opened; on the page with its edge in both themes.
 
 **Reason.** #211, item 9: "a picture of the screen stands where a method has its example"; finding 7: a picture taken by hand goes stale with each release.
+
+## 24 November 2026: six pages more of Using Zemp Lite, and the test of the controls they name (release 0.2.3, step 9a)
+
+**The pages**, drafted from the app as it is (question 3), each short, in plain words, with its picture: **Projects, scripts and files**; **Running a script**; **The notes beside each statement**; **Sections and the outline**; **The Data place**; **The Plots place**. With Getting started first and Finding help last they are eight of the thirteen; the order in Topics is the order they are read. What each says was taken from the tests of the place it describes, which state in plain words what the app does, and from the screen itself.
+
+**Every control a page names is looked for on the screen** (`tests/browser/using-controls.spec.ts`; finding 7). A page names a control in bold, as the screen names it. The test reads each page from its file, takes the controls it names, brings the app to the screens that page speaks of (the screen of projects, a project with its panes and menus open, a run, the Data and Plots places, Help), and looks for each name among what the controls there are called: by a screen reader, in their own words, or on resting. A name is there whole, or as the words a longer name begins with ("Projects ▾"). A page with no screens in the test fails, so a new page cannot be added without them. A control that the app renames or drops now fails the page that names it, in both engines.
+
+**What the test found at once:** the page said every file's menu has **Move to…**; the main script's has not, since what Zeff opens by name keeps its name and place. The page now says so.
+
+**Corrected in Getting started:** the whole script is run by ⌘⇧↵; ⌘↵, with the cursor in the script, runs the statement at the cursor. The page said ⌘↵.
+
+**Left unnamed on purpose:** Stop (the Run button reads so only while a run goes) and the arrow that runs a section (shown when the pointer or the Tab key rests on the section) are described in words, not in bold: a name in bold is one the test can find standing on the screen.
+
+**The pictures:** eight now, each of its page's place as a reader comes to it (the Project pane; the commands that run; the notes with every output folded; the Outline pane; the Data place; the Plots place), 33 to 58 kB, 407 kB together, none in the first load; the first load's script is 218.1 kB compressed (217.4 kB at step 8b), the six entries of the list of pages.
+
+**Tested.** The controls of the eight pages on their screens (9 tests in both engines). The tests of step 8a and 8b now run over all eight pages: each opens from Topics set in type, with its picture arrived as taken, at 12.5 pixels and 4.5 to 1 in both themes. Unit: each page read, held to the list, its links and its picture.
+
+**Reason.** Finding 7 of the plan: a page that names a control is checked by a test to name one that is on the screen, so that the pages cannot fall behind the app unnoticed.

@@ -7,7 +7,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { Locator, Page } from "@playwright/test";
-import { expect, test } from "../../tests/browser/support";
+import { cursorTo, expect, test } from "../../tests/browser/support";
 
 /** The size every picture is taken at: the narrowest window the app is laid out for. */
 const SIZE = { width: 1200, height: 750 };
@@ -25,6 +25,10 @@ async function scratch(page: Page, press: Press): Promise<void> {
   await expect(page.getByRole("status")).toHaveText(READY);
 }
 
+const places = (page: Page) => page.getByRole("navigation", { name: "Places" });
+const bar = (page: Page, place: string) =>
+  page.getByRole("toolbar", { name: `${place}: its panes and its controls` });
+
 /** The scenes: the name of each picture, and how the app is brought to it. */
 const SCENES: Record<string, (page: Page, press: Press) => Promise<void>> = {
   // Getting started: the example run, a note beside each statement.
@@ -32,6 +36,52 @@ const SCENES: Record<string, (page: Page, press: Press) => Promise<void>> = {
     await scratch(page, press);
     await press(page.getByRole("button", { name: "Run", exact: true }));
     await expect(page.getByRole("status")).toHaveText("done");
+  },
+  // Projects, scripts and files: the Project pane, with the files of the Scratch project.
+  "the-project-pane": async (page, press) => {
+    await scratch(page, press);
+    await press(bar(page, "Script").getByRole("button", { name: "Project", exact: true }));
+    await expect(page.getByRole("region", { name: "Project" })).toBeVisible();
+  },
+  // Running a script: the commands that run, in the list of commands.
+  "the-ways-to-run": async (page, press) => {
+    await scratch(page, press);
+    await cursorTo(page, 10);
+    await page.keyboard.press("ControlOrMeta+k");
+    await page.getByRole("combobox", { name: "Type a command" }).fill("run");
+    await expect(page.getByRole("dialog", { name: "Commands" })).toBeVisible();
+  },
+  // The notes: a run, and every output folded, so that the notes alone are beside the script.
+  "the-notes": async (page, press) => {
+    await scratch(page, press);
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText("done");
+    await press(page.getByRole("button", { name: "Fold all", exact: true }));
+  },
+  // Sections and the outline: the Outline pane, listing the sections of the example.
+  "the-outline": async (page, press) => {
+    await scratch(page, press);
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText("done");
+    await press(page.getByRole("button", { name: "Fold all", exact: true }));
+    await press(bar(page, "Script").getByRole("button", { name: "Outline", exact: true }));
+    await expect(page.getByRole("region", { name: "Outline" })).toBeVisible();
+  },
+  // The Data place: the frames of the run, and a frame as a table.
+  "the-data-place": async (page, press) => {
+    await scratch(page, press);
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText("done");
+    await press(places(page).getByRole("button", { name: "Data" }));
+    await expect(page.getByRole("grid")).toBeVisible();
+  },
+  // The Plots place: the strip of the run's plots, one drawn large, and its facts.
+  "the-plots-place": async (page, press) => {
+    await scratch(page, press);
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText("done");
+    await press(places(page).getByRole("button", { name: "Plots" }));
+    await expect(page.getByRole("list", { name: "Plots of the last run" })).toBeVisible();
   },
   // Finding help: a name of R typed in the search field of Help.
   "search-in-help": async (page, press) => {

@@ -142,4 +142,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 8b `[engine]`.** Each page of Using Zemp Lite has a picture of the screen, made from the running app by a script (`npm run pictures`, `tools/pictures/`): 1,200 by 750, light theme, WebP, about 55 kB each, committed, fetched when its page is opened; the first load of the app does not carry them. A unit test holds the pages and the pictures to each other. Green here: the whole routine in both browsers, the display kept awake.
 
-**Next.** Step 9a `[function]`: six pages more of Using Zemp Lite, each with its picture, and the test that every control a page names is on the screen.
+**Done, step 9a `[function]`.** Six pages more, each with its picture: projects, scripts and files; running a script; the notes beside each statement; sections and the outline; the Data place; the Plots place (eight of the thirteen now). A new test looks for every control a page names in bold on the screens the page speaks of, in both browsers, so a page that falls behind the app fails; it found at once that the main script's menu has no **Move to…**. Getting started corrected: ⌘⇧↵ runs the whole script. Green here: the whole routine in both browsers.
+
+**Next.** Step 9b `[function]`: the last five pages (commands with ⌘K; keyboard shortcuts; exporting and opening a project; where the work is kept; reporting a problem), and the owner's reading of the thirteen.

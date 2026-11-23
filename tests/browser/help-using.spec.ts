@@ -36,6 +36,18 @@ const reads = async (page: Page) =>
     .map((text) => text.replace(/\s+/g, " ").trim())
     .join(" ");
 
+/** The pages there are, in the order they are read. */
+const PAGES = [
+  "Getting started",
+  "Projects, scripts and files",
+  "Running a script",
+  "The notes beside each statement",
+  "Sections and the outline",
+  "The Data place",
+  "The Plots place",
+  "Finding help",
+];
+
 /** The words of a text, without the marks of the page's file, or its pictures' own words. */
 const wordsOf = (text: string) =>
   text
@@ -57,8 +69,8 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
     topics(page)
       .getByRole("heading", { level: 3 })
       .getByRole("button", { name: /Using Zemp Lite/ }),
-  ).toHaveText(/^▾\s*Using Zemp Lite\s*2$/);
-  await expect(using(page).getByRole("button")).toHaveText(["Getting started", "Finding help"]);
+  ).toHaveText(new RegExp(`^▾\\s*Using Zemp Lite\\s*${PAGES.length}$`));
+  await expect(using(page).getByRole("button")).toHaveText(PAGES);
   await press(using(page).getByRole("button", { name: "Getting started" }));
   await expect(title(page)).toHaveText("Getting started");
   await expect.poll(() => reads(page)).toBe("Help › Using Zemp Lite › Getting started");
@@ -85,7 +97,7 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
     "Plots",
     "Help",
   ]);
-  await expect(shown(page).locator("kbd")).toHaveText(["⌘↵", "Ctrl ↵"]);
+  await expect(shown(page).locator("kbd")).toHaveText(["⌘⇧↵", "Ctrl ⇧ ↵"]);
   await expect(shown(page).locator("code")).toHaveText(["edited · not run", "stale"]);
   // Every letter of the page is its file's, in its order, and nothing more (the spaces apart,
   // which the marks of the file and the type of the page set differently).
@@ -96,7 +108,7 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
     topics(page).getByRole("list", { name: "On this page" }).getByRole("button"),
   ).toHaveText(["Run the example", "The four places", "Change something", "Where to go next"]);
   const beside = topics(page).getByRole("list", { name: "The pages of Using Zemp Lite" });
-  await expect(beside.getByRole("button")).toHaveText(["Getting started", "Finding help"]);
+  await expect(beside.getByRole("button")).toHaveText(PAGES);
   await expect(beside.locator('[aria-current="page"]')).toHaveText("Getting started");
 });
 
@@ -166,11 +178,14 @@ test("the pages are found by search and by the trail, and listed on a page of th
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Using Zemp Lite");
   await expect(
     shown(page).getByRole("list", { name: "Facts of Using Zemp Lite" }).getByRole("listitem"),
-  ).toHaveText(["2 pages", "on the app itself, in Zemp's own words"]);
-  await expect(shown(page).getByRole("row")).toHaveText([
+  ).toHaveText([`${PAGES.length} pages`, "on the app itself, in Zemp's own words"]);
+  // Each page with its one line, in the order they are read.
+  const rows = shown(page).getByRole("row");
+  await expect(rows.getByRole("button")).toHaveText(PAGES);
+  await expect(rows.first()).toHaveText(
     /^Getting started\s*Open the Scratch project, run a script/,
-    /^Finding help\s*Search by a name you know/,
-  ]);
+  );
+  await expect(rows.last()).toHaveText(/^Finding help\s*Search by a name you know/);
   await press(shown(page).getByRole("button", { name: "Getting started" }));
   await expect(title(page)).toHaveText("Getting started");
   await press(trail(page).getByRole("button", { name: "Help", exact: true }));
@@ -276,7 +291,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.setViewportSize({ width: 1200, height: 760 });
     await scratch(page, press);
     if (theme === "dark") await press(page.getByRole("switch", { name: "Dark" }));
-    for (const name of ["Getting started", "Finding help"]) {
+    for (const name of PAGES) {
       if ((await topics(page).getByRole("button", { name: "All topics" }).count()) > 0) {
         await press(topics(page).getByRole("button", { name: "All topics" }));
       }
