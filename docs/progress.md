@@ -150,4 +150,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 9c `[function]`.** The copy of the specification brought to Zeff 58c3c2d, and Help laid out as the owner asked (#211, item 13): the right pane is **On this page**; **Related functions** is gone, See also keeping its links; Topics holds a page's neighbours and no sections; the search field is at the right end of the bar; the trail begins under Home, without the word Help, and Home has none. A reader's old choices of the two panes are carried over. Every picture made again. Green here: the whole routine in both browsers.
 
-**Next.** Step 9d `[engine]`: the pages Zemp keeps held to the engine (#211, item 12); then step 9e, the owner's reading of the thirteen pages.
+**Done, step 9d `[engine]`.** The owner's standing rule (#211, item 12) has its check: every piece of code in the thirteen pages is held to the engine or to the running app (`src/using/held.ts`): a name of the engine's is looked for in its index; what a page says the search finds is searched for; a command is read from ⌘K; what a page quotes from the screen is made in the app and read there, in both browsers. A piece held in no way fails the build. Green here: the whole routine in both browsers.
+
+**Next.** Step 9e `[function]`: the owner reads the thirteen pages of Using Zemp Lite, in the app, and they are changed on his word. **This step waits for the owner.**

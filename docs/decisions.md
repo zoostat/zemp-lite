@@ -1958,3 +1958,23 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Unit: the trail of each kind of page without the word, and none on Home (12 tests); the view state, both old choices carried and the old keys gone when written back. Browser, both engines: the sections at the right, marked and gone to, on a function's page, a code's and a page of the app's own; "This page has no sections." on Home, a package's page, the codes and a name the engine has no page for; no pane, link or command called Related functions, and See also still a list of links, each opening its page; Topics beside a page with its neighbours and nothing of the page's sections; the trail beginning with its first step, never with Help, and absent on Home; the bar's order on Home, on a page, at 1,000 pixels and with the right pane closed; a project of 0.2.2 opening with its choices kept. The older tests of the outline, of the related functions and of the trail were rewritten to the new places; none was dropped but the one of the pane that is gone.
 
 **Reason.** The owner's decision of 24 November 2026, #211, item 13.
+
+## 24 November 2026: the pages Zemp keeps, held to the engine and to the app (release 0.2.3, step 9d)
+
+**The rule** (#211, item 12; the owner, 24 November 2026: "you must update the help pages (including codes and figures) as per the zeff engine"): at every release the pages Zemp keeps agree with the engine the release carries; the build fails where they do not. In force from this release.
+
+**Choice.** A page of Using Zemp Lite gives code between backticks, and every such piece is held in one of five ways; a piece held in none fails the build, so nothing can be written into a page that no test reads (`src/using/held.ts` lists the pieces by page; the two tests go through every page).
+
+1. _A name of the engine's_ (a function, a package, a dataset, a code) needs no entry: it is looked for in the index of the engine the worker carries, under that name. A link to the engine's page (`help:`, `package:`, `code:`) is held the same way.
+2. _What a page says the search finds_ ("`lm` and `reghdfe` both find `reg`"): searched for on that engine's own index, and the function found.
+3. _A command of ⌘K_: read from the list of commands in the running app, by its name, or by the words it begins with (`Open file:`).
+4. _What a page quotes from the screen_ (what a note says, `wages Frame · 15,571 × 13`; how a result stands to the script, `edited · not run`, `stale`, `not run`, `failed`, `running…`, `waiting`; the file `zeff.toml`; a section's comment; `saved`): each has a scene, which the browser's test makes in the app, in both engines, and the piece is read among the words the window shows. Where the piece is what the reader types (a condition of the Data place, `year == 2012`; `run` in the list of commands; a subsection's comment), the scene types it and looks at what the engine and the app answer: the rows kept and their count, the commands listed, the subsection in the Outline pane.
+5. _A word of the command line or of a project's files_ which the app has no screen to show (`zeff run`, `zeff help`): listed with why, and read by a person when the engine changes.
+
+**The pictures** are the third part of the rule: made again from the running app of each release, by `npm run pictures`, in the pre-release routine (step 11).
+
+**What it does not reach.** A sentence of prose that says what the app does, with no code and no control named in it, is held by no test; it is read against the app at each release, and the owner reads the thirteen at step 9e. The controls a page names in bold are held by the test of step 9a.
+
+**Tested.** Unit, on the engine as the worker carries it (`src/using/engine.node.test.ts`, 4 tests): the links of every page; every piece of code of every page held; nothing listed that a page no longer gives; the four things the search is said to find. Browser, both engines (`tests/browser/using-engine.spec.ts`, 12 tests): the ten scenes, each with the pieces the pages quote from it, and none made for nothing; the commands the pages name (twenty-one namings, nineteen commands), each in the list.
+
+**Reason.** #211, item 12: no release ships a page that the engine it carries would contradict.
