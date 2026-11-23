@@ -1706,3 +1706,29 @@ The rules are generous on purpose: a name too many is a match low in a list, a n
 **Tested.** Five browser tests in both engines (`tests/browser/help-history.spec.ts`): Home lit, the buttons greyed at either end and saying where they go; a page from the field, from a link of the right pane, from F1 and from **Explain**'s code; the branch dropped and a page not doubled; the place kept when one leaves Help and returns; ⌘[ and ⌘] with the cursor in the field, each kept from the browser, more presses than pages; the three buttons from the keyboard alone (Safari gives a button the Tab key with Option held); the side buttons as events in both engines and, in Chromium, as the mouse sends them, the address unchanged. Not kept: where a page was scrolled to when one goes back to it; it opens at its top.
 
 **Reason.** #211, part 3: a help system is read by jumping, so Back and Forward go through the reader's own path, and nothing a reader does in Help takes them out of the app.
+
+## 23 November 2026: the trail of the Help place, and the pages its steps open (release 0.2.3, step 3b)
+
+**Choice.** A trail stands in the bar of the Help place, where the page's name stood, after **Home**: where the page is, each step before the last a link, the last the page itself (`src/help/trail.ts`, worked out from the index of the help and the codes by family, both the engine's):
+
+- a function: _Help › Packages › stats › t_test_; a name two packages have names both, side by side, each a link (_Help › Packages › data · results › summary_); a shipped dataset stands under `datasets`;
+- a package: _Help › Packages › stats_;
+- a code: _Help › Errors and warnings › Z01xx › Z0101_, the family by its pattern as the engine names it, which is short and exact, with what the family is of on the page it opens;
+- a name the index does not know (a function of a later release, a name mistyped): _Help › a_learning_, over what the engine says of it;
+- Home: _Help_ alone.
+
+**Help** and **Packages** both open Home: in this stage Home is the index of functions by package, so it is the page of the packages too; at stage 2 of #211, when Home becomes the index of methods, **Packages** needs a page of its own. A name of the engine's (a package, a function, a family, a code) is set in the code's type, the words in the app's.
+
+**A package's page** is set from the index of step 2 for every package alike (`src/help/pages.ts`, `src/help/ListPage.svelte`), as #211, item 7, draws it without the two parts that wait for the engine (a package's one line, and the methods that use it): the package's name; "package · tier 1" and "14 functions in Zeff 0.8.0"; its functions in the engine's order, each a link with its one line; under `datasets`, the four shipped datasets after its two functions, under the heading **Datasets**. It is a place of the history apart from the function of the same name: `plot`, `text` and `datasets` typed in the field open the function, as `zeff help` does, and the function's trail has its package one step back; a name that is a package's alone (`stats`, `regress`) opens the package. The engine's print of a package (`zeff help stats`) is no longer shown; the seven it prints are held to the same names and one lines in the same order by a test.
+
+**The codes by family** are a page, **Errors and warnings**: every family the engine lists (12, with 144 codes at 0.8.0), its pattern and what it is of as a heading, each code a link with its title; the Outline pane lists the families. A family's step of a trail opens the page at that family's heading; it is one page, shown from different places, and each place is a stop of the history. The worker's message `codes`, there since 0.2.1 and unused, is now asked for with the index and kept (`Workspace.helpCodes`).
+
+**A page and its trail come together.** The page shown is kept with the stop it is of (`Workspace.help.stop`), set when the page has been read, so that a trail never stands over the page before it. The index and the codes are asked for before the first page is shown.
+
+**Known.** A function of the project's own with the name of a package that has no function of that name (`fn regress`) opens the package's page from F1, not its own; none of the samples has one, and it is left until a reader meets it. In a window narrower than the 1,200 pixels the app is laid out for, the field gives way first and then the page's own name, cut at its end.
+
+**Words that are Zemp's.** "Packages", "Errors and warnings", "Datasets", "package", and the counts ("14 functions in Zeff 0.8.0", "144 codes", "12 families"): labels of the place, as "Outline" and "Related functions" are. Every name, one line, family and title is the engine's.
+
+**Tested.** Unit: the trail of each kind of page, a name of two packages, a package and the function of its name, a dataset, an unknown name, a code with and without its family; the two lists (11 tests, `src/help/trail.test.ts`). The worker's `codes` under Node. Browser, both engines (`tests/browser/help-trail.spec.ts`, 5 tests): each step of a trail opens its page and goes into the history; the pages of `stats`, `results` and `regress` row for row what the released `zeff help` prints; `plot` the function and `plot` the package; `datasets` with its datasets; the 12 families and 144 codes, a family's step at its heading; the bar at 1,200 and 1,000 pixels; 12.5 pixels and 4.5 to 1 in both themes; the keyboard alone.
+
+**Reason.** #211, part 3 and item 7; and step 2's finding that three packages have no page the engine prints.

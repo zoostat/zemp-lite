@@ -10,6 +10,7 @@ import type {
   View,
   Checked,
   ExplainedPage,
+  CodeFamily,
   FromWorker,
   HelpIndex,
   Needs,
@@ -295,6 +296,11 @@ export class Engine {
   async helpIndex(): Promise<HelpIndex> {
     const found = expect(await this.#ask({ type: "helpIndex" }), "helpIndex");
     return { engine: found.engine, packages: found.packages, datasets: found.datasets };
+  }
+
+  /** Every code with an explained page, by family, as `zeff explain` lists them. It needs no project. */
+  async codes(): Promise<CodeFamily[]> {
+    return expect(await this.#ask({ type: "codes" }), "codes").families;
   }
 
   /** A code's explained page, as `zeff explain` gives it. It needs no project. */

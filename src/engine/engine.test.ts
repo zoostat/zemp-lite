@@ -421,6 +421,24 @@ describe("the index of the help", () => {
   });
 });
 
+describe("the codes by family", () => {
+  it("are asked for, and given as the engine lists them", async () => {
+    const { engine: made, worker } = await opened();
+    const asked = made.codes();
+    await settle();
+    expect(worker.last).toMatchObject({ type: "codes" });
+    const families = [
+      {
+        name: "Z01xx",
+        area: "Names: variables, bindings, functions, packages",
+        codes: [{ code: "Z0101", kind: "error", title: "no such name" }],
+      },
+    ];
+    worker.answer({ type: "codes", families });
+    expect(await asked).toEqual(families);
+  });
+});
+
 describe("rows of a frame", () => {
   const page = {
     name: "pay",

@@ -6,10 +6,19 @@
 
 /**
  * A page of the Help place: Home, where Help starts; what `zeff help <name>` prints for a
- * name (a function's page, a dataset's, a package's list); or a code's explained page.
+ * name (a function's page or a dataset's); a package's page, its functions listed from the
+ * index of the help; the codes by family, shown from one family where one is named; or a
+ * code's explained page.
  */
 export type Stop =
-  { kind: "home" } | { kind: "name"; name: string } | { kind: "code"; code: string };
+  | { kind: "home" }
+  | { kind: "name"; name: string }
+  | { kind: "package"; name: string }
+  | { kind: "codes"; family: string | null }
+  | { kind: "code"; code: string };
+
+/** What the page of the codes by family is called, in the trail and on its buttons. */
+export const CODES = "Errors and warnings";
 
 /** The pages opened, oldest first, and the one shown; `at` is -1 before any is opened. */
 export interface History {
@@ -29,9 +38,18 @@ export function begun(): History {
 
 /** Whether two stops are the same page. */
 export function same(a: Stop, b: Stop): boolean {
-  if (a.kind === "home" || b.kind === "home") return a.kind === b.kind;
-  if (a.kind === "name") return b.kind === "name" && a.name === b.name;
-  return b.kind === "code" && a.code === b.code;
+  switch (a.kind) {
+    case "home":
+      return b.kind === "home";
+    case "name":
+      return b.kind === "name" && a.name === b.name;
+    case "package":
+      return b.kind === "package" && a.name === b.name;
+    case "codes":
+      return b.kind === "codes" && a.family === b.family;
+    case "code":
+      return b.kind === "code" && a.code === b.code;
+  }
 }
 
 /** The page shown, or none before any is opened. */
@@ -70,8 +88,17 @@ export function forward(history: History): History {
   return after(history) === null ? history : { stops: history.stops, at: history.at + 1 };
 }
 
-/** What a stop is called, for a button that goes to it: `Home`, a name, or a code. */
+/** What a stop is called, for a button that goes to it: `Home`, a name, a family, or a code. */
 export function called(stop: Stop): string {
-  if (stop.kind === "home") return "Home";
-  return stop.kind === "name" ? stop.name : stop.code;
+  switch (stop.kind) {
+    case "home":
+      return "Home";
+    case "name":
+    case "package":
+      return stop.name;
+    case "codes":
+      return stop.family ?? CODES;
+    case "code":
+      return stop.code;
+  }
 }

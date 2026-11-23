@@ -5,6 +5,7 @@ import type { Engine } from "../engine/engine";
 import { Language, type Diagnostic, type Range } from "../engine/language";
 import type {
   Checked,
+  CodeFamily,
   FrameInfo,
   HelpIndex,
   Outcome,
@@ -19,6 +20,7 @@ import {
   back,
   before,
   begun,
+  called,
   forward,
   here,
   opened,
@@ -26,6 +28,7 @@ import {
   type Stop,
 } from "../help/history";
 import { once } from "../help/once";
+import { homesOf } from "../help/trail";
 import { ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
@@ -172,7 +175,11 @@ export class Workspace {
    * The page the Help place shows (#74, #203): a function's as `zeff help` prints it, or a
    * code's as `zeff explain` does, with the name it is known by; none until one is asked for.
    */
-  help = $state<{ title: string; page: string }>({ title: "", page: "" });
+  help = $state<{ title: string; page: string; stop: Stop | null }>({
+    title: "",
+    page: "",
+    stop: null,
+  });
   /**
    * The pages of Help this reader opened, and the one shown (#211, part 3; `help/history.ts`):
    * what **Back** and **Forward** go through. It lasts as long as the window.
@@ -185,6 +192,8 @@ export class Workspace {
    * their functions, and the shipped datasets; none until the Help place is first shown.
    */
   helpIndex = $state<HelpIndex | null>(null);
+  /** The codes by family, as the engine lists them; none until the Help place is first shown. */
+  helpCodes = $state<CodeFamily[] | null>(null);
   /** What floats over the window about the last run: its facts, or what it said. */
   panel = $state<"facts" | "said" | null>(null);
   /** A line to be brought into view, with the cursor on it (`goTo`). */
@@ -1121,9 +1130,24 @@ export class Workspace {
     return this.engine.help(name);
   }
 
-  /** Open the Help place on a function's page (F1 in the script, a related function, the field). */
+  /**
+   * Open the Help place on the page of a name (F1 in the script, a related function, the
+   * field): a function's or a dataset's page, as `zeff help` looks for a function first; a
+   * package's page where the name is a package's and no function's; otherwise what the engine
+   * says of the name.
+   */
   async showHelp(name: string): Promise<void> {
-    await this.#openStop({ kind: "name", name });
+    const index = await this.indexHelp();
+    const packaged =
+      index !== null &&
+      homesOf(index, name).length === 0 &&
+      index.packages.some((one) => one.name === name);
+    await this.#openStop(packaged ? { kind: "package", name } : { kind: "name", name });
+  }
+
+  /** Open the Help place on a page of its own: a step of the trail, a row of a list. */
+  async showHelpStop(stop: Stop): Promise<void> {
+    await this.#openStop(stop);
   }
 
   /** Open the Help place on a code's explained page (Explain, in what a run said). */
@@ -1160,19 +1184,23 @@ export class Workspace {
   }
 
   /**
-   * Put a page of the history on the screen: Home, or the engine's page read afresh (a page
-   * of the project's own function follows its script). Where another page was asked for
-   * while this one was read, the later one stands.
+   * Put a page of the history on the screen: Home; the engine's page read afresh (a page of
+   * the project's own function follows its script); or a list set from the index and the
+   * codes, which are asked for first, so that a page and its trail come together. Where
+   * another page was asked for while this one was read, the later one stands.
    */
   async #showStop(stop: Stop): Promise<void> {
     const asked = ++this.#helpAsked;
-    let shown = { title: "", page: "" };
-    if (stop.kind === "name") {
+    await this.indexHelp();
+    let shown = { title: called(stop), page: "", stop };
+    if (stop.kind === "home") {
+      shown = { title: "", page: "", stop };
+    } else if (stop.kind === "name") {
       const found = await this.helpPage(stop.name);
-      shown = { title: stop.name, page: found.page ?? found.message };
+      shown = { title: stop.name, page: found.page ?? found.message, stop };
     } else if (stop.kind === "code") {
       const page = await this.explain(stop.code).catch((error: Error) => error.message);
-      shown = { title: stop.code, page };
+      shown = { title: stop.code, page, stop };
     }
     if (asked === this.#helpAsked) this.help = shown;
   }
@@ -1181,17 +1209,23 @@ export class Workspace {
   openHelp(): void {
     Object.assign(this.views, withTab(this.views, HELP));
     this.#keep();
-    if (here(this.helpHistory) === null) this.helpHistory = opened(this.helpHistory, HELP_HOME);
+    if (here(this.helpHistory) === null) {
+      this.helpHistory = opened(this.helpHistory, HELP_HOME);
+      this.help = { title: "", page: "", stop: HELP_HOME };
+    }
     void this.indexHelp();
   }
 
   /**
-   * The index of the help, asked of the worker the first time it is wanted and kept; null
-   * where the worker cannot give it, and then the Help place works on without it.
+   * The index of the help and the codes by family, asked of the worker the first time they
+   * are wanted and kept; the index is null where the worker cannot give it, and then the
+   * Help place works on without it.
    */
   async indexHelp(): Promise<HelpIndex | null> {
     try {
-      this.helpIndex = await this.#indexed();
+      const [index, codes] = await Promise.all([this.#indexed(), this.#coded()]);
+      this.helpIndex = index;
+      this.helpCodes = codes;
     } catch {
       // The worker is not there: the next call asks again.
     }
@@ -1199,6 +1233,9 @@ export class Workspace {
   }
   readonly #indexed = once(() =>
     this.language !== null ? this.language.helpIndex() : this.engine.helpIndex(),
+  );
+  readonly #coded = once(() =>
+    this.language !== null ? this.language.codes() : this.engine.codes(),
   );
 
   /**

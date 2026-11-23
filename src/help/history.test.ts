@@ -70,6 +70,24 @@ describe("the history of the Help place", () => {
     expect(opened(gone, name("reg"))).toBe(gone);
   });
 
+  it("tells a package from the function of its name, and one family of codes from another", () => {
+    const plot: Stop = { kind: "package", name: "plot" };
+    expect(same(plot, name("plot"))).toBe(false);
+    expect(same(plot, { kind: "package", name: "plot" })).toBe(true);
+    expect(same(plot, { kind: "package", name: "stats" })).toBe(false);
+    const all: Stop = { kind: "codes", family: null };
+    const names: Stop = { kind: "codes", family: "Z01xx" };
+    expect(same(all, { kind: "codes", family: null })).toBe(true);
+    expect(same(all, names)).toBe(false);
+    expect(same(names, { kind: "codes", family: "Z01xx" })).toBe(true);
+    expect(same(names, code("Z0101"))).toBe(false);
+    // The function and then its package are two pages of the history.
+    expect(through(name("plot"), plot).stops).toHaveLength(2);
+    expect(called(plot)).toBe("plot");
+    expect(called(all)).toBe("Errors and warnings");
+    expect(called(names)).toBe("Z01xx");
+  });
+
   it("tells a name from a code of the same letters, and Home from both", () => {
     expect(same(name("W0201"), code("W0201"))).toBe(false);
     expect(same(code("W0201"), code("W0201"))).toBe(true);

@@ -428,7 +428,7 @@ test("a help page stays inside its place and never under 12.5 pixels, at every c
   expect((await sizes()).sideways).toBe(0);
 });
 
-test("a page the reader does not know, a package's list, is shown as the engine prints it", async ({
+test("a package's page is set from the engine's list, and a line the reader does not know is shown as printed", async ({
   page,
   press,
 }) => {
@@ -437,12 +437,18 @@ test("a page the reader does not know, a package's list, is shown as the engine 
   const field = bar(page).getByRole("searchbox", {
     name: "Open the page of a function or a code",
   });
+  // A package's page: its functions with their one lines, the engine's words in its order
+  // (`help-trail.spec.ts` holds every row to what `zeff help regress` prints).
   await field.fill("regress");
   await field.press("Enter");
   await expect(page.getByTestId("help-title")).toHaveText("regress");
-  const formatted = page.locator('pre[data-testid="help-page"]');
-  await expect(formatted).toContainText("regress · tier 2 · 10 of 10 functions in this release");
-  await expect(formatted).toContainText("  reg           Linear regression by least squares");
+  const formatted = page.getByTestId("help-page");
+  await expect(formatted.getByRole("heading", { level: 3 })).toHaveText("regress");
+  await expect(formatted).toContainText("package · tier 2");
+  await expect(formatted).toContainText("10 functions in Zeff 0.8.0");
+  await expect(formatted.getByRole("row").first()).toHaveText(
+    /^reg\s*Linear regression by least squares, with fixed effects$/,
+  );
   // A function that arrives with a later release has a line, and no page: the line is shown.
   await field.fill("a_learning");
   await field.press("Enter");

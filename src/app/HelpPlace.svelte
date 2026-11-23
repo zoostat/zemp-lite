@@ -13,19 +13,40 @@
   // **Forward** go through them, **Home** returns to where Help starts and is lit while one is
   // there. ⌘[ and ⌘] (Ctrl on other keyboards) and the mouse's two side buttons do as Back
   // and Forward while this place is shown; the browser, whose own Back and Forward they are,
-  // is not given them here, so that reading Help never leaves the app.
+  // is not given them here, so that reading Help never leaves the app. Beside them the trail
+  // says where the page stands, each step before the last a link (`help/trail.ts`): _Help ›
+  // Packages › stats › t_test_. A package's page and the codes by family are lists set from
+  // the engine's index (`help/pages.ts`, `help/ListPage.svelte`), so that every step of a
+  // trail has a page to open.
   import HelpPage from "../help/HelpPage.svelte";
-  import { after, before, called, here } from "../help/history";
+  import { tick } from "svelte";
+  import { HOME, after, before, called, here } from "../help/history";
+  import ListPage from "../help/ListPage.svelte";
+  import { codesPage, packagePage, partsOf } from "../help/pages";
   import { outlineOf, readPage, relatedOf } from "../help/read";
+  import { trailOf } from "../help/trail";
   import { paneOf } from "./panes";
   import Place from "./Place.svelte";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
 
-  const page = $derived(workspace.help.page);
+  // The page shown: a list (a package's functions, the codes by family), or the engine's print.
+  const shown = $derived(workspace.help.stop);
+  const list = $derived(
+    shown?.kind === "package"
+      ? packagePage(workspace.helpIndex, shown.name)
+      : shown?.kind === "codes"
+        ? codesPage(workspace.helpCodes)
+        : null,
+  );
+  const page = $derived(list === null ? workspace.help.page : "");
+  const blank = $derived(list === null && page === "");
   const doc = $derived(readPage(page));
-  const sections = $derived(outlineOf(doc));
+  const sections = $derived(
+    list === null ? outlineOf(doc) : partsOf(list).map((part) => ({ ...part, entry: false })),
+  );
+  const trail = $derived(trailOf(shown ?? HOME, workspace.helpIndex, workspace.helpCodes));
 
   // The related functions, each with the first line of its own page, asked of the engine.
   const related = $derived(relatedOf(doc));
@@ -58,11 +79,17 @@
     }
     inView = found;
   }
-  // A new page is read from its top.
+  // A new page is read from its top; the codes opened at a family, from that family's heading.
   $effect(() => {
-    void page;
+    const now = workspace.help.stop;
     if (pane !== null) pane.scrollTop = 0;
     inView = null;
+    const family = now?.kind === "codes" ? now.family : null;
+    if (family === null) return;
+    void tick().then(() => {
+      const line = list?.groups.findIndex((group) => group.key === family) ?? -1;
+      if (line >= 0) goTo(line);
+    });
   });
   function goTo(line: number): void {
     const part = pane?.querySelector<HTMLElement>(`[data-line="${line}"]`);
@@ -108,7 +135,7 @@
 {#snippet outline()}
   {#if sections.length === 0}
     <p class="none">
-      {page === "" ? "No page is open." : "This page has no sections."}
+      {blank ? "No page is open." : "This page has no sections."}
     </p>
   {:else}
     <ul class="outline">
@@ -128,7 +155,7 @@
 {#snippet relatedFunctions()}
   {#if related.length === 0}
     <p class="none">
-      {page === "" ? "No page is open." : "This page names no related function."}
+      {blank ? "No page is open." : "This page names no related function."}
     </p>
   {:else}
     <ul class="related">
@@ -180,9 +207,26 @@
       <span>Home</span>
     </button>
   </div>
-  <h2 class="mono" data-testid="help-title">
-    {workspace.help.title === "" ? "Help" : workspace.help.title}
-  </h2>
+  <nav class="trail" aria-label="Where this page stands">
+    <ol>
+      {#each trail as step, at (at)}
+        <li class:last={step.to === null}>
+          {#if at > 0}<span class="then" aria-hidden="true">{step.beside ? "·" : "›"}</span>{/if}
+          {#if step.to !== null}
+            <button
+              class:mono={step.name}
+              onclick={() => step.to !== null && void workspace.showHelpStop(step.to)}
+              >{step.label}</button
+            >
+          {:else}
+            <span class="here" class:mono={step.name} aria-current="page" data-testid="help-title"
+              >{step.label}</span
+            >
+          {/if}
+        </li>
+      {/each}
+    </ol>
+  </nav>
   <span class="gap"></span>
   <form onsubmit={open}>
     <input
@@ -207,7 +251,9 @@
     bar={controls}
   >
     <div class="page" bind:this={pane} onscroll={watch}>
-      {#if page === ""}
+      {#if list !== null}
+        <ListPage {list} onopen={(to) => void workspace.showHelpStop(to)} />
+      {:else if page === ""}
         <p class="quiet">
           Press F1 on a function's name in the script, press Explain on what a run said, or type a
           name in the field above, to read the engine's page here.
@@ -235,10 +281,61 @@
     min-height: 0;
     min-width: 0;
   }
-  h2 {
+  /* The trail: one line, the steps before the last links; a long one is cut at its end. */
+  .trail {
+    flex: 0 1 auto;
     font-size: 13.5px;
-    font-weight: 500;
+    min-width: 0;
+  }
+  .trail ol {
+    align-items: center;
+    display: flex;
+    list-style: none;
     margin: 0;
+    overflow: hidden;
+    padding: 0;
+    white-space: nowrap;
+  }
+  .trail li {
+    align-items: center;
+    display: flex;
+    flex: none;
+  }
+  .trail li.last {
+    flex: 0 1 auto;
+    min-width: 3.5em;
+  }
+  .trail .then {
+    color: var(--ink-3);
+    padding: 0 6px;
+  }
+  .trail button {
+    background: none;
+    border: 0;
+    border-radius: 5px;
+    color: var(--accent);
+    cursor: pointer;
+    display: inline;
+    font: inherit;
+    padding: 1px 3px;
+    width: auto;
+  }
+  .trail button.mono,
+  .trail .here.mono {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  .trail button:hover {
+    text-decoration: underline;
+  }
+  .trail button:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+  .trail .here {
+    color: var(--ink);
+    font-weight: 600;
+    overflow: hidden;
+    padding: 1px 3px;
+    text-overflow: ellipsis;
   }
   .nav {
     align-items: center;
@@ -299,10 +396,13 @@
   .gap {
     flex: 1;
   }
+  /* The field gives way before the trail does, down to a width a name can still be typed in. */
   form {
     align-items: center;
     display: flex;
+    flex: 0 1 auto;
     gap: 6px;
+    min-width: 0;
   }
   input {
     background: var(--soft);
@@ -311,6 +411,8 @@
     color: var(--ink);
     font: inherit;
     font-size: 13px;
+    flex: 0 1 230px;
+    min-width: 120px;
     padding: 4px 9px;
     width: 230px;
   }

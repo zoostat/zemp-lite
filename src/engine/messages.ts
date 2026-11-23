@@ -74,6 +74,15 @@ export interface ExplainedPage {
   text: string;
 }
 
+/** The codes of one family, as `zeff explain` lists them: its pattern, what it is of, its codes. */
+export interface CodeFamily {
+  /** The family's pattern, as `Z01xx`. */
+  name: string;
+  /** What the family is of, in the engine's words: "Names: variables, bindings, …". */
+  area: string;
+  codes: { code: string; kind: string; title: string }[];
+}
+
 /**
  * A name of R or of Stata that a function answers to for a reader coming from either: what is
  * typed (`feols`), how the engine's page or catalogue writes it (`fixest::feols()`), and
@@ -223,6 +232,7 @@ export type Request =
   | { type: "language"; body: string }
   | { type: "help"; name: string }
   | { type: "helpIndex" }
+  | { type: "codes" }
   | {
       type: "rows";
       name: string;
@@ -271,6 +281,7 @@ export type Reply =
   | { type: "language"; messages: string[] }
   | { type: "help"; page: string | null; message: string }
   | ({ type: "helpIndex" } & HelpIndex)
+  | { type: "codes"; families: CodeFamily[] }
   | ({ type: "rows" } & Omit<Rows, "filter">)
   | ({ type: "filter" } & Filtered)
   | { type: "vars"; printed: string; said: string }

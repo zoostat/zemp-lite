@@ -8,7 +8,7 @@
 import type { Project } from "../project/projects";
 import { Session } from "../project/session";
 import type { Engine } from "./engine";
-import type { HelpIndex } from "./messages";
+import type { CodeFamily, HelpIndex } from "./messages";
 
 /** A place in a document, as the protocol has it: lines and UTF-16 columns from 0. */
 export interface Position {
@@ -142,6 +142,12 @@ export class Language {
   async helpIndex(): Promise<HelpIndex> {
     await this.start();
     return this.#engine.helpIndex();
+  }
+
+  /** The codes by family, from the language worker. */
+  async codes(): Promise<CodeFamily[]> {
+    await this.start();
+    return this.#engine.codes();
   }
 
   /** A code's explained page, from the language worker. */

@@ -102,4 +102,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 3a `[engine]`.** The Help place has **Back**, **Forward** and **Home** at its head: the pages opened are a history, as a browser's (`src/help/history.ts`); Home is lit while one is there, the arrows greyed at either end and saying where they go; ⌘[ and ⌘] and the mouse's side buttons do the same while Help is shown and are kept from the browser, so Help never leaves the app. Home shows the old sentence until step 4. Green here: the whole routine in both browsers.
 
-**Next.** Step 3b `[function]`: the trail, and the pages its steps open.
+**Done, step 3b `[function]`.** A trail in the Help place's bar says where a page stands, each step a link: _Help › Packages › stats › t_test_, _Help › Errors and warnings › Z01xx › Z0101_ (`src/help/trail.ts`). A package has a page of its own, its functions with their one lines from the index, for every package alike and apart from the function of its name; the codes by family are a page, **Errors and warnings** (`src/help/pages.ts`). Green here: the whole routine in both browsers.
+
+**Next.** Step 4 `[function]`: Home, the Index of functions.

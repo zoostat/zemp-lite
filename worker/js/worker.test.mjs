@@ -264,6 +264,26 @@ test("the index of the help is given without a project: the packages, their func
   );
 });
 
+test("the codes with an explained page are given by family, without a project", async (t) => {
+  const { worker, next } = started(t, 0);
+  await next("ready");
+  worker.postMessage({ type: "codes", id: 7 });
+  const codes = await next("codes");
+  assert.equal(codes.id, 7);
+  assert.equal(codes.families.length, 12);
+  assert.deepEqual(codes.families[1].name, "Z01xx");
+  assert.equal(codes.families[1].area, "Names: variables, bindings, functions, packages");
+  assert.deepEqual(codes.families[1].codes[0], {
+    code: "Z0101",
+    kind: "error",
+    title: "no such name",
+  });
+  assert.equal(
+    codes.families.reduce((sum, one) => sum + one.codes.length, 0),
+    144,
+  );
+});
+
 test("the engine's language server is spoken to through the worker, over the project", async (t) => {
   const { worker, next } = await opened(t, 0);
   const send = (id, body) =>
