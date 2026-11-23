@@ -8,7 +8,8 @@
   // them the packages and the codes by family, in sections that fold. At its right the pane **Related functions**: those the page names under SEE
   // ALSO, each with what its own page says it does, a click opening that page. F1 on a name in
   // the script, **Explain** in what a run said, a name or a code in the page itself, and the
-  // field here each open a page.
+  // field here each open a page; from 0.2.3 the field suggests as one types
+  // (`help/SearchField.svelte`).
   //
   // From 0.2.3 (#211, part 3) the pages opened are a history (`help/history.ts`): **Back** and
   // **Forward** go through them, **Home** returns to where Help starts and is lit while one is
@@ -24,6 +25,7 @@
   import { HOME, after, before, called, here } from "../help/history";
   import HomePage from "../help/HomePage.svelte";
   import ListPage from "../help/ListPage.svelte";
+  import SearchField from "../help/SearchField.svelte";
   import TopicsPane from "../help/TopicsPane.svelte";
   import { codesPage, packagePage, partsOf } from "../help/pages";
   import { outlineOf, readPage, relatedOf } from "../help/read";
@@ -129,15 +131,6 @@
     if (event.type !== "mouseup") return;
     void (event.button === 3 ? workspace.helpBack() : workspace.helpForward());
   }
-
-  let asked = $state("");
-  function open(event: SubmitEvent): void {
-    event.preventDefault();
-    const name = asked.trim();
-    if (name === "") return;
-    asked = "";
-    void (/^[WZ]\d{4}$/.test(name) ? workspace.showCode(name) : workspace.showHelp(name));
-  }
 </script>
 
 {#snippet topics()}
@@ -220,16 +213,7 @@
     </ol>
   </nav>
   <span class="gap"></span>
-  <form onsubmit={open}>
-    <input
-      type="search"
-      placeholder="A function's name, or a code"
-      aria-label="Open the page of a function or a code"
-      spellcheck="false"
-      bind:value={asked}
-    />
-    <button class="word" type="submit">Open</button>
-  </form>
+  <SearchField {workspace} />
 {/snippet}
 
 <svelte:window onkeydown={keys} onmousedown={side} onmouseup={side} onauxclick={side} />
@@ -390,39 +374,6 @@
   }
   .gap {
     flex: 1;
-  }
-  /* The field gives way before the trail does, down to a width a name can still be typed in. */
-  form {
-    align-items: center;
-    display: flex;
-    flex: 0 1 auto;
-    gap: 6px;
-    min-width: 0;
-  }
-  input {
-    background: var(--soft);
-    border: 0;
-    border-radius: 6px;
-    color: var(--ink);
-    font: inherit;
-    font-size: 13px;
-    flex: 0 1 230px;
-    min-width: 120px;
-    padding: 4px 9px;
-    width: 230px;
-  }
-  .word {
-    background: none;
-    border: 0;
-    border-radius: 6px;
-    color: var(--ink-2);
-    cursor: pointer;
-    font: inherit;
-    font-size: 13px;
-    padding: 2px 6px;
-  }
-  .word:hover {
-    background: var(--soft);
   }
   .page {
     flex: 1;

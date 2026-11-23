@@ -22,8 +22,7 @@ const back = (page: Page) => moving(page).getByRole("button", { name: "Back" });
 const forward = (page: Page) => moving(page).getByRole("button", { name: "Forward" });
 const home = (page: Page) => moving(page).getByRole("button", { name: "Home" });
 const title = (page: Page) => page.getByTestId("help-title");
-const field = (page: Page) =>
-  bar(page).getByRole("searchbox", { name: "Open the page of a function or a code" });
+const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
 const related = (page: Page) =>
   page
     .getByRole("complementary", { name: "Help: the right pane" })

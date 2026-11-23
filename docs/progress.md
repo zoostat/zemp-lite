@@ -116,4 +116,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **For the owner to know (step 6).** With eight places, one lines that merely contain a word crowded out an R or Stata name typed exactly (`table` did not find `tabulate`). Two places are now kept for such names; the order of the rules is #211's, unchanged. Say if another order is wanted.
 
-**Next.** Step 7 `[function]`: the suggestions under the bar's field.
+**Done, step 7 `[function]`.** The field of Help's bar suggests as one types: from the second letter a list of up to eight matches, each with what it is, its one line and why it matched ("matched R lm()"); ↑ ↓ ↵ Esc, and `/` to reach the field; nothing found is a sentence and the nearest names; with none marked ↵ opens the name as typed, as before (`src/help/SearchField.svelte`). Two refinements of step 6 from the real index: `lm` gives `reg` before `anova`, and `ttest` no longer guesses `test`. Green here: the whole routine in both browsers.
+
+**Next.** Step 8 `[engine]`: the frame of the app's own pages (Using Zemp Lite).

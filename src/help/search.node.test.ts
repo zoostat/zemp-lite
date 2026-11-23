@@ -99,6 +99,10 @@ describe("the search, on the whole index of Zeff 0.8.0", () => {
       expect(found?.why, typed).toBe(why);
       expect(found?.rule, typed).toBe("foreign");
     }
+    // `ttest` is Stata's name and that alone: `test`, one key away, is not guessed beside it.
+    expect(names("ttest")).toEqual(["t_test"]);
+    // `lm` is the first name of `reg`; `anova`, which R also writes with `lm`, comes after it.
+    expect(names("lm")).toEqual(["reg", "anova"]);
     // Where nothing else is called so, the function is the first match.
     for (const typed of ["lm", "ttest", "t.test", "left_join", "xtset", "rnorm", "kwallis"]) {
       expect(first(typed)?.rule, typed).toBe("foreign");

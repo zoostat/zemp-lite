@@ -38,8 +38,7 @@ const allTopics = (page: Page) => topics(page).getByRole("button", { name: "All 
 const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
-const field = (page: Page) =>
-  bar(page).getByRole("searchbox", { name: "Open the page of a function or a code" });
+const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
 
 async function ask(page: Page, name: string) {
   await field(page).fill(name);

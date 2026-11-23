@@ -124,9 +124,7 @@ test("the Help place has the page's outline at its left, each section gone to an
   await expect(
     topics(page).getByRole("list", { name: "Packages" }).getByRole("button").first(),
   ).toHaveText(/^core\s*71$/);
-  const field = bar(page).getByRole("searchbox", {
-    name: "Open the page of a function or a code",
-  });
+  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   await field.fill("summary");
   await field.press("Enter");
   await expect(page.getByTestId("help-title")).toHaveText("summary");
@@ -181,9 +179,7 @@ test("the Help place has the page's related functions at its right, each with wh
 }) => {
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
-  const field = bar(page).getByRole("searchbox", {
-    name: "Open the page of a function or a code",
-  });
+  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   await field.fill("summary");
   await field.press("Enter");
   // Those the page names under SEE ALSO, in its order, each with the first line of its own page.
@@ -246,9 +242,7 @@ test("a code's explained page opens in the Help place from what the run said, an
     "Fix",
   ]);
   // A code typed in the field opens its page too.
-  const field = bar(page).getByRole("searchbox", {
-    name: "Open the page of a function or a code",
-  });
+  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   await field.fill("summary");
   await field.press("Enter");
   await expect(help.getByTestId("help-title")).toHaveText("summary");
@@ -266,9 +260,7 @@ test("a page of every kind of part is set in type, and every word of it is the e
 }) => {
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
-  const field = bar(page).getByRole("searchbox", {
-    name: "Open the page of a function or a code",
-  });
+  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   await field.fill("add");
   await field.press("Enter");
   await expect(page.getByTestId("help-title")).toHaveText("add");
@@ -343,9 +335,7 @@ test("a function named in a page, a related name and a code each open their own 
 }) => {
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
-  const field = bar(page).getByRole("searchbox", {
-    name: "Open the page of a function or a code",
-  });
+  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   const title = page.getByTestId("help-title");
   const formatted = page.getByTestId("help-page");
   const open = async (name: string) => {
@@ -396,9 +386,7 @@ test("a help page stays inside its place and never under 12.5 pixels, at every c
   await press(places(page).getByRole("button", { name: "Help" }));
   await expect(topics(page)).toBeVisible();
   await expect(related(page)).toBeVisible();
-  const field = bar(page).getByRole("searchbox", {
-    name: "Open the page of a function or a code",
-  });
+  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   const sizes = async () =>
     page.getByTestId("help").evaluate((help) => {
       const pane = help.querySelector(".page") as HTMLElement;
@@ -442,9 +430,7 @@ test("a package's page is set from the engine's list, and a line the reader does
 }) => {
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
-  const field = bar(page).getByRole("searchbox", {
-    name: "Open the page of a function or a code",
-  });
+  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   // A package's page: its functions with their one lines, the engine's words in its order
   // (`help-trail.spec.ts` holds every row to what `zeff help regress` prints).
   await field.fill("regress");

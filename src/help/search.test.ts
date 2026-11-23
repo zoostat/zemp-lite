@@ -248,6 +248,31 @@ describe("the rules of the search, each by itself", () => {
     expect(search(entries, "rge").nothing).not.toBeNull();
     // Two slips are not one.
     expect(read("sumnarry")).toEqual([]);
+    // A name of R or of Stata typed exactly is no slip either: `ttest` is one key from
+    // `t_test`, which it finds as Stata's name, and nothing else is guessed beside it.
+    const among = entriesOf(
+      {
+        engine: "0.8.0",
+        packages: [
+          {
+            name: "p",
+            tier: 1,
+            functions: [
+              fn("t_test", "nothing of it", [stata("ttest")]),
+              fn("test", "nothing of it"),
+              fn("ttests", "nothing of it"),
+            ],
+          },
+        ],
+        datasets: [],
+      },
+      null,
+    );
+    expect(read("ttest", among)).toEqual([
+      "function ttests [begins]",
+      "function t_test [foreign: Stata ttest]",
+    ]);
+    expect(read("ttestz", among)).toEqual(["function ttests [slip]"]);
   });
 });
 
@@ -286,13 +311,21 @@ describe("the order of the search", () => {
       "function by_r_exact [foreign: R table()]",
       "function by_stata_begun [foreign: Stata tablefull]",
     ]);
-    // Without the function of that name, the slip is the last of them.
+    // Nor beside R's name typed exactly.
     const without = among.filter((one) => one.name !== "table");
     expect(read("table", without)).toEqual([
       "function tables [begins]",
       "function of_table [part]",
       "function by_words [words]",
       "function by_r_exact [foreign: R table()]",
+      "function by_stata_begun [foreign: Stata tablefull]",
+    ]);
+    // Where no name was typed exactly, the slip is the last of them.
+    const neither = without.filter((one) => one.name !== "by_r_exact");
+    expect(read("table", neither)).toEqual([
+      "function tables [begins]",
+      "function of_table [part]",
+      "function by_words [words]",
       "function by_stata_begun [foreign: Stata tablefull]",
       "function tabel [slip]",
     ]);
@@ -380,6 +413,37 @@ describe("the order of the search", () => {
       "fit_04",
       "fit_05",
       "fit_06",
+    ]);
+  });
+});
+
+describe("the functions an R or a Stata name finds", () => {
+  it("come in the order of where the name stands among each one's names, then by name", () => {
+    const among = entriesOf(
+      {
+        engine: "0.8.0",
+        packages: [
+          {
+            name: "p",
+            tier: 1,
+            functions: [
+              fn("anova", "nothing of it", [r("aov"), r("oneway.test"), r("lm")]),
+              fn("reg", "nothing of it", [r("lm"), r("feols")]),
+              fn("also", "nothing of it", [r("lm")]),
+              fn("begun", "nothing of it", [r("lmer")]),
+            ],
+          },
+        ],
+        datasets: [],
+      },
+      null,
+    );
+    // `lm` is the first name of `also` and of `reg`, and the third of `anova`.
+    expect(read("lm", among)).toEqual([
+      "function also [foreign: R lm()]",
+      "function reg [foreign: R lm()]",
+      "function anova [foreign: R lm()]",
+      "function begun [foreign: R lmer()]",
     ]);
   });
 });

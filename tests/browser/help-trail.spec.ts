@@ -26,8 +26,7 @@ const step = (page: Page, name: string) => trail(page).getByRole("button", { nam
 const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
-const field = (page: Page) =>
-  bar(page).getByRole("searchbox", { name: "Open the page of a function or a code" });
+const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
 /** The sections of the page open, in the Topics pane. */
 const outline = (page: Page) =>
   page

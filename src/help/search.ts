@@ -11,8 +11,8 @@
 //      description;
 //   4. an R or a Stata name: one typed exactly, then one beginning with it (`lm`, `t.test`);
 //   5. a code begun (`W02`);
-//   6. from the fourth letter, a name one key's slip away (`regg`), where no name was typed
-//      exactly.
+//   6. from the fourth letter, a name one key's slip away (`regg`), where no name, the
+//      engine's or R's or Stata's, was typed exactly.
 //
 // Where more than eight are found, the words of one lines, which are the commonest match and
 // the weakest, give up two places at the most to R and Stata names typed exactly, so that
@@ -21,7 +21,9 @@
 //
 // A match is entered once, by the best rule that finds it. Within a rule the order is fixed,
 // so the same letters always give the same list: by the name, as a dictionary has it, and
-// for one name by its kind (a function before the package of its name). Where nothing is
+// for one name by its kind (a function before the package of its name). Among the functions
+// an R or a Stata name finds, the one that has it earlier among its names comes first: `lm`
+// is the first name of `reg`, and the fifth of `anova`, which R writes `anova(lm())`. Where nothing is
 // found the answer is a sentence and the nearest names, never an empty list.
 import type { CodeFamily, ForeignName, HelpIndex } from "../engine/messages";
 import type { Stop } from "./history";
@@ -199,15 +201,23 @@ function partBeginning(entry: Entry, typed: string): string | null {
 /** How an R or a Stata name is typed: its name, or as its source writes it, without brackets. */
 const spellings = (name: ForeignName) => [lower(name.name), lower(name.shown.replace(/\(\)$/, ""))];
 
-/** The R or Stata name of an entry that is what was typed, or that begins with it; and which. */
-function foreignMatch(entry: Entry, typed: string): { name: ForeignName; exact: boolean } | null {
-  let begun: ForeignName | null = null;
-  for (const name of entry.foreign) {
+/**
+ * The R or Stata name of an entry that is what was typed, or that begins with it; which it
+ * is, and where it stands among the entry's names.
+ */
+function foreignMatch(
+  entry: Entry,
+  typed: string,
+): { name: ForeignName; exact: boolean; at: number } | null {
+  let begun: { name: ForeignName; exact: boolean; at: number } | null = null;
+  for (const [at, name] of entry.foreign.entries()) {
     const all = spellings(name);
-    if (all.includes(typed)) return { name, exact: true };
-    if (begun === null && all.some((one) => one.startsWith(typed))) begun = name;
+    if (all.includes(typed)) return { name, exact: true, at };
+    if (begun === null && all.some((one) => one.startsWith(typed))) {
+      begun = { name, exact: false, at };
+    }
   }
-  return begun === null ? null : { name: begun, exact: false };
+  return begun;
 }
 
 /**
@@ -257,10 +267,15 @@ export function search(entries: Entry[], asked: string): Found {
   const rules: Rule[] = ["exact", "begins", "part", "words", "foreign", "foreign", "code", "slip"];
   const found: Match[][] = rules.map(() => []);
   const forgiving = [...typed].length >= SLIP_FROM;
+  /** Where the R or Stata name that matched stands among each match's names. */
+  const standing = new Map<Match, number>();
   for (const entry of [...entries].sort(byName)) {
     const name = lower(entry.name);
-    const match = (at: number, why: string | null, word: string | null) =>
-      found[at]?.push({ ...entry, rule: rules[at] ?? "exact", why, word });
+    const match = (at: number, why: string | null, word: string | null): Match => {
+      const made: Match = { ...entry, rule: rules[at] ?? "exact", why, word };
+      found[at]?.push(made);
+      return made;
+    };
     if (name === typed) {
       match(0, null, null);
       continue;
@@ -282,15 +297,20 @@ export function search(entries: Entry[], asked: string): Found {
     }
     const foreign = foreignMatch(entry, typed);
     if (foreign !== null) {
-      match(foreign.exact ? 4 : 5, said(foreign.name), null);
+      standing.set(match(foreign.exact ? 4 : 5, said(foreign.name), null), foreign.at);
       continue;
     }
     if (forgiving && entry.kind !== "page" && slips(name, typed, 1) === 1) {
       match(7, null, null);
     }
   }
-  // A name typed exactly is no slip of the keyboard: nothing one key away is offered beside it.
-  if ((found[0]?.length ?? 0) > 0) found[7] = [];
+  // The functions an R or a Stata name finds: first the one that has it earlier among its names.
+  for (const at of [4, 5]) {
+    found[at]?.sort((a, b) => (standing.get(a) ?? 0) - (standing.get(b) ?? 0) || byName(a, b));
+  }
+  // A name typed exactly, the engine's or R's or Stata's, is no slip of the keyboard: nothing
+  // one key away is offered beside it (`ttest` is Stata's, not `test` mistyped).
+  if ((found[0]?.length ?? 0) > 0 || (found[4]?.length ?? 0) > 0) found[7] = [];
   // The words of one lines give up places to R and Stata names typed exactly (see above).
   const [exact = [], begins = [], part = [], words = [], known = [], ...rest] = found;
   const names = [...exact, ...begins, ...part];
