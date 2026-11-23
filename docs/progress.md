@@ -88,4 +88,8 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done.** On the owner's "Start release zemp-lite 0.2.3": `v0.2.2` is tagged and the tree clean; the copy of the specification brought to Zeff 635f19f, where the row of 0.2.3 and #211 stand; the row, #211 with its mockup, section 7's Help row, the Help place's code and what the engine of 0.8.0 gives read; `docs/releases/0.2.3.md` written: twelve steps in seven parts (opening; what the engine gives; moving about; Home and Topics; search; Using Zemp Lite; the whole and the close), with three questions for the owner. No code is written.
 
-**Next.** On "go": step 1 `[engine]`, the release opened.
+**The owner's "Go, as recommended"** took the three answers as recommended (`docs/decisions.md`).
+
+**Done, step 1 `[engine]`.** The release opened: version `0.2.3-dev`; the answers and what the reading found recorded. Nothing of the app changes. Green here: the whole routine in both browsers.
+
+**Next.** Step 2 `[engine]`: the index of the help, from the worker (the message `helpIndex`).

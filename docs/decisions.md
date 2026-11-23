@@ -1641,3 +1641,19 @@ Rewritten to hold the same behaviour in the one layout: the tests of `output.spe
 **Choice.** `docs/spec/` is the Zeff repository's at commit 635f19f, each of its ten files taken from the commit, not from that repository's working folder, and compared byte for byte. Six differ from the copy of 3159c99: the register and the Zemp Specification, by the entries above; the catalogue, the Language Reference, the Engine Specification and the sample script, by the work of Zeff 0.9.0 since (`n_chars`, `row_number`, the sections of a script, and others), none of which Zemp Lite on Zeff 0.8.0 reads. The ruling on Paper of the same day (#172) is not yet entered there; the copy is brought up again when it is.
 
 **Reason.** The specification is the authority, and a release is planned from its row: the copy must hold the row of 0.2.3 before its plan is written.
+
+## 23 November 2026: Release 0.2.3 opened (step 1)
+
+**The owner's word:** "Start release zemp-lite 0.2.3", and, to the plan and its three questions, "Go, as recommended". Each answer is his to overturn.
+
+**His answers, as recommended.**
+
+1. **R and Stata names in search** are found from the page's _Coming from R or Stata_ where it has one, and from the catalogue's `equivalent` column for every function; a match says where it was found.
+2. **Home shows the names alone**, in columns under each package's heading; a function's one line is shown when the pointer or the keyboard rests on its name, on the package's page, and in search.
+3. **The thirteen pages of Using Zemp Lite** are drafted in the steps from the app as it is, their pictures made from the app in the light theme; the thirteen are put to him to read before the release (step 9b) and changed on his word.
+
+**What the reading found** is in `docs/releases/0.2.3.md`: the Help place keeps one page and no history; the worker, which builds the released engine in, can read the registry's packages, functions, summaries, datasets and the catalogue's `equivalent` through its public interface; the codes by family are given already; the engine has no one-line description of a package, and none is written here; 106 of the 250 pages of 0.8.0 have their comparison with R and Stata; the browser's own Back and Forward keys are settled at step 3.
+
+**Choices of this step.** Version `0.2.3-dev` in `package.json`, `worker/Cargo.toml` and their lock files. Nothing of the app changes.
+
+**Reason.** The owner's decisions.
