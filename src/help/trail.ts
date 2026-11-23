@@ -1,8 +1,10 @@
-// The trail at the head of a page of Help (release 0.2.3, step 3b; open decision #211, part
-// 3): where the page stands, each step before the last a link. _Help › Packages › stats ›
-// t_test_; _Help › Errors and warnings › Z01xx › Z0101_; _Help › Using Zemp Lite › Finding help_. The steps are worked out from the
-// index of the help and the codes by family, which are the engine's; a page the index does
-// not know (a function of a later release, a name mistyped) stands under Help alone.
+// The trail at the head of a page of Help (release 0.2.3, steps 3b and 9c; open decision #211,
+// part 3 and item 13): where the page stands, each step before the last a link. It stands
+// beside **Home** and begins with the first step under it: _Packages › stats › t_test_;
+// _Errors and warnings › Z01xx › Z0101_; _Using Zemp Lite › Finding help_. Home itself has no
+// trail: its button is marked as the page open. The steps are worked out from the index of
+// the help and the codes by family, which are the engine's; a page the index does not know (a
+// function of a later release, a name mistyped) is its own name alone.
 import type { CodeFamily, HelpIndex } from "../engine/messages";
 import { USING_TITLE, usingPage } from "../using/pages";
 import { CODES, HOME, type Stop } from "./history";
@@ -51,41 +53,35 @@ export function trailOf(
   index: HelpIndex | null,
   families: CodeFamily[] | null,
 ): Step[] {
-  const help = (last: boolean) => word("Help", last ? null : HOME);
   // In this stage Home is the index by package, so it is the page of the packages too.
   const packages = word("Packages", HOME);
   const codes = (last: boolean) => word(CODES, last ? null : { kind: "codes", family: null });
   switch (stop.kind) {
     case "home":
-      return [help(true)];
+      return [];
     case "package":
-      return [help(false), packages, name(stop.name, null)];
+      return [packages, name(stop.name, null)];
     case "name": {
       const homes = homesOf(index, stop.name);
-      if (homes.length === 0) return [help(false), name(stop.name, null)];
+      if (homes.length === 0) return [name(stop.name, null)];
       return [
-        help(false),
         packages,
         ...homes.map((home, at) => name(home, { kind: "package", name: home }, at > 0)),
         name(stop.name, null),
       ];
     }
     case "codes":
-      return stop.family === null
-        ? [help(false), codes(true)]
-        : [help(false), codes(false), name(stop.family, null)];
+      return stop.family === null ? [codes(true)] : [codes(false), name(stop.family, null)];
     case "using":
       return stop.page === null
-        ? [help(false), word(USING_TITLE, null)]
+        ? [word(USING_TITLE, null)]
         : [
-            help(false),
             word(USING_TITLE, { kind: "using", page: null }),
             word(usingPage(stop.page)?.title ?? stop.page, null),
           ];
     case "code": {
       const family = familyOf(families, stop.code);
       return [
-        help(false),
         codes(false),
         ...(family === null ? [] : [name(family, { kind: "codes", family })]),
         name(stop.code, null),

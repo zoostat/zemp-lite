@@ -27,12 +27,13 @@ const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
 const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
-/** The sections of the page open, in the Topics pane. */
-const outline = (page: Page) =>
+/** The pane at the right, On this page, and the sections it lists. */
+const onThisPage = (page: Page) =>
   page
-    .getByRole("complementary", { name: "Help: the left pane" })
-    .getByRole("region", { name: "Topics" })
-    .getByRole("list", { name: "On this page" });
+    .getByRole("complementary", { name: "Help: the right pane" })
+    .getByRole("region", { name: "On this page" });
+const outline = (page: Page) => onThisPage(page).getByRole("list", { name: "On this page" });
+const home = (page: Page) => bar(page).getByRole("button", { name: "Home" });
 
 /** The trail as it reads, its marks between the steps as drawn. */
 const reads = async (page: Page) =>
@@ -69,17 +70,16 @@ test("the trail says where a page stands, and each step opens its page", async (
   press,
 }) => {
   await scratch(page, press);
-  // Home: the trail is Help, and no link.
-  await expect.poll(() => reads(page)).toBe("Help");
-  await expect(trail(page).getByRole("button")).toHaveCount(0);
-  await expect(title(page)).toHaveAttribute("aria-current", "page");
+  // Home has no trail: its own button, marked, says where one is.
+  await expect(trail(page)).toHaveCount(0);
+  await expect(home(page)).toHaveAttribute("aria-current", "page");
 
   await ask(page, "t_test");
-  await expect.poll(() => reads(page)).toBe("Help › Packages › stats › t_test");
+  await expect.poll(() => reads(page)).toBe("Packages › stats › t_test");
   // The package's step: its page, the functions the released engine lists, in its order.
   await press(step(page, "stats"));
   await expect(title(page)).toHaveText("stats");
-  await expect.poll(() => reads(page)).toBe("Help › Packages › stats");
+  await expect.poll(() => reads(page)).toBe("Packages › stats");
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("stats");
   await expect(
     shown(page).getByRole("list", { name: "Facts of stats" }).getByRole("listitem"),
@@ -88,32 +88,34 @@ test("the trail says where a page stands, and each step opens its page", async (
   // A function of the list opens its page; the steps went into the history, one by one.
   await press(shown(page).getByRole("button", { name: "anova", exact: true }));
   await expect(title(page)).toHaveText("anova");
-  await expect.poll(() => reads(page)).toBe("Help › Packages › stats › anova");
+  await expect.poll(() => reads(page)).toBe("Packages › stats › anova");
   await expect(shown(page)).toContainText("Analysis of variance");
   await press(back(page));
   await expect(title(page)).toHaveText("stats");
   await press(back(page));
   await expect(title(page)).toHaveText("t_test");
-  // Packages and Help both open Home, where the packages are listed.
+  // The trail begins under Home: its first step is Packages, and the word Help is not in it.
+  await expect(trail(page).getByRole("listitem").first()).toHaveText("Packages");
+  await expect(trail(page).getByText("Help", { exact: true })).toHaveCount(0);
+  // Packages opens Home, where the packages are listed; so does Home's own button.
   await press(step(page, "Packages"));
-  await expect.poll(() => reads(page)).toBe("Help");
-  await expect(bar(page).getByRole("button", { name: "Home" })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
+  await expect(trail(page)).toHaveCount(0);
+  await expect(home(page)).toHaveAttribute("aria-current", "page");
+  await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Index of functions");
   await press(back(page));
-  await press(step(page, "Help"));
-  await expect.poll(() => reads(page)).toBe("Help");
+  await expect(title(page)).toHaveText("t_test");
+  await press(home(page));
+  await expect(trail(page)).toHaveCount(0);
 
   // A name two packages have names both, each a link to its own page.
   await ask(page, "summary");
-  await expect.poll(() => reads(page)).toBe("Help › Packages › data · results › summary");
+  await expect.poll(() => reads(page)).toBe("Packages › data · results › summary");
   await press(step(page, "results"));
   await expect(title(page)).toHaveText("results");
   expect(await rows(page)).toEqual(printed("results"));
   // A name the engine has no page for stands under Help alone, with what the engine says.
   await ask(page, "a_learning");
-  await expect.poll(() => reads(page)).toBe("Help › a_learning");
+  await expect.poll(() => reads(page)).toBe("a_learning");
 });
 
 test("a package has a page of its own, apart from the function of its name", async ({
@@ -123,10 +125,10 @@ test("a package has a page of its own, apart from the function of its name", asy
   await scratch(page, press);
   // `plot` typed is the function, as `zeff help plot` prints it; its package is a step away.
   await ask(page, "plot");
-  await expect.poll(() => reads(page)).toBe("Help › Packages › plot › plot");
+  await expect.poll(() => reads(page)).toBe("Packages › plot › plot");
   await expect(shown(page).getByRole("heading", { level: 4, name: "Usage" }).first()).toBeVisible();
   await press(step(page, "plot"));
-  await expect.poll(() => reads(page)).toBe("Help › Packages › plot");
+  await expect.poll(() => reads(page)).toBe("Packages › plot");
   await expect(
     shown(page).getByRole("list", { name: "Facts of plot" }).getByRole("listitem"),
   ).toHaveText(["package · tier 1", "31 functions in Zeff 0.8.0"]);
@@ -137,15 +139,15 @@ test("a package has a page of its own, apart from the function of its name", asy
   expect(new Set(listed.map(([name]) => name)).size).toBe(31);
   // The function from its package's page, and back: two pages of the history.
   await press(shown(page).getByRole("button", { name: "plot", exact: true }));
-  await expect.poll(() => reads(page)).toBe("Help › Packages › plot › plot");
+  await expect.poll(() => reads(page)).toBe("Packages › plot › plot");
   await press(back(page));
-  await expect.poll(() => reads(page)).toBe("Help › Packages › plot");
+  await expect.poll(() => reads(page)).toBe("Packages › plot");
   await press(back(page));
-  await expect.poll(() => reads(page)).toBe("Help › Packages › plot › plot");
+  await expect.poll(() => reads(page)).toBe("Packages › plot › plot");
 
   // A name that is a package's alone opens the package's page from the field.
   await ask(page, "regress");
-  await expect.poll(() => reads(page)).toBe("Help › Packages › regress");
+  await expect.poll(() => reads(page)).toBe("Packages › regress");
   expect(await rows(page)).toEqual(printed("regress"));
 
   // `datasets` lists the shipped datasets after its two functions, each with its page.
@@ -163,9 +165,11 @@ test("a package has a page of its own, apart from the function of its name", asy
     "staff",
     "wages",
   ]);
-  await expect(outline(page).getByRole("button")).toHaveText(["Datasets"]);
+  // A list has no sections for the pane at the right, which says so.
+  await expect(outline(page)).toHaveCount(0);
+  await expect(onThisPage(page)).toContainText("This page has no sections.");
   await press(parts.nth(1).getByRole("button", { name: "wages" }));
-  await expect.poll(() => reads(page)).toBe("Help › Packages › datasets › wages");
+  await expect.poll(() => reads(page)).toBe("Packages › datasets › wages");
   await expect(shown(page)).toContainText("Synthetic hourly wages");
 });
 
@@ -176,11 +180,11 @@ test("the codes by family are a page, and a code stands under its family", async
   await page.setViewportSize({ width: 1280, height: 620 });
   await scratch(page, press);
   await ask(page, "W0201");
-  await expect.poll(() => reads(page)).toBe("Help › Errors and warnings › W0xxx › W0201");
+  await expect.poll(() => reads(page)).toBe("Errors and warnings › W0xxx › W0201");
   // Errors and warnings: every family the engine lists, each with its codes and their titles.
   await press(step(page, "Errors and warnings"));
   await expect(title(page)).toHaveText("Errors and warnings");
-  await expect.poll(() => reads(page)).toBe("Help › Errors and warnings");
+  await expect.poll(() => reads(page)).toBe("Errors and warnings");
   await expect(
     shown(page).getByRole("list", { name: "Facts of Errors and warnings" }).getByRole("listitem"),
   ).toHaveText(["144 codes", "12 families"]);
@@ -195,24 +199,18 @@ test("the codes by family are a page, and a code stands under its family", async
     "Z0101",
     "no such name",
   ]);
-  // The outline lists the families, each going to its place.
-  const entries = outline(page).getByRole("button");
-  await expect(entries).toHaveCount(12);
-  await expect(entries.nth(1)).toHaveText(
-    "Z01xx · Names: variables, bindings, functions, packages",
-  );
-  await press(entries.nth(10));
-  await expect(entries.nth(10)).toHaveAttribute("aria-current", "location");
+  // The page is a list: the pane at the right has no sections of it to show.
+  await expect(onThisPage(page)).toContainText("This page has no sections.");
   // A code of the list opens its page, under its family.
   await press(shown(page).getByRole("button", { name: "Z0101" }));
   await expect(title(page)).toHaveText("Z0101");
-  await expect.poll(() => reads(page)).toBe("Help › Errors and warnings › Z01xx › Z0101");
+  await expect.poll(() => reads(page)).toBe("Errors and warnings › Z01xx › Z0101");
   await expect(shown(page)).toContainText("no such name");
 
   // A family's step opens the codes at that family: its heading at the top of the page.
   await ask(page, "W0201");
   await press(step(page, "W0xxx"));
-  await expect.poll(() => reads(page)).toBe("Help › Errors and warnings › W0xxx");
+  await expect.poll(() => reads(page)).toBe("Errors and warnings › W0xxx");
   await expect(title(page)).toHaveText("W0xxx");
   const heading = shown(page).getByRole("heading", { level: 4, name: /^W0xxx/ });
   await expect(heading).toBeInViewport();
@@ -223,7 +221,6 @@ test("the codes by family are a page, and a code stands under its family", async
       return Math.abs((await heading.boundingBox())!.y - top);
     })
     .toBeLessThan(60);
-  await expect(entries.nth(10)).toHaveAttribute("aria-current", "location");
   // Back returns to the code, and the codes opened afresh are read from their top.
   await press(back(page));
   await expect(title(page)).toHaveText("W0201");
@@ -281,7 +278,8 @@ for (const theme of ["light", "dark"] as const) {
     // key and answer to Enter. (Safari gives a button the Tab key with Option held.)
     const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
     await ask(page, "t_test");
-    await step(page, "Help").focus();
+    // Home, and after it the first step of the trail.
+    await home(page).focus();
     await page.keyboard.press(tab);
     await expect(step(page, "Packages")).toBeFocused();
     await page.keyboard.press(tab);
@@ -295,3 +293,57 @@ for (const theme of ["light", "dark"] as const) {
     await expect(title(page)).toHaveText("proportion_test");
   });
 }
+
+test("the bar of Help: Topics, Back, Forward, Home, the trail, the search field at the right end, and On this page last", async ({
+  page,
+  press,
+}) => {
+  await page.setViewportSize({ width: 1200, height: 700 });
+  await scratch(page, press);
+  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
+  const link = bar(page).getByRole("button", { name: "On this page", exact: true });
+  const order = async () => {
+    const parts = [
+      bar(page).getByRole("button", { name: "Topics", exact: true }),
+      back(page),
+      bar(page).getByRole("button", { name: "Forward" }),
+      home(page),
+      ...((await trail(page).count()) > 0 ? [trail(page)] : []),
+      field,
+      link,
+    ];
+    const boxes = [];
+    for (const part of parts) boxes.push((await part.boundingBox())!);
+    // Each begins where the one before it has ended, on one line.
+    for (let at = 1; at < boxes.length; at++) {
+      expect(boxes[at]!.x).toBeGreaterThanOrEqual(boxes[at - 1]!.x + boxes[at - 1]!.width - 1);
+      expect(
+        Math.abs(boxes[at]!.y + boxes[at]!.height / 2 - (boxes[0]!.y + boxes[0]!.height / 2)),
+      ).toBeLessThan(8);
+    }
+    // Nothing stands after the field but the link of the right pane, at the bar's end.
+    const end = (await bar(page).boundingBox())!;
+    const last = boxes[boxes.length - 1]!;
+    const before = boxes[boxes.length - 2]!;
+    expect(end.x + end.width - (last.x + last.width)).toBeLessThan(24);
+    expect(last.x - (before.x + before.width)).toBeLessThan(40);
+    const between = await bar(page).evaluate((node) => {
+      const input = node.querySelector("input")!.getBoundingClientRect();
+      return [...node.querySelectorAll("button")].filter(
+        (one) => one.getBoundingClientRect().left >= input.right,
+      ).length;
+    });
+    expect(between).toBe(1);
+  };
+  // On Home, where there is no trail; on a page; and in a narrower window.
+  await order();
+  await ask(page, "proportion_test");
+  await order();
+  await page.setViewportSize({ width: 1000, height: 700 });
+  await order();
+  // With the right pane closed its link is still the last thing of the bar.
+  await page.setViewportSize({ width: 1200, height: 700 });
+  await press(link);
+  await expect(link).toHaveAttribute("aria-pressed", "false");
+  await order();
+});

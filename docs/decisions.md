@@ -1928,3 +1928,33 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Unit: the three tests of the keys; each page read, held to the list, its links and its picture (13 pages). Browser, both engines: the controls each of the thirteen pages names, on its screens; each page opened from Topics with its picture, at 12.5 pixels and 4.5 to 1 in both themes; found by search by a title begun and by a word of a one line.
 
 **Reason.** #211, item 9; and the plan's own rule for the page of shortcuts, that its list be held by a test to the shortcuts the app has.
+
+## 24 November 2026: The specification's copy is brought to Zeff 58c3c2d, where the owner's layout of Help stands
+
+**What came.** On 24 November 2026 the coordinating session passed two changes the owner made to the Help place of 0.2.3 after seeing it as step 5b left it: "remove "related functions" move search bar to right end, Move "on this pane" to the right pane", and "Also I want to remove "Help" from right to "Home"". They are recorded in the Zeff repository as item 13 of #211 (commits 8caf4c4 and 58c3c2d), with the row of 0.2.3 in section 15 of the Zemp Specification and the Help row of section 7 amended; items 11 (a Run button under each example, at Zemp 0.3) and 12 (the owner's standing rule that each release's Help agrees with the engine it carries, checked at the build, in force from 0.2.3) were added since the last copy.
+
+**Checked before acting.** A message from another session is not the owner's word by itself. Both commits were read in the Zeff repository through Git alone (`git log`, `git show`), on its main branch as pushed, under the owner's name, before anything was changed here; `~/dev/zeff` was not touched.
+
+**Choice.** `docs/spec/` is the Zeff repository's at commit 58c3c2d, each file taken from the commit and compared byte for byte. Four differ from the copy of 635f19f: the register and the Zemp Specification, by the entries above (and #212 to #214, of the engine); the testing handbook and the Language Reference, by the work of Zeff 0.9.0, none of which Zemp Lite on Zeff 0.8.0 reads.
+
+**Reason.** The specification is the authority, and a step is built from what it says.
+
+## 24 November 2026: the layout of Help as the owner changed it (release 0.2.3, step 9c)
+
+**Choice,** as #211, item 13, has it:
+
+- **The right pane of Help is On this page**: the sections of the page open, each going to its place, the one in view marked, as the Outline pane of 0.2.1 and the Topics pane of step 5a held them. It is opened and closed by its own link, the last thing of the bar, and by its ×; ⌘K has **Help: show On this page** and **Help: hide On this page**.
+- **Related functions is removed**: the pane, its link, its command, and the asking of each related function's first line. A page's own **See also** keeps its links, as before. `relatedOf`, which only the pane used, is gone with its test.
+- **Topics no longer holds the page's sections.** It holds its three sections that fold, and beside a page the page's neighbours with **‹ All topics**. With the sections gone the neighbours have the pane: each holder's list is as tall as 72 hundredths of the window (two packages share it), the page open brought into view.
+- **The search field stands at the right end of the bar**, after Back, Forward, Home and the trail, with nothing after it but the link of the right pane. It was already there; a test now holds the order.
+- **The trail no longer begins with the word Help.** It begins with the first step under Home: _Packages › stats › t_test_, _Errors and warnings › Z01xx › Z0101_, _Using Zemp Lite › Finding help_; a name the index does not know is its own name alone. **On Home there is no trail**: Home's button, marked, says where one is.
+
+**What a list shows at the right.** The register says a list, "such as a package's page or Home", has no sections, and the pane says so: "This page has no sections." That is taken for every page that is a list: a package's page (the heading **Datasets** on that of `datasets` too), the codes by family, the list of the pages of Using Zemp Lite, and Home. The families of the codes are reached from Topics and from the trail's step, which still opens the codes at a family's heading. `partsOf`, which gave a list's parts to the pane, is gone with its tests.
+
+**The view state** stays of version 4, which no release has carried: the panes of Help are `topics` and `page`. A file of 0.2.1 or 0.2.2, which says `outline` and `related`, is read with both choices carried over: a reader who had closed Related functions has the right pane closed. The key `page` of the folded sections of Topics is no longer read.
+
+**The pages of Using Zemp Lite:** Finding help says where the page's sections are; nothing else in the thirteen spoke of what changed. Every picture was made again (`npm run pictures`), seven of them changed: those that show Help, and those whose run carries its time of day.
+
+**Tested.** Unit: the trail of each kind of page without the word, and none on Home (12 tests); the view state, both old choices carried and the old keys gone when written back. Browser, both engines: the sections at the right, marked and gone to, on a function's page, a code's and a page of the app's own; "This page has no sections." on Home, a package's page, the codes and a name the engine has no page for; no pane, link or command called Related functions, and See also still a list of links, each opening its page; Topics beside a page with its neighbours and nothing of the page's sections; the trail beginning with its first step, never with Help, and absent on Home; the bar's order on Home, on a page, at 1,000 pixels and with the right pane closed; a project of 0.2.2 opening with its choices kept. The older tests of the outline, of the related functions and of the trail were rewritten to the new places; none was dropped but the one of the pane that is gone.
+
+**Reason.** The owner's decision of 24 November 2026, #211, item 13.

@@ -10,7 +10,6 @@ import {
   outlineOf,
   pieces,
   readPage,
-  relatedOf,
   wordsOf,
   wordsOfPrint,
   type Block,
@@ -169,21 +168,6 @@ describe("the reader of a help page, on the kept pages", () => {
     expect(one.every((item) => !item.entry)).toBe(true);
     expect(one.map((item) => item.title)).toContain("Coming from R or Stata");
     expect(outlineOf(readPage("no such page"))).toEqual([]);
-  });
-
-  it("gives the functions named under SEE ALSO, in order and once each", () => {
-    expect(relatedOf(readPage(kept("help-summary.txt")))).toEqual([
-      "mean",
-      "sd",
-      "describe",
-      "estimates",
-      "export",
-      "reg",
-    ]);
-    expect(relatedOf(readPage(kept("explain-W0201.txt")))).toEqual([]);
-    expect(
-      relatedOf(readPage("reg — Linear regression\n\nUSAGE\n    data.reg(formula)\n")),
-    ).toEqual([]);
   });
 
   it("reads every kind of part of a function's page", () => {

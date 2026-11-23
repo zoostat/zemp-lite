@@ -533,7 +533,7 @@ test("what is folded in Topics is kept with the project, and a project whose Out
   await expect(topics).toHaveCount(0);
   await expect(
     page.getByRole("complementary", { name: "Help: the right pane" }).getByRole("region", {
-      name: "Related functions",
+      name: "On this page",
     }),
   ).toBeVisible();
   // Opened by its link, it holds its sections as they first stand.

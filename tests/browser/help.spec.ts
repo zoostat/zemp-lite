@@ -1,8 +1,8 @@
-// Help (open decisions #74 and #203; release 0.2.1, steps 8 and 10b): a place of its own, with
-// the engine's page in the middle, set in type, the page's outline at its left and its related
-// functions at its right; opened by F1 on a name, by Explain in what a run said, by a name or a
-// code in the page itself, and by its own field; and `:help` in the console line. Every word
-// of every page is the engine's.
+// Help (open decisions #74, #203 and #211; release 0.2.1, steps 8 and 10b; release 0.2.3): a
+// place of its own, with the engine's page in the middle, set in type, and at its right the
+// page's sections (**On this page**; at its left as **Outline**, until 0.2.3); opened by F1 on
+// a name, by Explain in what a run said, by a name or a code in the page itself, and by its
+// own field; and `:help` in the console line. Every word of every page is the engine's.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { cursorTo, expect, test, write, useExample } from "./support";
@@ -71,12 +71,13 @@ const topics = (page: Page) =>
   page
     .getByRole("complementary", { name: "Help: the left pane" })
     .getByRole("region", { name: "Topics" });
-/** The sections of the page open, in the Topics pane (the Outline pane, until 0.2.3). */
-const outline = (page: Page) => topics(page).getByRole("list", { name: "On this page" });
-const related = (page: Page) =>
+/** The pane at the right, On this page (it held the related functions until 0.2.3). */
+const onThisPage = (page: Page) =>
   page
     .getByRole("complementary", { name: "Help: the right pane" })
-    .getByRole("region", { name: "Related functions" });
+    .getByRole("region", { name: "On this page" });
+/** The sections of the page open, in that pane (in the Outline pane at the left, until 0.2.3). */
+const outline = (page: Page) => onThisPage(page).getByRole("list", { name: "On this page" });
 
 test("F1 on a function's name opens the Help place at its page, every word the engine's", async ({
   page,
@@ -116,11 +117,13 @@ test("the Help place has the page's outline at its left, each section gone to an
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
   // With no page asked for, Help is on Home, the index of functions, which has no sections
-  // of its own: the Topics pane holds the packages and the codes (`help-topics.spec.ts`).
+  // of its own, and the pane at the right says so; the Topics pane holds the packages and the
+  // codes (`help-topics.spec.ts`).
   await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText(
     "Index of functions",
   );
   await expect(outline(page)).toHaveCount(0);
+  await expect(onThisPage(page)).toContainText("This page has no sections.");
   await expect(
     topics(page).getByRole("list", { name: "Packages" }).getByRole("button").first(),
   ).toHaveText(/^core\s*71$/);
@@ -163,17 +166,22 @@ test("the Help place has the page's outline at its left, each section gone to an
     })
     .toBeLessThan(30);
   await expect(outline(page).locator('[aria-current="location"]')).toHaveCount(1);
-  // The pane that holds them closes and opens by its link, and by its own ×.
-  const link = bar(page).getByRole("button", { name: "Topics", exact: true });
+  // The pane that holds them closes and opens by its link, and by its own ×; the link is the
+  // last thing of the bar, after the search field.
+  const link = bar(page).getByRole("button", { name: "On this page", exact: true });
   await expect(link).toHaveAttribute("aria-pressed", "true");
+  await expect(link).toHaveAttribute("title", "Show or hide the sections of the page open");
   await press(link);
-  await expect(topics(page)).toHaveCount(0);
+  await expect(onThisPage(page)).toHaveCount(0);
   await press(link);
-  await press(topics(page).getByRole("button", { name: "Close Topics" }));
+  await press(onThisPage(page).getByRole("button", { name: "Close On this page" }));
   await expect(link).toHaveAttribute("aria-pressed", "false");
+  // Topics, at the left, is as it was, and holds none of the page's sections.
+  await expect(topics(page)).toBeVisible();
+  await expect(topics(page).getByRole("list", { name: "On this page" })).toHaveCount(0);
 });
 
-test("the Help place has the page's related functions at its right, each with what it does", async ({
+test("the related functions are the links of the page's own See also, and there is no pane of them", async ({
   page,
   press,
 }) => {
@@ -182,43 +190,34 @@ test("the Help place has the page's related functions at its right, each with wh
   const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   await field.fill("summary");
   await field.press("Enter");
-  // Those the page names under SEE ALSO, in its order, each with the first line of its own page.
-  const listed = related(page).locator("ul").getByRole("button");
-  await expect(listed).toHaveText([
-    /^mean\s*Mean of a variable\s*data$/,
-    /^sd\s*Sample standard deviation\s*data$/,
-    /^describe\s*Type, non-missing and missing count of each variable\s*data$/,
-    /^estimates\s*The estimates of a result as a frame\s*results$/,
-    /^export\s*Write a table, a result or a plot to a file\s*results$/,
-    /^reg\s*Linear regression by least squares, with fixed effects\s*regress$/,
-  ]);
-  // One opened: its page, its own outline and its own related functions.
-  await press(listed.nth(5));
+  await expect(page.getByTestId("help-title")).toHaveText("summary");
+  // No pane and no link of the bar is called Related functions, and no command of ⌘K.
+  await expect(page.getByText("Related functions")).toHaveCount(0);
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("related");
+  await expect(page.getByRole("dialog", { name: "Commands" }).getByRole("option")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  // Those the page names under See also are links of the page, in its order: `summary` is of
+  // two packages, and each of its two pages has its own.
+  const also = page
+    .getByTestId("help-page")
+    .getByRole("region", { name: "See also" })
+    .getByRole("button");
+  await expect(also).toHaveText(["mean", "sd", "describe", "estimates", "export", "reg"]);
+  // One opened: its page, its own sections at the right and its own See also.
+  await press(also.nth(5));
   await expect(page.getByTestId("help-title")).toHaveText("reg");
   await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText("reg");
   await expect(page.getByTestId("help-page")).toContainText(
     "Linear regression by least squares, with fixed effects",
   );
   await expect(outline(page).getByRole("button").first()).toHaveText("Usage");
-  await expect(related(page).locator("ul").getByRole("button")).toHaveText([
-    /^category/,
-    /^base/,
-    /^interact/,
-    /^summary/,
-    /^r_squared/,
-    /^report/,
-  ]);
-  // A name the engine has no page for shows what the engine says, and names nothing related.
+  // A name the engine has no page for shows what the engine says, and has no sections.
   await field.fill("nosuch");
   await field.press("Enter");
   await expect(page.getByTestId("help-title")).toHaveText("nosuch");
   await expect(page.getByTestId("help-page")).toContainText("nosuch");
-  await expect(related(page)).toContainText("This page names no related function.");
-  // The pane closes and opens by its link.
-  const link = bar(page).getByRole("button", { name: "Related functions", exact: true });
-  await press(link);
-  await expect(related(page)).toHaveCount(0);
-  await expect(link).toHaveAttribute("aria-pressed", "false");
+  await expect(onThisPage(page)).toContainText("This page has no sections.");
 });
 
 test("a code's explained page opens in the Help place from what the run said, and from the field", async ({
@@ -329,7 +328,7 @@ test("a page of every kind of part is set in type, and every word of it is the e
   expect(unnamed).toBe(0);
 });
 
-test("a function named in a page, a related name and a code each open their own page", async ({
+test("a function named in a page, a name under See also and a code each open their own page", async ({
   page,
   press,
 }) => {
@@ -385,7 +384,7 @@ test("a help page stays inside its place and never under 12.5 pixels, at every c
   await scratch(page, press);
   await press(places(page).getByRole("button", { name: "Help" }));
   await expect(topics(page)).toBeVisible();
-  await expect(related(page)).toBeVisible();
+  await expect(onThisPage(page)).toBeVisible();
   const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   const sizes = async () =>
     page.getByTestId("help").evaluate((help) => {

@@ -4,20 +4,21 @@
   // terminal prints it). In the middle the engine's page, a function's or a code's, read from
   // its print (`help/read.ts`) and formatted (`help/HelpPage.svelte`), every word the engine's.
   // At its left the pane **Topics** (`help/TopicsPane.svelte`; it was **Outline** until
-  // 0.2.3): the page's sections, each going to its place, the one in view marked, and under
-  // them the packages and the codes by family, in sections that fold. At its right the pane **Related functions**: those the page names under SEE
-  // ALSO, each with what its own page says it does, a click opening that page. F1 on a name in
-  // the script, **Explain** in what a run said, a name or a code in the page itself, and the
-  // field here each open a page; from 0.2.3 the field suggests as one types
-  // (`help/SearchField.svelte`).
+  // 0.2.3): the packages, the codes by family and the app's own pages, in sections that fold,
+  // and beside a page its neighbours. At its right the pane **On this page** (#211, item 13;
+  // it was **Related functions**): the sections of the page open, each going to its place,
+  // the one in view marked; a page's own See also keeps the links to related functions. F1 on
+  // a name in the script, **Explain** in what a run said, a name or a code in the page itself,
+  // and the field at the right end of the bar each open a page; the field suggests as one
+  // types (`help/SearchField.svelte`).
   //
   // From 0.2.3 (#211, part 3) the pages opened are a history (`help/history.ts`): **Back** and
   // **Forward** go through them, **Home** returns to where Help starts and is lit while one is
   // there. ⌘[ and ⌘] (Ctrl on other keyboards) and the mouse's two side buttons do as Back
   // and Forward while this place is shown; the browser, whose own Back and Forward they are,
   // is not given them here, so that reading Help never leaves the app. Beside them the trail
-  // says where the page stands, each step before the last a link (`help/trail.ts`): _Help ›
-  // Packages › stats › t_test_. A package's page and the codes by family are lists set from
+  // says where the page stands, each step before the last a link (`help/trail.ts`): _Packages
+  // › stats › t_test_; on Home there is none, Home being marked as the page open. A package's page and the codes by family are lists set from
   // the engine's index (`help/pages.ts`, `help/ListPage.svelte`), so that every step of a
   // trail has a page to open.
   import HelpPage from "../help/HelpPage.svelte";
@@ -27,8 +28,8 @@
   import ListPage from "../help/ListPage.svelte";
   import SearchField from "../help/SearchField.svelte";
   import TopicsPane from "../help/TopicsPane.svelte";
-  import { codesPage, packagePage, partsOf, usingList } from "../help/pages";
-  import { outlineOf, readPage, relatedOf } from "../help/read";
+  import { codesPage, packagePage, usingList } from "../help/pages";
+  import { outlineOf, readPage } from "../help/read";
   import { trailOf } from "../help/trail";
   import { headingsOf, readUsing } from "../using/read";
   import UsingPage from "../using/UsingPage.svelte";
@@ -67,35 +68,18 @@
   const home = $derived(shown === null || shown.kind === "home" ? workspace.helpIndex : null);
   const blank = $derived(list === null && own === null && page === "" && home === null);
   const doc = $derived(readPage(page));
+  // The sections of the page open, for the pane at the right: those of the engine's page, or
+  // of one of the app's own. A page that is a list, and Home, has none (#211, item 13).
   const sections = $derived(
     own !== null
       ? own.doc === null
         ? []
         : headingsOf(own.doc).map((part) => ({ ...part, entry: false }))
-      : list === null
+      : list === null && home === null
         ? outlineOf(doc)
-        : partsOf(list).map((part) => ({ ...part, entry: false })),
+        : [],
   );
   const trail = $derived(trailOf(shown ?? HOME, workspace.helpIndex, workspace.helpCodes));
-
-  // The related functions, each with the first line of its own page, asked of the engine.
-  const related = $derived(relatedOf(doc));
-  let heads = $state<Record<string, { does: string; pack: string } | null>>({});
-  $effect(() => {
-    for (const name of related) {
-      if (name in heads) continue;
-      heads[name] = null;
-      void workspace
-        .helpPage(name)
-        .then((found) => {
-          const [head] = found.page === null ? [] : readPage(found.page).entries;
-          heads[name] = { does: head?.does ?? "", pack: head?.facts[0] ?? "" };
-        })
-        .catch(() => {
-          heads[name] = { does: "", pack: "" };
-        });
-    }
-  });
 
   // The section in view: the last whose heading has reached the top of the page's own pane.
   let pane = $state<HTMLElement | null>(null);
@@ -154,25 +138,23 @@
 </script>
 
 {#snippet topics()}
-  <TopicsPane {workspace} sections={home === null ? sections : []} {inView} onsection={goTo} />
+  <TopicsPane {workspace} />
 {/snippet}
 
-{#snippet relatedFunctions()}
-  {#if related.length === 0}
+{#snippet onThisPage()}
+  {#if sections.length === 0}
     <p class="none">
-      {blank ? "No page is open." : "This page names no related function."}
+      {blank ? "No page is open." : "This page has no sections."}
     </p>
   {:else}
-    <ul class="related">
-      {#each related as name (name)}
-        <li>
-          <button onclick={() => void workspace.showHelp(name)} title="Open the page of {name}">
-            <span class="name mono">{name}</span>
-            {#if heads[name]}
-              <span class="does">{heads[name]?.does}</span>
-              <span class="pack">{heads[name]?.pack}</span>
-            {/if}
-          </button>
+    <ul class="outline" aria-label="On this page">
+      {#each sections as section (section.line)}
+        <li class:entry={section.entry}>
+          <button
+            class:on={section.line === inView}
+            aria-current={section.line === inView ? "location" : undefined}
+            onclick={() => goTo(section.line)}>{section.title}</button
+          >
         </li>
       {/each}
     </ul>
@@ -212,26 +194,29 @@
       <span>Home</span>
     </button>
   </div>
-  <nav class="trail" aria-label="Where this page stands">
-    <ol>
-      {#each trail as step, at (at)}
-        <li class:last={step.to === null}>
-          {#if at > 0}<span class="then" aria-hidden="true">{step.beside ? "·" : "›"}</span>{/if}
-          {#if step.to !== null}
-            <button
-              class:mono={step.name}
-              onclick={() => step.to !== null && void workspace.showHelpStop(step.to)}
-              >{step.label}</button
-            >
-          {:else}
-            <span class="here" class:mono={step.name} aria-current="page" data-testid="help-title"
-              >{step.label}</span
-            >
-          {/if}
-        </li>
-      {/each}
-    </ol>
-  </nav>
+  <!-- Home has no trail: its button is marked as the page open. -->
+  {#if trail.length > 0}
+    <nav class="trail" aria-label="Where this page stands">
+      <ol>
+        {#each trail as step, at (at)}
+          <li class:last={step.to === null}>
+            {#if at > 0}<span class="then" aria-hidden="true">{step.beside ? "·" : "›"}</span>{/if}
+            {#if step.to !== null}
+              <button
+                class:mono={step.name}
+                onclick={() => step.to !== null && void workspace.showHelpStop(step.to)}
+                >{step.label}</button
+              >
+            {:else}
+              <span class="here" class:mono={step.name} aria-current="page" data-testid="help-title"
+                >{step.label}</span
+              >
+            {/if}
+          </li>
+        {/each}
+      </ol>
+    </nav>
+  {/if}
   <span class="gap"></span>
   <SearchField {workspace} />
 {/snippet}
@@ -243,7 +228,7 @@
     {workspace}
     name="Help"
     left={[paneOf(workspace, "help", "topics", topics)]}
-    right={[paneOf(workspace, "help", "related", relatedFunctions)]}
+    right={[paneOf(workspace, "help", "page", onThisPage)]}
     bar={controls}
   >
     <div class="page" bind:this={pane} onscroll={watch}>
@@ -446,18 +431,12 @@
   li button:focus-visible {
     outline: 2px solid var(--accent);
   }
-  .related .name {
-    display: block;
+  .outline .entry button {
     font-weight: 600;
   }
-  .related .does {
-    color: var(--ink-2);
-    display: block;
-    font-size: 13px;
-  }
-  .related .pack {
-    color: var(--ink-3);
-    display: block;
-    font-size: 12.5px;
+  .outline .on {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
   }
 </style>

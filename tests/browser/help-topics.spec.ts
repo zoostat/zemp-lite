@@ -34,6 +34,10 @@ const head = (page: Page, name: string) =>
 const listOf = (page: Page, name: string) => topics(page).getByRole("list", { name, exact: true });
 const family = (page: Page, name: string) =>
   listOf(page, "Errors and warnings").getByRole("button", { name: new RegExp(`${name} `) });
+const onThisPage = (page: Page) =>
+  page
+    .getByRole("complementary", { name: "Help: the right pane" })
+    .getByRole("region", { name: "On this page" });
 const allTopics = (page: Page) => topics(page).getByRole("button", { name: "All topics" });
 const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
@@ -202,7 +206,7 @@ test("every package and every code of Topics opens its page", async ({ page, pre
   expect(pressed).toBe(144);
 });
 
-test("beside a function's page Topics holds its package, the open function marked, and the page's sections", async ({
+test("beside a function's page Topics holds its package, the open function marked; the page's sections are at the right", async ({
   page,
   press,
 }) => {
@@ -210,10 +214,10 @@ test("beside a function's page Topics holds its package, the open function marke
   await scratch(page, press);
   // Home has nothing beside it: the sections, and no way back to them to offer.
   await expect(allTopics(page)).toHaveCount(0);
-  await expect(topics(page).getByRole("region", { name: "On this page" })).toHaveCount(0);
+  await expect(onThisPage(page)).toContainText("This page has no sections.");
 
   await ask(page, "t_test");
-  // All topics; the package with its count, a link to its page; its functions; On this page.
+  // All topics; the package with its count, a link to its page; and its functions.
   await expect(allTopics(page)).toBeVisible();
   const holder = topics(page).getByRole("region", { name: "Beside this page: stats" });
   await expect(holder.getByRole("heading", { level: 3 })).toHaveText(/^stats\s*14$/);
@@ -223,14 +227,13 @@ test("beside a function's page Topics holds its package, the open function marke
   await expect(listOf(page, "The functions of stats").locator('[aria-current="page"]')).toHaveText(
     "t_test",
   );
-  // The packages and the codes give way to them; the page's sections stand under them.
+  // The packages and the codes give way to them, and the pane holds nothing else: the page's
+  // sections are in the pane at the right, On this page (#211, item 13).
   await expect(listOf(page, "Packages")).toHaveCount(0);
   await expect(listOf(page, "Errors and warnings")).toHaveCount(0);
-  await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
-    /^stats\s*14$/,
-    /^▾\s*On this page\s*\d+$/,
-  ]);
-  const sections = listOf(page, "On this page").getByRole("button");
+  await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([/^stats\s*14$/]);
+  await expect(topics(page).getByText("On this page")).toHaveCount(0);
+  const sections = onThisPage(page).getByRole("list", { name: "On this page" }).getByRole("button");
   await expect(sections.first()).toHaveText("Usage");
   await expect(sections.first()).toBeInViewport();
   // A section goes to its place and is marked, as in the Outline pane it was.
@@ -268,23 +271,23 @@ test("beside a function's page Topics holds its package, the open function marke
   await expect(title(page)).toHaveText("t_test");
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("t_test");
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
-    /^▾\s*On this page\s*\d+$/,
     /^▾\s*Packages\s*10$/,
     /^▾\s*Errors and warnings\s*144$/,
     /^▾\s*Using Zemp Lite\s*\d+$/,
   ]);
   await expect(allTopics(page)).toHaveCount(0);
-  // Folded, On this page stays folded on the next page, where the neighbours are back.
-  await press(head(page, "On this page"));
-  await expect(listOf(page, "On this page")).toHaveCount(0);
+  // The page's sections are where they were, at the right; the next page has its neighbours.
+  await expect(sections.first()).toHaveText("Usage");
   await ask(page, "reg");
   await expect(allTopics(page)).toBeVisible();
   await expect(
     listOf(page, "The functions of regress").locator('[aria-current="page"]'),
   ).toHaveText("reg");
-  await expect(head(page, "On this page")).toHaveAttribute("aria-expanded", "false");
-  await press(head(page, "On this page"));
   await expect(sections.first()).toHaveText("Usage");
+  // The pane at the right closes by its link, and Topics is as it was.
+  await press(bar(page).getByRole("button", { name: "On this page", exact: true }));
+  await expect(onThisPage(page)).toHaveCount(0);
+  await expect(allTopics(page)).toBeVisible();
 });
 
 test("a name of two packages has both beside it, a dataset its package, and a code its family", async ({
@@ -306,14 +309,12 @@ test("a name of two packages has both beside it, a dataset its package, and a co
     // In a package of many functions the open one is brought into view in the list.
     await expect(marked).toBeInViewport();
   }
-  // The two share the room one package has, and the page's sections are in view under them.
-  await expect(listOf(page, "On this page").getByRole("button").first()).toBeInViewport();
-  // A function far down a long package is in view too, and the page's sections still are.
+  // The two share the pane, each in a list of its own.
+  // A function far down a long package is in view too.
   await ask(page, "assert");
   const far = listOf(page, "The functions of core").locator('[aria-current="page"]');
   await expect(far).toHaveText("assert");
   await expect(far).toBeInViewport();
-  await expect(listOf(page, "On this page").getByRole("button").first()).toBeInViewport();
 
   // A dataset stands among the datasets of `datasets`, after its two functions.
   await ask(page, "wages");

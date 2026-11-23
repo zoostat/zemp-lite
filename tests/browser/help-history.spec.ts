@@ -23,10 +23,7 @@ const forward = (page: Page) => moving(page).getByRole("button", { name: "Forwar
 const home = (page: Page) => moving(page).getByRole("button", { name: "Home" });
 const title = (page: Page) => page.getByTestId("help-title");
 const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
-const related = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Help: the right pane" })
-    .getByRole("region", { name: "Related functions" });
+const trail = (page: Page) => bar(page).getByRole("navigation", { name: "Where this page stands" });
 
 /** Open a page by its name or its code, typed in the field of the bar. */
 async function ask(page: Page, name: string) {
@@ -38,7 +35,8 @@ async function ask(page: Page, name: string) {
 /** Whether Home is the page shown: its button lit, and the index of functions in the middle. */
 async function isHome(page: Page) {
   await expect(home(page)).toHaveAttribute("aria-current", "page");
-  await expect(title(page)).toHaveText("Help");
+  // Home has no trail: its button, marked, says where one is.
+  await expect(trail(page)).toHaveCount(0);
   await expect(page.getByTestId("help-page").getByRole("heading", { level: 3 })).toHaveText(
     "Index of functions",
   );
@@ -55,13 +53,15 @@ test("Help opens on Home, and Back and Forward go through the pages opened, grey
   await expect(back(page)).toBeDisabled();
   await expect(forward(page)).toBeDisabled();
 
-  // A page from the field, one from a link of the right pane, and a code.
+  // A page from the field, one from a link of the page (under See also), and a code.
   await ask(page, "summary");
   await expect(home(page)).not.toHaveAttribute("aria-current", "page");
   await expect(back(page)).toBeEnabled();
   await expect(back(page)).toHaveAttribute("title", "Back: Home");
   await expect(forward(page)).toBeDisabled();
-  await press(related(page).getByRole("button", { name: /^reg/ }));
+  await press(
+    page.getByTestId("help-page").getByRole("button", { name: "reg", exact: true }).first(),
+  );
   await expect(title(page)).toHaveText("reg");
   await ask(page, "W0201");
 

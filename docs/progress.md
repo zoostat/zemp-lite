@@ -148,4 +148,6 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **The owner changed the layout of Help (24 November 2026, through the coordinating session; #211, item 13, Zeff 8caf4c4):** the right pane becomes **On this page**, **Related functions** goes, Topics keeps the neighbours without the page's sections, the search field stands at the right end of the bar. The same day he took the word Help off the head of the trail (Zeff 58c3c2d), and set a standing rule (#211, item 12): the pages Zemp keeps agree with the engine a release carries, checked at the build. The layout is step 9c, the check of the rule step 9d, and his reading of the pages step 9e, after both.
 
-**Next.** Step 9c `[function]`: the layout of Help as the owner changed it; then every picture made again.
+**Done, step 9c `[function]`.** The copy of the specification brought to Zeff 58c3c2d, and Help laid out as the owner asked (#211, item 13): the right pane is **On this page**; **Related functions** is gone, See also keeping its links; Topics holds a page's neighbours and no sections; the search field is at the right end of the bar; the trail begins under Home, without the word Help, and Home has none. A reader's old choices of the two panes are carried over. Every picture made again. Green here: the whole routine in both browsers.
+
+**Next.** Step 9d `[engine]`: the pages Zemp keeps held to the engine (#211, item 12); then step 9e, the owner's reading of the thirteen pages.

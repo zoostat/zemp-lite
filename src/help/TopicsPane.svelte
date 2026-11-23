@@ -1,38 +1,25 @@
 <script lang="ts">
-  // The Topics pane of the Help place (release 0.2.3, step 5a; the row of 0.2.3; open decision
-  // #211, items 4 and 9): sections that fold, each with its count. **On this page**, the
-  // sections of the page open, each going to its place, the one in view marked; **Packages**,
-  // each package the engine ships with its count, a click opening its page; **Errors and
-  // warnings**, the families as the engine lists them, each folding to its codes with their
-  // titles, a click opening a code's page; **Using Zemp Lite**, the app's own pages by their
-  // titles. Which sections are folded is kept with the project. Every name, family and title
-  // of the first three is the engine's.
+  // The Topics pane of the Help place (release 0.2.3, steps 5a, 5b and 9c; the row of 0.2.3;
+  // open decision #211, items 4, 9 and 13): sections that fold, each with its count.
+  // **Packages**, each package the engine ships with its count, a click opening its page;
+  // **Errors and warnings**, the families as the engine lists them, each folding to its codes
+  // with their titles, a click opening a code's page; **Using Zemp Lite**, the app's own pages
+  // by their titles. Which sections are folded is kept with the project. Every name, family
+  // and title of the first two is the engine's.
   //
-  // Beside a page that has neighbours (step 5b; `around.ts`) the pane holds those in place of
-  // the packages and the codes: a function's package with its functions, the open one marked
-  // and in view; a package's own functions; a code's family with its codes; and under them
-  // **On this page**. **‹ All topics** returns the pane to its sections without leaving the
-  // page; the next page opened has its neighbours beside it again.
+  // Beside a page that has neighbours (`around.ts`) the pane holds those in place of its
+  // sections: a function's package with its functions, the open one marked and in view; a
+  // package's own functions; a code's family with its codes; a page of the app's own, all of
+  // them. **‹ All topics** returns the pane to its sections without leaving the page; the
+  // next page opened has its neighbours beside it again. The sections of the page itself are
+  // in the pane at the right, **On this page** (item 13).
   import { familyTopic, TOPICS, topicOpen } from "../app/views";
   import type { Workspace } from "../app/workspace-state.svelte";
   import { aroundOf } from "./around";
   import { USING, USING_TITLE } from "../using/pages";
   import { CODES, type Stop } from "./history";
 
-  let {
-    workspace,
-    sections,
-    inView,
-    onsection,
-  }: {
-    workspace: Workspace;
-    /** The sections of the page open: where each is, its words, and whether it heads an entry. */
-    sections: { line: number; title: string; entry: boolean }[];
-    /** The section in view, by its line. */
-    inView: number | null;
-    /** Go to a section of the page. */
-    onsection: (line: number) => void;
-  } = $props();
+  let { workspace }: { workspace: Workspace } = $props();
 
   const index = $derived(workspace.helpIndex);
   const families = $derived(workspace.helpCodes);
@@ -127,8 +114,8 @@
             </span>
           {/if}
         </h3>
-        <!-- Two packages share the room one has, so that the page's sections stay in view. -->
-        <div class="around" style:max-height="{Math.round(38 / around.length)}vh">
+        <!-- Two packages share the pane, each in a list of its own, the open name in view in each. -->
+        <div class="around" style:max-height="{Math.round(72 / around.length)}vh">
           <ul aria-label="The {group.kind} of {group.name}">
             {#each group.rows as row (row.name)}
               {@render neighbour(row, group.kind)}
@@ -145,24 +132,6 @@
         </div>
       </section>
     {/each}
-  {/if}
-  {#if sections.length > 0}
-    <section aria-label="On this page">
-      {@render head(TOPICS.page, "On this page", sections.length)}
-      {#if open(TOPICS.page)}
-        <ul class="outline" id="help-topic-{TOPICS.page}" aria-label="On this page">
-          {#each sections as section (section.line)}
-            <li class:entry={section.entry}>
-              <button
-                class:on={section.line === inView}
-                aria-current={section.line === inView ? "location" : undefined}
-                onclick={() => onsection(section.line)}>{section.title}</button
-              >
-            </li>
-          {/each}
-        </ul>
-      {/if}
-    </section>
   {/if}
   {#if index !== null && !beside}
     <section aria-label="Packages">
@@ -309,9 +278,9 @@
   .fold.here {
     padding: 5px 8px;
   }
-  /* The neighbours keep to a box of their own, so that the page's sections stay in view. */
+  /* The neighbours of one holder scroll in a list of their own, the open one kept in view. */
   .around {
-    max-height: 38vh;
+    max-height: 72vh;
     overflow: auto;
   }
   h4 {
@@ -365,12 +334,6 @@
   }
   .row.code .title {
     color: var(--ink-2);
-  }
-  .outline button {
-    padding-left: 26px;
-  }
-  .outline .entry button {
-    font-weight: 600;
   }
   .on {
     background: var(--accent-soft);

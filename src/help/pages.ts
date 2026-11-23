@@ -131,20 +131,3 @@ export function countsOf(index: HelpIndex): string {
   const functions = index.packages.reduce((sum, one) => sum + one.functions.length, 0);
   return `Zeff ${index.engine} · ${counted(functions, "function", "functions")} in ${counted(index.packages.length, "package", "packages")}`;
 }
-
-/** The parts of a list that have a heading, for the outline: where each is, and its words. */
-export function partsOf(page: ListPage): { line: number; title: string }[] {
-  return page.groups.flatMap((group, line) =>
-    group.heading === null
-      ? []
-      : [
-          {
-            line,
-            title:
-              group.heading.name === null
-                ? group.heading.words
-                : `${group.heading.name} · ${group.heading.words}`,
-          },
-        ],
-  );
-}

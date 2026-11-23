@@ -78,7 +78,7 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
   await expect(using(page).getByRole("button")).toHaveText(PAGES);
   await press(using(page).getByRole("button", { name: "Getting started" }));
   await expect(title(page)).toHaveText("Getting started");
-  await expect.poll(() => reads(page)).toBe("Help › Using Zemp Lite › Getting started");
+  await expect.poll(() => reads(page)).toBe("Using Zemp Lite › Getting started");
 
   // The title, the one line, the headings; a numbered list and a plain one.
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Getting started");
@@ -110,7 +110,10 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
   expect(seen).toBe(wordsOf(file("src/using/pages/getting-started.md")).join(""));
   // The page's sections stand in Topics, each going to its place; beside it, all the pages.
   await expect(
-    topics(page).getByRole("list", { name: "On this page" }).getByRole("button"),
+    page
+      .getByRole("complementary", { name: "Help: the right pane" })
+      .getByRole("list", { name: "On this page" })
+      .getByRole("button"),
   ).toHaveText(["Run the example", "The four places", "Change something", "Where to go next"]);
   const beside = topics(page).getByRole("list", { name: "The pages of Using Zemp Lite" });
   await expect(beside.getByRole("button")).toHaveText(PAGES);
@@ -127,7 +130,7 @@ test("links go from one page to another and to the engine's pages, each into the
   // To another of these pages.
   await press(shown(page).getByRole("button", { name: "Finding help" }));
   await expect(title(page)).toHaveText("Finding help");
-  await expect.poll(() => reads(page)).toBe("Help › Using Zemp Lite › Finding help");
+  await expect.poll(() => reads(page)).toBe("Using Zemp Lite › Finding help");
   await expect(shown(page).locator("kbd")).toHaveText([
     "/",
     "↓",
@@ -141,7 +144,7 @@ test("links go from one page to another and to the engine's pages, each into the
   // To a function's page, to a code's, and back to where one was.
   await press(shown(page).getByRole("button", { name: "t_test" }));
   await expect(title(page)).toHaveText("t_test");
-  await expect.poll(() => reads(page)).toBe("Help › Packages › stats › t_test");
+  await expect.poll(() => reads(page)).toBe("Packages › stats › t_test");
   await press(back(page));
   await expect(title(page)).toHaveText("Finding help");
   await press(shown(page).getByRole("button", { name: "W0201" }));
@@ -183,7 +186,7 @@ test("the pages are found by search and by the trail, and listed on a page of th
   // The trail's step: the list of the pages, each with its one line; its row opens a page.
   await press(trail(page).getByRole("button", { name: "Using Zemp Lite" }));
   await expect(title(page)).toHaveText("Using Zemp Lite");
-  await expect.poll(() => reads(page)).toBe("Help › Using Zemp Lite");
+  await expect.poll(() => reads(page)).toBe("Using Zemp Lite");
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Using Zemp Lite");
   await expect(
     shown(page).getByRole("list", { name: "Facts of Using Zemp Lite" }).getByRole("listitem"),
@@ -197,7 +200,7 @@ test("the pages are found by search and by the trail, and listed on a page of th
   await expect(rows.last()).toHaveText(/^Reporting a problem\s*When a script fails/);
   await press(shown(page).getByRole("button", { name: "Getting started" }));
   await expect(title(page)).toHaveText("Getting started");
-  await press(trail(page).getByRole("button", { name: "Help", exact: true }));
+  await press(bar(page).getByRole("button", { name: "Home" }));
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Index of functions");
 });
 
@@ -273,7 +276,7 @@ test("a page's picture is fetched when the page is opened, with its words, and k
   const beside = await fits();
   // With the panes closed there is more room, and the picture is never wider than it was taken.
   await press(bar(page).getByRole("button", { name: "Topics", exact: true }));
-  await press(bar(page).getByRole("button", { name: "Related functions", exact: true }));
+  await press(bar(page).getByRole("button", { name: "On this page", exact: true }));
   expect(await fits()).toBeGreaterThanOrEqual(beside);
   expect(await fits()).toBeLessThanOrEqual(1200);
   await page.setViewportSize({ width: 1000, height: 760 });

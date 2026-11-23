@@ -9,7 +9,8 @@
 // pane opened and closed by its own link (open decision #203), and the file says which panes
 // of each place are open and how wide the two sides are. From 0.2.3 the left pane of Help is
 // **Topics** (open decision #211; it was **Outline**), and the file says which of its sections
-// the reader folded or unfolded.
+// the reader folded or unfolded; its right pane is **On this page** (#211, item 13; it was
+// **Related functions**).
 
 import type { View } from "../engine/messages";
 
@@ -25,7 +26,7 @@ export const PANES = {
   script: { project: false, outline: false, notes: true },
   data: { frames: true, variables: false },
   plots: { list: true, about: true },
-  help: { topics: true, related: true },
+  help: { topics: true, page: true },
 } as const;
 export type PlaceName = keyof typeof PANES;
 export type PaneName<P extends PlaceName> = keyof (typeof PANES)[P];
@@ -183,6 +184,10 @@ export function readViews(text: string | null): ViewState {
       if (typeof help["topics"] !== "boolean" && typeof help["outline"] === "boolean") {
         state.panes.help.topics = help["outline"];
       }
+      // Its right pane was Related functions: a reader who closed that has the right pane closed.
+      if (typeof help["page"] !== "boolean" && typeof help["related"] === "boolean") {
+        state.panes.help.page = help["related"];
+      }
     }
   }
   const topics = (from["help"] as Record<string, unknown> | undefined)?.["topics"];
@@ -283,7 +288,6 @@ export function writeViews(state: ViewState): string {
 
 /** The sections of the Topics pane, by their keys; a family of codes is `codes:` and its name. */
 export const TOPICS = {
-  page: "page",
   packages: "packages",
   codes: "codes",
   using: "using",

@@ -558,15 +558,3 @@ export function outlineOf(doc: HelpDoc): OutlineItem[] {
     })),
   ]);
 }
-
-/** The functions a page names under SEE ALSO, in its order and once each. */
-export function relatedOf(doc: HelpDoc): string[] {
-  const names = doc.entries.flatMap((entry) =>
-    entry.sections
-      .filter((section) => section.heading === "SEE ALSO")
-      .flatMap((section) =>
-        section.blocks.flatMap((block) => (block.kind === "names" ? block.names : [])),
-      ),
-  );
-  return names.filter((name, at) => names.indexOf(name) === at);
-}

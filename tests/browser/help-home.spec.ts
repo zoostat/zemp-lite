@@ -149,7 +149,8 @@ test("every name on Home opens its page", async ({ page, press }) => {
       );
       if (!there || !headed || /no function or package is called/.test(text)) missing.push(name);
       pane.querySelector<HTMLButtonElement>('button[aria-label="Back"]')!.click();
-      await settled(() => title() === "Help" && names().length === count);
+      // Back on Home, which has no trail: its names are there again.
+      await settled(() => title() === undefined && names().length === count);
     }
     return missing;
   });
@@ -230,12 +231,12 @@ for (const theme of ["light", "dark"] as const) {
     expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
     expect(await faintText(home(page))).toEqual([]);
     await press(bar(page).getByRole("button", { name: "Topics" }));
-    await press(bar(page).getByRole("button", { name: "Related functions" }));
+    await press(bar(page).getByRole("button", { name: "On this page" }));
     const closed = await columns(page);
     expect(closed.count).toBeGreaterThan(open.count);
     expect(closed.sideways).toBeLessThanOrEqual(0);
     await press(bar(page).getByRole("button", { name: "Topics" }));
-    await press(bar(page).getByRole("button", { name: "Related functions" }));
+    await press(bar(page).getByRole("button", { name: "On this page" }));
     await page.setViewportSize({ width: 1000, height: 700 });
     const narrow = await columns(page);
     expect(narrow.count).toBeGreaterThanOrEqual(1);

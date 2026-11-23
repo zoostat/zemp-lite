@@ -30,7 +30,7 @@ export const WORDS: { [P in PlaceName]: { [N in PaneName<P>]: Words } } = {
   },
   help: {
     topics: { label: "Topics", holds: "the topics of Help" },
-    related: { label: "Related functions", holds: "the functions related to this one" },
+    page: { label: "On this page", holds: "the sections of the page open" },
   },
 };
 
