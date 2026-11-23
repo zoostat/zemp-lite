@@ -7,7 +7,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { Locator, Page } from "@playwright/test";
-import { cursorTo, expect, test } from "../../tests/browser/support";
+import { readFileSync } from "node:fs";
+import { cursorTo, expect, test, write } from "../../tests/browser/support";
 
 /** The size every picture is taken at: the narrowest window the app is laid out for. */
 const SIZE = { width: 1200, height: 750 };
@@ -24,6 +25,12 @@ async function scratch(page: Page, press: Press): Promise<void> {
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
 }
+
+/** A script that fails, as the tests of the report have it: a file that is not there. */
+const FAILING = readFileSync(
+  new URL("../../tests/scripts/report/error.zeff", import.meta.url),
+  "utf8",
+);
 
 const places = (page: Page) => page.getByRole("navigation", { name: "Places" });
 const bar = (page: Page, place: string) =>
@@ -82,6 +89,54 @@ const SCENES: Record<string, (page: Page, press: Press) => Promise<void>> = {
     await expect(page.getByRole("status")).toHaveText("done");
     await press(places(page).getByRole("button", { name: "Plots" }));
     await expect(page.getByRole("list", { name: "Plots of the last run" })).toBeVisible();
+  },
+  // Commands: the list of commands, before anything is typed.
+  "the-commands": async (page, press) => {
+    await scratch(page, press);
+    await page.keyboard.press("ControlOrMeta+k");
+    await expect(page.getByRole("dialog", { name: "Commands" })).toBeVisible();
+  },
+  // Keyboard shortcuts: the console line, a statement typed and run in it.
+  "the-console-line": async (page, press) => {
+    await scratch(page, press);
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText("done");
+    await press(page.getByRole("button", { name: "Fold all", exact: true }));
+    await page.keyboard.press("Control+Backquote");
+    await page.keyboard.type("print(6 * 7)");
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("log", { name: "Console output" }).getByTestId("entry"),
+    ).toHaveCount(1);
+  },
+  // Exporting and opening a project: the menu of a project's row on the screen of projects.
+  "the-menu-of-a-project": async (page, press) => {
+    await page.goto("/");
+    await press(page.getByRole("button", { name: "New project…" }));
+    await page.getByLabel("The name of the new project").fill("Returns to schooling");
+    await press(page.getByRole("button", { name: "Create" }));
+    await expect(page.getByRole("status")).toHaveText(READY);
+    await press(page.getByTitle("Back to the projects of this browser"));
+    await press(page.getByRole("button", { name: "Actions for Returns to schooling" }));
+    await expect(page.getByRole("menuitem", { name: "Export project…" })).toBeVisible();
+  },
+  // Where the work is kept: the screen of projects, with its sentence on where they are kept.
+  "the-screen-of-projects": async (page) => {
+    await page.goto("/");
+    await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+  },
+  // Reporting a problem: the report of a script that fails, shown whole.
+  "the-report": async (page, press) => {
+    await scratch(page, press);
+    await write(page, FAILING);
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText(/^ended with exit code \d$/);
+    await page.keyboard.press("ControlOrMeta+k");
+    await page.getByRole("combobox", { name: "Type a command" }).fill("report a problem");
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("dialog", { name: "Report a problem" }).getByTestId("report-text"),
+    ).toBeVisible();
   },
   // Finding help: a name of R typed in the search field of Help.
   "search-in-help": async (page, press) => {

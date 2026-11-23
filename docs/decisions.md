@@ -1912,3 +1912,19 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** The controls of the eight pages on their screens (9 tests in both engines). The tests of step 8a and 8b now run over all eight pages: each opens from Topics set in type, with its picture arrived as taken, at 12.5 pixels and 4.5 to 1 in both themes. Unit: each page read, held to the list, its links and its picture.
 
 **Reason.** Finding 7 of the plan: a page that names a control is checked by a test to name one that is on the screen, so that the pages cannot fall behind the app unnoticed.
+
+## 24 November 2026: the last five pages of Using Zemp Lite, and the keys held to the app (release 0.2.3, step 9b)
+
+**The pages**, drafted as the eight before them: **Commands with ⌘K**; **Keyboard shortcuts**; **Exporting and opening a project**; **Where the work is kept**; **Reporting a problem**. The thirteen of #211, item 9, are all written, in the order they are read: Getting started first, the places of the app, Finding help, and then these five. Each has its picture (the list of commands; the console line with a statement run in it; the menu of a project's row; the screen of projects; the report of a script that fails).
+
+**The page of keyboard shortcuts is held to the app** by a unit test (`src/using/shortcuts.node.test.ts`), both ways as far as can be: every key the page lists is named in the test with a test of the browser that presses that key and watches the app answer, by its file and its title, which must be there; the page's keys and the test's are the same set, so that neither can gain or lose a key alone; and every key the script's own editor is given (`Mod-Enter`, `Shift-Mod-Enter`, `Alt-Enter`, `F1`, read from `Editor.svelte`) is on the page. A key of the app that is neither the editor's nor yet on the page is not found by this; the page is read against the code at each release (#211, item 12).
+
+**What the pages say of the engine** was taken from it: the report holds what `zeff report-bug` says it holds, in its own first lines (statements of the script, the names and types of the variables, the names of the files they were read from, no rows of data, and a message may name a value).
+
+**The owner's reading is moved** from this step to a step of its own, 9d: on 24 November 2026 the coordinating session passed the owner's change of the Help place's layout (#211, item 13), which changes what several pictures show; it is step 9c, and the pages are put to him when it is done and the pictures are made again.
+
+**The pictures:** thirteen, 34 to 63 kB, 679 kB together, none in the first load.
+
+**Tested.** Unit: the three tests of the keys; each page read, held to the list, its links and its picture (13 pages). Browser, both engines: the controls each of the thirteen pages names, on its screens; each page opened from Topics with its picture, at 12.5 pixels and 4.5 to 1 in both themes; found by search by a title begun and by a word of a one line.
+
+**Reason.** #211, item 9; and the plan's own rule for the page of shortcuts, that its list be held by a test to the shortcuts the app has.

@@ -144,4 +144,8 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Done, step 9a `[function]`.** Six pages more, each with its picture: projects, scripts and files; running a script; the notes beside each statement; sections and the outline; the Data place; the Plots place (eight of the thirteen now). A new test looks for every control a page names in bold on the screens the page speaks of, in both browsers, so a page that falls behind the app fails; it found at once that the main script's menu has no **Move to…**. Getting started corrected: ⌘⇧↵ runs the whole script. Green here: the whole routine in both browsers.
 
-**Next.** Step 9b `[function]`: the last five pages (commands with ⌘K; keyboard shortcuts; exporting and opening a project; where the work is kept; reporting a problem), and the owner's reading of the thirteen.
+**Done, step 9b `[function]`.** The last five pages, each with its picture: commands with ⌘K; keyboard shortcuts; exporting and opening a project; where the work is kept; reporting a problem. All thirteen are written. A unit test holds the page of shortcuts to the app: each key it lists is one a browser test presses, and every key of the script's editor is on the page. Green here: the whole routine in both browsers.
+
+**The owner changed the layout of Help (24 November 2026, through the coordinating session; #211, item 13, Zeff 8caf4c4):** the right pane becomes **On this page**, **Related functions** goes, Topics keeps the neighbours without the page's sections, the search field stands at the right end of the bar. It is step 9c, done before the pages are put to him, since it changes what their pictures show; his reading is step 9d.
+
+**Next.** Step 9c `[function]`: the layout of Help as the owner changed it; then every picture made again.

@@ -57,6 +57,31 @@ export const USING: UsingPage[] = [
     title: "Finding help",
     line: "Search by a name you know, browse the functions by package, or press F1 on a name in the script.",
   },
+  {
+    slug: "commands",
+    title: "Commands with ⌘K",
+    line: "Everything the window can do has a command: press ⌘K, type a word of it, and press Enter.",
+  },
+  {
+    slug: "keyboard-shortcuts",
+    title: "Keyboard shortcuts",
+    line: "The keys the app answers to, place by place. On Windows and Linux, Ctrl takes the place of ⌘.",
+  },
+  {
+    slug: "exporting-and-opening-a-project",
+    title: "Exporting and opening a project",
+    line: "A project leaves the browser as one zip, and comes back from one: to keep it safe, to move it, or to run it with Zeff on a computer.",
+  },
+  {
+    slug: "where-the-work-is-kept",
+    title: "Where the work is kept",
+    line: "Your projects are kept in this browser, on this computer, and nowhere else; export what matters.",
+  },
+  {
+    slug: "reporting-a-problem",
+    title: "Reporting a problem",
+    line: "When a script fails in a way that looks like a fault of Zeff, the app builds a report for you to read and save; nothing is sent.",
+  },
 ];
 
 /** A page by the name of its file, or none. */

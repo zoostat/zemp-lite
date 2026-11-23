@@ -46,6 +46,11 @@ const PAGES = [
   "The Data place",
   "The Plots place",
   "Finding help",
+  "Commands with ⌘K",
+  "Keyboard shortcuts",
+  "Exporting and opening a project",
+  "Where the work is kept",
+  "Reporting a problem",
 ];
 
 /** The words of a text, without the marks of the page's file, or its pictures' own words. */
@@ -164,10 +169,14 @@ test("the pages are found by search and by the trail, and listed on a page of th
   await expect(options.first()).toHaveText(
     /^page\s*Getting started\s*Open the Scratch project, run a script, and read what each statement made\.\s*$/,
   );
-  await field(page).fill("browse");
+  await field(page).fill("finding");
   await expect(options.first()).toHaveText(
     /^page\s*Finding help\s*Search by a name you know, browse/,
   );
+  // A word of a one line finds the pages that have it.
+  await field(page).fill("zip");
+  await expect(options.first()).toHaveText(/^page\s*Exporting and opening a project/);
+  await field(page).fill("finding");
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(title(page)).toHaveText("Finding help");
@@ -185,7 +194,7 @@ test("the pages are found by search and by the trail, and listed on a page of th
   await expect(rows.first()).toHaveText(
     /^Getting started\s*Open the Scratch project, run a script/,
   );
-  await expect(rows.last()).toHaveText(/^Finding help\s*Search by a name you know/);
+  await expect(rows.last()).toHaveText(/^Reporting a problem\s*When a script fails/);
   await press(shown(page).getByRole("button", { name: "Getting started" }));
   await expect(title(page)).toHaveText("Getting started");
   await press(trail(page).getByRole("button", { name: "Help", exact: true }));
@@ -316,6 +325,12 @@ for (const theme of ["light", "dark"] as const) {
     }
     // From the keyboard alone: a link of the page is a stop of the Tab key and answers to Enter.
     const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
+    await press(
+      topics(page)
+        .getByRole("list", { name: "The pages of Using Zemp Lite" })
+        .getByRole("button", { name: "Finding help" }),
+    );
+    await expect(title(page)).toHaveText("Finding help");
     await shown(page).getByRole("button", { name: "t_test" }).focus();
     await page.keyboard.press(tab);
     await expect(shown(page).getByRole("button", { name: "W0201" })).toBeFocused();

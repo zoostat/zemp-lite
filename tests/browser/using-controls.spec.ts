@@ -5,7 +5,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import type { Locator, Page } from "@playwright/test";
 import { readUsing, type Piece } from "../../src/using/read";
-import { expect, test } from "./support";
+import { expect, test, write } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 const folder = new URL("../../src/using/pages/", import.meta.url);
@@ -33,11 +33,13 @@ async function named(page: Page): Promise<string[]> {
       "button, a[href], input, select, textarea, label, summary, [role='button'], [role='menuitem'], [role='checkbox'], [role='switch'], [role='option'], [role='tab'], [role='combobox']",
     );
     for (const one of controls) {
+      // Its own words, and those of each part of it (a button's word beside its key).
       for (const text of [
         one.getAttribute("aria-label"),
         one.textContent,
         one.getAttribute("title"),
         one.getAttribute("placeholder"),
+        ...[...one.children].map((part) => part.textContent),
       ]) {
         const name = text?.replace(/\s+/g, " ").trim();
         if (name) names.add(name);
@@ -135,6 +137,40 @@ const SCREENS: Record<
     await strip.getByRole("checkbox", { name: "Compare" }).nth(1).check();
     await see();
   },
+  commands: async (page, press, see) => {
+    await scratch(page, press);
+    await see();
+  },
+  // The page of keys names keys, not controls; its keys are held by a test of their own.
+  "keyboard-shortcuts": async () => {},
+  "exporting-and-opening-a-project": async (page, press, see) => {
+    await see();
+    await scratch(page, press);
+    await see();
+  },
+  "where-the-work-is-kept": async (page, press, see) => {
+    await scratch(page, press);
+    await see();
+  },
+  "reporting-a-problem": async (page, press, see) => {
+    await scratch(page, press);
+    await run(page, press);
+    await see();
+    // A script that fails, and its report.
+    await write(
+      page,
+      readFileSync(new URL("../scripts/report/error.zeff", import.meta.url), "utf8"),
+    );
+    await press(page.getByRole("button", { name: "Run", exact: true }));
+    await expect(page.getByRole("status")).toHaveText(/^ended with exit code \d$/);
+    await page.keyboard.press("ControlOrMeta+k");
+    await page.getByRole("combobox", { name: "Type a command" }).fill("report a problem");
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("dialog", { name: "Report a problem" }).getByTestId("report-text"),
+    ).toBeVisible();
+    await see();
+  },
   "finding-help": async (page, press, see) => {
     await scratch(page, press);
     await run(page, press);
@@ -160,7 +196,6 @@ for (const slug of pages) {
     press,
   }) => {
     const controls = controlsOf(slug);
-    expect(controls.length, "a page names the controls it speaks of").toBeGreaterThan(0);
     await page.goto("/");
     await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
     const seen = new Set<string>();
