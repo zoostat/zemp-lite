@@ -2454,3 +2454,11 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **What comes next for Zemp Lite.** The pages of a function and of a code reordered (#223), a release of its own, once the owner has typed the order of the parts; then Zemp 0.3 on "Start release 0.3", after Zeff 0.9.0 is released. Nothing of either is begun before his word.
 
+## 24 November 2026: The specification's copy brought to Zeff 6e57f99, after the release
+
+**What.** `docs/spec/` is the copy of the Zeff repository's `docs/spec/` at commit 6e57f99 ("Record the release of Zemp Lite 0.2.4 in the registers"), compared with it byte for byte. Two files differ from the copy at 7a7a8ee: the open decisions (#220 marked done in all ten items, with the two details the build settled; #211's item 13 built as changed; #215's hover) and the risk register (R4's figures at this release, and the seven red checks that only GitHub's slower machines showed; R4's rating unchanged, with the owner).
+
+**The design guide** is not in `docs/spec/`: it is kept outside both repositories, and its section 9 now says the two details (the bar's number rounded down; **Recent** alone until the list is read). The sentence of the entry above that waited for a commit of it is answered by this.
+
+**Reason.** The copy here names one commit of the Zeff repository and is that commit's, whole. This commit follows the tag `v0.2.4`, which carries the copy at 7a7a8ee.
+
