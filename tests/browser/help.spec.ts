@@ -134,6 +134,13 @@ test("the Help place has the page's outline at its left, each section gone to an
     "Errors and warnings",
     "Using Zemp Lite",
   ]);
+  // Topics' sections are closed when Help is first opened (#220, item 8); unfolded, Packages
+  // lists the packages.
+  await press(
+    topics(page)
+      .getByRole("heading", { level: 3 })
+      .getByRole("button", { name: /Packages/ }),
+  );
   await expect(
     topics(page).getByRole("list", { name: "Packages" }).getByRole("button").first(),
   ).toHaveText(/^core\s*71$/);

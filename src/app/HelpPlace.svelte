@@ -42,7 +42,7 @@
 
   let { workspace }: { workspace: Workspace } = $props();
 
-  // A project left in the Help place opens in it again, with no press of its button.
+  // The Help place on the screen stands on a page: on Home, until one is opened.
   onMount(() => workspace.readyHelp());
 
   // The page shown: a list (a package's functions, the codes by family, the app's own pages),

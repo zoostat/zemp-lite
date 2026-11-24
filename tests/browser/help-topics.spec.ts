@@ -11,7 +11,7 @@ import { expect, faintText, smallestText, test, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
 
-async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
+async function scratch(page: Page, press: (target: Locator) => Promise<void>, unfolded = true) {
   await page.goto("/app/");
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
@@ -19,6 +19,16 @@ async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
   await press(
     page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Help" }),
   );
+  // Help, first opened after a start, has every section of Topics closed (open decision #220,
+  // item 8; `kept.spec.ts` and the first test here hold that). These tests are of what the
+  // sections hold, so each is unfolded, as a reader unfolds it.
+  for (const name of ["Packages", "Errors and warnings", "Using Zemp Lite"]) {
+    const fold = page
+      .getByRole("complementary", { name: "Help: the left pane" })
+      .getByRole("heading", { level: 3 })
+      .getByRole("button", { name: new RegExp(`^\\S?\\s*${name}`) });
+    if (unfolded) await press(fold);
+  }
 }
 
 const bar = (page: Page) => page.getByRole("toolbar", { name: "Help: its panes and its controls" });
@@ -64,8 +74,18 @@ test("Topics holds sections that fold, each with its count, by the mouse and by 
   page,
   press,
 }) => {
-  await scratch(page, press);
-  // On Home: the packages and the codes, each section open, with its count.
+  await scratch(page, press, false);
+  // Help, first opened after a start: every section closed, each with its count.
+  await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
+    /^▸\s*Packages\s*10$/,
+    /^▸\s*Errors and warnings\s*144$/,
+    /^▸\s*Using Zemp Lite\s*\d+$/,
+  ]);
+  await expect(topics(page).getByRole("list")).toHaveCount(0);
+  for (const name of ["Packages", "Errors and warnings", "Using Zemp Lite"]) {
+    await press(head(page, name));
+  }
+  // Unfolded: the packages and the codes, each section open, with its count.
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
     /^▾\s*Packages\s*10$/,
     /^▾\s*Errors and warnings\s*144$/,

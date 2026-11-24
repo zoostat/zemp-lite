@@ -301,6 +301,25 @@ export function topicOpen(state: ViewState, key: string): boolean {
   return state.help.topics[key] ?? !key.startsWith("codes:");
 }
 
+/**
+ * The views a start begins from (release 0.2.4, step 11; open decision #220, item 8): whatever
+ * place a project was left on, it opens on the Script place, with the file it last showed
+ * there; and the first click on Help shows Home with every section of the Topics pane closed.
+ * Everything else is as the project keeps it. Within a visit the reader's choices stand: Help
+ * returns to the page being read, with Topics as the reader left it.
+ */
+export function started(state: ViewState): ViewState {
+  const file = (tab: string) => tab.startsWith("file:");
+  const active =
+    state.active !== null && file(state.active)
+      ? state.active
+      : (state.tabs.find((tab) => file(tab) && tab.endsWith(".zeff")) ??
+        state.tabs.find(file) ??
+        null);
+  const closed = Object.fromEntries(Object.values(TOPICS).map((key) => [key, false]));
+  return { ...state, active, help: { topics: closed } };
+}
+
 /** The lines unfolded in `path` with the output of the statement at `line` unfolded or folded. */
 export function unfoldToggled(state: ViewState, path: string, line: number): number[] {
   const now = state.script.unfolded[path] ?? [];

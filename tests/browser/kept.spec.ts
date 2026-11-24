@@ -246,9 +246,16 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
 
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
-  // The Plots place is the one shown; the run is made again for its plots.
+  // A start opens on the Script place (open decision #220, item 8); the run is made again for
+  // its plots, and the Plots place, gone to, is as it was left.
+  await expect(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Script" }),
+  ).toHaveAttribute("aria-current", "page");
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
+  );
   await expect
     .poll(() => strip.locator(".name").allTextContents())
     .toEqual(["w2010 · log(wage)", "w2010 · log(wage) against educ"]);
@@ -468,10 +475,12 @@ test("a change of the view made as the page is left is kept: the page loaded aga
     .toBe("true true");
 });
 
-test("what is folded in Topics is kept with the project, and a project whose Outline pane of Help was closed opens with Topics closed", async ({
+test("a start opens on the Script place, and Help then on Home with Topics closed; within a visit Help is as it was left", async ({
   page,
   press,
 }) => {
+  // Release 0.2.4, step 11 (open decision #220, item 8). Until 0.2.4 a project opened on the
+  // place it was left on, and what was folded in Topics was kept with the project.
   await page.goto("/app/");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Topics kept");
@@ -479,30 +488,66 @@ test("what is folded in Topics is kept with the project, and a project whose Out
   await expect(page).toHaveURL(/#\/p\/topics-kept$/);
   await expect(page.getByRole("status")).toHaveText(READY);
   const places = page.getByRole("navigation", { name: "Places" });
+  const on = (name: string) => places.getByRole("button", { name, exact: true });
   const topics = page
     .getByRole("complementary", { name: "Help: the left pane" })
     .getByRole("region", { name: "Topics" });
-  const packages = topics
-    .getByRole("heading", { level: 3 })
-    .getByRole("button", { name: /Packages/ });
+  const fold = (name: RegExp) =>
+    topics.getByRole("heading", { level: 3 }).getByRole("button", { name });
   const family = topics.getByRole("button", { name: /Z01xx / });
-  await press(places.getByRole("button", { name: "Help" }));
-  await press(packages);
+  const title = page.getByTestId("help-title");
+
+  // The first click on Help: Home, and every section of Topics closed.
+  await press(on("Help"));
+  await expect(page.getByTestId("help-counts")).toBeVisible();
+  for (const name of [/Packages/, /Errors and warnings/, /Using Zemp Lite/]) {
+    await expect(fold(name)).toHaveAttribute("aria-expanded", "false");
+  }
+  await expect(topics.getByRole("list")).toHaveCount(0);
+  // The reader unfolds two sections and a family, and reads a page.
+  await press(fold(/Packages/));
+  await press(fold(/Errors and warnings/));
   await press(family);
-  await expect(packages).toHaveAttribute("aria-expanded", "false");
   await expect(topics.getByRole("list", { name: "The codes of Z01xx" })).toBeVisible();
+  await press(topics.getByRole("list", { name: "The codes of Z01xx" }).getByRole("button").first());
+  await expect(title).toHaveText("Z0101");
+  // Within the visit Help returns to the page being read, and Topics is as it was left.
+  await press(on("Script"));
+  await press(on("Help"));
+  await expect(title).toHaveText("Z0101");
+  await press(topics.getByRole("button", { name: "All topics" }));
+  await expect(fold(/Packages/)).toHaveAttribute("aria-expanded", "true");
+  await expect(family).toHaveAttribute("aria-expanded", "true");
+  await expect(fold(/Using Zemp Lite/)).toHaveAttribute("aria-expanded", "false");
   await page.waitForTimeout(1500);
 
+  // A start, with the project left on Help: the Script place; Help, clicked, is on Home with
+  // every section closed again.
   await page.reload();
   await expect(page.getByRole("status")).toHaveText(READY);
-  await expect(packages).toHaveAttribute("aria-expanded", "false");
-  await expect(family).toHaveAttribute("aria-expanded", "true");
-  await expect(
-    topics.getByRole("list", { name: "The codes of Z01xx" }).getByRole("button"),
-  ).toHaveCount(10);
+  await expect(on("Script")).toHaveAttribute("aria-current", "page");
+  await expect.poll(() => scriptText(page)).toBe("// Topics kept\n");
+  await press(on("Help"));
+  await expect(page.getByTestId("help-counts")).toBeVisible();
+  await expect(title).toHaveCount(0);
+  for (const name of [/Packages/, /Errors and warnings/, /Using Zemp Lite/]) {
+    await expect(fold(name)).toHaveAttribute("aria-expanded", "false");
+  }
+  await expect(topics.getByRole("list")).toHaveCount(0);
+  // The family the reader had unfolded is folded again inside its section.
+  await press(fold(/Errors and warnings/));
+  await expect(family).toHaveAttribute("aria-expanded", "false");
 
-  // The project as Zemp Lite 0.2.2 left it, the left pane of Help called Outline and closed.
-  // (A family of codes has the word in its name: the button is asked for by what it says it does.)
+  // Left on Data, it opens on Script too.
+  await press(on("Data"));
+  await expect(on("Data")).toHaveAttribute("aria-current", "page");
+  await page.waitForTimeout(1500);
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(on("Script")).toHaveAttribute("aria-current", "page");
+
+  // The project as Zemp Lite 0.2.2 left it, on Help, the left pane of Help called Outline and
+  // closed: it opens on Script, and Help has its left pane closed, as the reader had it.
   await press(page.getByTitle("Back to the projects of this browser"));
   await expect(page).toHaveURL(/\/#?$/);
   await page.waitForTimeout(1000);
@@ -526,15 +571,17 @@ test("what is folded in Topics is kept with the project, and a project whose Out
   });
   await press(page.getByRole("button", { name: /^Topics kept in this browser/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(on("Script")).toHaveAttribute("aria-current", "page");
+  await press(on("Help"));
   const link = page
     .getByRole("toolbar", { name: "Help: its panes and its controls" })
     .getByRole("button", { name: "Topics", exact: true });
   await expect(link).toHaveAttribute("aria-pressed", "false");
   await expect(topics).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "On this page" })).toBeVisible();
-  // Opened by its link, it holds its sections as they first stand.
+  // Opened by its link, its sections are closed, as on any first opening of Help.
   await press(link);
-  await expect(packages).toHaveAttribute("aria-expanded", "true");
+  await expect(fold(/Packages/)).toHaveAttribute("aria-expanded", "false");
 });
 
 test("a project made before the app moved to /app/ is opened by the address it had at the root", async ({

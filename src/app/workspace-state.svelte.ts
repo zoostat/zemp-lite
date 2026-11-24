@@ -57,6 +57,7 @@ import {
   leftWidth,
   rightWidth,
   readViews,
+  started,
   tabPath,
   topicOpen,
   unfoldToggled,
@@ -450,7 +451,9 @@ export class Workspace {
     views.tabs = tabs;
     views.active =
       views.active !== null && tabs.includes(views.active) ? views.active : (tabs[0] ?? null);
-    this.views = views;
+    // A start opens on the Script place, and Help on Home with its topics closed, whatever
+    // the project was left on (open decision #220, item 8).
+    this.views = started(views);
     await this.refresh();
     for (const tab of tabs) {
       const path = tabPath(tab);

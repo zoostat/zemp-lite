@@ -17,6 +17,15 @@ async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
     page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Help" }),
   );
   await expect(page.getByTestId("help-counts")).toBeVisible();
+  // Help, first opened after a start, has every section of Topics closed (open decision #220,
+  // item 8; `kept.spec.ts` holds that). These tests are of the pages the section lists, so it
+  // is unfolded, as a reader unfolds it.
+  await press(
+    page
+      .getByRole("complementary", { name: "Help: the left pane" })
+      .getByRole("heading", { level: 3 })
+      .getByRole("button", { name: /Using Zemp Lite/ }),
+  );
 }
 
 const bar = (page: Page) => page.getByRole("toolbar", { name: "Help: its panes and its controls" });

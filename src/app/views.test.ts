@@ -6,6 +6,7 @@ import {
   leftWidth,
   readViews,
   rightWidth,
+  started,
   tabPath,
   topicOpen,
   unfoldToggled,
@@ -277,6 +278,47 @@ describe("the view state of a project", () => {
     expect(read.tabs).toEqual(["file:a.zeff", "view:plots"]);
     expect(read.active).toBe("file:a.zeff");
     expect(readViews(JSON.stringify({ tabs: [] })).active).toBeNull();
+  });
+});
+
+describe("the views a start begins from", () => {
+  const left = (active: string | null, tabs: string[]) => ({
+    ...usual(),
+    tabs,
+    active,
+    help: { topics: { packages: true, using: true, "codes:Z01xx": true } },
+    panes: { ...usual().panes, help: { topics: false }, data: { frames: false, variables: true } },
+  });
+
+  it("are on the Script place, with the file it last showed, whatever place was left", () => {
+    const tabs = ["file:data/wages.csv", "file:scripts/main.zeff", "file:scripts/iv.zeff"];
+    for (const view of ["view:help", "view:data", "view:plots"]) {
+      // Left on a place: the first script open is shown.
+      expect(started(left(view, [...tabs, view])).active).toBe("file:scripts/main.zeff");
+    }
+    // Left on a file: that file, a script or not.
+    expect(started(left("file:scripts/iv.zeff", tabs)).active).toBe("file:scripts/iv.zeff");
+    expect(started(left("file:data/wages.csv", tabs)).active).toBe("file:data/wages.csv");
+    // No script among the files open: a file; no file at all: none, and the place is Script.
+    expect(started(left("view:data", ["file:data/wages.csv", "view:data"])).active).toBe(
+      "file:data/wages.csv",
+    );
+    expect(started(left("view:help", ["view:help"])).active).toBeNull();
+  });
+
+  it("have every section of Topics closed, and keep everything else as the project has it", () => {
+    const before = left("view:help", ["file:scripts/main.zeff", "view:help"]);
+    const now = started(before);
+    for (const key of ["packages", "codes", "using", "codes:Z01xx", "codes:W10xx"]) {
+      expect(topicOpen(now, key), key).toBe(false);
+    }
+    // The tabs, the panes, what is unfolded and the rest are the project's own.
+    expect(now.tabs).toEqual(before.tabs);
+    expect(now.panes).toEqual(before.panes);
+    expect({ ...now, active: null, help: null }).toEqual({ ...before, active: null, help: null });
+    // The state given is not changed: the start is a view of it.
+    expect(before.active).toBe("view:help");
+    expect(before.help.topics["packages"]).toBe(true);
   });
 });
 
