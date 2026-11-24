@@ -2107,3 +2107,13 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Choice.** `docs/spec/` is the Zeff repository's at commit 674aa9b, compared byte for byte, made after release 0.2.3 was tagged. Four files differ from the copy of ca4c070: the Zemp Specification (the row 0.2.4 of section 15), the register of open decisions (#220, and the entries Zeff's own release 0.9.0 added since), the function catalogue and the help examples (Zeff 0.9.0's own work, nothing of Zemp Lite's). Nothing is changed in the app and nothing of 0.2.4 is begun: it opens on the owner's "Start release 0.2.4".
 
 **Reason.** The copy here is the Zeff repository's at a named commit, brought up to date before a release of Zemp Lite is planned from it.
+
+## 24 November 2026: The owner's first answers on the pages of Help redrawn (not yet placed in a release's plan)
+
+**The owner's words**, in this session, after release 0.2.3: "make the help place more smart and aesthetic. show mockups"; then, on the first draft, "reorder, restructure the individual help pages. completely revamp. don't make too much flashy"; then, on the second draft, "A, one page".
+
+**Answered, on the second draft** (`~/dev/handbook/zemp-lite-help-pages-mockup.html`, outside the repositories): a function's page is one page, not tabs; its long parts are always shown whole, nothing folded; the one plain line about the reader's own script is kept, on a function's page and on a code's; the work is a release of its own after 0.2.4. The order of the parts he wishes changed, and has not yet said how. The third draft shows the page whole in the order proposed, the other examples at its foot.
+
+**Not answered:** the first draft's proposals for Home and for search (`~/dev/handbook/zemp-lite-help-smarter-mockup.html`).
+
+**Reason for recording here.** They are the owner's rulings on a screen of Zemp Lite; the register of open decisions is the Zeff repository's, and the coordinating session enters them there. Nothing is built: no release of Zemp Lite is open.
