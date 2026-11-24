@@ -21,7 +21,7 @@ type Press = (target: Locator) => Promise<void>;
 
 /** The Scratch project as a reader first opens it, with its own example. */
 async function scratch(page: Page, press: Press): Promise<void> {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
 }
@@ -111,7 +111,7 @@ const SCENES: Record<string, (page: Page, press: Press) => Promise<void>> = {
   },
   // Exporting and opening a project: the menu of a project's row on the screen of projects.
   "the-menu-of-a-project": async (page, press) => {
-    await page.goto("/");
+    await page.goto("/app/");
     await press(page.getByRole("button", { name: "New project…" }));
     await page.getByLabel("The name of the new project").fill("Returns to schooling");
     await press(page.getByRole("button", { name: "Create" }));
@@ -122,7 +122,7 @@ const SCENES: Record<string, (page: Page, press: Press) => Promise<void>> = {
   },
   // Where the work is kept: the screen of projects, with its sentence on where they are kept.
   "the-screen-of-projects": async (page) => {
-    await page.goto("/");
+    await page.goto("/app/");
     await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
   },
   // Reporting a problem: the report of a script that fails, shown whole.

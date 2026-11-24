@@ -38,7 +38,7 @@ test("a project is renamed and duplicated from its row of the start screen, and 
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await made(page, press, "Wages");
   const script = 'print("the wages project")\n';
   await write(page, script);
@@ -127,7 +127,7 @@ test("a project is deleted after one question in its row, which offers to export
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await made(page, press, "Wages");
   await press(page.getByRole("button", { name: "Projects ▾" }));
   await made(page, press, "Pay");
@@ -162,7 +162,7 @@ test("a project is deleted after one question in its row, which offers to export
   await expect(row(page, "Wages")).toHaveCount(0);
   await expect(row(page, "Pay")).toBeVisible();
   // Its address no longer opens it, and a new project may take its name.
-  await page.goto("/#/p/wages");
+  await page.goto("/app/#/p/wages");
   await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
   await made(page, press, "Wages");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Wages");
@@ -176,7 +176,7 @@ test("the Scratch project is not renamed or deleted: it is duplicated into a pro
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const mine = 'print("my own work in the scratch project")\n';
@@ -222,7 +222,7 @@ test("the project open is renamed, duplicated and deleted from ⌘K, which asks 
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await made(page, press, "Wages");
   // What is typed is written before the project is closed for the question.
   const typed = 'print("typed just before the command")\n';

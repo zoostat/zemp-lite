@@ -15,7 +15,7 @@ async function ranWith(
   press: (target: ReturnType<Page["locator"]>) => Promise<void>,
   text: string,
 ) {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await write(page, text);

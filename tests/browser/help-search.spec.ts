@@ -9,7 +9,7 @@ import { expect, faintText, smallestText, test, useExample } from "./support";
 const READY = "engine Zeff 0.8.0 ready";
 
 async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
@@ -112,7 +112,7 @@ test("typed before the engine has given its index, the list waits for it and nev
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   // Whether the sentence of nothing found was ever on the page, from before Help is opened.

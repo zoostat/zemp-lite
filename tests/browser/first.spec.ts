@@ -12,7 +12,7 @@ const scratch = (file: string) =>
   readFileSync(new URL(`../../examples/scratch/${file}`, import.meta.url), "utf8");
 
 async function opened(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
 }
@@ -170,7 +170,7 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     page,
     press,
   }) => {
-    await page.goto("/");
+    await page.goto("/app/");
     const start = page.getByTestId("start");
     await expect(start.getByRole("heading", { level: 1 })).toContainText("Zemp Lite 0.2");
     await expect(start.getByTestId("alpha")).toHaveText("alpha");
@@ -221,7 +221,7 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     press,
   }) => {
     await page.setViewportSize({ width: 1000, height: 800 });
-    await page.goto("/");
+    await page.goto("/app/");
     const line = page.getByRole("note");
     await expect(line).toContainText("at least 1,200 pixels wide; this one is 1000.");
     await press(page.getByRole("button", { name: "Open Zemp Lite" }));

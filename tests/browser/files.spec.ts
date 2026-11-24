@@ -21,7 +21,7 @@ const menu = (page: Page, path: string) =>
 
 /** A project open on a script that has written a figure and a frame, with the Project pane shown. */
 async function opened(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(

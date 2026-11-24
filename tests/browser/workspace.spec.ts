@@ -9,7 +9,7 @@ const READY = "engine Zeff 0.8.0 ready";
 type Press = (target: ReturnType<Page["locator"]>) => Promise<void>;
 
 async function scratch(page: Page, press: Press) {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);

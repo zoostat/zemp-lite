@@ -39,7 +39,7 @@ test("where the browser may clear the projects the status bar says so, with Expo
   browserName,
 }) => {
   await browserThat(page, false);
-  await page.goto("/");
+  await page.goto("/app/");
   const kept = browserName !== "webkit";
   if (kept) {
     await expect(page.getByText("Kept on this computer.")).toBeVisible();
@@ -81,7 +81,7 @@ test("where the browser has agreed to keep the storage the status bar is silent,
     "WebKit's test profile gives a page no private storage to keep",
   );
   await browserThat(page, true);
-  await page.goto("/");
+  await page.goto("/app/");
   await expect(page.locator(".store")).toContainText("the browser may clear it");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
@@ -120,7 +120,7 @@ test("at the narrowest window the reminder leaves the console room to type in", 
   // console's field 146 pixels in Chromium, and 39 where the browser keeps nothing.
   await browserThat(page, false);
   await page.setViewportSize({ width: 1200, height: 800 });
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const line =

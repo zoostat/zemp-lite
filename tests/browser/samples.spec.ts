@@ -40,7 +40,7 @@ for (const name of ["regression", "simulation", "plots"]) {
     // window is given the width at which the place is 118 characters wide, and that is held
     // before anything is compared.
     await page.setViewportSize({ width: 1100, height: 3200 });
-    await page.goto("/");
+    await page.goto("/app/");
     await press(page.getByRole("button", { name: "Scratch project" }));
     await expect(page.getByRole("status")).toHaveText(READY);
     await placeOf(page, 118);
@@ -69,7 +69,7 @@ test("the specification's sample script, written for Zeff 1.0, is refused as `ze
   press,
 }) => {
   const file = (name: string) => readFileSync(new URL(`../../${name}`, import.meta.url), "utf8");
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await write(page, file("docs/spec/zeff_samples.zeff"));

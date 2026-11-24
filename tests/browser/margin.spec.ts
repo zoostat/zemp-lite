@@ -35,7 +35,7 @@ type Press = (target: ReturnType<Page["locator"]>) => Promise<void>;
  * into, as a project opened afresh is.
  */
 async function scratch(page: Page, press: Press, reopened = false) {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);

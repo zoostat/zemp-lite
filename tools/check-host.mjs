@@ -1,5 +1,6 @@
 // The check made after each deployment (release 0.2, step 17): that the address serves Zemp
-// Lite as the headers file says it must. The page, every file it names, the engine's worker
+// Lite as the headers file says it must. The front page at the root, the app's page at `app/`
+// (release 0.2.4, step 2), every file they name, the engine's worker
 // and its WebAssembly are fetched; each answer must carry the isolation headers of
 // `public/_headers` (a page without them is not given the shared memory a run is cancelled
 // through), a built file must be kept as never changing, and every answer that carries a tag,
@@ -81,14 +82,33 @@ async function look() {
     else if (modified !== null) tags.push({ what, url, ask: { "if-modified-since": modified } });
   }
 
-  const page = await fetched(base);
+  // Two pages of one build (release 0.2.4, step 2): the front page at the root of the
+  // address, and the app at `app/`, which is the one that names the worker and the engine.
+  const front = await fetched(base);
+  if (front.status !== 200) {
+    await front.arrayBuffer();
+    return {
+      problems: [`the front page answered ${front.status}, not 200`],
+      whole: true,
+      said: "",
+    };
+  }
+  holds("the front page", front);
+  tagged("the front page", base, front);
+  const frontHtml = await front.text();
+  const app = new URL("app/", base);
+  const page = await fetched(app);
   if (page.status !== 200) {
     await page.arrayBuffer();
-    return { problems: [`the page answered ${page.status}, not 200`], whole: true, said: "" };
+    return { problems: [`the app's page answered ${page.status}, not 200`], whole: true, said: "" };
   }
-  holds("the page", page);
-  tagged("the page", base, page);
-  const html = await page.text();
+  holds("the app's page", page);
+  tagged("the app's page", app, page);
+  const appHtml = await page.text();
+  if (!/<div id="app">/.test(appHtml)) {
+    problems.push("the address `app/` did not answer with the app's page");
+  }
+  const html = `${frontHtml}\n${appHtml}`;
 
   // Every file the page names, and the files they name in turn: the worker and its WebAssembly.
   const named = new Set([...html.matchAll(/(?:src|href)="\/?(assets\/[^"]+)"/g)].map((m) => m[1]));
@@ -148,11 +168,11 @@ async function look() {
       revalidated += 1;
     }
   }
-  const pageTagged = tags.some(({ what }) => what === "the page");
+  const pageTagged = tags.some(({ what }) => what === "the app's page");
   return {
     problems,
     whole: wasm.length > 0 && worker.length > 0,
-    said: `${checked} answers, the page, ${seen.size} files (the worker and the engine's WebAssembly among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers`,
+    said: `${checked} answers, the front page and the app's page, ${seen.size} files (the worker and the engine's WebAssembly among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers`,
   };
 }
 

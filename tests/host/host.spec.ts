@@ -10,7 +10,7 @@ const READY = "engine Zeff 0.8.0 ready";
 
 test("the page is isolated, and the engine starts and runs the example", async ({ page }) => {
   const from = Date.now();
-  await page.goto("/");
+  await page.goto("/app/");
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
   // A first visit: the Start screen fetches, checks and starts the engine.
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
@@ -29,11 +29,25 @@ test("the page is isolated, and the engine starts and runs the example", async (
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
 });
 
+test("the root is the front page, which opens the app; and an address kept from before goes on to the app", async ({
+  page,
+}) => {
+  // Release 0.2.4, step 2 (open decision #220, item 2): the front page at the root, the app at
+  // `/app/`, and the root given a project after its `#`, as addresses were until 0.2.4.
+  await page.goto("/");
+  expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
+  await page.getByRole("link", { name: "Open Zemp Lite" }).first().click();
+  await expect(page).toHaveURL(/\/app\/$/);
+  await expect(page.getByRole("button", { name: "Open Zemp Lite" })).toBeVisible();
+  await page.goto("/#/p/not-here");
+  await expect(page).toHaveURL(/\/app\/#?$/);
+});
+
 test("Help opens on Home, the search finds reg by R's lm, and a page of the app has its picture", async ({
   page,
 }) => {
   // Release 0.2.3 (step 10): the Help place at the address, on the engine it carries.
-  await page.goto("/");
+  await page.goto("/app/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
@@ -83,7 +97,7 @@ test("what is counted, and what is never collected, is said on a page of its own
 });
 
 test("a statement run alone and a plot drawn afresh are timed at the address", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
@@ -155,7 +169,7 @@ test("the first drawing of a run's figures is timed at the address", async ({ pa
   // above has shown 2.5 to 3.2 s before its run began, at some deployments in Chromium).
   // The window is tall, so that the editor draws every line and each figure is asked for.
   await page.setViewportSize({ width: 1280, height: 3000 });
-  await page.goto("/");
+  await page.goto("/app/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
@@ -194,7 +208,7 @@ test("a project is exported at the address as a zip, and the zip opened there ag
   // A reader's way out of the browser, and back (open decision #208): what the hosted alpha
   // gives the computer is read here by the reader of this repository, and then opened at the
   // address as a new project that runs.
-  await page.goto("/");
+  await page.goto("/app/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();

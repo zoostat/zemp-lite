@@ -196,7 +196,7 @@ for (const slug of pages) {
     press,
   }) => {
     const controls = controlsOf(slug);
-    await page.goto("/");
+    await page.goto("/app/");
     await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
     const seen = new Set<string>();
     await SCREENS[slug]?.(page, press, async () => {

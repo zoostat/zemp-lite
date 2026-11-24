@@ -12,7 +12,7 @@ const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta
 const READY = "engine Zeff 0.8.0 ready";
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);

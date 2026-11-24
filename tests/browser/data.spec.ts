@@ -15,7 +15,7 @@ test.beforeEach(async ({ browserName, context }) => {
 });
 
 async function ran(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
@@ -503,7 +503,7 @@ test("a variable's properties are of the frame of the script that ran, not of an
   // Found reading the hosted alpha at 0.2.1: both the returns to schooling and the showcase
   // of plots make a frame `wages`, of 15,571 and of 18,201 rows; with the showcase run, the
   // pane gave the statistics of the other script's.
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await page.keyboard.press("ControlOrMeta+k");
@@ -528,7 +528,7 @@ test("a date's properties are its rows, its least and its greatest, and its dist
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await write(page, "let firms = dataset(firms)\n");

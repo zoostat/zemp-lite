@@ -405,7 +405,7 @@
 
 <footer class="bottom">
   <span class="state">No project open</span>
-  <a class="counted" href="./counted.html">What is counted</a>
+  <a class="counted" href="/counted.html">What is counted</a>
   <span class="engine">engine Zeff {ENGINE} · in this browser</span>
 </footer>
 

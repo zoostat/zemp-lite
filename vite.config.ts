@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig } from "vitest/config";
 
@@ -45,7 +46,18 @@ export default defineConfig({
   // The engine's worker is a module worker, which waits for the engine to load before it
   // listens.
   worker: { format: "es" },
-  build: { target: "es2022" },
+  // Two pages over one `/assets/` (release 0.2.4, step 2; open decision #220, item 2): the
+  // front page at the root and the app at `/app/`. One folder of built files for both, so a
+  // file keeps its address whichever page asks for it.
+  build: {
+    target: "es2022",
+    rollupOptions: {
+      input: {
+        front: fileURLToPath(new URL("./index.html", import.meta.url)),
+        app: fileURLToPath(new URL("./app/index.html", import.meta.url)),
+      },
+    },
+  },
   define: {
     __ZEMP_VERSION__: JSON.stringify(manifest.version),
     __ENGINE_SHA256__: JSON.stringify(

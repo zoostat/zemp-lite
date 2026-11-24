@@ -2149,3 +2149,19 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Choices of this step.** Version `0.2.4-dev` in `package.json`, `worker/Cargo.toml` and their lock files. Nothing of the app changes. The lock file of the tools names one tool whose own version is 0.2.3; it is left as it is, the version of the project alone being changed.
 
 **Reason.** The standing instructions: a release is opened on the owner's "go" to its plan, and his answers are recorded before the first step of work.
+
+## 24 November 2026: The app at `/app/`, and the root that leads to it (release 0.2.4, step 2)
+
+**Choices.**
+
+1. _Two pages of one build._ The build has two pages over one folder of built files, `/assets/`: the front page at the root (`index.html`, entered at `src/root/main.ts`) and the app at `/app/` (`app/index.html`, entered at `src/main.ts` as before). The built files are named by what they hold and asked for by their address from the root, so a file has one address whichever page asks for it; the engine's file among them.
+2. _The engine is fetched once for each release, as before, and the move adds no fetch._ The engine's file carries the worker's version, so each release's file differs from the last and a reader's browser fetches it once at each release (the Start screen then shows, as it has at every release). What #220 asks, that the stored engine survives the move, holds within a release: the file's address does not depend on the page.
+3. _Projects._ The browser's private file system and the app's notes in the browser's storage belong to the origin, not to a path: nothing is moved or copied, and a project made at the root is there at `/app/`.
+4. _An address kept from before._ Until 0.2.4 a project's address was the root with `#/p/<folder>` after it, and `#/new` asked for a new project's name. The root, given either, goes on to the same at `/app/` before anything is drawn, and replaces its own address, so that Back does not return to an address that would only forward again (`src/root/forward.ts`). Any other address at the root is the front page's own.
+5. _The front page until the landing page stands_ (step 8): the name, the landing page's one line, **Open Zemp Lite** as a link to `/app/`, the version and the engine, and **What is counted**. It fetches nothing of the engine.
+6. _What is counted_ stays at the root (`/counted.html`), linked from the app's screens and from the front page; its foot leads back to the app and to the front page.
+7. _The checks._ The edition check walks from both entries of the build. The check of the host after a deployment asks for both pages and every file they name. The browser tests, the pictures' script and the checks at the address open the app at `/app/`.
+
+**Tested.** Unit (`src/root/forward.test.ts`): an old address of a project and of the naming of a new one goes to the app, and nothing else does. Browser (`tests/browser/address.spec.ts`, and one test of `kept.spec.ts`): the root is the front page, opens the app and asks for nothing of the engine or its worker; a project made at `/app/` is opened, with what was written in it, by the address it would have had at the root, and Back then leaves the app; an old address of a project that is not here opens the app's welcome screen; `/#/new` asks the name in the app; the worker and the engine are asked for in `/assets/` alone; what is counted is reached from both pages and leads back to both. At the address (`tests/host/host.spec.ts`): the root is isolated, opens the app, and forwards an old address.
+
+**Reason.** The owner's decision (#220, item 2, taken as recommended and confirmed by his "Go, as recommended"): a visitor first sees what Zemp Lite is, and a click opens it; nobody's work or bookmark is lost by the move.

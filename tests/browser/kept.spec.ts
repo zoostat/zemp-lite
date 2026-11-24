@@ -9,7 +9,7 @@ test.describe.configure({ mode: "serial" });
 const READY = "engine Zeff 0.8.0 ready";
 
 test("the welcome screen says that projects are kept on this computer", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await expect(page.getByText("Kept on this computer.")).toBeVisible();
   await expect(page.getByText("No project yet.")).toBeVisible();
 });
@@ -18,7 +18,7 @@ test("a project is made, and is still there with its script after the page is re
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Returns to schooling");
   await press(page.getByRole("button", { name: "Create" }));
@@ -55,7 +55,7 @@ test("a project is made, and is still there with its script after the page is re
 });
 
 test("the Scratch project keeps what the user wrote in it", async ({ page, press }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect
     .poll(() => scriptText(page))
@@ -71,7 +71,7 @@ test("the file shown and a folder folded in the Project pane are kept with the p
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   // Another file of the project shown in the Script place, and a folder of the tree folded.
@@ -112,7 +112,7 @@ test("which panes are open is each project's own: a new project opens with Proje
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
@@ -147,7 +147,7 @@ test("what is unfolded, and whether the notes are shown, are kept with the proje
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
@@ -187,7 +187,7 @@ test("which panes of a place are open, and the left pane's width, are kept with 
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
@@ -224,7 +224,7 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
   press,
 }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
@@ -263,7 +263,7 @@ test("the data viewer's sort and condition are kept with the project, and nothin
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Viewed");
   await press(page.getByRole("button", { name: "Create" }));
@@ -324,7 +324,7 @@ test("what a run writes is brought into the project: in the Project pane, in the
         return null;
       }
     }, `projects/what-a-run-writes/${path}`.split("/"));
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("What a run writes");
   await press(page.getByRole("button", { name: "Create" }));
@@ -388,7 +388,7 @@ test("a change of the view is kept though others follow it at once, and the page
   // The view state is written a fifth of a second after the first change not yet written.
   // It was once written after the last, each change putting it off: a reader who opened a
   // pane and went straight on working found it closed when the page was loaded again.
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Kept in the middle");
   await press(page.getByRole("button", { name: "Create" }));
@@ -423,7 +423,7 @@ test("a change of the view made as the page is left is kept: the page loaded aga
   // being left cannot be relied on to finish that writing. So as the page is left the view
   // state is noted in the browser's own record, written at once, and taken up at the next
   // opening (`src/app/left.ts`).
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Left at once");
   await press(page.getByRole("button", { name: "Create" }));
@@ -472,7 +472,7 @@ test("what is folded in Topics is kept with the project, and a project whose Out
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Topics kept");
   await press(page.getByRole("button", { name: "Create" }));
@@ -539,4 +539,30 @@ test("what is folded in Topics is kept with the project, and a project whose Out
   // Opened by its link, it holds its sections as they first stand.
   await press(link);
   await expect(packages).toHaveAttribute("aria-expanded", "true");
+});
+
+test("a project made before the app moved to /app/ is opened by the address it had at the root", async ({
+  page,
+  press,
+}) => {
+  // Release 0.2.4, step 2 (open decision #220, item 2). The browser's private file system is
+  // the origin's, so the project is the same at `/app/` as it was at the root; and the root,
+  // given a project after its `#` as addresses were written until 0.2.4, goes on to the app.
+  await page.goto("/app/");
+  await press(page.getByRole("button", { name: "New project…" }));
+  await page.getByLabel("The name of the new project").fill("Kept from before");
+  await press(page.getByRole("button", { name: "Create" }));
+  await expect(page).toHaveURL(/\/app\/#\/p\/kept-from-before$/);
+  await expect.poll(() => scriptText(page)).toBe("// Kept from before\n");
+  await write(page, '// Kept from before\nprint("still here")\n');
+  await expect(page.getByText("saving")).toHaveCount(0);
+
+  await page.goto("about:blank");
+  await page.goto("/#/p/kept-from-before");
+  await expect(page).toHaveURL(/\/app\/#\/p\/kept-from-before$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Kept from before");
+  await expect.poll(() => scriptText(page)).toBe('// Kept from before\nprint("still here")\n');
+  // Back leaves the app: the root's address was replaced, not left behind to forward again.
+  await page.goBack();
+  expect(page.url()).toBe("about:blank");
 });

@@ -161,7 +161,7 @@
   <button class="open" disabled={!ready} onclick={onopen}>Open Zemp Lite</button>
 </div>
 <footer class="bottom">
-  <a class="counted" href="./counted.html">What is counted</a>
+  <a class="counted" href="/counted.html">What is counted</a>
   <span class="engine">engine Zeff {ENGINE} · in this browser</span>
 </footer>
 

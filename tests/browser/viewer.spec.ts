@@ -14,7 +14,7 @@ async function viewer(
   width = 1400,
 ): Promise<Locator> {
   await page.setViewportSize({ width, height: 900 });
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
@@ -234,7 +234,7 @@ test("the viewer is opened with ⌘K too, as the Plots place, and Script goes ba
   press,
 }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
@@ -264,7 +264,7 @@ test("the viewer is opened with ⌘K too, as the Plots place, and Script goes ba
 });
 
 test("the viewer says so where the last run drew no plot", async ({ page, press }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await page.keyboard.press("ControlOrMeta+k");
@@ -277,7 +277,7 @@ test("the Plots place: the plots of the run at its left and the plot's facts at 
   page,
   press,
 }) => {
-  await page.goto("/");
+  await page.goto("/app/");
   await press(page.getByRole("button", { name: "Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
