@@ -122,3 +122,5 @@ Decided by the owner (#211, stage 1), planned (`docs/releases/0.2.3.md`), built 
 
 **Found on GitHub at the release's commit, and mended after the tag.** GitHub checked the commit twice (the branch and the tag): one green, one failed in a single browser test, which pressed Tab on the project screen before the list of projects had been drawn. Reproduced here with the browser's storage made slow; the screen is right, and the test's helper now waits for the row. The commit deployed is the one after the tag (documents alone), and both addresses show 0.2.5 with the engine packed (2,931,532 bytes for the release's engine).
 
+**After that mend, told as it was:** its commit (23f1b6c) was pushed before its routine's result was read, and that run had one failure, in an unrelated test in WebKit (**Run to here** pressed, and no run begun in five seconds). Forty repeats of the test passed, and the whole routine run again on the pushed commit is green (418 unit tests, 647 browser tests). The cause of the one failure is not found; a second sighting should be looked into.
+

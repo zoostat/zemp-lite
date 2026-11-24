@@ -2666,3 +2666,13 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **Reason.** A failure of GitHub's check is read and its cause found, never passed over because another run was green.
 
+## 24 November 2026: One run of the routine failed in an unrelated test, once, and the commit was pushed before it was read (after release 0.2.5)
+
+**What happened.** The commit that makes the project screen's tests wait for the list (23f1b6c) was committed and pushed before the result of its routine had been read: the command that read the result went straight on to the commit. That run had failed, in one browser test of 647, in WebKit: "Run to here, on a statement's line number, runs the statements before it" pressed **Run to here** and no run began within five seconds. The test is not one the commit touches, and the commit changes no part of the app: one helper of the project screen's tests, and documents.
+
+**What was done about it.** The test was run forty times over in WebKit and passed forty times. The whole routine was run again on the pushed commit and was green (418 unit tests, 647 browser tests, 3 skipped by design). The cause of the one failure is not found; it has not been seen in the twenty-odd runs of the routine of this release, here or on GitHub. It is recorded so that a second sighting is known for one.
+
+**For the working.** The result of a routine is read, as a step of its own, before anything is committed on it. A command never both reads the result and commits.
+
+**Reason.** A step is committed only when the routine is green, and a failure is told as it was.
+
