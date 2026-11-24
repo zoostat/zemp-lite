@@ -2462,3 +2462,23 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **Reason.** The copy here names one commit of the Zeff repository and is that commit's, whole. This commit follows the tag `v0.2.4`, which carries the copy at 7a7a8ee.
 
+
+## 24 November 2026: Proposed for the next release: the engine sent packed at the tightest setting
+
+**The owner's words**, in this session, after release 0.2.4: "how to reduce engine download"; then, given the measures below and five ways with their costs, "enter tight packing as a proposal for the next release".
+
+**What is proposed.** The build packs the engine's WebAssembly with brotli at its highest setting, once, and the host sends that file as it is, in place of packing it afresh at a low setting each time it is sent. Nothing of the engine changes, and no result: the browser unpacks the same bytes. The size the landing page and the loading screen give would then be reckoned at the highest setting, and the check after a deployment, which already holds that figure to the bytes the address sends, would prove it at the address.
+
+**Measured**, on the engine of 0.2.4 (15,148,342 bytes unpacked: the compiled program 7,980,020, the data it carries 5,679,565, the table of internal names 1,467,616):
+
+- as the host sends it now, brotli at about setting 2: 4,058,127 bytes;
+- brotli at its highest setting: 2,918,859 bytes, which is 1,139,268 bytes less, 28 per cent;
+- with the script of the worker, the measure of risk R4: 2,926.6 kB of 5,000 kB, against 4.1 MB as it travels today.
+
+**To be tried before it is promised.** The host, Cloudflare Pages, does not send a file packed beforehand by itself. The trial at the address must show that the file arrives as packed and is not packed a second time; that the isolation headers and the year-long keeping of a built file are sent with it as now; that the browser still compiles the engine as it arrives; and that the first start is no slower in either engine. Where the host cannot be made to do so, the proposal falls and the download stays as it is.
+
+**Not proposed here**, though measured and told to the owner in the same answer: leaving out the table of internal names (0.11 MB more at the highest setting); an optimiser run over the compiled program (not measured: the tool is not installed); compiling for size, which slows every run; and the help pages, their examples and the sample datasets as a separate download fetched when first asked for (about 0.4 to 0.5 MB of the download; a change of the engine's design, for the Zeff repository's register).
+
+**Which release.** "The next release" is read here as whichever release of Zemp Lite the owner opens next: the pages of Help reordered (#223) or 0.3. That reading is this record's, not his word; the plan of that release puts it to him.
+
+**Reason for recording here.** It is the owner's word on what a release of Zemp Lite is to carry; the register of open decisions is the Zeff repository's, and the coordinating session enters it there. Nothing is built: no release of Zemp Lite is open.
