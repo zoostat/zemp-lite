@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   // A help page set in type (release 0.2.1, step 10b; the owner's choice of 22 November 2026,
   // the mockup's look C). The engine prints a page for a terminal; `read.ts` reads the print
   // into its parts, and this sets them: the name as the title, what it does under it, its
@@ -13,10 +14,13 @@
   let {
     doc,
     of,
+    under,
     onname,
     oncode,
   }: {
     doc: HelpDoc;
+    /** What stands under the page's title: the list of its sections, in a narrow window. */
+    under?: Snippet;
     /** Which function of its name the page is of, where the name has two: "of a frame" (#215). */
     of?: string;
     /** Open the page of a function. */
@@ -173,7 +177,7 @@
   {#each doc.notes as note (note.line)}
     <p class="said" data-line={note.line}>{@render prose(note.text)}</p>
   {/each}
-  {#each doc.entries as entry (entry.line)}
+  {#each doc.entries as entry, at (entry.line)}
     <section class="entry">
       <header data-line={entry.line}>
         <h3>
@@ -187,6 +191,7 @@
           </ul>
         {/if}
       </header>
+      {#if at === 0}{@render under?.()}{/if}
       {#each entry.sections as section (section.line)}
         <section data-line={section.line} aria-labelledby="help-{section.line}">
           <h4 id="help-{section.line}">{section.title}</h4>

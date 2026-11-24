@@ -34,10 +34,7 @@ const head = (page: Page, name: string) =>
 const listOf = (page: Page, name: string) => topics(page).getByRole("list", { name, exact: true });
 const family = (page: Page, name: string) =>
   listOf(page, "Errors and warnings").getByRole("button", { name: new RegExp(`${name} `) });
-const onThisPage = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Help: the right pane" })
-    .getByRole("region", { name: "On this page" });
+const onThisPage = (page: Page) => page.getByRole("navigation", { name: "On this page" });
 const allTopics = (page: Page) => topics(page).getByRole("button", { name: "All topics" });
 const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
@@ -215,9 +212,7 @@ test("beside a function's page Topics holds its package, the open function marke
   // Home has nothing beside it: the sections, and no way back to them to offer.
   await expect(allTopics(page)).toHaveCount(0);
   // Home's own parts, its panels, are in the pane at the right.
-  await expect(
-    onThisPage(page).getByRole("list", { name: "On this page" }).getByRole("button").first(),
-  ).toHaveText("Zeff");
+  await expect(onThisPage(page).getByRole("list").getByRole("button").first()).toHaveText("Zeff");
 
   await ask(page, "t_test");
   // All topics; the package with its count, a link to its page; and its functions.
@@ -236,7 +231,7 @@ test("beside a function's page Topics holds its package, the open function marke
   await expect(listOf(page, "Errors and warnings")).toHaveCount(0);
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([/^stats\s*14$/]);
   await expect(topics(page).getByText("On this page")).toHaveCount(0);
-  const sections = onThisPage(page).getByRole("list", { name: "On this page" }).getByRole("button");
+  const sections = onThisPage(page).getByRole("list").getByRole("button");
   await expect(sections.first()).toHaveText("Usage");
   await expect(sections.first()).toBeInViewport();
   // A section goes to its place and is marked, as in the Outline pane it was.
@@ -287,9 +282,9 @@ test("beside a function's page Topics holds its package, the open function marke
     listOf(page, "The functions of regress").locator('[aria-current="page"]'),
   ).toHaveText("reg");
   await expect(sections.first()).toHaveText("Usage");
-  // The pane at the right closes by its link, and Topics is as it was.
-  await press(bar(page).getByRole("button", { name: "On this page", exact: true }));
-  await expect(onThisPage(page)).toHaveCount(0);
+  // The page's sections have no link in the bar: they are a part of the page (#220, item 7).
+  await expect(bar(page).getByRole("button", { name: "On this page", exact: true })).toHaveCount(0);
+  await expect(onThisPage(page)).toBeVisible();
   await expect(allTopics(page)).toBeVisible();
 });
 

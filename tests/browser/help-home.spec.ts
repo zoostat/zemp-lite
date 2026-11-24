@@ -32,10 +32,7 @@ const panel = (page: Page, name: string) => home(page).getByRole("region", { nam
 /** The button of a topic's panel, which opens it: it is the whole panel's. */
 const opener = (page: Page, name: string) =>
   panel(page, name).getByRole("heading").getByRole("button");
-const onThisPage = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Help: the right pane" })
-    .getByRole("region", { name: "On this page" });
+const onThisPage = (page: Page) => page.getByRole("navigation", { name: "On this page" });
 
 const PACKAGES = [
   ["core", 71],
@@ -119,7 +116,7 @@ test("Home is a landing page: Zeff and Zemp Lite with their versions, and a pane
     expect(Math.abs(boxes[at]!.width - boxes[0]!.width)).toBeLessThan(1);
   }
   // The pane at the right lists the panels, each going to its place.
-  const parts = onThisPage(page).getByRole("list", { name: "On this page" }).getByRole("button");
+  const parts = onThisPage(page).getByRole("list").getByRole("button");
   await expect(parts).toHaveText(PANELS);
   await page.setViewportSize({ width: 1280, height: 420 });
   await press(parts.nth(4));
@@ -308,12 +305,10 @@ for (const theme of ["light", "dark"] as const) {
     expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
     expect(await faintText(home(page))).toEqual([]);
     expect(await faintText(onThisPage(page))).toEqual([]);
-    // With the panes closed the panels keep their measure; in a narrower window they fit.
+    // With Topics closed the panels keep their measure; in a narrower window they fit.
     await press(bar(page).getByRole("button", { name: "Topics" }));
-    await press(bar(page).getByRole("button", { name: "On this page" }));
     await fits();
     await press(bar(page).getByRole("button", { name: "Topics" }));
-    await press(bar(page).getByRole("button", { name: "On this page" }));
     await page.setViewportSize({ width: 1000, height: 800 });
     await fits();
     await page.setViewportSize({ width: 1200, height: 800 });

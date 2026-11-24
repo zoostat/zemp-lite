@@ -22,7 +22,7 @@ describe("the view state of a project", () => {
       script: { project: true, outline: true, notes: false },
       data: { frames: false, variables: true },
       plots: { list: false, about: false },
-      help: { topics: false, page: false },
+      help: { topics: false },
     };
     state.right = { width: 400 };
     state.left = { width: 312 };
@@ -100,7 +100,7 @@ describe("the view state of a project", () => {
       script: { project: false, outline: false, notes: true },
       data: { frames: true, variables: false },
       plots: { list: true, about: true },
-      help: { topics: true, page: true },
+      help: { topics: true },
     });
     expect(usual().right).toEqual({ width: 310 });
   });
@@ -122,7 +122,7 @@ describe("the view state of a project", () => {
       script: { project: true, outline: false, notes: true },
       data: { frames: true, variables: false },
       plots: { list: true, about: false },
-      help: { topics: true, page: true },
+      help: { topics: true },
     });
     expect(read.right).toEqual({ width: 560 });
   });
@@ -165,30 +165,27 @@ describe("the view state of a project", () => {
     }
   });
 
-  it("carries a reader's choice of the old panes of Help over: Outline to Topics, Related functions to On this page", () => {
+  it("carries a reader's choice of the old left pane of Help over to Topics, and passes over the pane that is no more", () => {
     // A file of 0.2.1 or 0.2.2, which called the panes of Help Outline and Related functions.
     const closed = readViews(
       JSON.stringify({ version: 3, panes: { help: { outline: false, related: true } } }),
     );
-    expect(closed.panes.help).toEqual({ topics: false, page: true });
-    const other = readViews(
-      JSON.stringify({ version: 3, panes: { help: { outline: true, related: false } } }),
-    );
-    expect(other.panes.help).toEqual({ topics: true, page: false });
+    expect(closed.panes.help).toEqual({ topics: false });
     const open = readViews(JSON.stringify({ version: 3, panes: { help: { outline: true } } }));
-    expect(open.panes.help).toEqual({ topics: true, page: true });
-    // A file of this build says Topics and On this page, and that is what stands, whatever
-    // an old key says.
-    const now = readViews(
+    expect(open.panes.help).toEqual({ topics: true });
+    // A file of 0.2.3 says Topics and On this page. From 0.2.4 the sections of the page are a
+    // part of the page, not a pane (open decision #220, item 7): what the file says of that
+    // pane is passed over, and Topics stands as the file has it, whatever an old key says.
+    const before = readViews(
       JSON.stringify({
         version: 4,
-        panes: { help: { topics: true, outline: false, page: false, related: true } },
+        panes: { help: { topics: false, outline: true, page: false, related: true } },
       }),
     );
-    expect(now.panes.help).toEqual({ topics: true, page: false });
+    expect(before.panes.help).toEqual({ topics: false });
     // Written back, the old keys are gone.
-    const written = JSON.parse(writeViews(closed)) as { panes: { help: object } };
-    expect(written.panes.help).toEqual({ topics: false, page: true });
+    const written = JSON.parse(writeViews(before)) as { panes: { help: object } };
+    expect(written.panes.help).toEqual({ topics: false });
   });
 
   it("keeps which sections of Topics the reader folded and unfolded, and opens the others as they first stand", () => {

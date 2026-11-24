@@ -493,18 +493,16 @@ test("what release 0.2.3 added is reached from the keyboard: every control of th
   await command(page, "help search");
   await expect(shown.getByRole("heading", { level: 3 })).toHaveText("Help");
   await expect(field).toBeFocused();
-  // Home: the bar, the panels and the packages' links, the Topics pane and On this page.
+  // Home: the bar, the panels and the packages' links, the Topics pane and the page's parts.
   await reached(
     "Topics",
     "Home",
     "Search Help",
-    "On this page",
     "Packages 10",
     "Errors and warnings 144",
     "Using Zemp Lite 13",
     "regress",
     "Close Topics",
-    "Close On this page",
     "Zemp Lite",
   );
 

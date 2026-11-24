@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   // A page of Using Zemp Lite, set in the type of the engine's pages (release 0.2.3, step 8a;
   // open decision #211, item 9): the title; what the page is for, in one line; headings;
   // paragraphs and lists, with a control named as the screen names it, a key as a key, code
@@ -12,9 +13,12 @@
 
   let {
     doc,
+    under,
     onopen,
   }: {
     doc: UsingDoc;
+    /** What stands under the page's title: the list of its sections, in a narrow window. */
+    under?: Snippet;
     /** Open the page a link goes to. */
     onopen: (to: Stop) => void;
   } = $props();
@@ -38,6 +42,7 @@
     <h3><Named text={doc.title} /></h3>
     <p class="does"><Named text={doc.line} /></p>
   </header>
+  {@render under?.()}
   {#each doc.blocks as block, at (at)}
     {#if block.kind === "heading"}
       <h4 data-line={block.line}><Named text={block.text} /></h4>

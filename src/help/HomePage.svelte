@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   // Home, the page Help starts on (release 0.2.3, step 9f; open decision #211, item 14, the
   // owner's choice of 24 November 2026): a landing page of soft panels, one under another.
   // Under the title **Help**, a panel for Zeff (its version, what it is, its counts) and one
@@ -18,9 +19,12 @@
   let {
     index,
     families,
+    under,
     onopen,
   }: {
     index: HelpIndex;
+    /** What stands under the page's title: the list of its panels, in a narrow window. */
+    under?: Snippet;
     families: CodeFamily[] | null;
     /** Open a page: a topic's, or a package's. */
     onopen: (to: Stop) => void;
@@ -31,6 +35,7 @@
 
 <article class="home" data-testid="help-page">
   <h3>{HOME_WORDS.title}</h3>
+  {@render under?.()}
 
   <section class="panel" data-line="0" aria-labelledby="help-home-zeff">
     <h4 id="help-home-zeff">

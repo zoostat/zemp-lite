@@ -211,7 +211,6 @@
     paneCommand(workspace, "plots", "list"),
     paneCommand(workspace, "plots", "about"),
     paneCommand(workspace, "help", "topics"),
-    paneCommand(workspace, "help", "page"),
     {
       name: "Place: Help",
       hint: "F1 in the script opens the page of the name at the cursor",

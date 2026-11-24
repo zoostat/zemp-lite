@@ -28,11 +28,8 @@ const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
 const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
 /** The pane at the right, On this page, and the sections it lists. */
-const onThisPage = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Help: the right pane" })
-    .getByRole("region", { name: "On this page" });
-const outline = (page: Page) => onThisPage(page).getByRole("list", { name: "On this page" });
+const onThisPage = (page: Page) => page.getByRole("navigation", { name: "On this page" });
+const outline = (page: Page) => onThisPage(page).getByRole("list");
 const home = (page: Page) => bar(page).getByRole("button", { name: "Home" });
 
 /** The trail as it reads, its marks between the steps as drawn. */
@@ -109,7 +106,7 @@ test("the trail says where a page stands, and each step opens its page", async (
   await expect.poll(() => reads(page)).toBe("Packages");
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Packages");
   await expect(shown(page).getByRole("row")).toHaveCount(10);
-  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  await expect(onThisPage(page)).toHaveCount(0);
   await press(back(page));
   await expect(title(page)).toHaveText("t_test");
   await press(home(page));
@@ -179,7 +176,7 @@ test("a package has a page of its own, apart from the function of its name", asy
   ]);
   // A list has no sections for the pane at the right, which says so.
   await expect(outline(page)).toHaveCount(0);
-  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  await expect(onThisPage(page)).toHaveCount(0);
   await press(parts.nth(1).getByRole("button", { name: "wages" }));
   await expect.poll(() => reads(page)).toBe("Packages › datasets › wages");
   await expect(shown(page)).toContainText("Synthetic hourly wages");
@@ -212,7 +209,7 @@ test("the codes by family are a page, and a code stands under its family", async
     "no such name",
   ]);
   // The page is a list: the pane at the right has no sections of it to show.
-  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  await expect(onThisPage(page)).toHaveCount(0);
   // A code of the list opens its page, under its family.
   await press(shown(page).getByRole("button", { name: "Z0101" }));
   await expect(title(page)).toHaveText("Z0101");
@@ -306,14 +303,13 @@ for (const theme of ["light", "dark"] as const) {
   });
 }
 
-test("the bar of Help: Topics, Back, Forward, Home, the trail, the search field at the right end, and On this page last", async ({
+test("the bar of Help: Topics, Back, Forward, Home, the trail, and the search field at the right end, with nothing after it", async ({
   page,
   press,
 }) => {
   await page.setViewportSize({ width: 1200, height: 700 });
   await scratch(page, press);
   const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
-  const link = bar(page).getByRole("button", { name: "On this page", exact: true });
   const order = async () => {
     const parts = [
       bar(page).getByRole("button", { name: "Topics", exact: true }),
@@ -322,7 +318,6 @@ test("the bar of Help: Topics, Back, Forward, Home, the trail, the search field 
       home(page),
       ...((await trail(page).count()) > 0 ? [trail(page)] : []),
       field,
-      link,
     ];
     const boxes = [];
     for (const part of parts) boxes.push((await part.boundingBox())!);
@@ -333,19 +328,18 @@ test("the bar of Help: Topics, Back, Forward, Home, the trail, the search field 
         Math.abs(boxes[at]!.y + boxes[at]!.height / 2 - (boxes[0]!.y + boxes[0]!.height / 2)),
       ).toBeLessThan(8);
     }
-    // Nothing stands after the field but the link of the right pane, at the bar's end.
+    // Nothing stands after the field: it ends the bar (the list of the page's sections has no
+    // link there from 0.2.4; open decision #220, item 7).
     const end = (await bar(page).boundingBox())!;
     const last = boxes[boxes.length - 1]!;
-    const before = boxes[boxes.length - 2]!;
     expect(end.x + end.width - (last.x + last.width)).toBeLessThan(24);
-    expect(last.x - (before.x + before.width)).toBeLessThan(40);
     const between = await bar(page).evaluate((node) => {
       const input = node.querySelector("input")!.getBoundingClientRect();
       return [...node.querySelectorAll("button")].filter(
         (one) => one.getBoundingClientRect().left >= input.right,
       ).length;
     });
-    expect(between).toBe(1);
+    expect(between).toBe(0);
   };
   // On Home, where there is no trail; on a page; and in a narrower window.
   await order();
@@ -357,10 +351,9 @@ test("the bar of Help: Topics, Back, Forward, Home, the trail, the search field 
   await page.setViewportSize({ width: 1000, height: 700 });
   await expect(narrow).toBeVisible();
   await order();
-  // With the right pane closed its link is still the last thing of the bar.
+  // With Topics closed the bar is in the same order.
   await page.setViewportSize({ width: 1200, height: 700 });
   await expect(narrow).toHaveCount(0);
-  await press(link);
-  await expect(link).toHaveAttribute("aria-pressed", "false");
+  await press(bar(page).getByRole("button", { name: "Topics", exact: true }));
   await order();
 });

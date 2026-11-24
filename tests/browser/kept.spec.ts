@@ -531,11 +531,7 @@ test("what is folded in Topics is kept with the project, and a project whose Out
     .getByRole("button", { name: "Topics", exact: true });
   await expect(link).toHaveAttribute("aria-pressed", "false");
   await expect(topics).toHaveCount(0);
-  await expect(
-    page.getByRole("complementary", { name: "Help: the right pane" }).getByRole("region", {
-      name: "On this page",
-    }),
-  ).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "On this page" })).toBeVisible();
   // Opened by its link, it holds its sections as they first stand.
   await press(link);
   await expect(packages).toHaveAttribute("aria-expanded", "true");

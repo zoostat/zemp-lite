@@ -37,12 +37,8 @@ const topics = (page: Page) =>
   page
     .getByRole("complementary", { name: "Help: the left pane" })
     .getByRole("region", { name: "Topics" });
-const onThisPage = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Help: the right pane" })
-    .getByRole("region", { name: "On this page" });
-const sections = (page: Page) =>
-  onThisPage(page).getByRole("list", { name: "On this page" }).getByRole("button");
+const onThisPage = (page: Page) => page.getByRole("navigation", { name: "On this page" });
+const sections = (page: Page) => onThisPage(page).getByRole("list").getByRole("button");
 /** The trail as it reads. */
 const reads = async (page: Page) =>
   (await trail(page).getByRole("listitem").allInnerTexts())
@@ -100,7 +96,7 @@ test("the bare name opens a chooser of the two functions, each with its usage an
   await expect(row(page, "histogram", "of a frame")).toBeVisible();
   // It is a page as any other: in the trail, with no sections, and in the history.
   expect(await reads(page)).toBe("Packages › plot › histogram");
-  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  await expect(onThisPage(page)).toHaveCount(0);
   await expect(back(page)).toHaveAttribute("title", "Back: Home");
 
   // One chosen: its own page, the title saying which, its sections alone at the right.

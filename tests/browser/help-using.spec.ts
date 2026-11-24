@@ -110,10 +110,7 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
   expect(seen).toBe(wordsOf(file("src/using/pages/getting-started.md")).join(""));
   // The page's sections stand in Topics, each going to its place; beside it, all the pages.
   await expect(
-    page
-      .getByRole("complementary", { name: "Help: the right pane" })
-      .getByRole("list", { name: "On this page" })
-      .getByRole("button"),
+    page.getByRole("navigation", { name: "On this page" }).getByRole("list").getByRole("button"),
   ).toHaveText(["Run the example", "The four places", "Change something", "Where to go next"]);
   const beside = topics(page).getByRole("list", { name: "The pages of Using Zemp Lite" });
   await expect(beside.getByRole("button")).toHaveText(PAGES);
@@ -276,9 +273,8 @@ test("a page's picture is fetched when the page is opened, with its words, and k
     return at.wide;
   };
   const beside = await fits();
-  // With the panes closed there is more room, and the picture is never wider than it was taken.
+  // With Topics closed there is more room, and the picture is never wider than it was taken.
   await press(bar(page).getByRole("button", { name: "Topics", exact: true }));
-  await press(bar(page).getByRole("button", { name: "On this page", exact: true }));
   expect(await fits()).toBeGreaterThanOrEqual(beside);
   expect(await fits()).toBeLessThanOrEqual(1200);
   await page.setViewportSize({ width: 1000, height: 760 });

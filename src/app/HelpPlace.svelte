@@ -88,10 +88,9 @@
   const list = $derived(listed ?? chooser);
   const doc = $derived(named?.kind === "one" ? named.doc : read);
   const of = $derived(named?.kind === "one" ? named.of.words : undefined);
-  const blank = $derived(list === null && own === null && page === "" && home === null);
-  // The sections of the page open, for the pane at the right: those of the engine's page, or
-  // of one of the app's own; on Home, its panels (#211, item 14). A page that is a list has
-  // none (item 13).
+  // The sections of the page open, listed as a part of the page (open decision #220, item 7,
+  // which replaces the pane of #211, item 13): those of the engine's page, or of one of the
+  // app's own; on Home, its panels (#211, item 14). A page that is a list has none.
   const sections = $derived(
     own !== null
       ? own.doc === null
@@ -110,6 +109,20 @@
   // right stays the section marked while the page stands at its end.
   let pane = $state<HTMLElement | null>(null);
   let inView = $state<number | null>(null);
+  // The list stands at the right of the page's text where the place is wide enough to hold
+  // both, and once under the page's title where it is not.
+  const BESIDE = 860;
+  let width = $state(0);
+  const beside = $derived(width >= BESIDE);
+  $effect(() => {
+    if (pane === null) return;
+    const seen = new ResizeObserver(() => {
+      width = pane?.clientWidth ?? 0;
+    });
+    seen.observe(pane);
+    width = pane.clientWidth;
+    return () => seen.disconnect();
+  });
   let asked: number | null = null;
   function watch(): void {
     if (pane === null) return;
@@ -173,24 +186,28 @@
   <TopicsPane {workspace} />
 {/snippet}
 
-{#snippet onThisPage()}
-  {#if sections.length === 0}
-    <p class="none">
-      {blank ? "No page is open." : "This page has no sections."}
-    </p>
-  {:else}
-    <ul class="outline" aria-label="On this page">
-      {#each sections as section (section.line)}
-        <li class:entry={section.entry}>
-          <button
-            class:on={section.line === inView}
-            aria-current={section.line === inView ? "location" : undefined}
-            onclick={() => goTo(section.line)}><Named text={section.title} /></button
-          >
-        </li>
-      {/each}
-    </ul>
+<!-- The sections of the page open: a part of the page, with no pane and no shade. -->
+{#snippet onThisPage(where: "beside" | "under")}
+  {#if sections.length > 0}
+    <nav class="otp {where}" aria-label="On this page">
+      <b>On this page</b>
+      <ul class="outline">
+        {#each sections as section (section.line)}
+          <li class:entry={section.entry}>
+            <button
+              class:on={section.line === inView}
+              aria-current={section.line === inView ? "location" : undefined}
+              onclick={() => goTo(section.line)}><Named text={section.title} /></button
+            >
+          </li>
+        {/each}
+      </ul>
+    </nav>
   {/if}
+{/snippet}
+
+{#snippet under()}
+  {#if !beside}{@render onThisPage("under")}{/if}
 {/snippet}
 
 {#snippet controls()}
@@ -260,41 +277,47 @@
     {workspace}
     name="Help"
     left={[paneOf(workspace, "help", "topics", topics)]}
-    right={[paneOf(workspace, "help", "page", onThisPage)]}
     bar={controls}
   >
     <div class="page" bind:this={pane} onscroll={watch}>
-      {#if list !== null}
-        <ListPage {list} onopen={(to) => void workspace.showHelpStop(to)} />
-      {:else if own !== null}
-        {#if own.doc !== null}
-          <UsingPage doc={own.doc} onopen={(to) => void workspace.showHelpStop(to)} />
-        {:else}
-          <p class="quiet" data-testid="help-page">This page cannot be shown: {own.slip}.</p>
-        {/if}
-      {:else if home !== null}
-        <HomePage
-          index={home}
-          families={workspace.helpCodes}
-          onopen={(to) => void workspace.showHelpStop(to)}
-        />
-      {:else if page === ""}
-        <!-- Home before the engine has given its index, or where it cannot. -->
-        <p class="quiet">
-          Press F1 on a function's name in the script, press Explain on what a run said, or type a
-          name in the field above, to read the engine's page here.
-        </p>
-      {:else if doc.plain !== null}
-        <!-- A page the reader does not know (a package's list): as the engine prints it. -->
-        <pre class="mono" data-testid="help-page">{doc.plain}</pre>
-      {:else}
-        <HelpPage
-          {doc}
-          {of}
-          onname={(name) => void workspace.showHelp(name)}
-          oncode={(code) => void workspace.showCode(code)}
-        />
-      {/if}
+      <div class="with" class:beside={beside && sections.length > 0}>
+        <div class="text">
+          {#if list !== null}
+            <ListPage {list} onopen={(to) => void workspace.showHelpStop(to)} />
+          {:else if own !== null}
+            {#if own.doc !== null}
+              <UsingPage doc={own.doc} {under} onopen={(to) => void workspace.showHelpStop(to)} />
+            {:else}
+              <p class="quiet" data-testid="help-page">This page cannot be shown: {own.slip}.</p>
+            {/if}
+          {:else if home !== null}
+            <HomePage
+              index={home}
+              families={workspace.helpCodes}
+              {under}
+              onopen={(to) => void workspace.showHelpStop(to)}
+            />
+          {:else if page === ""}
+            <!-- Home before the engine has given its index, or where it cannot. -->
+            <p class="quiet">
+              Press F1 on a function's name in the script, press Explain on what a run said, or type
+              a name in the field above, to read the engine's page here.
+            </p>
+          {:else if doc.plain !== null}
+            <!-- A page the reader does not know (a package's list): as the engine prints it. -->
+            <pre class="mono" data-testid="help-page">{doc.plain}</pre>
+          {:else}
+            <HelpPage
+              {doc}
+              {of}
+              {under}
+              onname={(name) => void workspace.showHelp(name)}
+              oncode={(code) => void workspace.showCode(code)}
+            />
+          {/if}
+        </div>
+        {#if beside}{@render onThisPage("beside")}{/if}
+      </div>
     </div>
   </Place>
 </div>
@@ -437,42 +460,73 @@
     white-space: pre;
   }
   .quiet,
-  .none {
-    color: var(--ink-3);
-    margin: 0;
+  /* The page and, beside it, the list of its sections: one ground, no rule between them. */
+  .with.beside {
+    align-items: start;
+    display: grid;
+    gap: 44px;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    max-width: 1010px;
   }
-  .none {
+  .text {
+    min-width: 0;
+  }
+  .otp {
     font-size: 13px;
-    padding: 4px 14px 14px;
   }
-  ul {
+  /* Beside the text it stays in view as the page is read. */
+  .otp.beside {
+    max-height: calc(100vh - 160px);
+    overflow: auto;
+    position: sticky;
+    top: 0;
+  }
+  /* Under the title it is a short block of the page's own, before the first section. */
+  .otp.under {
+    border-bottom: 1px solid var(--line);
+    margin: 0 0 14px;
+    max-width: 760px;
+    padding: 0 0 10px;
+  }
+  .otp b {
+    color: var(--ink-3);
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  .outline {
+    border-left: 1px solid var(--line-strong);
     list-style: none;
     margin: 0;
-    padding: 2px 8px 10px;
+    padding: 0;
   }
-  li button {
+  .outline button {
     background: none;
     border: 0;
-    border-radius: 7px;
-    color: var(--ink);
+    border-left: 2px solid transparent;
+    color: var(--ink-2);
     cursor: pointer;
     display: block;
     font: inherit;
-    padding: 5px 8px;
+    margin-left: -1px;
+    padding: 3px 8px 3px 12px;
     text-align: left;
     width: 100%;
   }
-  li button:hover {
-    background: var(--line);
+  .outline button:hover {
+    color: var(--accent);
   }
-  li button:focus-visible {
+  .outline button:focus-visible {
     outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
   .outline .entry button {
+    color: var(--ink);
     font-weight: 600;
   }
   .outline .on {
-    background: var(--accent-soft);
+    border-left-color: var(--accent);
     color: var(--accent);
     font-weight: 600;
   }

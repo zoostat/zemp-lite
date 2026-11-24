@@ -19,7 +19,7 @@ Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From t
 
 ## Browse
 
-**Home** is where Help starts: what Zeff and Zemp Lite are, and a panel for each kind of page, the packages, the errors and warnings, and these pages on the app. A package's page lists its functions, each with its one line. The **Topics** pane at the left lists the packages and the errors and warnings; beside a page it lists the pages around it. **On this page**, at the right, lists the sections of the page you are reading.
+**Home** is where Help starts: what Zeff and Zemp Lite are, and a panel for each kind of page, the packages, the errors and warnings, and these pages on the app. A package's page lists its functions, each with its one line. The **Topics** pane at the left lists the packages and the errors and warnings; beside a page it lists the pages around it. At the right of a page its sections are listed, under the words On this page; press one to go to it.
 
 ## From the script
 

@@ -75,12 +75,9 @@ const topics = (page: Page) =>
     .getByRole("complementary", { name: "Help: the left pane" })
     .getByRole("region", { name: "Topics" });
 /** The pane at the right, On this page (it held the related functions until 0.2.3). */
-const onThisPage = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Help: the right pane" })
-    .getByRole("region", { name: "On this page" });
+const onThisPage = (page: Page) => page.getByRole("navigation", { name: "On this page" });
 /** The sections of the page open, in that pane (in the Outline pane at the left, until 0.2.3). */
-const outline = (page: Page) => onThisPage(page).getByRole("list", { name: "On this page" });
+const outline = (page: Page) => onThisPage(page).getByRole("list");
 
 test("F1 on a function's name opens the Help place at its page, every word the engine's", async ({
   page,
@@ -146,7 +143,7 @@ test("the Help place has the page's outline at its left, each section gone to an
   await expect(page.getByTestId("help-title")).toHaveText("summary");
   // `summary` is a function of a frame and of a result (#215): the bare name is the chooser
   // of the two, which has no sections; each has a page of its own, with its own sections alone.
-  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  await expect(onThisPage(page)).toHaveCount(0);
   await press(page.getByTestId("help-page").getByRole("button", { name: "summary · of a frame" }));
   await expect(page.getByTestId("help-title")).toHaveText("of a frame");
   const entries = outline(page).getByRole("button");
@@ -174,19 +171,15 @@ test("the Help place has the page's outline at its left, each section gone to an
     })
     .toBeLessThan(30);
   await expect(outline(page).locator('[aria-current="location"]')).toHaveCount(1);
-  // The pane that holds them closes and opens by its link, and by its own ×; the link is the
-  // last thing of the bar, after the search field.
-  const link = bar(page).getByRole("button", { name: "On this page", exact: true });
-  await expect(link).toHaveAttribute("aria-pressed", "true");
-  await expect(link).toHaveAttribute("title", "Show or hide the sections of the page open");
-  await press(link);
-  await expect(onThisPage(page)).toHaveCount(0);
-  await press(link);
-  await press(onThisPage(page).getByRole("button", { name: "Close On this page" }));
-  await expect(link).toHaveAttribute("aria-pressed", "false");
+  // The list is a part of the page from 0.2.4 (open decision #220, item 7): it has no link in
+  // the bar, no pane and no × of its own, and is always there beside the page's text.
+  await expect(bar(page).getByRole("button", { name: "On this page", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("complementary", { name: "Help: the right pane" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Close On this page" })).toHaveCount(0);
+  await expect(onThisPage(page)).toBeVisible();
   // Topics, at the left, is as it was, and holds none of the page's sections.
   await expect(topics(page)).toBeVisible();
-  await expect(topics(page).getByRole("list", { name: "On this page" })).toHaveCount(0);
+  await expect(topics(page).getByRole("navigation", { name: "On this page" })).toHaveCount(0);
 });
 
 test("the related functions are the links of the page's own See also, and there is no pane of them", async ({
@@ -231,7 +224,7 @@ test("the related functions are the links of the page's own See also, and there 
   await field.press("Enter");
   await expect(page.getByTestId("help-title")).toHaveText("nosuch");
   await expect(page.getByTestId("help-page")).toContainText("nosuch");
-  await expect(onThisPage(page)).toContainText("This page has no sections.");
+  await expect(onThisPage(page)).toHaveCount(0);
 });
 
 test("a code's explained page opens in the Help place from what the run said, and from the field", async ({

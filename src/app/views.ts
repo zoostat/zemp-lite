@@ -20,13 +20,15 @@ export const VIEWS_VERSION = 4;
 /**
  * The panes of each place, and whether each is open in a project opened for the first time
  * (#203): beside the script, Project and Outline closed and Notes open; beside the data, the
- * frames open and the variables closed; beside a plot and a help page, both open.
+ * frames open and the variables closed; beside a plot, both open; beside a page of Help,
+ * Topics open (the sections of the page open are a part of the page from 0.2.4, not a pane:
+ * open decision #220, item 7).
  */
 export const PANES = {
   script: { project: false, outline: false, notes: true },
   data: { frames: true, variables: false },
   plots: { list: true, about: true },
-  help: { topics: true, page: true },
+  help: { topics: true },
 } as const;
 export type PlaceName = keyof typeof PANES;
 export type PaneName<P extends PlaceName> = keyof (typeof PANES)[P];
@@ -183,10 +185,6 @@ export function readViews(text: string | null): ViewState {
     if (typeof help === "object" && help !== null) {
       if (typeof help["topics"] !== "boolean" && typeof help["outline"] === "boolean") {
         state.panes.help.topics = help["outline"];
-      }
-      // Its right pane was Related functions: a reader who closed that has the right pane closed.
-      if (typeof help["page"] !== "boolean" && typeof help["related"] === "boolean") {
-        state.panes.help.page = help["related"];
       }
     }
   }
