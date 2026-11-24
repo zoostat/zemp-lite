@@ -111,69 +111,96 @@ test("the first step says how the engine came: the bytes that travelled, or that
   await expect(start(page)).not.toContainText("MB, once");
 });
 
-test("the bar glides: a start done at once still fills it over about a second, and the button opens only when it is full", async ({
-  page,
-}) => {
-  // Here the engine comes from this computer in a fraction of a second, and its three steps
-  // are done long before a second has passed. From the first frame of the screen: the bar, the
-  // button and the first step, frame by frame.
-  await page.addInitScript(() => {
-    const samples: [number, number, boolean, boolean][] = [];
-    (window as unknown as { samples: typeof samples }).samples = samples;
-    const look = () => {
-      const bar = document.querySelector('[role="progressbar"]');
-      const button = document.querySelector<HTMLButtonElement>("button.open");
-      const first = document.querySelector('[data-testid="step-fetch"]');
-      if (bar !== null && button !== null && first !== null) {
-        samples.push([
+/** What the screen showed at one change: when, the bar, the button grey, the first step done. */
+type Shown = [at: number, bar: number, grey: boolean, firstDone: boolean];
+
+// The bar glides, at two paces of frame: this machine's own, and frames 160 ms apart, which is
+// what a busy machine makes of them (six in the bar's second were seen on GitHub's machines).
+for (const [pace, apart] of [
+  ["at the machine's own frames", null],
+  ["with few frames, as a busy machine draws", 160],
+] as const) {
+  test(`the bar glides ${pace}: a start done at once still fills it over about a second, and the button opens only when it is full`, async ({
+    page,
+  }) => {
+    // Here the engine comes from this computer in a fraction of a second, and its three steps
+    // are done long before a second has passed.
+    if (apart !== null) {
+      await page.addInitScript((ms: number) => {
+        window.requestAnimationFrame = (frame: FrameRequestCallback) =>
+          window.setTimeout(() => frame(performance.now()), ms);
+        window.cancelAnimationFrame = (id: number) => window.clearTimeout(id);
+      }, apart);
+    }
+    // The bar, the button and the first step are noted at each change of the page, as it is
+    // made: so the record is of what the screen showed, whole, and when. (Noted frame by frame
+    // instead, the record ran a frame behind the screen, and a test that read it as soon as
+    // the button opened found the last frame missing where frames are far apart.)
+    await page.addInitScript(() => {
+      const shown: [number, number, boolean, boolean][] = [];
+      (window as unknown as { shown: typeof shown }).shown = shown;
+      const look = () => {
+        const bar = document.querySelector('[role="progressbar"]');
+        const button = document.querySelector<HTMLButtonElement>("button.open");
+        const first = document.querySelector('[data-testid="step-fetch"]');
+        if (bar === null || button === null || first === null) return;
+        const now: (typeof shown)[number] = [
           performance.now(),
           Number(bar.getAttribute("aria-valuenow")),
           button.disabled,
           first.className.includes("done"),
-        ]);
-        if (!button.disabled) return;
-      }
-      requestAnimationFrame(look);
-    };
-    requestAnimationFrame(look);
+        ];
+        const last = shown.at(-1);
+        if (last?.[1] !== now[1] || last[2] !== now[2] || last[3] !== now[3]) shown.push(now);
+      };
+      new MutationObserver(look).observe(document, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+      });
+    });
+    await page.goto("/app/");
+    // Until the record itself has the button open.
+    await page.waitForFunction(
+      () =>
+        (window as unknown as { shown: [number, number, boolean, boolean][] }).shown.at(-1)?.[2] ===
+        false,
+      null,
+      { timeout: 30_000 },
+    );
+    await expect(open(page)).toBeEnabled();
+    const shown = await page.evaluate(() => (window as unknown as { shown: Shown[] }).shown);
+    // It was seen, more than twice, however few the frames.
+    expect(shown.length).toBeGreaterThan(2);
+    const [began] = shown;
+    const ended = shown.at(-1);
+    if (began === undefined || ended === undefined) throw new Error("the bar was not seen");
+    // It began short of full and ended full, with the button open.
+    expect(began[1]).toBeLessThan(100);
+    expect(ended.slice(1)).toEqual([100, false, true]);
+    for (const [, bar, grey, firstDone] of shown.slice(0, -1)) {
+      // The button is grey for as long as the bar is short of full, and the bar says 100 only
+      // when it is full.
+      expect(grey, `the button at ${bar} %`).toBe(true);
+      expect(bar).toBeLessThan(100);
+      // A step is marked done only once the bar has passed it.
+      if (bar < 70) expect(firstDone, `the first step at ${bar} %`).toBe(false);
+    }
+    // It never goes back.
+    for (let at = 1; at < shown.length; at++) {
+      const [, bar] = shown[at] as Shown;
+      const [, last] = shown[at - 1] as Shown;
+      expect(bar).toBeGreaterThanOrEqual(last);
+    }
+    // And it took its time: the bar is paced by the clock, the whole of it in a second, so
+    // from where it began to full is about that share of a second, however few the frames.
+    const took = ended[0] - began[0];
+    expect(took).toBeGreaterThanOrEqual(((100 - began[1]) / 100) * 1000 * 0.85);
+    expect(took).toBeLessThan(8000);
+    // The engine itself was running well before the bar was full: the bar was gliding, not waiting.
+    await expect(start(page).locator("[data-engine]")).toHaveAttribute("data-engine", "done");
   });
-  await page.goto("/app/");
-  await expect(open(page)).toBeEnabled({ timeout: 30_000 });
-  const samples = await page.evaluate(
-    () => (window as unknown as { samples: [number, number, boolean, boolean][] }).samples,
-  );
-  // The bar is drawn by the screen's own frames, of which a busy machine makes few (six in
-  // that second were seen on GitHub's machines): so it is held by what does not depend on how
-  // many frames there were. It was seen, more than twice.
-  expect(samples.length).toBeGreaterThan(2);
-  const [began] = samples;
-  const ended = samples.at(-1);
-  if (began === undefined || ended === undefined) throw new Error("the bar was not seen");
-  // It was first seen short of full, and ended full, with the button opened at the end and
-  // not before. (How short of full it was first seen depends on when the machine drew its
-  // first frame; what follows allows for that.)
-  expect(began[1]).toBeLessThan(100);
-  expect(ended[1]).toBe(100);
-  expect(ended[2]).toBe(false);
-  for (const [, value, disabled, firstDone] of samples.slice(0, -1)) {
-    expect(disabled, `the button at ${value} %`).toBe(true);
-    // A step is marked done only once the bar has passed it.
-    if (value < 69) expect(firstDone, `the first step at ${value} %`).toBe(false);
-  }
-  // It never goes back.
-  for (let at = 1; at < samples.length; at++) {
-    const [, value] = samples[at] as [number, number, boolean, boolean];
-    const [, last] = samples[at - 1] as [number, number, boolean, boolean];
-    expect(value).toBeGreaterThanOrEqual(last);
-  }
-  // And it took its time: the bar is paced by the clock, the whole of it in a second, so from
-  // where it was first seen to full is about that share of a second, however few the frames.
-  const took = ended[0] - began[0];
-  expect(took).toBeGreaterThanOrEqual(((100 - began[1]) / 100) * 1000 * 0.85);
-  expect(took).toBeLessThan(8000);
-  // The engine itself was running well before the bar was full: the bar was gliding, not waiting.
-  await expect(start(page).locator("[data-engine]")).toHaveAttribute("data-engine", "done");
-});
+}
 
 test("a fetching that fails says so in the engine's step, and Try again starts it afresh", async ({
   page,

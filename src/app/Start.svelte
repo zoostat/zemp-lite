@@ -54,7 +54,9 @@
     frame = requestAnimationFrame(move);
     return () => cancelAnimationFrame(frame);
   });
-  const whole = $derived(Math.round(glide));
+  // The number the bar gives, never ahead of the bar: it says 100 only when the bar is full,
+  // which is when the button opens.
+  const whole = $derived(Math.floor(glide + 0.001));
   // The steps as the screen marks them: each done once the bar has passed it.
   const shown = $derived(marked({ fetching, checking, starting }, glide));
   const ready = $derived(shown.starting === "done");

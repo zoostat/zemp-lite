@@ -2417,3 +2417,15 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **The steps' record.** The commits of steps 6b to 15 carry the test as it was, so GitHub's check of each may fail in it and in nothing else; the routine was green here at each. The check must be green on the commit that mends the test before step 16 is begun, and the notes of the release say so.
 
 **Reason.** A test must fail for the fault it is of. This one failed for the speed of the machine it ran on.
+
+## 24 November 2026: The test of the gliding bar notes each change as it is made (found on GitHub after the commit that mended it)
+
+**What was seen.** GitHub's check of commit cc81972, which had mended the test of the gliding bar, failed in that test again, in one browser: the last thing the test's record held was the bar at 97, where the test expects it full.
+
+**What it is not.** A fault of the bar or of the button. The screen's number and the button are drawn from one value in one stroke, and the button opens only when that value is full.
+
+**What it was.** The test kept its record by looking at the screen once in each frame, before the screen drew that frame, so the record ran one frame behind the screen; and it read the record as soon as the button was seen open. Where frames are a sixth of a second apart the record did not yet hold the last frame. Reproduced here, in both browsers and every time, by slowing the frames to 160 ms and reading the record at once.
+
+**Choice.** (1) The test notes the bar, the button and the first step at each change of the page as it is made, so the record is what the screen showed, and when; and it waits until the record itself holds the open button. (2) The test is run at two paces of frame: the machine's own, and frames 160 ms apart, so that what a busy machine does is tried on every run and not only on GitHub. (3) The number on the bar is the bar's value rounded down, not to the nearest: it says 100 only when the bar is full, which is when the button opens (rounded to the nearest, it could say 100 for one frame while the button was still grey). The test holds that too: the button is grey for as long as the number is short of 100.
+
+**Reason.** As before: a test must fail for the fault it is of. And a machine's slowness that only GitHub has is found late and dearly; the second pace brings it to this Mac.
