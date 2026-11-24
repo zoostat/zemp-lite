@@ -186,6 +186,43 @@ test("where no packed file stands beside the engine, the engine is sent as the h
   assert.equal(Buffer.from(await still.arrayBuffer()).equals(engine), true);
 });
 
+test("where the host has not been given the engine yet and answers with its page, the page is never passed on as the engine", async () => {
+  // As Cloudflare Pages answers in the seconds after a deployment: the app's page, with the
+  // headers of a built file, to be kept for a year.
+  const early = () => ({
+    asked: [],
+    ASSETS: {
+      async fetch() {
+        return new Response("<!doctype html><title>Zemp Lite</title>", {
+          status: 200,
+          headers: {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "public, max-age=31536000, immutable",
+          },
+        });
+      },
+    },
+  });
+  for (const takes of ["gzip, deflate, br", "gzip", ""]) {
+    const answer = await worker.fetch(asking(ENGINE, { takes }), early());
+    assert.equal(answer.status, 503, takes);
+    assert.equal(answer.headers.get("cache-control"), "no-store", takes);
+    assert.equal(answer.headers.get("retry-after"), "5", takes);
+    assert.equal(answer.headers.get("content-encoding"), null, takes);
+    assert.match(answer.headers.get("content-type"), /^text\/plain/, takes);
+    // The isolation headers are on it, as on every answer.
+    assert.equal(answer.headers.get("Cross-Origin-Embedder-Policy"), "require-corp", takes);
+    assert.doesNotMatch(await answer.text(), /<!doctype/i, takes);
+  }
+  const head = await worker.fetch(asking(ENGINE, { method: "HEAD" }), early());
+  assert.equal(head.status, 503);
+  assert.equal((await head.arrayBuffer()).byteLength, 0);
+  // The packed file there and the engine not: still "not yet" for a browser that asks whole.
+  const half = host({ [packedName(ENGINE)]: { bytes: packed, type: "application/octet-stream" } });
+  assert.equal((await worker.fetch(asking(ENGINE, { takes: "gzip" }), half)).status, 503);
+  assert.equal((await worker.fetch(asking(ENGINE), half)).headers.get("content-encoding"), "br");
+});
+
 test("anything that is not the engine asked for, the function leaves to the host", async () => {
   const env = host({ "/assets/app-1.js": { bytes: Buffer.from("app"), type: "text/javascript" } });
   const script = await worker.fetch(asking("/assets/app-1.js"), env);

@@ -18,7 +18,20 @@ test("the page is isolated, and the engine starts and runs the example", async (
   // to the engine running, which the card says of itself; the bar glides on to its end for a
   // moment after that (open decision #220, item 10), and the button opens then.
   const open = page.getByRole("button", { name: "Start", exact: true });
-  await expect(page.locator('[data-engine="done"]')).toBeVisible({ timeout: 30_000 });
+  // Where the engine does not start, what the loading screen says of it is printed: the
+  // sentence of a failure, or the step it stands at.
+  await expect(page.locator('[data-engine="done"]'))
+    .toBeVisible({ timeout: 30_000 })
+    .catch(async (error: unknown) => {
+      const card = await page
+        .getByTestId("start")
+        .innerText()
+        .catch(() => "(the loading screen could not be read)");
+      console.log(
+        `the engine did not start; the loading screen says: ${card.replace(/\s+/g, " ")}`,
+      );
+      throw error;
+    });
   const started = Date.now() - from;
   await expect(open).toBeEnabled({ timeout: 30_000 });
   test.info().annotations.push({

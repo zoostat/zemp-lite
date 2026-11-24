@@ -4,7 +4,8 @@
 // setting beside the engine (`<name>.wasm.br`), and this function answers the engine's address,
 // and that address alone (`_routes.json`), with the packed file, marked as brotli and not to be
 // packed again. A browser that does not take brotli, and any case this function does not know,
-// is answered by the host as it always was: nothing here can leave the engine unsent.
+// is answered by the host as it always was: nothing here can leave the engine unsent. One
+// answer of the host is not passed on: its page in place of an engine it has not been given yet.
 //
 // The build writes this file out as `_worker.js` with the headers of `public/_headers` put in
 // (`vite.config.ts`): the host does not add them to what a function answers.
@@ -26,26 +27,46 @@ function takesBrotli(request) {
   });
 }
 
+/**
+ * The engine as the host has it, whole. For some seconds after a deployment a place of the host
+ * may not have been given the engine yet, and it then answers the engine's address with the
+ * app's page, with the headers of a built file: to be kept for a year. A browser that met that
+ * would keep a page as its engine. So a page is never passed on as the engine: the answer is
+ * "not yet", not to be kept, and the loading screen's **Try again** fetches the engine afresh.
+ */
+async function whole(request, env) {
+  const answer = await env.ASSETS.fetch(request);
+  const type = answer.headers.get("content-type") || "";
+  if (!type.startsWith("text/html")) return answer;
+  const headers = new Headers(HEADERS);
+  headers.set("content-type", "text/plain; charset=utf-8");
+  headers.set("cache-control", "no-store");
+  headers.set("retry-after", "5");
+  return new Response(
+    request.method === "HEAD" ? null : "The engine is not at this place of the host yet.\n",
+    { status: 503, headers },
+  );
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const asks = request.method === "GET" || request.method === "HEAD";
-    if (!asks || !url.pathname.endsWith(".wasm") || !takesBrotli(request)) {
-      return env.ASSETS.fetch(request);
-    }
+    if (!asks || !url.pathname.endsWith(".wasm")) return env.ASSETS.fetch(request);
+    if (!takesBrotli(request)) return whole(request, env);
     const beside = new URL(url);
     beside.pathname = `${url.pathname}.br`;
     let packed;
     try {
       packed = await env.ASSETS.fetch(new Request(beside, request));
     } catch {
-      return env.ASSETS.fetch(request);
+      return whole(request, env);
     }
     // No packed file beside the engine: the host answers such an address with a page, or with
     // "not found". The engine is then sent as it always was.
     const type = packed.headers.get("content-type") || "";
     if ((packed.status !== 200 && packed.status !== 304) || type.startsWith("text/html")) {
-      return env.ASSETS.fetch(request);
+      return whole(request, env);
     }
     const headers = new Headers(HEADERS);
     headers.set("content-type", "application/wasm");

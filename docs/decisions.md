@@ -2606,3 +2606,17 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **Reason.** The checklist's step 5.
 
+
+## 24 November 2026: The host's page is never passed on as the engine (found at the pre-release routine of 0.2.5)
+
+**Found.** At the deployment of the commit of step 4b, one check at the trial address needed its second try: in Chromium the engine had not started within thirty seconds of the first request, and started in three seconds on the retry. The record does not say what the loading screen showed. Looking for a cause, an old weakness of the host was found and confirmed at the address: an address under `/assets/` that is no file is answered with the app's page (status 200, `text/html`), and with the headers the headers file gives a built file, `Cache-Control: public, max-age=31536000, immutable`. For some seconds after a deployment a place of the host may not have been given a new file yet (the check of a host has always allowed for this), and a browser asking that place for the new engine would be sent the page and told to keep it for a year: the loading screen would say the digest differs, and **Try again** would be answered from the browser's own keeping with the same page. It is not of this release's making: it has been so since the alpha was first deployed (release 0.2, step 17). Whether the second try above was this is not known.
+
+**Choice.**
+
+1. _The function added at step 4 no longer hands such an answer on._ Asked for the engine, where the host answers with a page, it answers "not yet": status 503, not to be kept (`no-store`), with the isolation headers. The loading screen then says the host answered 503, and **Try again** fetches afresh, which a test of the screen already holds. This covers the engine for every browser, since the engine's address is the function's; it is the file a reader waits for and the one the function already answers.
+2. _The check after a deployment prints what the loading screen says_ where the engine does not start, so that another such failure names its cause.
+3. _Not done here: the other built files_ (the app's scripts, styles and fonts, and the worker's script). They are served by the host without the function, which is why they cost nothing, and the same weakness stands for them in the seconds after a deployment. A remedy is a design question (the function over every built file, at a cost against the host's daily limit; or files named so that the host cannot answer a missing one with a page), so it is put to the coordinating session for the registers and named in the notes' known issues.
+
+**Tested.** Under Node: the host answering with its page, to a browser that takes brotli, to one that does not, and for the headers alone, is answered 503, not to be kept, with the isolation headers and no page in the body; with the packed file there and the engine not, the packed engine is still sent to a browser that takes it.
+
+**Reason.** The pre-release routine (testing handbook, section 2.4, item 1): only fixes from here on, and this mends the release's own new piece so that it cannot carry on a fault of the host.
