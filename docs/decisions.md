@@ -2650,3 +2650,9 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **Reason.** The standing instructions' closing of a release.
 
+## 24 November 2026: The specification's copy brought to Zeff 6af2614, after the release
+
+**What.** `docs/spec/` is the copy of the Zeff repository's `docs/spec/` at commit 6af2614 ("Record the release of Zemp Lite 0.2.5 in the registers (#225, #224, R4)"), read there before it was taken and compared byte for byte. Two files differ from the copy at 6dfb777, which the tag `v0.2.5` carries: the open decisions (#225 done in its five items, with the tag and the commit; #224 done) and the risk register (the owner's rating of R4, Low, given in the coordinating session; R4's figures at this release; and the new risk R13, "A browser keeps a wrong file of Zemp Lite for a year", which is the weakness of the host found at step 6, its remedy for the app's other built files left as this repository's engineering at its next release).
+
+**Reason.** The copy here names one commit of the Zeff repository and is that commit's, whole. This commit follows the tag `v0.2.5`.
+
