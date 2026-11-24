@@ -172,23 +172,27 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
   }) => {
     await page.goto("/app/");
     const start = page.getByTestId("start");
-    await expect(start.getByRole("heading", { level: 1 })).toContainText("Zemp Lite 0.2");
-    await expect(start.getByTestId("alpha")).toHaveText("alpha");
-    await expect(start).toContainText("the first public preview of Zemp Lite");
-    // The three steps, each done in turn.
+    await expect(start.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
+    await expect(page.getByTestId("version")).toContainText("0.2");
+    await expect(page.getByTestId("alpha")).toHaveText("alpha");
+    await expect(page.getByText("The first public preview: much is still to come")).toBeVisible();
+    // The three steps, each done in turn, under one bar; the size is the size that travels
+    // (`start.spec.ts` holds it to the build's own figure).
     await expect(start.getByTestId("step-fetch")).toHaveClass(/done/);
-    await expect(start.getByTestId("step-fetch")).toContainText(/100 % of [\d.]+ MB/);
+    await expect(start.getByTestId("step-fetch")).toContainText(/[\d.]+ MB, once/);
     await expect(start.getByTestId("step-check")).toHaveClass(/done/);
     await expect(start.getByTestId("step-start")).toHaveClass(/done/);
     await expect(start.getByTestId("step-start")).toContainText("Zeff 0.8.0 ready");
-    // The four promises.
+    await expect(start.getByTestId("start-whole")).toHaveText(/Ready\s*100 %/);
+    // The four promises, in their band.
+    const promises = page.getByRole("region", { name: "What Zemp Lite promises" });
     for (const promise of [
-      "It runs here.",
-      "Your data stays on this computer,",
-      "No account.",
-      "The next visit opens at once:",
+      "It runs here",
+      "Your data stays on this computer",
+      "No account",
+      "The next visit opens at once",
     ]) {
-      await expect(start.getByText(promise)).toBeVisible();
+      await expect(promises.getByText(promise, { exact: true })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: "What is counted" })).toBeVisible();
     const open = start.getByRole("button", { name: "Open Zemp Lite" });

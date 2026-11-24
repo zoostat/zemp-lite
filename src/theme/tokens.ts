@@ -42,6 +42,11 @@ export const TOKENS = {
   "logo-centre": { light: "#2e1a5e", dark: "#e4dbfa" },
   "violet-2": { light: "#5b3a9e", dark: "#b9a4f0" },
   "violet-3": { light: "#9b7fdb", dark: "#7e62c4" },
+  // The deep violet band of the loading screen and the landing page (the design guide, section
+  // 9; open decision #220), with the two inks written on it.
+  deep: { light: "#2e1a5e", dark: "#1b1530" },
+  "deep-ink": { light: "#f3effc", dark: "#f1ecfc" },
+  "deep-muted": { light: "#d6ccf2", dark: "#c3b6e8" },
   // Code, the same wherever code is shown.
   "code-keyword": { light: "#7b4fd6", dark: "#c4a7ff" },
   "code-function": { light: "#1f63c2", dark: "#8cbcff" },
@@ -62,6 +67,8 @@ export const TEXT_ON: Partial<Record<Token, Token[]>> = {
   "ink-3": ["window", "soft", "softer", "tint"],
   accent: ["window", "soft", "softer", "accent-soft"],
   "button-ink": ["button"],
+  "deep-ink": ["deep"],
+  "deep-muted": ["deep"],
   warning: ["window", "soft", "softer", "warning-soft"],
   ok: ["window", "soft", "ok-soft"],
   error: ["window", "soft", "softer", "error-soft"],

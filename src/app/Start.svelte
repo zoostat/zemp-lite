@@ -1,18 +1,22 @@
 <script lang="ts">
-  // The Start screen of a first visit (the design guide, section 9, "Start (first visit)";
-  // release 0.2, step 18b): the engine is fetched, checked and started, each step with its
-  // progress, beside four promises; **Open Zemp Lite** goes on to the welcome screen once the
-  // engine runs. The next visit opens straight on the welcome screen, the engine being kept
+  // The loading screen of a first visit (the design guide, section 9, "Loading screen"; open
+  // decision #220, item 3; release 0.2.4, step 6; first built at release 0.2, step 18b): the
+  // name large with what Zemp Lite is in one line and **Open Zemp Lite**, which is grey until
+  // the engine runs; beside it a card, the engine fetched, checked and started under one bar,
+  // each step with its mark, its line and its state; and the four promises in a band. The size
+  // given is the size that travels, which the build takes from the engine (`facts.ts`). The next visit opens straight on the welcome screen, the engine being kept
   // by the browser. The check is of the engine's digest: the file fetched must be the one this
   // release was built with (its SHA-256); signed releases come later (Zemp Specification,
   // section 13).
   import engineUrl from "../../worker/pkg/web/zemp_worker_bg.wasm?url";
   import type { Engine } from "../engine/engine";
-  import Logo from "../theme/Logo.svelte";
+  import HexIcon from "../theme/HexIcon.svelte";
   import Name from "../theme/Name.svelte";
-  import ThemeButton from "../theme/ThemeButton.svelte";
+  import Watermark from "../theme/Watermark.svelte";
+  import { FACTS, megabytes } from "./facts";
+  import FrontBar from "./FrontBar.svelte";
   import NarrowLine from "./NarrowLine.svelte";
-  import { ENGINE, ENGINE_BYTES, ENGINE_SHA256, VERSION, shown } from "./version";
+  import { ENGINE, ENGINE_BYTES, ENGINE_SHA256 } from "./version";
 
   let { engine, onopen }: { engine: Engine; onopen: () => void } = $props();
 
@@ -24,12 +28,23 @@
   let problem = $state("");
   const ready = $derived(starting === "done");
 
-  const megabytes = (bytes: number) => `${(bytes / 1_000_000).toFixed(1)} MB`;
+  /** How much of the engine has come, of a hundred; none known before the worker is built. */
   const share = $derived(
     ENGINE_BYTES === null || ENGINE_BYTES === 0
       ? null
       : Math.min(100, Math.round((received / ENGINE_BYTES) * 100)),
   );
+  // One bar over the three steps: the fetching is the long one and has seven tenths of it.
+  const whole = $derived(
+    Math.round(
+      (fetching === "done" ? 70 : ((share ?? 0) * 70) / 100) +
+        (checking === "done" ? 15 : 0) +
+        (starting === "done" ? 15 : 0),
+    ),
+  );
+  const step = $derived(fetching !== "done" ? 1 : checking !== "done" ? 2 : 3);
+  /** The size the engine travels at, as the first step says it; nothing before the worker is built. */
+  const travels = FACTS === null ? null : megabytes(FACTS.travels);
 
   /** The engine's file, fetched as it comes, so that its progress can be shown. */
   async function fetched(): Promise<Uint8Array<ArrayBuffer>> {
@@ -97,204 +112,390 @@
     done: "done",
     failed: "failed",
   };
+
+  // Once the engine runs the cursor is on **Open Zemp Lite**, so that Return opens it too.
+  let open = $state<HTMLButtonElement | null>(null);
+  $effect(() => {
+    if (ready) open?.focus();
+  });
 </script>
 
+<!-- The mark of a step: a tick when done, a turning ring while it runs, its number while it waits. -->
+{#snippet mark(state: State, number: number)}
+  <i class="mark" aria-hidden="true">
+    {#if state === "done"}
+      <svg viewBox="0 0 20 20"><path d="M5 10.5 8.5 14 15 6.5" /></svg>
+    {:else if state === "failed"}
+      !
+    {:else if state === "waiting"}
+      {number}
+    {/if}
+  </i>
+{/snippet}
+
 <NarrowLine />
-<div class="corner"><ThemeButton /></div>
-<div class="start" data-testid="start">
-  <header>
-    <Logo size={34} />
-    <h1><Name /> <span class="version">{shown(VERSION)}</span></h1>
-    <span class="alpha" data-testid="alpha">alpha</span>
-  </header>
-  <p class="about">
-    An <b>alpha</b>: the first public preview of <Name />, the editor for Zeff in a browser. Much is
-    still to come, and what is here will change; every result is the released Zeff
-    {ENGINE} engine's own.
-  </p>
+<div class="screen">
+  <Watermark />
+  <FrontBar />
+  <main class="start-main" data-testid="start">
+    <section class="hero">
+      <h1><Name /></h1>
+      <p class="lede">
+        <strong>Zeff in your browser.</strong> Write a script, run it and read the results, with nothing
+        to install and nothing uploaded.
+      </p>
+      <button class="open" bind:this={open} disabled={!ready} onclick={onopen}
+        >Open <Name filled />{#if ready}<span class="arrow" aria-hidden="true">→</span>{/if}</button
+      >
+      <p class="hint" data-testid="open-hint">
+        {ready ? "or press ↵" : "Opens as soon as the engine is ready."}
+      </p>
+    </section>
 
-  <ol class="steps" aria-label="Starting the engine">
-    <li class={fetching} data-testid="step-fetch">
-      <span class="what">Fetching the engine</span>
-      <span class="how"
-        >{fetching === "going" || fetching === "done"
-          ? share === null
-            ? megabytes(received)
-            : `${share} % of ${megabytes(ENGINE_BYTES ?? 0)}`
-          : said[fetching]}</span
+    <section class="card" aria-label="Starting the engine">
+      <h2>Starting the engine</h2>
+      <div
+        class="bar"
+        role="progressbar"
+        aria-label="Starting the engine"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow={whole}
       >
-      <span class="bar" aria-hidden="true"
-        ><i style:width="{fetching === 'done' ? 100 : (share ?? 0)}%"></i></span
-      >
-    </li>
-    <li class={checking} data-testid="step-check">
-      <span class="what">Checking that it is the engine of this release</span>
-      <span class="how"
-        >{checking === "done" && ENGINE_SHA256 === null
-          ? "no digest in this build"
-          : said[checking]}</span
-      >
-    </li>
-    <li class={starting} data-testid="step-start">
-      <span class="what">Starting it in this browser</span>
-      <span class="how"
-        >{starting === "done" ? `Zeff ${engine.version ?? ENGINE} ready` : said[starting]}</span
-      >
-    </li>
-  </ol>
-  {#if problem}
-    <p class="problem" role="alert">
-      {problem}. <button class="word" onclick={() => void begin()}>Try again</button>
-    </p>
-  {/if}
+        <i style:width="{whole}%"></i>
+      </div>
+      <p class="barnote" data-testid="start-whole">
+        <span>{ready ? "Ready" : `Step ${step} of 3`}</span><span>{whole} %</span>
+      </p>
+      <ol class="steps">
+        <li class={fetching} data-testid="step-fetch">
+          {@render mark(fetching, 1)}
+          <div class="t">
+            <b>Fetching the engine</b>
+            <span>{travels === null ? "once" : `${travels}, once`}</span>
+          </div>
+          <em>{fetching === "going" && share !== null ? `${share} %` : said[fetching]}</em>
+        </li>
+        <li class={checking} data-testid="step-check">
+          {@render mark(checking, 2)}
+          <div class="t">
+            <b>Checking that it is the engine of this release</b>
+            <span>its digest against the one this release was built with</span>
+          </div>
+          <em
+            >{checking === "going"
+              ? "checking…"
+              : checking === "done" && ENGINE_SHA256 === null
+                ? "no digest in this build"
+                : said[checking]}</em
+          >
+        </li>
+        <li class={starting} data-testid="step-start">
+          {@render mark(starting, 3)}
+          <div class="t">
+            <b>Starting it in this browser</b>
+            <span>in a worker of its own, so the page never freezes</span>
+          </div>
+          <em
+            >{starting === "going"
+              ? "starting…"
+              : starting === "done"
+                ? `Zeff ${engine.version ?? ENGINE} ready`
+                : said[starting]}</em
+          >
+        </li>
+      </ol>
+      {#if problem}
+        <p class="problem" role="alert">
+          {problem}. <button class="word" onclick={() => void begin()}>Try again</button>
+        </p>
+      {/if}
+    </section>
+  </main>
 
-  <ul class="promises">
-    <li>
-      <b>It runs here.</b> The engine runs in this browser; your scripts are never sent anywhere.
-    </li>
-    <li>
-      <b>Your data stays on this computer,</b> in this browser's private storage.
-    </li>
-    <li><b>No account.</b> There is nothing to sign up for.</li>
-    <li><b>The next visit opens at once:</b> the browser keeps the engine.</li>
-  </ul>
-
-  <button class="open" disabled={!ready} onclick={onopen}>Open <Name filled /></button>
+  <section class="promise-band" aria-label="What Zemp Lite promises">
+    <ul class="promises">
+      <li>
+        <HexIcon name="here" size={40} />
+        <div>
+          <b>It runs here</b>
+          <span>The engine runs in this browser; your scripts are never sent anywhere.</span>
+        </div>
+      </li>
+      <li>
+        <HexIcon name="lock" size={40} />
+        <div>
+          <b>Your data stays on this computer</b>
+          <span>In this browser's private storage.</span>
+        </div>
+      </li>
+      <li>
+        <HexIcon name="no-account" size={40} />
+        <div>
+          <b>No account</b>
+          <span>There is nothing to sign up for.</span>
+        </div>
+      </li>
+      <li>
+        <HexIcon name="bolt" size={40} />
+        <div>
+          <b>The next visit opens at once</b>
+          <span>The browser keeps the engine.</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+  <footer class="bottom">
+    <span class="gap"></span>
+    <a class="counted" href="/counted.html">What is counted</a>
+    <span class="engine">engine Zeff {ENGINE} · in this browser</span>
+  </footer>
 </div>
-<footer class="bottom">
-  <a class="counted" href="/counted.html">What is counted</a>
-  <span class="engine">engine Zeff {ENGINE} · in this browser</span>
-</footer>
 
 <style>
-  .corner {
-    position: absolute;
-    right: 18px;
-    top: 16px;
-    z-index: 2;
-  }
-  .start {
+  .screen {
     background: var(--window);
     display: flex;
     flex: 1;
     flex-direction: column;
-    gap: 14px;
-    margin: 0 auto;
-    max-width: 640px;
+    min-height: 0;
     overflow: auto;
-    padding: 56px 24px 32px;
+    position: relative;
+  }
+  .screen > :global(*:not(.watermark)) {
+    position: relative;
+    z-index: 1;
+  }
+  .start-main {
+    align-items: center;
+    box-sizing: border-box;
+    display: grid;
+    flex: 1 0 auto;
+    gap: 56px;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    margin: 0 auto;
+    max-width: 1180px;
+    padding: 56px 32px 40px;
     width: 100%;
   }
-  header {
-    align-items: center;
-    display: flex;
-    gap: 14px;
-  }
   h1 {
-    font-family: "Newsreader", serif;
-    font-size: 34px;
-    font-weight: 500;
-    margin: 0;
+    font:
+      600 84px/1 "Newsreader",
+      serif;
+    letter-spacing: -0.01em;
+    margin: 0 0 20px;
   }
-  .version {
-    color: var(--ink-3);
-    font-size: 20px;
-  }
-  .alpha {
-    border: 1px solid var(--accent);
-    border-radius: 999px;
-    color: var(--accent);
-    font-size: 13px;
-    padding: 1px 10px;
-  }
-  .about,
-  .promises li {
+  .lede {
     color: var(--ink-2);
-    font-size: 15px;
-    margin: 0;
+    font-size: 21px;
+    line-height: 1.45;
+    margin: 0 0 34px;
+    max-width: 520px;
   }
-  .steps {
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    list-style: none;
-    margin: 8px 0 0;
-    padding: 14px 16px;
-  }
-  .steps li {
-    align-items: center;
-    display: grid;
-    gap: 4px 12px;
-    grid-template-columns: 1fr auto;
-  }
-  .what {
+  .lede strong {
     color: var(--ink);
-    font-size: 15px;
   }
-  .waiting .what {
+  .open {
+    background: var(--button);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px -10px color-mix(in srgb, var(--button) 70%, transparent);
+    color: var(--button-ink);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 18px 40px;
+    text-transform: uppercase;
+  }
+  .open :global(.lite) {
+    text-transform: none;
+  }
+  .open:disabled {
+    background: var(--soft);
+    border-color: var(--line-strong);
+    box-shadow: none;
     color: var(--ink-3);
   }
-  .how {
-    color: var(--ink-2);
+  .arrow {
+    margin-left: 12px;
+  }
+  .hint {
+    color: var(--ink-3);
     font-size: 13.5px;
+    margin: 10px 0 0;
   }
-  .done .how {
-    color: var(--ok, var(--ink-2));
+  .card {
+    background: var(--window);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 24px 48px -36px rgba(46, 26, 94, 0.5);
+    padding: 26px 28px 14px;
   }
-  .failed .how {
-    color: var(--error);
+  h2 {
+    font:
+      600 22px/1.2 "Newsreader",
+      serif;
+    margin: 0 0 16px;
   }
   .bar {
-    background: var(--soft);
-    border-radius: 3px;
-    grid-column: 1 / -1;
-    height: 5px;
+    background: var(--line);
+    border-radius: 999px;
+    height: 6px;
     overflow: hidden;
   }
   .bar i {
-    background: var(--accent);
+    background: linear-gradient(90deg, var(--violet-2), var(--violet-3));
+    border-radius: 999px;
     display: block;
     height: 100%;
-    transition: width 0.15s;
+    transition: width 0.2s;
   }
-  .promises {
+  .barnote {
+    color: var(--ink-3);
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin: 6px 0 0;
-    padding-left: 20px;
+    font-size: 13px;
+    justify-content: space-between;
+    margin: 6px 0 10px;
+  }
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .steps li {
+    align-items: start;
+    border-top: 1px solid var(--line);
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    padding: 14px 0;
+  }
+  .mark {
+    border: 1.5px solid var(--line-strong);
+    border-radius: 50%;
+    box-sizing: border-box;
+    color: var(--ink-3);
+    display: grid;
+    font:
+      600 13px/1 "Atkinson Hyperlegible Next",
+      sans-serif;
+    height: 28px;
+    place-items: center;
+    width: 28px;
+  }
+  .mark svg {
+    fill: none;
+    height: 16px;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.4;
+    width: 16px;
+  }
+  .done .mark {
+    background: var(--ok-soft);
+    border-color: transparent;
+    color: var(--ok);
+  }
+  .going .mark {
+    animation: turning 0.9s linear infinite;
+    border: 2.5px solid var(--accent-soft);
+    border-top-color: var(--accent);
+  }
+  .failed .mark {
+    background: var(--error-soft);
+    border-color: transparent;
+    color: var(--error);
+  }
+  @keyframes turning {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .going .mark {
+      animation: none;
+    }
+    .bar i {
+      transition: none;
+    }
+  }
+  .t b {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .t span {
+    color: var(--ink-3);
+    display: block;
+    font-size: 13.5px;
+  }
+  .waiting .t b {
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+  .steps em {
+    color: var(--ink-3);
+    font-size: 13.5px;
+    font-style: normal;
+    padding-top: 2px;
+    white-space: nowrap;
+  }
+  .done em {
+    color: var(--ok);
+  }
+  .going em {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .failed em {
+    color: var(--error);
   }
   .problem {
+    border-top: 1px solid var(--line);
     color: var(--error);
+    font-size: 13.5px;
     margin: 0;
+    padding: 12px 0;
   }
   .word {
     background: none;
     border: 0;
     color: var(--accent);
-    cursor: pointer;
-    font: inherit;
     padding: 0;
     text-decoration: underline;
   }
-  .open {
-    align-self: flex-start;
-    background: var(--accent);
-    border: 0;
-    border-radius: 8px;
-    color: var(--window);
-    cursor: pointer;
-    font: inherit;
-    font-size: 15px;
-    margin-top: 8px;
-    padding: 8px 18px;
+  .promise-band {
+    background: var(--deep);
+    color: var(--deep-ink);
+    flex: none;
   }
-  .open:disabled {
-    background: var(--soft);
-    color: var(--ink-3);
-    cursor: default;
+  .promises {
+    box-sizing: border-box;
+    display: grid;
+    gap: 28px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    list-style: none;
+    margin: 0 auto;
+    max-width: 1180px;
+    padding: 28px 32px;
+  }
+  .promises li {
+    align-items: flex-start;
+    display: flex;
+    gap: 14px;
+  }
+  .promises :global(svg) {
+    color: var(--deep-muted);
+  }
+  .promises b {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 2px;
+  }
+  .promises span {
+    color: var(--deep-muted);
+    font-size: 13.5px;
   }
   .bottom {
     align-items: center;
@@ -303,14 +504,48 @@
     color: var(--ink-3);
     display: flex;
     flex: none;
-    font-size: 13.5px;
-    gap: 12px;
-    height: 36px;
-    justify-content: flex-end;
-    padding: 0 18px;
+    font-size: 13px;
+    gap: 18px;
+    padding: 9px 32px;
+  }
+  .gap {
+    flex: 1;
   }
   .counted {
-    color: var(--ink-3);
-    margin-right: auto;
+    color: var(--ink-2);
+  }
+  /* A narrow window and a phone: one column, the name smaller, the promises two and then one
+     to a row. */
+  @media (max-width: 900px) {
+    .start-main {
+      gap: 32px;
+      grid-template-columns: minmax(0, 1fr);
+      padding: 36px 20px 32px;
+    }
+    h1 {
+      font-size: 60px;
+    }
+    .lede {
+      font-size: 18px;
+      margin-bottom: 24px;
+    }
+    .promises {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      padding: 24px 20px;
+    }
+    .bottom {
+      padding: 9px 16px;
+    }
+  }
+  @media (max-width: 520px) {
+    .promises {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .card {
+      padding: 20px 18px 10px;
+    }
+    .open {
+      padding: 16px 28px;
+    }
   }
 </style>
