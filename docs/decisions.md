@@ -2656,3 +2656,13 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **Reason.** The copy here names one commit of the Zeff repository and is that commit's, whole. This commit follows the tag `v0.2.5`.
 
+## 24 November 2026: A test of the project screen waits for the list before it presses Tab (found on GitHub at the release's commit)
+
+**Found.** GitHub checked the commit "Release 0.2.5" twice, once for the branch and once for the tag. The check for the tag was green; the check for the branch failed in one browser test of 647, in Chromium: "every card and every row is reached by the Tab key, in the order of the screen" did not find the project's row among the stops. The commit after it, which changes documents alone, was green and is the one deployed; both addresses show version 0.2.5 and send the engine packed.
+
+**The cause, reproduced here.** Since 0.2.4 the project screen draws its list only once the list has been read from the browser's storage, so that a visitor with projects is never shown the card of a first visit. The test made a project, returned to the project screen and pressed Tab at once. Where the storage answers late, the Tab key has passed the place of the list before the row is drawn. With the storage made to answer 400 ms late, the test fails here every time, with the same words as on GitHub; with a wait for the row, it passes in both browsers. The screen is right: the row is there a moment later, and a reader who presses Tab then reaches it. The same thing was mended for another test at 0.2.4 (the whole-screen test); this one was missed.
+
+**Choice.** The helper of the project screen's tests that makes a project and returns to the screen now waits for that project's row before it hands back. Nothing of the app changes, and nothing a test holds is loosened. The tag `v0.2.5` is not moved: the release's commit carries the test as it was, and its app is the app that passed.
+
+**Reason.** A failure of GitHub's check is read and its cause found, never passed over because another run was green.
+

@@ -22,6 +22,10 @@ async function made(page: Page, press: Press, name: string): Promise<void> {
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(name);
   await press(page.getByRole("button", { name: "Projects" }));
   await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
+  // The list of projects is drawn once it has been read from the browser's storage, a moment
+  // after the cards (release 0.2.4, the first-visit card); a test that goes on at once, on a
+  // slow machine, would meet the screen without its rows.
+  await expect(page.getByRole("button", { name: `Actions for ${name}` })).toBeVisible();
 }
 
 /** Whether the lower edge of the list of projects fades: the fade drawn over it is there. */
