@@ -19,7 +19,7 @@ const READY = "engine Zeff 0.8.0 ready";
 /** Open the Scratch project from the welcome screen and wait for the engine. */
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page).toHaveURL(/#\/p\/scratch$/);
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
@@ -32,26 +32,27 @@ test("the welcome screen opens, names the release and says where projects are ke
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/app/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Zemp Lite 0.2");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
+  await expect(page.getByTestId("version")).toContainText("0.2");
   // The page is cross-origin isolated, so the cancel flag can be shared with the worker.
   expect(await page.evaluate(() => crossOriginIsolated)).toBe(true);
   await expect(page.getByRole("button", { name: "New project…" })).toBeEnabled();
   // Open folder… is not here yet, and says where it comes (#208): with the desktop beta.
   const folder = page.getByRole("button", { name: "Open folder…" });
   await expect(folder).toBeDisabled();
-  await expect(folder).toContainText("comes with the desktop app, and then in Chrome and Edge");
+  await expect(folder).toContainText("comes with the desktop app");
   await expect(folder).not.toContainText("prototype");
-  await expect(page.getByRole("button", { name: "Scratch project" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeEnabled();
   // WebKit's test profile behaves as a private window does, which keeps nothing; that
   // projects are kept, in both browsers, is tested in `kept.spec.ts`.
   await expect(
     page.getByText(browserName === "webkit" ? "Not kept." : "Kept on this computer."),
   ).toBeVisible();
   // And how a project is taken out of the browser, whichever of the two holds.
-  await expect(page.locator(".store")).toContainText(
-    "To take a project out, as a zip saved on this computer, choose Export project… in its menu (⋯) in the list, or in ⌘K while it is open; Open a project's zip… opens it again, here or in another browser.",
+  await expect(page.getByTestId("kept")).toContainText(
+    "Taking a project out. Choose Export project… in its ⋯ menu to save it as a zip on this computer, or in ⌘K while it is open; Open project… opens it again, here or in another browser.",
   );
-  await expect(page.getByText("No project yet.")).toBeVisible();
+  await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
   await expect(page.getByText("engine Zeff 0.8.0 · in this browser")).toBeVisible();
   // The shipped fonts are the ones drawn: no outside server is asked for one.
   await page.evaluate(() => document.fonts.ready);
@@ -179,7 +180,7 @@ test("in a private window, where the browser keeps nothing, the screen says so a
   await page.setViewportSize({ width: 1100, height: 3600 });
   await page.goto("/app/");
   await expect(page.getByText("Not kept.")).toBeVisible();
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   await placeOf(page, 118);

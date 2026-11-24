@@ -11,7 +11,7 @@ const READY = "engine Zeff 0.8.0 ready";
 test("the welcome screen says that projects are kept on this computer", async ({ page }) => {
   await page.goto("/app/");
   await expect(page.getByText("Kept on this computer.")).toBeVisible();
-  await expect(page.getByText("No project yet.")).toBeVisible();
+  await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
 });
 
 test("a project is made, and is still there with its script after the page is reloaded", async ({
@@ -56,14 +56,14 @@ test("a project is made, and is still there with its script after the page is re
 
 test("the Scratch project keeps what the user wrote in it", async ({ page, press }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect
     .poll(() => scriptText(page))
     .toMatch(/^\/\/ Returns to schooling, in the wages panel/);
   await write(page, "print(1)\n");
   await expect(page.getByText("saving")).toHaveCount(0);
   await press(page.getByRole("button", { name: "Projects" }));
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect.poll(() => scriptText(page)).toBe("print(1)\n");
 });
 
@@ -72,7 +72,7 @@ test("the file shown and a folder folded in the Project pane are kept with the p
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   // Another file of the project shown in the Script place, and a folder of the tree folded.
   await press(
@@ -113,7 +113,7 @@ test("which panes are open is each project's own: a new project opens with Proje
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
   const project = bar.getByRole("button", { name: "Project", exact: true });
@@ -136,7 +136,7 @@ test("which panes are open is each project's own: a new project opens with Proje
   await expect(left).toHaveCount(0);
   // And the Scratch project is as it was left.
   await press(page.getByRole("button", { name: "Projects" }));
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await expect(project).toHaveAttribute("aria-pressed", "true");
   await expect(notes).toHaveAttribute("aria-pressed", "false");
@@ -148,7 +148,7 @@ test("what is unfolded, and whether the notes are shown, are kept with the proje
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
@@ -188,7 +188,7 @@ test("which panes of a place are open, and the left pane's width, are kept with 
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const bar = page.getByRole("toolbar", { name: "Script: its panes and its controls" });
   const project = bar.getByRole("button", { name: "Project", exact: true });
@@ -225,7 +225,7 @@ test("the order of the strip, the plots pinned and the page chosen are kept with
 }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));

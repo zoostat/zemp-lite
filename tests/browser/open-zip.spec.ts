@@ -50,7 +50,7 @@ test("a project exported and opened again from its zip is the same project, unde
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const script =
     'let pay = frame(educ = [10.0, 12, 14], wage = [11.0, 14, 19])\npay.save("pay.csv")\nprint(pay.mean(wage))\n';
@@ -70,7 +70,7 @@ test("a project exported and opened again from its zip is the same project, unde
   // Back on the start screen, the zip is opened: a new project, named for the one it holds
   // with a number after it, since that name is here already.
   await press(page.getByRole("button", { name: "Projects ▾" }));
-  await expect(page.getByRole("button", { name: "Open a project's zip…" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open project…" })).toBeVisible();
   await chooser(page).setInputFiles(zip);
   await expect(page).toHaveURL(/#\/p\/scratch-2$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Scratch 2");
@@ -168,7 +168,7 @@ test("a zip that cannot be opened is refused in a sentence, and no project is ma
     ],
   ];
   await page.goto("/app/");
-  await expect(page.getByText("No project yet.")).toBeVisible();
+  await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
   for (const [name, script, sentence] of refused) {
     await chooser(page).setInputFiles(written(`${name}.zip`, script));
     const said = page.getByRole("alert");
@@ -176,7 +176,7 @@ test("a zip that cannot be opened is refused in a sentence, and no project is ma
     else await expect(said, name).toHaveText(sentence);
     // Still the start screen, and no project in its list.
     await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
-    await expect(page.getByText("No project yet.")).toBeVisible();
+    await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
   }
   // A zip that opens takes the sentence away with it.
   const good = written(

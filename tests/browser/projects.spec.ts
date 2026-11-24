@@ -177,7 +177,7 @@ test("the Scratch project is not renamed or deleted: it is duplicated into a pro
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const mine = 'print("my own work in the scratch project")\n';
   await write(page, mine);
@@ -207,7 +207,7 @@ test("the Scratch project is not renamed or deleted: it is duplicated into a pro
   await expect(asked.getByRole("button", { name: "Keep" })).toBeFocused();
   await press(asked.getByRole("button", { name: "Reset" }));
   await expect(said(page)).toHaveText("The Scratch project is as a first visit has it");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await expect
     .poll(() => scriptText(page))
@@ -249,7 +249,7 @@ test("the project open is renamed, duplicated and deleted from ⌘K, which asks 
   await expect(row(page, "Pay")).toHaveCount(0);
   await expect(row(page, "Pay copy")).toBeVisible();
   // In the Scratch project the commands are its own: no rename, and a reset for a deletion.
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByRole("combobox", { name: "Type a command" }).fill("Project: ");

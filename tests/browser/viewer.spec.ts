@@ -15,7 +15,7 @@ async function viewer(
 ): Promise<Locator> {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
@@ -235,7 +235,7 @@ test("the viewer is opened with ⌘K too, as the Plots place, and Script goes ba
 }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
@@ -265,7 +265,7 @@ test("the viewer is opened with ⌘K too, as the Plots place, and Script goes ba
 
 test("the viewer says so where the last run drew no plot", async ({ page, press }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByRole("combobox", { name: "Type a command" }).fill("plot viewer");
@@ -278,7 +278,7 @@ test("the Plots place: the plots of the run at its left and the plot's facts at 
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));

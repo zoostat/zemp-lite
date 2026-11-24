@@ -16,7 +16,7 @@ test.beforeEach(async ({ browserName, context }) => {
 
 async function ran(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   await press(page.getByRole("button", { name: "Run", exact: true }));
@@ -504,7 +504,7 @@ test("a variable's properties are of the frame of the script that ran, not of an
   // of plots make a frame `wages`, of 15,571 and of 18,201 rows; with the showcase run, the
   // pane gave the statistics of the other script's.
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByRole("combobox", { name: "Type a command" }).fill("plots.zeff");
@@ -529,7 +529,7 @@ test("a date's properties are its rows, its least and its greatest, and its dist
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await write(page, "let firms = dataset(firms)\n");
   await press(page.getByRole("button", { name: "Run", exact: true }));

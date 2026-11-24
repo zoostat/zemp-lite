@@ -10,7 +10,7 @@ test.use({ viewport: { width: 1280, height: 3200 } });
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
 }

@@ -1,6 +1,6 @@
 // A zip, written and read (release 0.2.2, step 2; open decisions #208 and #117). A project
 // leaves the browser as one zip (**Export project…**, a folder saved) and comes back as one
-// (**Open a project's zip…**). Every browser the alpha supports, and Node, where the tests
+// (**Open project…**). Every browser the alpha supports, and Node, where the tests
 // run, has the deflate of a zip built in (`CompressionStream`, "deflate-raw"); what is written
 // here is the container: each file's header, the directory at the end, and a CRC-32. So the
 // zip is this repository's own and no dependency is taken for it.

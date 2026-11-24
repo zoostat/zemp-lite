@@ -54,7 +54,7 @@ test("while the engine is fetched the button is grey and says when it will open;
   // The cursor is on the button once the engine runs: Return opens the app.
   await expect(open(page)).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
 });
 
 test("the size given is the size the engine travels at, not its size unpacked", async ({

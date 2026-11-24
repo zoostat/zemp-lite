@@ -23,7 +23,7 @@ const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   // The page prints at the width of its place, and `zeff run` at 118 characters: the window is
   // given the width at which the place is 118 characters wide before anything is compared.

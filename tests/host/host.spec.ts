@@ -23,7 +23,7 @@ test("the page is isolated, and the engine starts and runs the example", async (
   console.log(`first start: ${started} ms (the goal: 2,000 ms)`);
   await expect(page.getByTestId("step-check")).toHaveClass(/done/);
   await open.click();
-  await page.getByRole("button", { name: "Scratch project" }).click();
+  await page.getByRole("button", { name: /^Scratch project/ }).click();
   await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
@@ -51,7 +51,7 @@ test("Help opens on Home, the search finds reg by R's lm, and a page of the app 
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
-  await page.getByRole("button", { name: "Scratch project" }).click();
+  await page.getByRole("button", { name: /^Scratch project/ }).click();
   await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
   await page
     .getByRole("navigation", { name: "Places" })
@@ -101,7 +101,7 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
-  await page.getByRole("button", { name: "Scratch project" }).click();
+  await page.getByRole("button", { name: /^Scratch project/ }).click();
   await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
@@ -173,7 +173,7 @@ test("the first drawing of a run's figures is timed at the address", async ({ pa
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
-  await page.getByRole("button", { name: "Scratch project" }).click();
+  await page.getByRole("button", { name: /^Scratch project/ }).click();
   await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
   // Timed in the page: from the status saying "done" to the first figure standing on it.
   const timed = page.evaluate(
@@ -212,7 +212,7 @@ test("a project is exported at the address as a zip, and the zip opened there ag
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
-  await page.getByRole("button", { name: "Scratch project" }).click();
+  await page.getByRole("button", { name: /^Scratch project/ }).click();
   await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
   await page.keyboard.press("ControlOrMeta+k");
   await page.getByRole("combobox", { name: "Type a command" }).fill("Project: export");

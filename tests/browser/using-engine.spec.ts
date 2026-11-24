@@ -14,7 +14,7 @@ type Press = (target: Locator) => Promise<void>;
 
 async function scratch(page: Page, press: Press): Promise<void> {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
 }
 async function run(page: Page, press: Press): Promise<void> {

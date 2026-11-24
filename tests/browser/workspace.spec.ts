@@ -10,7 +10,7 @@ type Press = (target: ReturnType<Page["locator"]>) => Promise<void>;
 
 async function scratch(page: Page, press: Press) {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
 }
@@ -308,7 +308,7 @@ test("a project is closed and another opened, each with an engine of its own", a
     // Closing a project ends its worker; the next project starts a new one.
     await press(page.getByRole("button", { name: "Projects" }));
     await expect(page.getByText("No project open")).toBeVisible();
-    await press(page.getByRole("button", { name: "Scratch project" }));
+    await press(page.getByRole("button", { name: /^Scratch project/ }));
     await expect(page.getByRole("status")).toHaveText(READY);
   }
   await press(page.getByRole("button", { name: "Run", exact: true }));

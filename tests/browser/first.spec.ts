@@ -13,7 +13,7 @@ const scratch = (file: string) =>
 
 async function opened(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
 }
 
@@ -198,18 +198,18 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     const open = start.getByRole("button", { name: "Open Zemp Lite" });
     await expect(open).toBeEnabled();
     await press(open);
-    await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
     await expect(page.getByTestId("alpha")).toHaveText("alpha");
     await expect(page.getByText("Report a problem", { exact: true })).toBeVisible();
 
     // The next visit opens straight on the welcome screen.
     await page.reload();
-    await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
     await expect(page.getByTestId("start")).toHaveCount(0);
 
     // And a stranger runs the example and reads its results, untold: Run, and each result is
     // open under its statement, with its note beside it.
-    await press(page.getByRole("button", { name: "Scratch project" }));
+    await press(page.getByRole("button", { name: /^Scratch project/ }));
     await expect(page.getByRole("status")).toHaveText(READY);
     await press(page.getByRole("button", { name: "Run", exact: true }));
     await expect(page.getByRole("status")).toHaveText("done");
@@ -229,7 +229,7 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     const line = page.getByRole("note");
     await expect(line).toContainText("at least 1,200 pixels wide; this one is 1000.");
     await press(page.getByRole("button", { name: "Open Zemp Lite" }));
-    await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
     await expect(line).toContainText("No smaller layout exists yet.");
   });
 });

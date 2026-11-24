@@ -285,6 +285,12 @@
     letter-spacing: -0.01em;
     margin: 0 0 20px;
   }
+  /* The badge of a page's title is 0.26 of the name (the design guide, "The name drawn"). */
+  h1 :global(.lite) {
+    font-size: 0.26em;
+    margin-left: 0.08em;
+    top: -0.35em;
+  }
   .lede {
     color: var(--ink-2);
     font-size: 21px;

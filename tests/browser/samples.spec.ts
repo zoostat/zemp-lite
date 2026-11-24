@@ -41,7 +41,7 @@ for (const name of ["regression", "simulation", "plots"]) {
     // before anything is compared.
     await page.setViewportSize({ width: 1100, height: 3200 });
     await page.goto("/app/");
-    await press(page.getByRole("button", { name: "Scratch project" }));
+    await press(page.getByRole("button", { name: /^Scratch project/ }));
     await expect(page.getByRole("status")).toHaveText(READY);
     await placeOf(page, 118);
     await expect(page.locator(".sheet")).toHaveAttribute("data-width", "118");
@@ -70,7 +70,7 @@ test("the specification's sample script, written for Zeff 1.0, is refused as `ze
 }) => {
   const file = (name: string) => readFileSync(new URL(`../../${name}`, import.meta.url), "utf8");
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await write(page, file("docs/spec/zeff_samples.zeff"));
   await expect(page.locator("header.top")).toContainText("· saved");

@@ -12,7 +12,7 @@ The zip holds the project as a folder: its scripts, its data, and what its runs 
 
 ## Opening a zip
 
-**Open a project's zip…**, on the screen of projects, opens a zip that **Export project…** wrote, or a project's folder zipped by any other tool. The project that opens is a new one, under a name of its own: nothing already in the browser is replaced.
+**Open project…**, on the screen of projects, opens a zip that **Export project…** wrote, or a project's folder zipped by any other tool. The project that opens is a new one, under a name of its own: nothing already in the browser is replaced.
 
 A zip that is not a project is refused in a sentence, and nothing is made.
 

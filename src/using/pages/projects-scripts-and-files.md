@@ -27,4 +27,4 @@ If you rename, move or delete a file that a script names, the app says which scr
 
 ## Taking a project out
 
-**Export project…** writes the whole project as one zip: its scripts, its data and what its runs wrote. **Open a project's zip…**, on the screen of projects, opens such a zip again, here or in another browser.
+**Export project…** writes the whole project as one zip: its scripts, its data and what its runs wrote. **Open project…**, on the screen of projects, opens such a zip again, here or in another browser.

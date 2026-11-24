@@ -43,7 +43,7 @@ test("where the browser may clear the projects the status bar says so, with Expo
   const kept = browserName !== "webkit";
   if (kept) {
     await expect(page.getByText("Kept on this computer.")).toBeVisible();
-    await expect(page.locator(".store")).toContainText(
+    await expect(page.getByTestId("kept")).toContainText(
       "the browser may clear it when the computer runs short of room",
     );
     // Nothing is asked of the browser until a project is made.
@@ -51,7 +51,7 @@ test("where the browser may clear the projects the status bar says so, with Expo
   } else {
     await expect(page.getByText("Not kept.")).toBeVisible();
   }
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   // A browser that gives the page a storage is asked, once, to keep it for good.
   expect(await asked(page)).toBe(kept ? 1 : 0);
@@ -65,7 +65,7 @@ test("where the browser may clear the projects the status bar says so, with Expo
   await expect(reminder(page)).toHaveText(`${line} · exported today`);
   // Made again, a project does not have the browser asked again.
   await press(page.getByRole("button", { name: "Projects ▾" }));
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   expect(await asked(page)).toBe(kept ? 1 : 0);
   await expect(reminder(page)).toHaveText(`${line} · exported today`);
@@ -82,15 +82,15 @@ test("where the browser has agreed to keep the storage the status bar is silent,
   );
   await browserThat(page, true);
   await page.goto("/app/");
-  await expect(page.locator(".store")).toContainText("the browser may clear it");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await expect(page.getByTestId("kept")).toContainText("the browser may clear it");
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   expect(await asked(page)).toBe(1);
   // Made today, kept for good: nothing to say.
   await expect(reminder(page)).toHaveCount(0);
   await expect(exportButton(page)).toHaveCount(0);
   await press(page.getByRole("button", { name: "Projects ▾" }));
-  await expect(page.locator(".store")).toContainText(
+  await expect(page.getByTestId("kept")).toContainText(
     "the browser has agreed not to clear it on its own",
   );
   // Thirty-one days on, never exported: the line says so.
@@ -121,7 +121,7 @@ test("at the narrowest window the reminder leaves the console room to type in", 
   await browserThat(page, false);
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const line =
     browserName === "webkit"

@@ -16,7 +16,7 @@ async function ranWith(
   text: string,
 ) {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await write(page, text);
   await press(page.getByRole("button", { name: "Run", exact: true }));

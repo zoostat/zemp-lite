@@ -8,13 +8,24 @@
   import ThemeButton from "../theme/ThemeButton.svelte";
   import { ENGINE, VERSION, shown } from "./version";
 
-  let { children }: { children?: Snippet } = $props();
+  let {
+    heading = false,
+    children,
+  }: {
+    /** Whether the name is the screen's heading: so on the project screen, which has no other. */
+    heading?: boolean;
+    children?: Snippet;
+  } = $props();
 </script>
 
 <header class="bar-top">
   <span class="brand">
     <Logo size={28} />
-    <span class="name"><Name /></span>
+    {#if heading}
+      <h1 class="name"><Name /></h1>
+    {:else}
+      <span class="name"><Name /></span>
+    {/if}
     <span class="version" data-testid="version">{shown(VERSION)}</span>
   </span>
   <span class="gap"></span>
@@ -46,6 +57,12 @@
     font:
       600 21px/1 "Newsreader",
       serif;
+    margin: 0;
+  }
+  /* The badge in a bar is 11 pixels (the design guide, "The name drawn"). */
+  .name :global(.lite) {
+    font-size: 11px;
+    top: -0.4em;
   }
   .version {
     color: var(--ink-3);

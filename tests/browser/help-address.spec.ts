@@ -87,7 +87,7 @@ test("an address of Help given while a project is open goes to the Scratch proje
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await page.evaluate(() => {
     window.location.hash = "#/help/using/getting-started";

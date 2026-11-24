@@ -31,7 +31,7 @@ test("the root is the front page, which opens the app and fetches nothing of the
   expect(asked).toEqual([]);
   await front.getByRole("link", { name: "Open Zemp Lite" }).click();
   await expect(page).toHaveURL(/\/app\/$/);
-  await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
 });
 
 test("an address kept from before, of a project that is no longer here, opens the app", async ({
@@ -41,7 +41,7 @@ test("an address kept from before, of a project that is no longer here, opens th
   // (`kept.spec.ts`), where a browser keeps what was made.
   await page.goto("/#/p/not-here");
   await expect(page).toHaveURL(/\/app\/#?$/);
-  await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
 });
 
 test("the naming of a new project, asked for at the root as before, is asked in the app", async ({
@@ -58,7 +58,7 @@ test("the engine's file stands in the one folder of built files, whichever page 
 }) => {
   const asked = engineAsked(page);
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const engine = asked.filter((path) => path.endsWith(".wasm"));
   expect(engine.length).toBeGreaterThan(0);

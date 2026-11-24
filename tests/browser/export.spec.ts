@@ -45,7 +45,7 @@ test("Export project…, from ⌘K, gives the project as a zip: its files, what 
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   // A script that writes a file, typed and at once exported: what is typed is saved first.
   const typed =
@@ -101,7 +101,7 @@ test("a project's row of the start screen has a menu, by the mouse and by the ke
   press,
 }) => {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "Projects ▾" }));
   const recent = page.getByRole("region", { name: "Recent projects" });

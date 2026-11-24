@@ -54,7 +54,7 @@ const bar = (page: Page, place: string) =>
   page.getByRole("toolbar", { name: `${place}: its panes and its controls` });
 
 async function scratch(page: Page, press: Press): Promise<void> {
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
 }
 async function run(page: Page, press: Press): Promise<void> {
@@ -197,7 +197,7 @@ for (const slug of pages) {
   }) => {
     const controls = controlsOf(slug);
     await page.goto("/app/");
-    await expect(page.getByRole("button", { name: "Scratch project" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
     const seen = new Set<string>();
     await SCREENS[slug]?.(page, press, async () => {
       for (const name of await named(page)) seen.add(name);

@@ -7,9 +7,12 @@
 </script>
 
 <script lang="ts">
-  // The welcome screen (Zemp Specification, section 5; the design guide, section 9): with no
-  // project open, one quiet screen. On the left what can be done; on the right the projects
-  // of this browser, the one opened last first.
+  import { tick } from "svelte";
+  // The project screen (Zemp Specification, section 5; the design guide, section 9, "Project
+  // screen"; open decision #220, item 4; redrawn at release 0.2.4, step 7): with no project
+  // open, four cards of what can be done, the note on where the work is kept in two columns
+  // under them, and on the right the projects of this browser, the one opened last first, five
+  // in view with the lower edge fading until the end of the list is reached.
   import { exportProject } from "../project/export";
   import { limitsFor, projectOf } from "../project/from-zip";
   import type { Keeping } from "../project/keeping";
@@ -21,15 +24,15 @@
     type ProjectInfo,
     type Projects,
   } from "../project/projects";
+  import HexIcon from "../theme/HexIcon.svelte";
   import Logo from "../theme/Logo.svelte";
-  import Name from "../theme/Name.svelte";
   import Named from "../theme/Named.svelte";
-  import ThemeButton from "../theme/ThemeButton.svelte";
   import Watermark from "../theme/Watermark.svelte";
+  import FrontBar from "./FrontBar.svelte";
   import NarrowLine from "./NarrowLine.svelte";
   import RowMenu from "./RowMenu.svelte";
   import { saveToComputer } from "./save";
-  import { ENGINE, VERSION, shown } from "./version";
+  import { ENGINE } from "./version";
 
   let {
     projects,
@@ -224,262 +227,462 @@
   function focus(node: HTMLInputElement): void {
     node.focus();
   }
+
+  // The list of projects shows five and fades at its lower edge while more lie below; the fade
+  // goes once the end of the list is in view, and is never there for a list that fits.
+  let box = $state<HTMLDivElement | null>(null);
+  let atEnd = $state(true);
+  function measure(): void {
+    if (box === null) return;
+    atEnd = box.scrollTop + box.clientHeight >= box.scrollHeight - 2;
+  }
+  $effect(() => {
+    // Measured again whenever the list or a question in one of its rows changes its height.
+    void recent.length;
+    void asking;
+    void tick().then(measure);
+  });
 </script>
 
 <NarrowLine />
-<div class="welcome">
+<div class="screen">
   <Watermark />
-  <div class="corner"><ThemeButton /></div>
-
-  <section class="left" aria-label="Start">
-    <h1 class="brand">
-      <Logo size={34} />
-      <Name /> <small>{shown(VERSION)}</small>
-      <span class="alpha" data-testid="alpha">alpha</span>
-    </h1>
-    <p class="alpha-line">
-      The first public preview: much is still to come, and what is here will change; every result is
-      the released Zeff {ENGINE} engine's own. Something wrong? In a project, ⌘K →
-      <b>Report a problem</b> builds a report here, which you read and save; nothing is sent.
-    </p>
-
-    {#if naming}
-      <form class="naming" onsubmit={create}>
-        <label for="project-name">The name of the new project</label>
-        <div class="row">
-          <input
-            id="project-name"
-            bind:value={name}
-            use:focus
-            autocomplete="off"
-            maxlength="80"
-            oninput={() => (problem = "")}
-          />
-          <button class="filled" type="submit">Create</button>
-          <button
-            type="button"
-            class="plain"
-            onclick={() => {
-              naming = false;
-              problem = "";
-            }}>Cancel</button
-          >
-        </div>
-        {#if problem}<p class="problem" role="alert"><Named text={problem} /></p>{/if}
-      </form>
-    {:else}
-      <button class="act" onclick={() => (naming = true)}>
-        <span class="what">New project…</span>
-        <span class="about"
-          >a folder with <span class="mono">zeff.toml</span>, scripts and data</span
-        >
-      </button>
-    {/if}
-    <button class="act" disabled>
-      <span class="what">Open folder…</span>
-      <span class="about"
-        >a project folder on this computer: comes with the desktop app, and then in Chrome and Edge</span
-      >
-    </button>
-    <button class="act" onclick={() => zipChooser?.click()}>
-      <span class="what">Open a project's zip…</span>
-      <span class="about"
-        >a zip that Export project… wrote, or a project's folder zipped on this computer</span
-      >
-    </button>
-    <input
-      bind:this={zipChooser}
-      type="file"
-      accept=".zip,application/zip"
-      hidden
-      onchange={zipChosen}
-      aria-label="A project's zip to open"
-    />
-    {#if zipProblem}<p class="problem" role="alert">{zipProblem}</p>{/if}
-    <button class="act" onclick={scratch}>
-      <span class="what">Scratch project</span>
-      <span class="about"
-        >two worked examples to run and change: the returns to schooling, and instrumental variables</span
-      >
-    </button>
-
-    <p class="store">
-      {#if lasting}
-        <b>Kept on this computer.</b> Projects live in this browser's private storage. Clearing the
-        site's data would remove them{keeping === "kept"
-          ? ", and the browser has agreed not to clear it on its own."
-          : ", and the browser may clear it when the computer runs short of room."}
-      {:else}
-        <b class="warn">Not kept.</b> This browser gives a page no private storage, so a project lasts
-        only until this tab is closed.
-      {/if}
-      To take a project out, as a zip saved on this computer, choose
-      <b class="word">Export project…</b>
-      in its menu (⋯) in the list, or in ⌘K while it is open;
-      <b class="word">Open a project's zip…</b> opens it again, here or in another browser.
-    </p>
-  </section>
-
-  <section class="right" aria-label="Recent projects">
-    <h2 class="label">Recent</h2>
-    <ul class="projects">
-      {#each recent as project (project.folder)}
-        <li>
-          <button class="rec" onclick={() => onopen(project.folder)}>
-            <span class="name">{project.name}</span>
-            <small>in this browser · {when(project.opened, now)}</small>
-          </button>
-          <RowMenu label="Actions for {project.name}" actions={actionsOf(project)} />
-        </li>
-        {#if asking !== null && asking.folder === project.folder}
-          <li class="asked">
-            {#if asking.kind === "rename" || asking.kind === "duplicate"}
-              <form class="row" onsubmit={(event) => void answered(event, project)}>
-                <input
-                  value={asking.kind === "rename" ? project.name : `${project.name} copy`}
-                  use:whole
-                  aria-label={asking.kind === "rename"
-                    ? `The new name of ${project.name}`
-                    : `The name of the copy of ${project.name}`}
-                  autocomplete="off"
-                  maxlength="80"
-                  oninput={(event) => {
-                    answer = event.currentTarget.value;
-                    refusal = "";
-                  }}
-                  onkeydown={leave}
-                />
-                <button class="filled" type="submit"
-                  >{asking.kind === "rename" ? "Rename" : "Duplicate"}</button
-                >
-                <button type="button" class="plain" onclick={() => (asking = null)}>Cancel</button>
-              </form>
-            {:else}
-              <div
-                class="confirm"
-                role="group"
-                aria-label={asking.kind === "reset"
-                  ? "Reset the Scratch project?"
-                  : `Delete ${project.name}?`}
+  <FrontBar heading>
+    <span class="report">Something wrong? In a project, ⌘K → <b>Report a problem</b></span>
+  </FrontBar>
+  <main class="welcome-main">
+    <section class="left" aria-label="Start">
+      <div class="actions">
+        {#if naming}
+          <form class="naming" onsubmit={create}>
+            <label for="project-name">The name of the new project</label>
+            <div class="row">
+              <input
+                id="project-name"
+                bind:value={name}
+                use:focus
+                autocomplete="off"
+                maxlength="80"
+                oninput={() => (problem = "")}
+              />
+              <button class="filled" type="submit">Create</button>
+              <button
+                type="button"
+                class="plain"
+                onclick={() => {
+                  naming = false;
+                  problem = "";
+                }}>Cancel</button
               >
-                <p>
-                  {#if asking.kind === "reset"}
-                    Reset the Scratch project? What it holds{files === null
-                      ? ""
-                      : files === 1
-                        ? ", one file,"
-                        : `, ${files} files,`} is deleted, and its examples are put back as a first visit
-                    has them. It cannot be brought back.
-                  {:else}
-                    Delete {project.name}{files === null || files === 0
-                      ? ""
-                      : files === 1
-                        ? " and the file in it"
-                        : ` and the ${files} files in it`}? It cannot be brought back.
-                  {/if}
-                </p>
-                <div class="row">
-                  <button class="plain" onkeydown={leave} onclick={() => void exported(project)}
-                    >Export project… first</button
-                  >
-                  <button
-                    class="plain danger"
-                    onkeydown={leave}
-                    onclick={() => void removed(project)}
-                    >{asking.kind === "reset" ? "Reset" : "Delete"}</button
-                  >
-                  <button class="plain" use:keep onkeydown={leave} onclick={() => (asking = null)}
-                    >Keep</button
-                  >
-                </div>
-              </div>
-            {/if}
-            {#if refusal}<p class="problem" role="alert">{refusal}</p>{/if}
-          </li>
+            </div>
+            {#if problem}<p class="problem" role="alert"><Named text={problem} /></p>{/if}
+          </form>
+        {:else}
+          <button class="act" onclick={() => (naming = true)}>
+            <HexIcon name="new" />
+            <span class="what">New project…</span>
+            <span class="about"
+              >A folder with <span class="mono">zeff.toml</span>, scripts and data.</span
+            >
+          </button>
         {/if}
+        <button class="act" onclick={() => zipChooser?.click()}>
+          <HexIcon name="zip" />
+          <span class="what">Open project…</span>
+          <span class="about"
+            >A project's zip: one that Export project… wrote, or a project's folder zipped on this
+            computer.</span
+          >
+        </button>
+        <button class="act off" disabled>
+          <HexIcon name="folder" />
+          <span class="what">Open folder…</span>
+          <span class="about">A project folder on this computer.</span>
+          <span class="tag">comes with the desktop app</span>
+        </button>
+        <button class="act primary" onclick={scratch}>
+          <HexIcon name="play" />
+          <span class="what">Scratch project</span>
+          <span class="about"
+            >Two worked examples to run and change: the returns to schooling, and instrumental
+            variables.</span
+          >
+          <span class="go">Start here <span aria-hidden="true">→</span></span>
+        </button>
+      </div>
+      <input
+        bind:this={zipChooser}
+        type="file"
+        accept=".zip,application/zip"
+        hidden
+        onchange={zipChosen}
+        aria-label="A project's zip to open"
+      />
+      {#if zipProblem}<p class="problem" role="alert"><Named text={zipProblem} /></p>{/if}
+
+      <div class="kept" data-testid="kept">
+        <div class="where" class:not={!lasting}>
+          <HexIcon name="lock" size={36} />
+          <p>
+            {#if lasting}
+              <b>Kept on this computer.</b> Projects live in this browser's private storage.
+              Clearing the site's data would remove them{keeping === "kept"
+                ? ", and the browser has agreed not to clear it on its own."
+                : ", and the browser may clear it when the computer runs short of room."}
+            {:else}
+              <b class="warn">Not kept.</b> This browser gives a page no private storage, so a project
+              lasts only until this tab is closed.
+            {/if}
+          </p>
+        </div>
+        <div>
+          <HexIcon name="out" size={36} />
+          <p>
+            <b>Taking a project out.</b> Choose <b>Export project…</b> in its ⋯ menu to save it as a
+            zip on this computer, or in ⌘K while it is open; <b>Open project…</b> opens it again, here
+            or in another browser.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="right" class:has={recent.length > 0} aria-label="Recent projects">
+      <div class="rhead">
+        <h2>Recent</h2>
+        {#if recent.length > 0}
+          <span class="count" data-testid="recent-count"
+            >{recent.length === 1
+              ? "1 project"
+              : `${recent.length} projects · the last opened first`}</span
+          >
+        {/if}
+      </div>
+      {#if recent.length === 0}
+        <div class="empty">
+          <HexIcon name="play" size={72} />
+          <b>No project yet</b>
+          <span>Start with the Scratch project: two worked examples, ready to run.</span>
+          <button class="filled" onclick={scratch}>Open the Scratch project</button>
+        </div>
       {:else}
-        <li class="none">No project yet. Start with the Scratch project.</li>
-      {/each}
-    </ul>
-    <p class="said" role="status"><Named text={said} /></p>
-  </section>
+        <div class="recent-box" class:end={atEnd} bind:this={box} onscroll={measure}>
+          <ul class="projects">
+            {#each recent as project (project.folder)}
+              <li>
+                <button class="rec" onclick={() => onopen(project.folder)}>
+                  <span class="pi" aria-hidden="true"><Logo size={26} /></span>
+                  <span class="name">{project.name}</span>
+                  <small>in this browser · {when(project.opened, now)}</small>
+                </button>
+                <RowMenu label="Actions for {project.name}" actions={actionsOf(project)} />
+              </li>
+              {#if asking !== null && asking.folder === project.folder}
+                <li class="asked">
+                  {#if asking.kind === "rename" || asking.kind === "duplicate"}
+                    <form class="row" onsubmit={(event) => void answered(event, project)}>
+                      <input
+                        value={asking.kind === "rename" ? project.name : `${project.name} copy`}
+                        use:whole
+                        aria-label={asking.kind === "rename"
+                          ? `The new name of ${project.name}`
+                          : `The name of the copy of ${project.name}`}
+                        autocomplete="off"
+                        maxlength="80"
+                        oninput={(event) => {
+                          answer = event.currentTarget.value;
+                          refusal = "";
+                        }}
+                        onkeydown={leave}
+                      />
+                      <button class="filled" type="submit"
+                        >{asking.kind === "rename" ? "Rename" : "Duplicate"}</button
+                      >
+                      <button type="button" class="plain" onclick={() => (asking = null)}
+                        >Cancel</button
+                      >
+                    </form>
+                  {:else}
+                    <div
+                      class="confirm"
+                      role="group"
+                      aria-label={asking.kind === "reset"
+                        ? "Reset the Scratch project?"
+                        : `Delete ${project.name}?`}
+                    >
+                      <p>
+                        {#if asking.kind === "reset"}
+                          Reset the Scratch project? What it holds{files === null
+                            ? ""
+                            : files === 1
+                              ? ", one file,"
+                              : `, ${files} files,`} is deleted, and its examples are put back as a first
+                          visit has them. It cannot be brought back.
+                        {:else}
+                          Delete {project.name}{files === null || files === 0
+                            ? ""
+                            : files === 1
+                              ? " and the file in it"
+                              : ` and the ${files} files in it`}? It cannot be brought back.
+                        {/if}
+                      </p>
+                      <div class="row">
+                        <button
+                          class="plain"
+                          onkeydown={leave}
+                          onclick={() => void exported(project)}>Export project… first</button
+                        >
+                        <button
+                          class="plain danger"
+                          onkeydown={leave}
+                          onclick={() => void removed(project)}
+                          >{asking.kind === "reset" ? "Reset" : "Delete"}</button
+                        >
+                        <button
+                          class="plain"
+                          use:keep
+                          onkeydown={leave}
+                          onclick={() => (asking = null)}>Keep</button
+                        >
+                      </div>
+                    </div>
+                  {/if}
+                  {#if refusal}<p class="problem" role="alert">{refusal}</p>{/if}
+                </li>
+              {/if}
+            {/each}
+          </ul>
+        </div>
+      {/if}
+      <p class="said" role="status"><Named text={said} /></p>
+    </section>
+  </main>
+
+  <footer class="bottom">
+    <span class="state">No project open</span>
+    <span class="gap"></span>
+    <a class="counted" href="/counted.html">What is counted</a>
+    <span class="engine">engine Zeff {ENGINE} · in this browser</span>
+  </footer>
 </div>
 
-<footer class="bottom">
-  <span class="state">No project open</span>
-  <a class="counted" href="/counted.html">What is counted</a>
-  <span class="engine">engine Zeff {ENGINE} · in this browser</span>
-</footer>
+<svelte:window onresize={measure} />
 
 <style>
-  .welcome {
-    display: grid;
+  .screen {
+    background: var(--window);
+    display: flex;
     flex: 1;
-    grid-template-columns: 1.1fr 1fr;
+    flex-direction: column;
     min-height: 0;
-    overflow: hidden;
+    overflow: auto;
     position: relative;
   }
-  .alpha {
-    border: 1px solid var(--accent);
-    border-radius: 999px;
-    color: var(--accent);
-    font-family: "Atkinson Hyperlegible Next", sans-serif;
-    font-size: 13px;
-    font-weight: 400;
-    margin-left: 4px;
-    padding: 1px 10px;
-    vertical-align: middle;
-  }
-  .alpha-line {
-    color: var(--ink-2);
-    font-size: 14px;
-    margin: -6px 0 18px;
-    max-width: 520px;
-  }
-  .corner {
-    position: absolute;
-    right: 18px;
-    top: 16px;
-    z-index: 2;
-  }
-  .left,
-  .right {
+  .screen > :global(*:not(.watermark)) {
     position: relative;
     z-index: 1;
   }
-  .left {
-    border-right: 1px solid var(--line);
-    padding: 64px 64px 40px;
+  .report {
+    color: var(--ink-3);
+    font-size: 13.5px;
+  }
+  .report b {
+    color: var(--ink-2);
+  }
+  .welcome-main {
+    align-items: start;
+    box-sizing: border-box;
+    display: grid;
+    flex: 1 0 auto;
+    gap: 48px;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    margin: 0 auto;
+    max-width: 1180px;
+    padding: 32px;
+    width: 100%;
+  }
+  .actions {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .act {
+    align-items: flex-start;
+    background: var(--window);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 18px 18px 16px;
+    text-align: left;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
+  }
+  .act:hover:not(:disabled),
+  .act:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 10px 24px -18px rgba(46, 26, 94, 0.6);
+  }
+  .act :global(svg) {
+    margin-bottom: 4px;
+  }
+  .what {
+    font-size: 16.5px;
+    font-weight: 700;
+  }
+  .about {
+    color: var(--ink-2);
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+  .act.primary {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .act.primary .about {
+    color: var(--ink);
+  }
+  .go {
+    color: var(--accent);
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  /* The card that waits for the desktop app: its words keep their contrast, and the dashed
+     tag says why it does nothing here. */
+  .act.off .what,
+  .act.off .about {
+    color: var(--ink-3);
+  }
+  .act.off :global(svg) {
+    color: var(--ink-3);
+  }
+  .tag {
+    border: 1px dashed var(--line-strong);
+    border-radius: 999px;
+    color: var(--ink-3);
+    font-size: 12.5px;
+    margin-top: 4px;
+    padding: 1px 9px;
+  }
+  .naming {
+    background: var(--window);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    box-sizing: border-box;
+    padding: 18px 18px 16px;
+  }
+  .naming label {
+    display: block;
+    font-size: 16.5px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .naming input {
+    background: var(--window);
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
+    flex: 1 1 100%;
+    font-size: 16.5px;
+    min-width: 0;
+    padding: 6px 10px;
+  }
+  .filled,
+  .plain {
+    border-radius: 7px;
+    font-size: 15px;
+    padding: 6px 14px;
+  }
+  .filled {
+    background: var(--button);
+    border: 1px solid var(--button);
+    color: var(--button-ink);
+  }
+  .plain {
+    background: var(--window);
+    border: 1px solid var(--line-strong);
+  }
+  .plain.danger {
+    color: var(--error);
+    font-weight: 600;
+  }
+  .problem {
+    color: var(--warning);
+    font-size: 14px;
+    margin: 8px 0 0;
+  }
+  .kept {
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    display: grid;
+    gap: 22px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 22px;
+    padding: 14px 16px;
+  }
+  .kept > div {
+    align-items: flex-start;
+    display: flex;
+    gap: 12px;
+  }
+  .kept p {
+    color: var(--ink-2);
+    font-size: 13.5px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .kept b {
+    color: var(--ink);
+  }
+  .kept .where :global(svg) {
+    color: var(--ok);
+  }
+  .kept .where.not :global(svg),
+  .kept b.warn {
+    color: var(--warning);
   }
   .right {
-    padding: 64px 52px 40px;
+    background: var(--window);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 24px 48px -36px rgba(46, 26, 94, 0.5);
+    padding: 22px 10px 12px;
   }
-  .brand {
-    align-items: center;
+  .rhead {
+    align-items: baseline;
     display: flex;
+    justify-content: space-between;
+    padding: 0 14px 10px;
+  }
+  h2 {
     font:
-      500 34px/1.1 "Newsreader",
-      Georgia,
+      600 22px/1.2 "Newsreader",
       serif;
-    gap: 12px;
-    letter-spacing: -0.01em;
-    margin: 0 0 30px;
+    margin: 0;
   }
-  .brand small {
+  .count {
     color: var(--ink-3);
-    font:
-      400 13.5px "Atkinson Hyperlegible Next",
-      sans-serif;
-    margin-left: 8px;
+    font-size: 13px;
   }
-  .act,
-  .rec {
-    background: none;
-    border: 0;
-    flex: 1;
-    min-width: 0;
-    text-align: left;
+  /* Five rows in view; the lower 64 pixels fade while more lie below. */
+  .recent-box {
+    -webkit-mask-image: linear-gradient(#000 calc(100% - 64px), transparent);
+    mask-image: linear-gradient(#000 calc(100% - 64px), transparent);
+    max-height: 335px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .recent-box.end {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
   .projects {
     list-style: none;
@@ -488,19 +691,48 @@
   }
   .projects li {
     align-items: center;
-    border-bottom: 1px solid var(--line);
+    border-radius: 10px;
     display: flex;
-    gap: 8px;
+  }
+  .projects li:hover:not(.asked) {
+    background: var(--accent-soft);
+  }
+  .rec {
+    background: none;
+    border: 0;
+    column-gap: 12px;
+    display: grid;
+    flex: 1;
+    grid-template-columns: 30px minmax(0, 1fr);
+    min-width: 0;
+    padding: 11px 14px;
+    text-align: left;
+  }
+  .pi {
+    align-self: center;
+    grid-row: span 2;
+  }
+  .rec .name {
+    font-size: 16px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rec small {
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+  .projects li :global(.more) {
+    margin-right: 8px;
   }
   .projects li.asked {
+    border-bottom: 1px solid var(--line);
     display: block;
-    padding: 10px 0 12px;
+    padding: 6px 14px 12px;
   }
   .asked .row {
     align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
   }
   .asked input {
     background: var(--window);
@@ -522,123 +754,31 @@
     line-height: 1.45;
     margin: 0 0 8px;
   }
-  .plain.danger {
-    color: var(--error);
-    font-weight: 600;
+  .empty {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 34px 20px 28px;
+    text-align: center;
   }
-  .projects li.none {
-    border: 0;
-    padding: 12px 0;
+  .empty b {
+    font:
+      600 20px "Newsreader",
+      serif;
+    margin-top: 6px;
+  }
+  .empty span {
+    color: var(--ink-2);
+    font-size: 14px;
+    margin-bottom: 12px;
+    max-width: 300px;
   }
   .said {
     color: var(--ink-2);
     font-size: 14px;
-    margin: 12px 0 0;
+    margin: 8px 14px 0;
     min-height: 1.45em;
-  }
-  .act {
-    align-items: baseline;
-    display: flex;
-    font-size: 17px;
-    gap: 18px;
-    justify-content: space-between;
-    padding: 14px 0;
-  }
-  .act:hover:not(:disabled) .what,
-  .rec:hover .name {
-    color: var(--accent);
-  }
-  .act:disabled .what {
-    color: var(--ink-3);
-  }
-  .about {
-    color: var(--ink-3);
-    flex: 1 1 auto;
-    font-size: 14px;
-    line-height: 1.45;
-    min-width: 0;
-    text-align: right;
-  }
-  .naming {
-    border-bottom: 1px solid var(--line);
-    padding: 12px 0 14px;
-  }
-  .naming label {
-    color: var(--ink-2);
-    display: block;
-    font-size: 14px;
-    margin-bottom: 6px;
-  }
-  .row {
-    display: flex;
-    gap: 8px;
-  }
-  .naming input {
-    background: var(--window);
-    border: 1px solid var(--line-strong);
-    border-radius: 7px;
-    flex: 1;
-    font-size: 16.5px;
-    min-width: 0;
-    padding: 6px 10px;
-  }
-  .filled,
-  .plain {
-    border-radius: 7px;
-    font-size: 15px;
-    padding: 6px 14px;
-  }
-  .filled {
-    background: var(--button);
-    border: 1px solid var(--button);
-    color: var(--button-ink);
-  }
-  .plain {
-    background: var(--window);
-    border: 1px solid var(--line-strong);
-  }
-  .problem {
-    color: var(--warning);
-    font-size: 14px;
-    margin: 8px 0 0;
-  }
-  .store {
-    background: var(--soft);
-    border-radius: 10px;
-    color: var(--ink-2);
-    font-size: 14px;
-    line-height: 1.6;
-    margin: 28px 0 0;
-    padding: 12px 14px;
-  }
-  .store b {
-    color: var(--ok);
-    font-weight: 500;
-  }
-  .store b.warn {
-    color: var(--warning);
-  }
-  .store b.word {
-    color: var(--ink);
-  }
-  .label {
-    color: var(--ink-3);
-    font-size: 14px;
-    font-weight: 400;
-    margin: 0 0 12px;
-  }
-  .rec {
-    display: block;
-    padding: 12px 0;
-  }
-  .rec .name {
-    display: block;
-    font-size: 16.5px;
-  }
-  .rec small,
-  .none {
-    color: var(--ink-3);
-    font-size: 14px;
   }
   .bottom {
     align-items: center;
@@ -647,30 +787,49 @@
     color: var(--ink-3);
     display: flex;
     flex: none;
-    font-size: 13.5px;
-    gap: 12px;
-    height: 36px;
-    justify-content: space-between;
-    padding: 0 18px;
+    font-size: 13px;
+    gap: 18px;
+    padding: 9px 32px;
   }
-  .bottom .engine {
+  .gap {
+    flex: 1;
+  }
+  .bottom .engine,
+  .bottom .counted {
     color: var(--ink-2);
   }
-  .bottom .counted {
-    color: var(--ink-3);
-    margin-left: auto;
-  }
+  /* A narrow window: one column. A phone: the cards and the note one to a row, and the list
+     of projects first when there are any. */
   @media (max-width: 900px) {
-    .welcome {
-      grid-template-columns: 1fr;
-      overflow: auto;
+    .welcome-main {
+      gap: 32px;
+      grid-template-columns: minmax(0, 1fr);
     }
-    .left {
-      border-right: 0;
-      padding: 32px 24px;
+    .report {
+      display: none;
     }
-    .right {
-      padding: 24px;
+  }
+  @media (max-width: 640px) {
+    .welcome-main {
+      padding: 24px 16px;
+    }
+    .actions,
+    .kept {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .kept {
+      gap: 14px;
+    }
+    .right.has {
+      order: -1;
+    }
+    .bottom {
+      flex-wrap: wrap;
+      gap: 4px 14px;
+      padding: 9px 16px;
+    }
+    .gap {
+      display: none;
     }
   }
 </style>

@@ -36,12 +36,12 @@ type Press = (target: ReturnType<Page["locator"]>) => Promise<void>;
  */
 async function scratch(page: Page, press: Press, reopened = false) {
   await page.goto("/app/");
-  await press(page.getByRole("button", { name: "Scratch project" }));
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   if (reopened) {
     await press(page.getByRole("button", { name: "Projects" }));
-    await press(page.getByRole("button", { name: "Scratch project" }));
+    await press(page.getByRole("button", { name: /^Scratch project/ }));
     await expect(page.getByRole("status")).toHaveText(READY);
     await expect.poll(() => scriptText(page)).toBe(EXAMPLE);
   }
