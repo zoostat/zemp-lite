@@ -2085,3 +2085,17 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Unit (`src/engine/language.test.ts`, 3 tests more), on a project whose file is slow to read: a question asked while a text is on its way is sent after it (this one fails on the code as it was); texts reach the server in the order given; a telling that failed holds nothing up. The browser test that found it is unchanged.
 
 **Reason.** A formatter must never make edits in a text they were not computed for; and the language server's answers are of the script the reader sees.
+
+## 24 November 2026: Release 0.2.3 is closed
+
+**The owner's word:** "Release 0.2.3".
+
+**The routine at the close.** Here, on the release's own tree, which differs from the commit before it in the version, the pictures and the documents alone: format, lint, types, the edition check, the Rust checks, 36 native tests, the worker's message tests, the measure (2,925.7 kB as it travels, of 5,000), the nine sample projects identical, 377 unit tests, and the browser tests whole in Chromium and in WebKit (529 passed, 3 skipped by design). The thirteen pictures of Using Zemp Lite were made again after the version was set, since the screen of projects and Home of Help show it; nine of the files changed. The walk of a first visitor at the address and the checks at both addresses were made at step 11 on the commit before, whose app is the same but for the version it shows.
+
+**Not done, and said so in the notes.** The reader test (owed at Zeff 0.9.0 by the owner's decision at 0.2.1) and the checks by hand (a real keyboard, VoiceOver, Safari itself). The cause of the occasional wait before ⌘↵ on GitHub's machines is still not found. A function of R named with its brackets in a page's prose is still set as a link.
+
+**The registers.** They are the Zeff repository's. The review was sent to the Zeff session at step 11: #211's first stage built as decided, with items 13 and 14; #215 built for Zemp Lite and its nine wordings kept by the owner; R4's figures; R10 unchanged. No catalogued function shipped, so the catalogue's status column is not touched.
+
+**The release.** Version 0.2.3 in `package.json`, `worker/Cargo.toml` and their lock files; the commit "Release 0.2.3"; the tag `v0.2.3`; a GitHub release marked a pre-release, as 0.2 to 0.2.2 were, carrying `docs/releases/0.2.3-notes.md`.
+
+**What comes next for Zemp Lite.** The owner has decided the content of 0.2.4 (open decision #220, Zeff 674aa9b): a landing page, the loading and project screens redrawn, the name drawn with a badge. The specification's copy is brought up to it after this release; nothing of it is begun before his "Start release 0.2.4".

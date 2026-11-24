@@ -170,8 +170,12 @@ On the owner's words, passed on by the coordinating session ("Yes, ask it"; "Yes
 
 **Step 10 green on GitHub and at both addresses (commit c9f27c2, with the mend).** The six checks at the address pass in both browsers, from GitHub and from this Mac.
 
-**Step 11 `[function]`, all but the release itself.** On c9f27c2: the whole routine green here and on GitHub in both browsers; the nine samples through the worker; a first visitor's walk through Help at `https://lite.zeff-lang.dev` in Chromium and WebKit (Home, a package, a function, Back and Forward, a code from Topics, search by `lm` and by `ttest`, the chooser of `histogram`, a page of Using Zemp Lite with its picture, the dark theme), looked at by eye; the notes written with the measures of the 24 deployments; the registers reviewed and sent to the Zeff session.
+**Done, step 11 `[function]`, the pre-release routine.** On c9f27c2: the whole routine green here and on GitHub in both browsers; the nine samples through the worker; a first visitor's walk through Help at `https://lite.zeff-lang.dev` in Chromium and WebKit, looked at by eye; the notes written with the measures of the 24 deployments; the registers reviewed and sent to the Zeff session.
 
-**For the owner.** (1) "Release 0.2.3" when he is ready. At the release the version is set, the pictures are made once more (Home shows the version), and the routine is run on that commit. (2) Whether he wishes to read again what changed in the pages after his reading: in **Finding help**, the paragraph on Home and the new section "A name with two functions"; in **Commands with ⌘K**, the name **Help: home**. (3) Still his from before: the reader test, the checks by hand, the trademarks (#37), and the order of the search where an R or Stata name is typed exactly.
+## 24 November 2026: release 0.2.3 closed
 
-**Next.** The release, on the owner's word. After it: Zemp Lite waits for Zeff 0.9.0 and the stage 2 of #211 at Zeff 0.10.0.
+**Done.** On the owner's "Release 0.2.3": version 0.2.3; the thirteen pictures made again, so that the screens in them show it; the notes finished (`docs/releases/0.2.3-notes.md`); the commit "Release 0.2.3", the tag `v0.2.3`, a GitHub pre-release. The reader test and the checks by hand are not done, and the notes say so.
+
+**Green.** The whole routine here on the release's own tree, in both browsers (377 unit tests, 529 browser tests, 3 skipped by design; the worker 2,925.7 kB as it travels, of 5,000).
+
+**Next.** The owner has decided the content of 0.2.4 (#220): a landing page, the loading and project screens redrawn, the name drawn as "Zemp" with a raised "Lite" badge. The specification's copy is brought up to it; the work opens on his "Start release 0.2.4". **Still the owner's:** whether to read again what changed in **Finding help** (the paragraph on Home, the section "A name with two functions") and in **Commands with ⌘K** (**Help: home**); the reader test; the checks by hand; the trademarks (#37); the order of the search where an R or Stata name is typed exactly.
