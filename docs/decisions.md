@@ -2388,3 +2388,20 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** From this Mac at `https://lite.zeff-lang.dev`, in both browsers: the check passes, each of the five addresses answered 200 by the interface.
 
 **Reason.** A check that fails for the asker's own frequency hides the failures that matter; #220, item 1, asks that every link goes to an address that exists, which is what is now asked.
+
+## 24 November 2026: The whole, the measures and the notes (release 0.2.4, step 15)
+
+**Choices.**
+
+1. _One test of the whole_ (`tests/browser/front-whole.spec.ts`), in both themes: the landing page and the page of what is counted at a desk's width and a phone's; the loading screen while the engine comes and once it runs, at both widths; the project screen empty, naming with a name refused, with six projects, with a row's menu open, with a deletion and a new name asked, and on a phone; Home of Help and a function's page at 1,440, 1,200 and 1,000 pixels. Each state is held to the same floor: nothing under 12.5 pixels, nothing under 4.5 to 1, nothing wider than the window; and where the keyboard is walked, every stop of the Tab key has a name. The walk presses the key until it comes round to a control it has already stopped at, so every stop is seen wherever the cursor began; what a control says is taken without what is drawn for the eye alone.
+2. _Two faults it found, before any release carried them, both mended here:_
+   - _A row's menu cut by the fade._ With enough projects for the list to fade (step 7), the fade was a mask of the list, and a mask is laid over everything drawn inside it: a row's menu, which opens out of the list, was faded and cut with it, and its lower items could not be pressed with the mouse. The fade is now drawn over the list's lower edge, on the card's own ground, and takes no press; the list is not masked. The project screen's own test now presses the last item of a menu in a list of eight, and holds that nothing above it is masked.
+   - _The badge in the grey button._ While the engine comes, **Open Zemp Lite** is grey, and the badge of the name inside it stood at 3.9 to 1: the small-print ink on a ground tinted with the same ink. In the grey button the badge has no ground of its own.
+   - Besides: the badge written by hand on the page of what is counted was not marked as the badge it is, so the measure of the smallest text counted it; it is marked.
+3. _The measures at the address._ The check after a deployment now times the landing page to its first drawing and adds up what it fetched, holds that nothing of the engine is among it, and that the whole is under a megabyte. From this Mac at `https://lite.zeff-lang.dev`: 2.2 and 2.6 s to its first drawing on a first request, 491 kB in 10 or 11 files.
+4. _The notes_ are drafted (`docs/releases/0.2.4-notes.md`), their measures and their record of the checks to be completed at the release.
+5. _The correction of the earlier notes._ Under the line of the measures of 0.2, 0.2.1, 0.2.2 and 0.2.3 that gives the engine "with brotli as it travels", one dated line says what the figure is (the least a host could send) and what a visitor downloads (about 4.1 MB). The old lines are left as they were written. The known issues of 0.2 had already said that the host sends 4.07 MB; the measures and the screens did not follow.
+
+**Tested.** As above; and from this Mac at the address, the new measure and the corrected check of the links, in both browsers.
+
+**Reason.** The checklist's step 15; the testing handbook's routine before a release; and the owner's rule that what a release says of itself is true.

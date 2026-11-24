@@ -365,92 +365,96 @@
           <button class="filled" onclick={scratch}>Open the Scratch project</button>
         </div>
       {:else}
-        <div class="recent-box" class:end={atEnd} bind:this={box} onscroll={measure}>
-          <ul class="projects">
-            {#each recent as project (project.folder)}
-              <li>
-                <button class="rec" onclick={() => onopen(project.folder)}>
-                  <span class="pi" aria-hidden="true"><Logo size={26} /></span>
-                  <span class="name">{project.name}</span>
-                  <small>in this browser · {when(project.opened, now)}</small>
-                </button>
-                <RowMenu label="Actions for {project.name}" actions={actionsOf(project)} />
-              </li>
-              {#if asking !== null && asking.folder === project.folder}
-                <li class="asked">
-                  {#if asking.kind === "rename" || asking.kind === "duplicate"}
-                    <form class="row" onsubmit={(event) => void answered(event, project)}>
-                      <input
-                        value={asking.kind === "rename" ? project.name : `${project.name} copy`}
-                        use:whole
-                        aria-label={asking.kind === "rename"
-                          ? `The new name of ${project.name}`
-                          : `The name of the copy of ${project.name}`}
-                        autocomplete="off"
-                        maxlength="80"
-                        oninput={(event) => {
-                          answer = event.currentTarget.value;
-                          refusal = "";
-                        }}
-                        onkeydown={leave}
-                      />
-                      <button class="filled" type="submit"
-                        >{asking.kind === "rename" ? "Rename" : "Duplicate"}</button
-                      >
-                      <button type="button" class="plain" onclick={() => (asking = null)}
-                        >Cancel</button
-                      >
-                    </form>
-                  {:else}
-                    <div
-                      class="confirm"
-                      role="group"
-                      aria-label={asking.kind === "reset"
-                        ? "Reset the Scratch project?"
-                        : `Delete ${project.name}?`}
-                    >
-                      <p>
-                        {#if asking.kind === "reset"}
-                          Reset the Scratch project? What it holds{files === null
-                            ? ""
-                            : files === 1
-                              ? ", one file,"
-                              : `, ${files} files,`} is deleted, and its examples are put back as a first
-                          visit has them. It cannot be brought back.
-                        {:else}
-                          Delete {project.name}{files === null || files === 0
-                            ? ""
-                            : files === 1
-                              ? " and the file in it"
-                              : ` and the ${files} files in it`}? It cannot be brought back.
-                        {/if}
-                      </p>
-                      <div class="row">
-                        <button
-                          class="plain"
-                          onkeydown={leave}
-                          onclick={() => void exported(project)}>Export project… first</button
-                        >
-                        <button
-                          class="plain danger"
-                          onkeydown={leave}
-                          onclick={() => void removed(project)}
-                          >{asking.kind === "reset" ? "Reset" : "Delete"}</button
-                        >
-                        <button
-                          class="plain"
-                          use:keep
-                          onkeydown={leave}
-                          onclick={() => (asking = null)}>Keep</button
-                        >
-                      </div>
-                    </div>
-                  {/if}
-                  {#if refusal}<p class="problem" role="alert">{refusal}</p>{/if}
+        <!-- The fade is drawn over the list's lower edge, not cut out of the list: a row's menu
+             opens out of the list and must not be faded or cut with it. -->
+        <div class="recent-wrap" class:end={atEnd}>
+          <div class="recent-box" bind:this={box} onscroll={measure}>
+            <ul class="projects">
+              {#each recent as project (project.folder)}
+                <li>
+                  <button class="rec" onclick={() => onopen(project.folder)}>
+                    <span class="pi" aria-hidden="true"><Logo size={26} /></span>
+                    <span class="name">{project.name}</span>
+                    <small>in this browser · {when(project.opened, now)}</small>
+                  </button>
+                  <RowMenu label="Actions for {project.name}" actions={actionsOf(project)} />
                 </li>
-              {/if}
-            {/each}
-          </ul>
+                {#if asking !== null && asking.folder === project.folder}
+                  <li class="asked">
+                    {#if asking.kind === "rename" || asking.kind === "duplicate"}
+                      <form class="row" onsubmit={(event) => void answered(event, project)}>
+                        <input
+                          value={asking.kind === "rename" ? project.name : `${project.name} copy`}
+                          use:whole
+                          aria-label={asking.kind === "rename"
+                            ? `The new name of ${project.name}`
+                            : `The name of the copy of ${project.name}`}
+                          autocomplete="off"
+                          maxlength="80"
+                          oninput={(event) => {
+                            answer = event.currentTarget.value;
+                            refusal = "";
+                          }}
+                          onkeydown={leave}
+                        />
+                        <button class="filled" type="submit"
+                          >{asking.kind === "rename" ? "Rename" : "Duplicate"}</button
+                        >
+                        <button type="button" class="plain" onclick={() => (asking = null)}
+                          >Cancel</button
+                        >
+                      </form>
+                    {:else}
+                      <div
+                        class="confirm"
+                        role="group"
+                        aria-label={asking.kind === "reset"
+                          ? "Reset the Scratch project?"
+                          : `Delete ${project.name}?`}
+                      >
+                        <p>
+                          {#if asking.kind === "reset"}
+                            Reset the Scratch project? What it holds{files === null
+                              ? ""
+                              : files === 1
+                                ? ", one file,"
+                                : `, ${files} files,`} is deleted, and its examples are put back as a
+                            first visit has them. It cannot be brought back.
+                          {:else}
+                            Delete {project.name}{files === null || files === 0
+                              ? ""
+                              : files === 1
+                                ? " and the file in it"
+                                : ` and the ${files} files in it`}? It cannot be brought back.
+                          {/if}
+                        </p>
+                        <div class="row">
+                          <button
+                            class="plain"
+                            onkeydown={leave}
+                            onclick={() => void exported(project)}>Export project… first</button
+                          >
+                          <button
+                            class="plain danger"
+                            onkeydown={leave}
+                            onclick={() => void removed(project)}
+                            >{asking.kind === "reset" ? "Reset" : "Delete"}</button
+                          >
+                          <button
+                            class="plain"
+                            use:keep
+                            onkeydown={leave}
+                            onclick={() => (asking = null)}>Keep</button
+                          >
+                        </div>
+                      </div>
+                    {/if}
+                    {#if refusal}<p class="problem" role="alert">{refusal}</p>{/if}
+                  </li>
+                {/if}
+              {/each}
+            </ul>
+          </div>
         </div>
       {/if}
       <p class="said" role="status"><Named text={said} /></p>
@@ -672,17 +676,29 @@
     color: var(--ink-3);
     font-size: 13px;
   }
-  /* Five rows in view; the lower 64 pixels fade while more lie below. */
+  /* Five rows in view; the lower 64 pixels fade into the card while more lie below. The fade
+     lies over the list and takes no press, so that the rows under it and the menus that open
+     out of the list are as they are. */
+  .recent-wrap {
+    position: relative;
+  }
+  .recent-wrap::after {
+    background: linear-gradient(transparent, var(--window));
+    bottom: 0;
+    content: "";
+    height: 64px;
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+  }
+  .recent-wrap.end::after {
+    display: none;
+  }
   .recent-box {
-    -webkit-mask-image: linear-gradient(#000 calc(100% - 64px), transparent);
-    mask-image: linear-gradient(#000 calc(100% - 64px), transparent);
     max-height: 335px;
     overflow-y: auto;
     scrollbar-width: thin;
-  }
-  .recent-box.end {
-    -webkit-mask-image: none;
-    mask-image: none;
   }
   .projects {
     list-style: none;

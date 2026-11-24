@@ -24,13 +24,11 @@ async function made(page: Page, press: Press, name: string): Promise<void> {
   await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
 }
 
-/** Whether the lower edge of the list of projects fades. */
+/** Whether the lower edge of the list of projects fades: the fade drawn over it is there. */
 const fades = (page: Page) =>
-  box(page).evaluate((node) => {
-    const style = getComputedStyle(node);
-    const mask = style.maskImage || style.webkitMaskImage;
-    return mask !== "none" && mask !== "";
-  });
+  recent(page)
+    .locator(".recent-wrap")
+    .evaluate((node) => getComputedStyle(node, "::after").display !== "none");
 
 test("the screen has no heading of its own: the name in the bar, the alpha strip, and four cards in two rows", async ({
   page,
@@ -144,7 +142,24 @@ test("the list counts its projects, shows five with the lower edge fading, and l
     "Export project…",
     "Delete…",
   ]);
-  await page.keyboard.press("Escape");
+  // The menu opens out of the list and is not faded or cut with it: its last item is in view
+  // whole, on its own ground, and takes a press where it is drawn. (Found by the test of the
+  // whole, step 15: the fade was first a mask of the list, which cut the menu too.)
+  const last = menu.getByRole("menuitem", { name: "Delete…" });
+  const drawn = await last.evaluate((node) => {
+    const box = node.getBoundingClientRect();
+    const at = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    let masked = false;
+    for (let up: Element | null = node; up !== null; up = up.parentElement) {
+      const style = getComputedStyle(up);
+      if ((style.maskImage || style.webkitMaskImage || "none") !== "none") masked = true;
+    }
+    return { hit: at === node || node.contains(at), masked };
+  });
+  expect(drawn).toEqual({ hit: true, masked: false });
+  await press(last);
+  await expect(recent(page).getByRole("group", { name: "Delete Eight?" })).toBeVisible();
+  await press(recent(page).getByRole("button", { name: "Keep" }));
   await press(rows(page).first());
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Eight");
 });

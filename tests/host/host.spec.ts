@@ -103,6 +103,40 @@ test("the root is the landing page, with the engine's own counts; its links out 
   await expect(page.getByTestId("help-title")).toHaveText("Finding help", { timeout: 30_000 });
 });
 
+test("the landing page's first drawing and its weight are measured at the address, and it fetches nothing of the engine", async ({
+  page,
+}) => {
+  // Release 0.2.4, step 15: a visitor sees what Zemp Lite is before anything of the engine
+  // is fetched (risk R4 is of the app's download, which the landing page does not begin).
+  const from = Date.now();
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
+  await expect(page.getByTestId("front-printed")).toContainText("(intercept)");
+  const drawn = Date.now() - from;
+  await page.waitForLoadState("networkidle");
+  const fetched = await page.evaluate(() => {
+    const all = [
+      ...(performance.getEntriesByType("navigation") as PerformanceResourceTiming[]),
+      ...(performance.getEntriesByType("resource") as PerformanceResourceTiming[]),
+    ];
+    return {
+      bytes: all.reduce((sum, one) => sum + one.transferSize, 0),
+      files: all.length,
+      engine: all.filter((one) => /\.wasm$|worker/.test(one.name)).length,
+    };
+  });
+  expect(fetched.engine).toBe(0);
+  // A page of words, three fonts and a little script: well under a megabyte.
+  expect(fetched.bytes).toBeLessThan(1_000_000);
+  test.info().annotations.push({
+    type: "landing page",
+    description: `${drawn} ms to its first drawing; ${fetched.bytes} bytes in ${fetched.files} files`,
+  });
+  console.log(
+    `landing page: ${drawn} ms to its first drawing; ${fetched.bytes} bytes in ${fetched.files} files`,
+  );
+});
+
 test("the size the screens give for the engine is the size this address sends, and a kept engine is said to be kept", async ({
   page,
 }) => {

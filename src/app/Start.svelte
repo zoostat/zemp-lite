@@ -362,6 +362,11 @@
     box-shadow: none;
     color: var(--ink-3);
   }
+  /* In the grey button the badge has no ground of its own: the small-print ink on a tinted
+     ground falls under 4.5 to 1. */
+  .open:disabled :global(.lite) {
+    background: transparent;
+  }
   .arrow {
     margin-left: 12px;
   }
