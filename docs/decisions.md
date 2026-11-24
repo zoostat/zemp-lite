@@ -2439,3 +2439,18 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Choice.** (1) Until the list has been read the screen shows neither the list nor the card: the heading **Recent** alone. (2) A test notes every change of the page from the moment the project screen is asked for, and holds that the card's words never stand on it for a visitor with a project; it failed in both browsers before the mend. (3) The whole-screen test waits for the list's rows before it measures the screen with six projects, and for the card before it measures the empty one.
 
 **Reason.** A visitor must not be told, even for a moment, that work is not there. And the test that found it did so by the chance of a slow machine; the new test finds it on any.
+
+## 24 November 2026: Release 0.2.4 is closed
+
+**The owner's word:** "Release 0.2.4".
+
+**The routine at the close.** Here, on the release's own tree, which differs from the checked and deployed commit bce5ed5 in the version, the pictures and the documents alone: format, lint, types, the edition check, the Rust checks, the native tests of the worker, the worker's message tests, the measure (2,926.6 kB at brotli's highest setting; 4.1 MB as the host sends it, of 5 MB), the nine sample projects identical, the seven tests of the build's facts, 422 unit tests, and the browser tests whole in Chromium and in WebKit (635 passed, 3 skipped by design). The thirteen pictures of Using Zemp Lite were made again after the version was set, since the project screen shows it; eight of the files changed. The walk of a first and of a returning visitor at the address and the checks at both addresses were made at step 16, on bce5ed5.
+
+**Not done, and said so in the notes.** The reader test (owed at Zeff 0.9.0 by the owner's decision at 0.2.1) and the checks by hand (a real keyboard, VoiceOver, Safari itself). The cause of the occasional wait before ⌘↵ on GitHub's machines is still not found.
+
+**The registers.** They are the Zeff repository's. The review was sent to the coordinating session at step 16, which holds its edits for this release: #220 done in all ten items; #211's item 13 as replaced; #215 built; R4's figures (4.08 MB sent, 0.9 MB of room, no early warning seen); the seven red checks that only GitHub's slower machines showed. That session has added two details of this release to the design guide, section 9 (the bar's number rounded down; **Recent** alone until the list is read); they are not yet committed there, so `docs/spec/` here stays the copy at Zeff 7a7a8ee and is brought up when they are. No catalogued function shipped, so the catalogue's status column is not touched.
+
+**The release.** Version 0.2.4 in `package.json`, `worker/Cargo.toml` and their lock files; the commit "Release 0.2.4"; the tag `v0.2.4`; a GitHub release marked a pre-release, as 0.2 to 0.2.3 were, carrying `docs/releases/0.2.4-notes.md`.
+
+**What comes next for Zemp Lite.** The pages of a function and of a code reordered (#223), a release of its own, once the owner has typed the order of the parts; then Zemp 0.3 on "Start release 0.3", after Zeff 0.9.0 is released. Nothing of either is begun before his word.
+
