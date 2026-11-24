@@ -2482,3 +2482,15 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Which release.** "The next release" is read here as whichever release of Zemp Lite the owner opens next: the pages of Help reordered (#223) or 0.3. That reading is this record's, not his word; the plan of that release puts it to him.
 
 **Reason for recording here.** It is the owner's word on what a release of Zemp Lite is to carry; the register of open decisions is the Zeff repository's, and the coordinating session enters it there. Nothing is built: no release of Zemp Lite is open.
+
+## 24 November 2026: The owner opens release 0.2.5: the app back at the root, the landing page removed, the tight packing its second step
+
+**The owner's words**, in this session, after release 0.2.4: "I want "https://lite.zeff-lang.dev/app/" content would be landing page instead of content of https://lite.zeff-lang.dev". Asked what should become of the present landing page, he typed in place of an option: "I want moving I want "https://lite.zeff-lang.dev/app/" to https://lite.zeff-lang.dev"; asked when, he chose "A small release now, 0.2.5". Asked again whether the present page is kept at an address of its own or removed, he chose "Remove it". Asked whether 0.2.5 carries the tight packing (#224), he chose "Yes, as a second step": the release moves the app first, then tries the packing at the address, and goes out without it where the host cannot do it.
+
+**What it means.** The app opens at the root of `lite.zeff-lang.dev`, as before 0.2.4. The landing page of 0.2.4 (open decision #220, items 1 and 2) is deleted with its tests, and its text and its table of the three regressions are shown nowhere. What else 0.2.4 brought stays: the loading screen and the project screen redrawn, the name drawn with its badge, the four changes of Help, and the address for a page of Help, now `/#/help` and a page after it.
+
+**Engineering, taken here.** An address with `/app/` in it, kept from 0.2.4, goes on to the same place at the root, as an address of the root went on to `/app/` in 0.2.4. How is settled in the release's plan.
+
+**Not begun.** The row 0.2.5 of section 15 of the Zemp Specification and the entry of the register are the Zeff repository's; the coordinating session was asked for them the same day. The plan is written from that row and shown to the owner, and no code is written before his "go".
+
+**Reason.** The owner's word on what a visitor meets at the address; a change of what the specification says of 0.2.4, so a release of its own carries it.
