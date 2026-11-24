@@ -137,6 +137,7 @@ for (const theme of ["light", "dark"] as const) {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.goto("/app/");
       await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+      await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
       await floor(page, "the project screen, empty");
       // The naming row, with a name that is refused.
       await made("Wages");
@@ -148,6 +149,12 @@ for (const theme of ["light", "dark"] as const) {
       await press(page.getByRole("button", { name: "Cancel" }));
       // With projects enough for the list to fade.
       for (const name of ["Two", "Three", "Four", "Five", "Six"]) await made(name);
+      // The list is read after the screen is drawn: until its rows are there.
+      await expect(
+        page
+          .getByRole("region", { name: "Recent projects" })
+          .getByRole("button", { name: /^Actions for / }),
+      ).toHaveCount(6);
       await floor(page, "the project screen, with six projects");
       const reached = await stops(page, tab);
       expect(reached, reached.join(" | ")).not.toContain("(no name)");

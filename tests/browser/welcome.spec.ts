@@ -100,6 +100,31 @@ test("a first visit's list says there is no project yet, and its button opens th
   await expect(recent(page).getByText("No project yet", { exact: true })).toHaveCount(0);
 });
 
+test("a visitor with a project is never shown the card of a first visit, not for the moment the list takes to be read", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/app/");
+  await press(page.getByRole("button", { name: "New project…" }));
+  await page.getByLabel("The name of the new project").fill("Wages");
+  await press(page.getByRole("button", { name: "Create" }));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Wages");
+  // From here, every change of the page is looked at for the card's words.
+  await page.evaluate(() => {
+    const seen = window as unknown as { firstVisitCard: boolean };
+    seen.firstVisitCard = false;
+    new MutationObserver(() => {
+      if (document.body.textContent.includes("No project yet")) seen.firstVisitCard = true;
+    }).observe(document, { subtree: true, childList: true, characterData: true });
+  });
+  await press(page.getByRole("button", { name: "Projects" }));
+  await expect(rows(page)).toHaveCount(1);
+  expect(
+    await page.evaluate(() => (window as unknown as { firstVisitCard: boolean }).firstVisitCard),
+  ).toBe(false);
+  await expect(recent(page).getByText("No project yet", { exact: true })).toHaveCount(0);
+});
+
 test("the list counts its projects, shows five with the lower edge fading, and loses the fade at its end", async ({
   page,
   press,

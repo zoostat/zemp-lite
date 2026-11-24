@@ -64,8 +64,16 @@
   let problem = $state("");
   const now = Date.now();
 
+  // Whether the list has been read yet. Until it has, the screen shows neither the list nor
+  // the card of a first visit: a visitor with projects is never told there is none.
+  let read = $state(false);
+
   async function refresh(): Promise<void> {
-    recent = await projects.list();
+    try {
+      recent = await projects.list();
+    } finally {
+      read = true;
+    }
   }
   void refresh();
 
@@ -357,7 +365,9 @@
           >
         {/if}
       </div>
-      {#if recent.length === 0}
+      {#if !read}
+        <!-- The list is being read: nothing yet. -->
+      {:else if recent.length === 0}
         <div class="empty">
           <HexIcon name="play" size={72} />
           <b>No project yet</b>

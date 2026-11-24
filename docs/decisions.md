@@ -2429,3 +2429,13 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Choice.** (1) The test notes the bar, the button and the first step at each change of the page as it is made, so the record is what the screen showed, and when; and it waits until the record itself holds the open button. (2) The test is run at two paces of frame: the machine's own, and frames 160 ms apart, so that what a busy machine does is tried on every run and not only on GitHub. (3) The number on the bar is the bar's value rounded down, not to the nearest: it says 100 only when the bar is full, which is when the button opens (rounded to the nearest, it could say 100 for one frame while the button was still grey). The test holds that too: the button is grey for as long as the number is short of 100.
 
 **Reason.** As before: a test must fail for the fault it is of. And a machine's slowness that only GitHub has is found late and dearly; the second pace brings it to this Mac.
+
+## 24 November 2026: The project screen shows no first-visit card before its list is read (found on GitHub at step 16)
+
+**What was seen.** GitHub's check of commit 0b9606a passed the test of the gliding bar and failed in the whole-screen test of step 15, in one browser: on the project screen, after six projects were made, the Tab key reached **Open the Scratch project**, the button of a first visit's card, and no row of the list. The same test had failed once before, at the commit of step 15, among the failures of the gliding bar, and passed at the commit between.
+
+**What it was.** A fault of the screen, of step 7. The list of projects is read from the browser's storage after the screen is drawn, and until it had been read the screen showed the card of a first visit, "No project yet", to a visitor who has projects. On this Mac that is a few thousandths of a second; on a busy machine it was long enough to be read.
+
+**Choice.** (1) Until the list has been read the screen shows neither the list nor the card: the heading **Recent** alone. (2) A test notes every change of the page from the moment the project screen is asked for, and holds that the card's words never stand on it for a visitor with a project; it failed in both browsers before the mend. (3) The whole-screen test waits for the list's rows before it measures the screen with six projects, and for the card before it measures the empty one.
+
+**Reason.** A visitor must not be told, even for a moment, that work is not there. And the test that found it did so by the chance of a slow machine; the new test finds it on any.
