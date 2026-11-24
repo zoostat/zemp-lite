@@ -87,10 +87,10 @@ if (!fs.existsSync(entry)) {
   process.exit(1);
 }
 walk(entry, []);
-// The front page at the root of the address is a second, small entry of the build (release
-// 0.2.4, step 2); what it reaches is held to the same rule.
-const front = path.join(root, "src", "root", "main.ts");
-if (fs.existsSync(front)) walk(front, []);
+// The page at `/app/`, which goes on to the root, is a second, small entry of the build
+// (release 0.2.5, step 2); what it reaches is held to the same rule.
+const moved = path.join(root, "src", "moved", "main.ts");
+if (fs.existsSync(moved)) walk(moved, []);
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 for (const field of ["dependencies", "devDependencies", "optionalDependencies"]) {
@@ -107,5 +107,5 @@ if (breaches.length > 0) {
   process.exit(1);
 }
 console.log(
-  `The edition check holds: ${seen.size} modules reached from src/main.ts and the front page's entry, none of Zemp Studio's, and no dialog, guide or builder.`,
+  `The edition check holds: ${seen.size} modules reached from src/main.ts and the entry of the page at /app/, none of Zemp Studio's, and no dialog, guide or builder.`,
 );

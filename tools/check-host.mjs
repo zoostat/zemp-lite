@@ -1,6 +1,6 @@
 // The check made after each deployment (release 0.2, step 17): that the address serves Zemp
-// Lite as the headers file says it must. The front page at the root, the app's page at `app/`
-// (release 0.2.4, step 2), every file they name, the engine's worker
+// Lite as the headers file says it must. The app's page at the root, the page at `app/` that
+// goes on to it (release 0.2.5, step 2), every file they name, the engine's worker
 // and its WebAssembly are fetched; each answer must carry the isolation headers of
 // `public/_headers` (a page without them is not given the shared memory a run is cancelled
 // through), a built file must be kept as never changing, and every answer that carries a tag,
@@ -82,33 +82,37 @@ async function look() {
     else if (modified !== null) tags.push({ what, url, ask: { "if-modified-since": modified } });
   }
 
-  // Two pages of one build (release 0.2.4, step 2): the front page at the root of the
-  // address, and the app at `app/`, which is the one that names the worker and the engine.
-  const front = await fetched(base);
-  if (front.status !== 200) {
-    await front.arrayBuffer();
-    return {
-      problems: [`the front page answered ${front.status}, not 200`],
-      whole: true,
-      said: "",
-    };
-  }
-  holds("the front page", front);
-  tagged("the front page", base, front);
-  const frontHtml = await front.text();
-  const app = new URL("app/", base);
-  const page = await fetched(app);
+  // Two pages of one build (release 0.2.5, step 2): the app at the root of the address, which
+  // is the one that names the worker and the engine; and at `app/`, where the app stood in
+  // 0.2.4 alone, a page that draws nothing and goes on to the root.
+  const page = await fetched(base);
   if (page.status !== 200) {
     await page.arrayBuffer();
     return { problems: [`the app's page answered ${page.status}, not 200`], whole: true, said: "" };
   }
   holds("the app's page", page);
-  tagged("the app's page", app, page);
+  tagged("the app's page", base, page);
   const appHtml = await page.text();
   if (!/<div id="app">/.test(appHtml)) {
-    problems.push("the address `app/` did not answer with the app's page");
+    problems.push("the root of the address did not answer with the app's page");
   }
-  const html = `${frontHtml}\n${appHtml}`;
+  const old = new URL("app/", base);
+  const moved = await fetched(old);
+  if (moved.status !== 200) {
+    await moved.arrayBuffer();
+    return {
+      problems: [`the page at \`app/\` answered ${moved.status}, not 200`],
+      whole: true,
+      said: "",
+    };
+  }
+  holds("the page at `app/`", moved);
+  tagged("the page at `app/`", old, moved);
+  const movedHtml = await moved.text();
+  if (/<div id="app">/.test(movedHtml) || !/<script[^>]+src="\/?assets\//.test(movedHtml)) {
+    problems.push("the address `app/` did not answer with the page that goes on to the root");
+  }
+  const html = `${appHtml}\n${movedHtml}`;
 
   // Every file the page names, and the files they name in turn: the worker and its WebAssembly.
   const named = new Set([...html.matchAll(/(?:src|href)="\/?(assets\/[^"]+)"/g)].map((m) => m[1]));
@@ -172,7 +176,7 @@ async function look() {
   return {
     problems,
     whole: wasm.length > 0 && worker.length > 0,
-    said: `${checked} answers, the front page and the app's page, ${seen.size} files (the worker and the engine's WebAssembly among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers`,
+    said: `${checked} answers, the app's page and the page at app/ that goes on to it, ${seen.size} files (the worker and the engine's WebAssembly among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers`,
   };
 }
 

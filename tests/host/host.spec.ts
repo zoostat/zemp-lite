@@ -3,14 +3,14 @@
 // example; and the first start, from a browser that has never seen the page to the engine
 // ready, is measured against the Zemp Specification's 2 seconds (section 14).
 import { readFileSync } from "node:fs";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { readZip } from "../../src/project/zip";
 
 const READY = "engine Zeff 0.8.0 ready";
 
 test("the page is isolated, and the engine starts and runs the example", async ({ page }) => {
   const from = Date.now();
-  await page.goto("/app/");
+  await page.goto("/");
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
   // A first visit: the Start screen fetches, checks and starts the engine. The start is timed
   // to the engine running, which the card says of itself; the bar glides on to its end for a
@@ -32,125 +32,50 @@ test("the page is isolated, and the engine starts and runs the example", async (
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
 });
 
-test("the root is the front page, which opens the app; and an address kept from before goes on to the app", async ({
+test("the root is the app; an address of 0.2.4, with /app/ in it, goes on to the same place at the root, and a link into Help opens its page", async ({
   page,
 }) => {
-  // Release 0.2.4, step 2 (open decision #220, item 2): the front page at the root, the app at
-  // `/app/`, and the root given a project after its `#`, as addresses were until 0.2.4.
+  // Release 0.2.5, step 2 (open decision #225): the app at the root, as before 0.2.4; and
+  // `/app/`, where it stood in 0.2.4 alone, a page that goes on.
   await page.goto("/");
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
-  await page.getByRole("link", { name: "Open Zemp Lite" }).first().click();
-  await expect(page).toHaveURL(/\/app\/$/);
-  await expect(page.getByRole("button", { name: "Open Zemp Lite" })).toBeVisible();
-  await page.goto("/#/p/not-here");
-  await expect(page).toHaveURL(/\/app\/#?$/);
-});
-
-const SOURCE = "https://github.com/zoostat/zemp-lite";
-
-/**
- * Whether an address the landing page links to out of the site is there. Every such link is
- * to the repository: its front page, a file of its main branch, or its list of releases.
- * GitHub's pages answer 429 to a machine that asks often, which says nothing of the page; so
- * the question is put to GitHub's interface for programs, with this run's token where there
- * is one (after a deployment) and without where there is none (from a desk).
- */
-async function exists(page: Page, address: string): Promise<boolean> {
-  if (!address.startsWith(SOURCE)) return false;
-  const rest = address.slice(SOURCE.length);
-  const file = /^\/blob\/main\/(.+)$/.exec(rest);
-  const asked =
-    rest === ""
-      ? ""
-      : rest === "/releases"
-        ? "/releases?per_page=1"
-        : file !== null
-          ? `/contents/${file[1]}?ref=main`
-          : null;
-  if (asked === null) return false;
-  const token = process.env["GITHUB_TOKEN"];
-  const answer = await page.request.get(`https://api.github.com/repos/zoostat/zemp-lite${asked}`, {
-    headers: {
-      accept: "application/vnd.github+json",
-      ...(token === undefined || token === "" ? {} : { authorization: `Bearer ${token}` }),
-    },
-  });
-  return answer.status() === 200;
-}
-
-test("the root is the landing page, with the engine's own counts; its links out of the site answer, and a link into Help opens its page", async ({
-  page,
-}) => {
-  // Release 0.2.4, step 8 (open decision #220, item 1): every link goes to an address that
-  // exists. The links within the site are held by the routine; those out of it are asked for
-  // here, where there is a network to ask over.
-  test.slow();
-  await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
-  await expect(page.getByTestId("front-functions")).toHaveText(/^\d+$/);
-  await expect(page.getByTestId("front-printed")).toContainText("(intercept)");
-  const outside = await page
-    .locator('a[href^="https://"]')
-    .evaluateAll((all) => [...new Set(all.map((one) => one.getAttribute("href") as string))]);
-  expect(outside.length).toBeGreaterThan(2);
-  for (const address of outside) {
-    expect(await exists(page, address), address).toBe(true);
-  }
-  await page.getByRole("link", { name: "Finding help", exact: true }).click();
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
+  // Nothing of the landing page of 0.2.4 is here.
+  await expect(page.getByRole("link", { name: "Open Zemp Lite" })).toHaveCount(0);
   await open.click();
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+  // The page at `/app/` is isolated too, and goes on: with nothing after it, with a project,
+  // and with a page of Help.
+  await page.goto("about:blank");
+  await page.goto("/app/");
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe("/");
+  await page.goto("/app/#/p/not-here");
+  await expect(page).toHaveURL(/\/#?$/);
+  expect(new URL(page.url()).pathname).toBe("/");
+  await page.goto("/app/#/help/using/finding-help");
   await expect(page.getByTestId("help-title")).toHaveText("Finding help", { timeout: 30_000 });
+  expect(new URL(page.url()).pathname).toBe("/");
+  // And the address of a page of Help at the root itself.
+  await page.goto("about:blank");
+  await page.goto("/#/help/name/reg");
+  await expect(page.getByTestId("help-title")).toHaveText("reg", { timeout: 30_000 });
 });
 
-test("the landing page's first drawing and its weight are measured at the address, and it fetches nothing of the engine", async ({
-  page,
-}) => {
-  // Release 0.2.4, step 15: a visitor sees what Zemp Lite is before anything of the engine
-  // is fetched (risk R4 is of the app's download, which the landing page does not begin).
-  const from = Date.now();
-  await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
-  await expect(page.getByTestId("front-printed")).toContainText("(intercept)");
-  const drawn = Date.now() - from;
-  await page.waitForLoadState("networkidle");
-  const fetched = await page.evaluate(() => {
-    const all = [
-      ...(performance.getEntriesByType("navigation") as PerformanceResourceTiming[]),
-      ...(performance.getEntriesByType("resource") as PerformanceResourceTiming[]),
-    ];
-    return {
-      bytes: all.reduce((sum, one) => sum + one.transferSize, 0),
-      files: all.length,
-      engine: all.filter((one) => /\.wasm$|worker/.test(one.name)).length,
-    };
-  });
-  expect(fetched.engine).toBe(0);
-  // A page of words, three fonts and a little script: well under a megabyte.
-  expect(fetched.bytes).toBeLessThan(1_000_000);
-  test.info().annotations.push({
-    type: "landing page",
-    description: `${drawn} ms to its first drawing; ${fetched.bytes} bytes in ${fetched.files} files`,
-  });
-  console.log(
-    `landing page: ${drawn} ms to its first drawing; ${fetched.bytes} bytes in ${fetched.files} files`,
-  );
-});
-
-test("the size the screens give for the engine is the size this address sends, and a kept engine is said to be kept", async ({
+test("the size the loading screen gives for the engine is the size this address sends, and a kept engine is said to be kept", async ({
   page,
 }) => {
   // Release 0.2.4, step 6b. The build cannot ask the host how it compresses a file, so it
-  // reckons the engine's travelling size (`tools/facts-lib.mjs`); here the reckoning is held to
-  // the bytes this address really sends, as the browser's own record of the fetch has them.
+  // reckons the engine's travelling size (`tools/facts-lib.mjs`), and the loading screen gives
+  // that figure until the engine has come; here the reckoning is held to the bytes this address
+  // really sends, as the browser's own record of the fetch has them.
   await page.goto("/");
-  const said = Number(
-    ((await page.getByTestId("front-travels").textContent()) ?? "").replace(" MB", ""),
-  );
-  expect(said).toBeGreaterThan(0);
-  await page.goto("/app/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
+  const how = page.getByTestId("step-fetch-how");
+  const said = Number(((await how.getAttribute("data-reckoned")) ?? "").replace(" MB", ""));
+  expect(said).toBeGreaterThan(0);
   const record = () =>
     page.evaluate(() => {
       const entry = (performance.getEntriesByType("resource") as PerformanceResourceTiming[])
@@ -160,25 +85,24 @@ test("the size the screens give for the engine is the size this address sends, a
     });
   const first = await record();
   expect(first).not.toBeNull();
-  const how = page.getByTestId("step-fetch-how");
   if (first !== null && first.sent >= first.body / 2) {
-    // Fetched: the step gives the bytes that travelled, and the landing page's figure is
-    // within a tenth of a megabyte of them, and under the limit of risk R4.
+    // Fetched: the step gives the bytes that travelled, and the build's figure is within a
+    // tenth of a megabyte of them, and under the limit of risk R4.
     const travelled = first.body / 1_000_000;
     await expect(how).toHaveText(`${travelled.toFixed(1)} MB, once`);
     expect(Math.abs(said - travelled)).toBeLessThanOrEqual(0.1);
     expect(first.body).toBeLessThan(5_000_000);
     test.info().annotations.push({
       type: "engine as it travels",
-      description: `${first.body} bytes from this address; the screens say ${said.toFixed(1)} MB`,
+      description: `${first.body} bytes from this address; the build reckons ${said.toFixed(1)} MB`,
     });
-    console.log(`engine as it travels: ${first.body} bytes; the screens say ${said} MB`);
+    console.log(`engine as it travels: ${first.body} bytes; the build reckons ${said} MB`);
   }
   // The same screen again in the same browser. Where the browser kept the engine, nothing
   // travels and the step says so; where it fetched it again, the step gives the bytes.
   await page.evaluate(() => localStorage.removeItem("zemp-started"));
+  await page.goto("about:blank");
   await page.goto("/");
-  await page.goto("/app/");
   await expect(open).toBeEnabled({ timeout: 30_000 });
   const again = await record();
   expect(again).not.toBeNull();
@@ -193,7 +117,7 @@ test("Help opens on Home, the search finds reg by R's lm, and a page of the app 
   page,
 }) => {
   // Release 0.2.3 (step 10): the Help place at the address, on the engine it carries.
-  await page.goto("/app/");
+  await page.goto("/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
@@ -243,7 +167,7 @@ test("what is counted, and what is never collected, is said on a page of its own
 });
 
 test("a statement run alone and a plot drawn afresh are timed at the address", async ({ page }) => {
-  await page.goto("/app/");
+  await page.goto("/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
@@ -315,7 +239,7 @@ test("the first drawing of a run's figures is timed at the address", async ({ pa
   // above has shown 2.5 to 3.2 s before its run began, at some deployments in Chromium).
   // The window is tall, so that the editor draws every line and each figure is asked for.
   await page.setViewportSize({ width: 1280, height: 3000 });
-  await page.goto("/app/");
+  await page.goto("/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
@@ -354,7 +278,7 @@ test("a project is exported at the address as a zip, and the zip opened there ag
   // A reader's way out of the browser, and back (open decision #208): what the hosted alpha
   // gives the computer is read here by the reader of this repository, and then opened at the
   // address as a new project that runs.
-  await page.goto("/app/");
+  await page.goto("/");
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();

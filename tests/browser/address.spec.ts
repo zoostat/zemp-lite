@@ -1,7 +1,7 @@
-// Where Zemp Lite lives (release 0.2.4, step 2; open decision #220, item 2): the front page at
-// the root of the address and the app at `/app/`, both of one origin. A project made before
-// the move is there after it, and an address kept from before, the root with a project after
-// its `#`, still opens that project.
+// Where Zemp Lite lives (release 0.2.5, step 2; open decision #225): the app at the root of the
+// address, as before 0.2.4. In 0.2.4 alone it stood at `/app/`; an address of that release, of
+// a project, of the naming of a new one or of a page of Help, goes on to the same place at the
+// root, and Back does not return to `/app/`.
 import type { Page, Request } from "@playwright/test";
 import { expect, test } from "./support";
 
@@ -17,47 +17,98 @@ function engineAsked(page: Page): string[] {
   return asked;
 }
 
-test("the root is the front page, which opens the app and fetches nothing of the engine", async ({
-  page,
-}) => {
-  const asked = engineAsked(page);
+test("the root is the app: the project screen, and no page before it", async ({ page }) => {
   await page.goto("/");
-  const front = page.getByTestId("front");
-  await expect(front.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
-  await expect(front).toContainText("Zeff in your browser.");
-  await expect(front).toContainText("on the Zeff 0.8.0 engine");
-  // The page has drawn and settled, and has asked for nothing of the engine.
-  await page.waitForLoadState("networkidle");
-  expect(asked).toEqual([]);
-  await front.getByRole("link", { name: "Open Zemp Lite" }).click();
-  await expect(page).toHaveURL(/\/app\/$/);
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
+  // Nothing of the landing page of 0.2.4 is here: no way in to press, and none of its bands.
+  await expect(page.getByRole("link", { name: "Open Zemp Lite" })).toHaveCount(0);
+  await expect(page.getByTestId("front")).toHaveCount(0);
+  await expect(page.getByText("Why Zemp Lite?")).toHaveCount(0);
 });
 
-test("an address kept from before, of a project that is no longer here, opens the app", async ({
-  page,
-}) => {
-  // The project itself, found again by its old address, is among the tests of kept projects
-  // (`kept.spec.ts`), where a browser keeps what was made.
-  await page.goto("/#/p/not-here");
-  await expect(page).toHaveURL(/\/app\/#?$/);
-  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+test.describe("a first visit", () => {
+  test.use({ firstVisit: true });
+
+  test("the root opens on the loading screen, which starts the engine at once", async ({
+    page,
+  }) => {
+    const asked = engineAsked(page);
+    await page.goto("/");
+    const open = page.getByRole("button", { name: "Open Zemp Lite" });
+    await expect(open).toBeEnabled({ timeout: 30_000 });
+    expect(asked.filter((path) => path.endsWith(".wasm")).length).toBeGreaterThan(0);
+    await open.click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+  });
 });
 
-test("the naming of a new project, asked for at the root as before, is asked in the app", async ({
+test("an address of 0.2.4 with nothing after it goes on to the root, and Back does not return to it", async ({
   page,
 }) => {
-  await page.goto("/#/new");
-  await expect(page).toHaveURL(/\/app\/#\/new$/);
+  await page.goto("about:blank");
+  await page.goto("/app/");
+  await expect(page).toHaveURL(/^[^#]*\/$/);
+  expect(new URL(page.url()).pathname).toBe("/");
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+  // The address of `/app/` was replaced, not left behind to send the reader on again.
+  await page.goBack();
+  expect(page.url()).toBe("about:blank");
+});
+
+test("the file of the page at /app/, asked for by its name, goes on to the root too", async ({
+  page,
+}) => {
+  await page.goto("/app/index.html#/new");
+  await expect(page).toHaveURL(/\/#\/new$/);
+  expect(new URL(page.url()).pathname).toBe("/");
   await expect(page.getByLabel("The name of the new project")).toBeVisible();
 });
 
-test("the engine's file stands in the one folder of built files, whichever page leads to it", async ({
+test("an address of 0.2.4 of a project that is no longer here opens the app at the root", async ({
   page,
-  press,
 }) => {
+  // The project itself, found again by its address of 0.2.4, is among the tests of kept
+  // projects (`kept.spec.ts`), where a browser keeps what was made.
+  await page.goto("/app/#/p/not-here");
+  await expect(page).toHaveURL(/\/#?$/);
+  expect(new URL(page.url()).pathname).toBe("/");
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+});
+
+test("the naming of a new project, asked for at /app/ as in 0.2.4, is asked at the root", async ({
+  page,
+}) => {
+  await page.goto("/app/#/new");
+  await expect(page).toHaveURL(/\/#\/new$/);
+  expect(new URL(page.url()).pathname).toBe("/");
+  await expect(page.getByLabel("The name of the new project")).toBeVisible();
+});
+
+test("an address of 0.2.4 of a page of Help opens that page at the root", async ({ page }) => {
+  await page.goto("/app/#/help/name/reg");
+  await expect(page).toHaveURL(/\/#\/p\/scratch$/);
+  expect(new URL(page.url()).pathname).toBe("/");
+  await expect(page.getByTestId("help-title")).toHaveText("reg");
+});
+
+test("an address of before 0.2.4, of the root, is the app's own: nothing sends it on", async ({
+  page,
+}) => {
+  const visited: string[] = [];
+  page.on("framenavigated", (frame) => {
+    if (frame === page.mainFrame()) visited.push(new URL(frame.url()).pathname);
+  });
+  await page.goto("/#/new");
+  await expect(page.getByLabel("The name of the new project")).toBeVisible();
+  expect(visited.every((path) => path === "/")).toBe(true);
+});
+
+test("the engine's file stands in the one folder of built files", async ({ page, press }) => {
   const asked = engineAsked(page);
-  await page.goto("/app/");
+  await page.goto("/");
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const engine = asked.filter((path) => path.endsWith(".wasm"));
@@ -65,17 +116,15 @@ test("the engine's file stands in the one folder of built files, whichever page 
   for (const path of asked) expect(path).toMatch(/^\/assets\/[^/]+$/);
 });
 
-test("what is counted is said at the root, and reached from the app and from the front page", async ({
+test("what is counted is said on a page of its own, reached from the app and leading back to it", async ({
   page,
 }) => {
-  await page.goto("/app/");
+  await page.goto("/");
   await page.getByRole("link", { name: "What is counted" }).click();
   await expect(page).toHaveURL(/\/counted\.html$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("What is counted");
-  await page.getByRole("link", { name: "The front page" }).click();
-  await expect(page.getByTestId("front")).toBeVisible();
-  await page.getByRole("link", { name: "What is counted" }).click();
-  await expect(page).toHaveURL(/\/counted\.html$/);
+  await expect(page.getByRole("link", { name: "The front page" })).toHaveCount(0);
   await page.getByRole("link", { name: "Back to Zemp Lite" }).click();
-  await expect(page).toHaveURL(/\/app\/$/);
+  expect(new URL(page.url()).pathname).toBe("/");
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
 });

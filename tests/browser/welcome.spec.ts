@@ -34,7 +34,7 @@ test("the screen has no heading of its own: the name in the bar, the alpha strip
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/app/");
+  await page.goto("/");
   // The one heading of the first rank is the name, in the bar; nothing is titled "Start".
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
@@ -85,7 +85,7 @@ test("a first visit's list says there is no project yet, and its button opens th
   page,
   press,
 }) => {
-  await page.goto("/app/");
+  await page.goto("/");
   await expect(recent(page).getByRole("heading", { level: 2 })).toHaveText("Recent");
   await expect(recent(page).getByText("No project yet", { exact: true })).toBeVisible();
   await expect(recent(page)).toContainText(
@@ -104,7 +104,7 @@ test("a visitor with a project is never shown the card of a first visit, not for
   page,
   press,
 }) => {
-  await page.goto("/app/");
+  await page.goto("/");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Wages");
   await press(page.getByRole("button", { name: "Create" }));
@@ -131,7 +131,7 @@ test("the list counts its projects, shows five with the lower edge fading, and l
 }) => {
   test.slow();
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/app/");
+  await page.goto("/");
   for (const name of ["One", "Two", "Three"]) await made(page, press, name);
   await expect(rows(page)).toHaveCount(3);
   await expect(page.getByTestId("recent-count")).toHaveText("3 projects · the last opened first");
@@ -196,7 +196,7 @@ test("every card and every row is reached by the Tab key, in the order of the sc
 }) => {
   // Safari moves through the controls of a page with Option and Tab, as its own setting has it.
   const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
-  await page.goto("/app/");
+  await page.goto("/");
   await made(page, press, "Wages");
   const order: string[] = [];
   await page.locator("body").focus();
@@ -232,7 +232,7 @@ for (const theme of ["light", "dark"] as const) {
   }) => {
     await page.emulateMedia({ colorScheme: theme });
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/app/");
+    await page.goto("/");
     await made(page, press, "Wages");
     for (const width of [1440, 1000, 375]) {
       await page.setViewportSize({ width, height: 900 });

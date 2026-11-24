@@ -49,7 +49,7 @@ test("a project exported and opened again from its zip is the same project, unde
   page,
   press,
 }) => {
-  await page.goto("/app/");
+  await page.goto("/");
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   const script =
@@ -125,7 +125,7 @@ test("a project's folder zipped by another tool is opened: its one folder taken 
       "z.writestr('returns/.DS_Store', b'junk')\nz.writestr('__MACOSX/returns/._zeff.toml', b'junk')\n" +
       "z.writestr('returns/.zemp/views.json', b'not even json')\nz.close()",
   );
-  await page.goto("/app/");
+  await page.goto("/");
   await chooser(page).setInputFiles(zip);
   await expect(page).toHaveURL(/#\/p\/returns$/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Returns");
@@ -167,7 +167,7 @@ test("a zip that cannot be opened is refused in a sentence, and no project is ma
       /`data\/A\.csv` and `data\/a\.csv`, which differ only in capitals/,
     ],
   ];
-  await page.goto("/app/");
+  await page.goto("/");
   await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
   for (const [name, script, sentence] of refused) {
     await chooser(page).setInputFiles(written(`${name}.zip`, script));

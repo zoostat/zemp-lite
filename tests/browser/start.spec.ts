@@ -36,7 +36,7 @@ test("while the engine is fetched the button is grey and says when it will open;
     await held;
     await route.continue();
   });
-  await page.goto("/app/");
+  await page.goto("/");
   await expect(start(page).getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
   await expect(start(page)).toContainText("Zeff in your browser.");
   await expect(open(page)).toBeDisabled();
@@ -72,7 +72,7 @@ test("the first step says how the engine came: the bytes that travelled, or that
     await route.continue();
   });
   const { travels } = facts();
-  await page.goto("/app/");
+  await page.goto("/");
   const how = page.getByTestId("step-fetch-how");
   await expect(how).toHaveText(`${(travels / 1_000_000).toFixed(1)} MB, once`);
   expect(travels).toBeLessThan(5_000_000);
@@ -105,7 +105,7 @@ test("the first step says how the engine came: the bytes that travelled, or that
         : read(name, type);
   });
   await page.goto("/");
-  await page.goto("/app/");
+  await page.goto("/");
   await expect(open(page)).toBeEnabled({ timeout: 30_000 });
   await expect(how).toHaveText("already in this browser");
   await expect(start(page)).not.toContainText("MB, once");
@@ -159,7 +159,7 @@ for (const [pace, apart] of [
         attributes: true,
       });
     });
-    await page.goto("/app/");
+    await page.goto("/");
     // Until the record itself has the button open.
     await page.waitForFunction(
       () =>
@@ -210,7 +210,7 @@ test("a fetching that fails says so in the engine's step, and Try again starts i
     if (failing) await route.fulfill({ status: 503, body: "not now" });
     else await route.continue();
   });
-  await page.goto("/app/");
+  await page.goto("/");
   const problem = start(page).getByRole("alert");
   await expect(problem).toContainText("the engine could not be fetched: the host answered 503.");
   await expect(page.getByTestId("step-fetch")).toHaveClass(/failed/);
@@ -233,7 +233,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: theme });
     for (const width of [1440, 1000, 375]) {
       await page.setViewportSize({ width, height: 900 });
-      await page.goto("/app/");
+      await page.goto("/");
       await expect(open(page)).toBeEnabled({ timeout: 30_000 });
       expect(await smallestText(page), `the smallest text at ${width}`).toBeGreaterThanOrEqual(
         12.5,

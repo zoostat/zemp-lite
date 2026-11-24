@@ -99,8 +99,9 @@ describe("the fonts the app's rules name", () => {
     const read = named
       .filter(({ value }) => !/^(inherit|var\()/.test(value))
       .map((one) => ({ ...one, families: families(one.value) }));
-    // The reading finds the rules: there are many, in the styles and in the editor's theme.
-    expect(read.length).toBeGreaterThan(40);
+    // The reading finds the rules: there are many, in the styles and in the editor's theme
+    // (35 once the landing page of 0.2.4 went with its own, at 0.2.5).
+    expect(read.length).toBeGreaterThan(30);
     const wrong = read.filter(({ families: all }) => {
       const [first, ...rest] = all;
       if (first === undefined || first === "inherit") return false;

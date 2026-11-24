@@ -2517,3 +2517,21 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Choice.** Version `0.2.5-dev`, in the app's manifest and the worker's. The findings of the reading and the four engineering choices are those of the entry above ("Release 0.2.5 planned"): `/app/` a page that goes on; the landing page deleted in the step that moves the app and its leavings cleared in the step after; the tight packing tried on a deployment beside the real one first; a fallen trial taken out by a commit of its own.
 
 **Reason.** The checklist's step 1.
+
+## 24 November 2026: The app at the root, and `/app/` a page that goes on (release 0.2.5, step 2)
+
+**Choice.**
+
+1. _Two pages still, turned about._ The build's page of the root is the app's (`index.html`, `src/main.ts`); `app/index.html` is a page with no element to draw in and one small script (`src/moved/`), which replaces the address by the same place at the root. One folder of built files for both, as before.
+2. _What goes on, and how._ Whatever follows the `#` of an address of `/app/` is carried to the root unread: a project, the naming of a new one, a page of Help, or nothing. The app reads it there as it reads any address, so the page at `/app/` knows nothing of what an address may name and need never change. The address is replaced, not followed, so Back does not return to `/app/` to be sent on again. `/app/index.html` is the same file and goes on the same way.
+3. _An address of before 0.2.4_ (the root with a project after its `#`) is the app's own again: nothing sends it on, and a test holds that.
+4. _The landing page is deleted whole in this step_, its page, its helpers (the words, the colours of the printed table, the going-on of 0.2.4) and its tests: the helper of its words read the going-on that this step removes, so the two could not be parted as the plan had them. Step 3 keeps what else the plan gave it: the facts of the build that no screen shows now, the build's stop on unwritten notes, and the comments.
+5. _The page of what is counted_ leads back to Zemp Lite by one link, to the root; its link to "the front page" is gone with that page.
+6. _The size the build reckons, kept on the loading screen for the check._ The check after a deployment held the landing page's figure of the engine's size to the bytes the address sent. With that page gone, the loading screen's first step carries the build's figure as a mark of its own (`data-reckoned`) beside what it says, and the check reads it there: the step itself says the figure only until the engine has come, which is too short a time for a check to read it.
+7. _The checks at the address_ (`tests/host/host.spec.ts`, `tools/check-host.mjs`): the root answers with the app's page and starts the engine; `app/` answers with the page that goes on, with the isolation headers, and goes on with nothing after it, with a project and with a page of Help; `/#/help/…` opens its page. Gone with the landing page: its links out of the site, its weight and its first drawing.
+
+**Tested.** Unit: where an address of `/app/` leads, for a project, the naming of a new one, a page of Help, nothing, and anything else. Browser, in both engines: the root is the project screen with nothing of the landing page; a first visit opens on the loading screen, which starts the engine at once; each kind of `/app/` address goes on and Back does not return; a project made is found by its address of 0.2.4; an address of before 0.2.4 is not sent on; the page of what is counted leads back. Forty-one files of tests that opened `/app/` open the root.
+
+**Found by the routine.** The test that reads every rule naming a font, and holds each to the three shipped faces, first makes sure its reading finds the rules at all: it asked for more than 40, and finds 35 now that the landing page's own are gone. That floor is of the reading, not of the fonts; it is set at 30 with the count beside it, and what the test holds of each rule is unchanged.
+
+**Reason.** The checklist's step 2; open decision #225, items 1 to 3.

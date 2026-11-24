@@ -18,7 +18,7 @@ const READY = "engine Zeff 0.8.0 ready";
 
 /** Open the Scratch project from the welcome screen and wait for the engine. */
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
-  await page.goto("/app/");
+  await page.goto("/");
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page).toHaveURL(/#\/p\/scratch$/);
   await expect(page.getByRole("status")).toHaveText(READY);
@@ -31,7 +31,7 @@ test("the welcome screen opens, names the release and says where projects are ke
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/app/");
+  await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
   await expect(page.getByTestId("version")).toContainText("0.2");
   // The page is cross-origin isolated, so the cancel flag can be shared with the worker.
@@ -68,7 +68,7 @@ test("the light and dark button switches the theme, and the choice is remembered
   press,
 }) => {
   await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/app/");
+  await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   const ground = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   expect(await ground()).toBe("rgb(255, 255, 255)");
@@ -82,7 +82,7 @@ test("the light and dark button switches the theme, and the choice is remembered
 
 test("with no choice made, the theme is the system's", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
-  await page.goto("/app/");
+  await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
@@ -178,7 +178,7 @@ test("in a private window, where the browser keeps nothing, the screen says so a
   // A window tall enough for the whole script with its outputs: the editor draws only the
   // lines near its window.
   await page.setViewportSize({ width: 1100, height: 3600 });
-  await page.goto("/app/");
+  await page.goto("/");
   await expect(page.getByText("Not kept.")).toBeVisible();
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);

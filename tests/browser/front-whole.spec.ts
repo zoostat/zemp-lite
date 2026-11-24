@@ -1,8 +1,9 @@
-// The whole of what release 0.2.4 draws (step 15): every screen of the front door, and Help as
-// it now stands, taken through the keyboard, 12.5 pixels, 4.5 to 1 and both themes, at a desk's
-// width and a phone's. Each screen has tests of its own for what it does (`landing.spec`,
-// `start.spec`, `welcome.spec`, `help-home.spec`, `help-onpage.spec`); this one holds them all to
-// the same floor, state by state, so that a state none of those looks at is not left out.
+// The whole of what release 0.2.4 drew and 0.2.5 keeps (step 15 of 0.2.4; the landing page went
+// at 0.2.5, open decision #225): every screen of the front door, and Help as it now stands,
+// taken through the keyboard, 12.5 pixels, 4.5 to 1 and both themes, at a desk's width and a
+// phone's. Each screen has tests of its own for what it does (`start.spec`, `welcome.spec`,
+// `help-home.spec`, `help-onpage.spec`); this one holds them all to the same floor, state by
+// state, so that a state none of those looks at is not left out.
 import type { Page } from "@playwright/test";
 import { expect, faintText, smallestText, test } from "./support";
 
@@ -56,30 +57,18 @@ for (const theme of ["light", "dark"] as const) {
       await page.emulateMedia({ colorScheme: theme });
     });
 
-    test("the landing page and the page of what is counted, at a desk's width and a phone's", async ({
+    test("the page of what is counted, at a desk's width and a phone's", async ({
       page,
       browserName,
     }) => {
       const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
       for (const width of [1440, 375]) {
         await page.setViewportSize({ width, height: 900 });
-        await page.goto("/");
-        await expect(page.getByTestId("front")).toBeVisible();
-        await floor(page, `the landing page at ${width}`);
-        const reached = await stops(page, tab);
-        expect(reached, reached.join(" | ")).not.toContain("(no name)");
-        expect(reached.length, "the stops of the Tab key").toBeGreaterThan(1);
-        // Every way on is a stop: the way in, the four pages of Made for, and the foot's links.
-        for (const name of [
-          "Open Zemp Lite",
-          "Getting started",
-          "Exporting a project",
-          "Notices",
-        ]) {
-          expect(reached, `${name} at ${width}`).toContain(name);
-        }
         await page.goto("/counted.html");
+        await expect(page.getByRole("heading", { level: 1 })).toHaveText("What is counted");
         await floor(page, `what is counted at ${width}`);
+        const reached = await stops(page, tab);
+        expect(reached, reached.join(" | ")).toEqual(["Back to Zemp Lite"]);
       }
     });
 
@@ -102,7 +91,7 @@ for (const theme of ["light", "dark"] as const) {
             await held;
             await route.continue();
           });
-          await page.goto("/app/");
+          await page.goto("/");
           await expect(page.getByTestId("step-fetch")).toHaveClass(/going/);
           await floor(page, `the loading screen, fetching, at ${width}`);
           release();
@@ -135,7 +124,7 @@ for (const theme of ["light", "dark"] as const) {
         await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
       };
       await page.setViewportSize({ width: 1440, height: 900 });
-      await page.goto("/app/");
+      await page.goto("/");
       await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
       await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
       await floor(page, "the project screen, empty");
@@ -191,7 +180,7 @@ for (const theme of ["light", "dark"] as const) {
       const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
       for (const width of [1440, 1200, 1000]) {
         await page.setViewportSize({ width, height: 800 });
-        await page.goto("/app/#/help");
+        await page.goto("/#/help");
         await expect(page.getByTestId("help-counts")).toBeVisible();
         await expect(page.getByRole("status")).toHaveText(READY);
         await floor(page, `Home of Help at ${width}`);
@@ -200,7 +189,7 @@ for (const theme of ["light", "dark"] as const) {
         expect(home.length, "the stops of the Tab key").toBeGreaterThan(1);
         // The list of the page's parts is reached, wherever it stands.
         expect(home).toContain("Errors and warnings");
-        await page.goto("/app/#/help/name/reg");
+        await page.goto("/#/help/name/reg");
         await expect(page.getByTestId("help-title")).toHaveText("reg");
         await expect(page.getByRole("navigation", { name: "On this page" })).toBeVisible();
         await floor(page, `the page of reg at ${width}`);

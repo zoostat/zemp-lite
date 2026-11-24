@@ -47,16 +47,11 @@ async function drawnOn(page: Page, what: string): Promise<void> {
   expect(found.smallest, `${what}: the badge`).toBeGreaterThanOrEqual(11);
 }
 
-test("the front page and the page of what is counted draw the name, and the tab's title writes it", async ({
+test("the page of what is counted draws the name, and the tab's title writes it", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByTestId("front")).toBeVisible();
-  await drawnOn(page, "the front page");
   await expect(page).toHaveTitle("Zemp Lite");
-  // The name is read as it always was: the heading and the way in are found by their words.
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
-  await expect(page.getByRole("link", { name: "Open Zemp Lite" })).toBeVisible();
   await page.goto("/counted.html");
   await drawnOn(page, "what is counted");
   await expect(page).toHaveTitle("What is counted · Zemp Lite");
@@ -69,7 +64,7 @@ test.describe("a first visit", () => {
   test("the Start screen draws the name, in its heading, its sentence and its button", async ({
     page,
   }) => {
-    await page.goto("/app/");
+    await page.goto("/");
     const open = page.getByRole("button", { name: "Open Zemp Lite" });
     await expect(open).toBeEnabled({ timeout: 30_000 });
     await drawnOn(page, "the Start screen");
@@ -87,7 +82,7 @@ for (const theme of ["light", "dark"] as const) {
   }) => {
     await page.emulateMedia({ colorScheme: theme });
     await page.setViewportSize({ width: 1100, height: 800 });
-    await page.goto("/app/");
+    await page.goto("/");
     await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
     // Under 1,200 pixels the line at the top names the app.
     await drawnOn(page, "the welcome screen");
@@ -107,10 +102,10 @@ for (const theme of ["light", "dark"] as const) {
     expect(await faintText(page.getByTestId("help"))).toEqual([]);
 
     // The list of the app's pages, whose title and trail name it; and a page that speaks of it.
-    await page.goto("/app/#/help/using");
+    await page.goto("/#/help/using");
     await expect(page.getByTestId("help-title")).toHaveText("Using Zemp Lite");
     await drawnOn(page, "the list of the pages of Using Zemp Lite");
-    await page.goto("/app/#/help/using/getting-started");
+    await page.goto("/#/help/using/getting-started");
     await expect(page.getByTestId("help-title")).toHaveText("Getting started");
     await drawnOn(page, "a page of Using Zemp Lite");
     expect(await faintText(page.getByTestId("help"))).toEqual([]);

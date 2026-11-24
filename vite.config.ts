@@ -103,15 +103,14 @@ export default defineConfig(({ command }) => {
     // The engine's worker is a module worker, which waits for the engine to load before it
     // listens.
     worker: { format: "es" },
-    // Two pages over one `/assets/` (release 0.2.4, step 2; open decision #220, item 2): the
-    // front page at the root and the app at `/app/`. One folder of built files for both, so a
-    // file keeps its address whichever page asks for it.
+    // Two pages over one `/assets/` (release 0.2.5, step 2; open decision #225): the app at the
+    // root, and at `/app/`, where it stood in 0.2.4 alone, a page that goes on to the root.
     build: {
       target: "es2022",
       rollupOptions: {
         input: {
-          front: fileURLToPath(new URL("./index.html", import.meta.url)),
-          app: fileURLToPath(new URL("./app/index.html", import.meta.url)),
+          app: fileURLToPath(new URL("./index.html", import.meta.url)),
+          moved: fileURLToPath(new URL("./app/index.html", import.meta.url)),
         },
       },
     },

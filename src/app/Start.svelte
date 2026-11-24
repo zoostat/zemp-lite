@@ -61,7 +61,11 @@
   const shown = $derived(marked({ fetching, checking, starting }, glide));
   const ready = $derived(shown.starting === "done");
   const step = $derived(shown.fetching !== "done" ? 1 : shown.checking !== "done" ? 2 : 3);
-  /** The size the engine travels at from the host, as the build reckons it (`facts.ts`). */
+  /**
+   * The size the engine travels at from the host, as the build reckons it (`facts.ts`). The
+   * step says it until the engine has come and keeps it beside what it then says, so that the
+   * check after a deployment can hold the reckoning to the bytes the address sent.
+   */
   const travels = FACTS === null ? null : megabytes(FACTS.travels);
   /** How the engine came this time, once it has: fetched, with its bytes, or already kept. */
   let arrived = $state<Came>(null);
@@ -210,7 +214,7 @@
           {@render mark(shown.fetching, 1)}
           <div class="t">
             <b>Fetching the engine</b>
-            <span data-testid="step-fetch-how">{first}</span>
+            <span data-testid="step-fetch-how" data-reckoned={travels}>{first}</span>
           </div>
           <em
             >{shown.fetching === "going" && fetching === "going" && share !== null

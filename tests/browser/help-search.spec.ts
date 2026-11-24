@@ -9,7 +9,7 @@ import { expect, faintText, smallestText, test, useExample } from "./support";
 const READY = "engine Zeff 0.8.0 ready";
 
 async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
-  await page.goto("/app/");
+  await page.goto("/");
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
@@ -113,7 +113,7 @@ test("typed before the engine has given its index, the list waits for it and nev
   page,
   press,
 }) => {
-  await page.goto("/app/");
+  await page.goto("/");
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   // Whether the sentence of nothing found was ever on the page, from before Help is opened.
@@ -371,7 +371,7 @@ test("a name the engine suggests in its sentence is a link to that name's page",
   page,
 }) => {
   // Release 0.2.4, step 13: the sentence said "did you mean" a name, and the name was not a link.
-  await page.goto("/app/#/help/name/lm");
+  await page.goto("/#/help/name/lm");
   await expect(shown(page)).toContainText("no function or package is called");
   await expect(shown(page)).toContainText("did you mean");
   const meant = shown(page).getByRole("button", { name: "lp", exact: true });
@@ -382,7 +382,7 @@ test("a name the engine suggests in its sentence is a link to that name's page",
   await expect(title(page)).toHaveText("lp");
   await expect(shown(page)).not.toContainText("no function or package is called");
   // From the keyboard too.
-  await page.goto("/app/#/help/name/regg");
+  await page.goto("/#/help/name/regg");
   const other = shown(page).getByRole("button", { name: "reg", exact: true });
   await other.focus();
   await page.keyboard.press("Enter");

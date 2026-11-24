@@ -37,7 +37,7 @@ test("the list is beside a function's page, on the page's own ground, with no li
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 800 });
-  await page.goto("/app/#/help/name/reg");
+  await page.goto("/#/help/name/reg");
   await expect(title(page)).toHaveText("reg");
   await expect(list(page)).toBeVisible();
   await expect(list(page)).toHaveCount(1);
@@ -69,7 +69,7 @@ test("the list stays in view as the page is read, marks the part in view, and go
   browserName,
 }) => {
   await page.setViewportSize({ width: 1440, height: 700 });
-  await page.goto("/app/#/help/name/reg");
+  await page.goto("/#/help/name/reg");
   await expect(title(page)).toHaveText("reg");
   const pane = page.getByTestId("help").locator(".page");
   // Far down the page the list is still at the top of the place.
@@ -101,14 +101,14 @@ test("a code's page, a page of the app and Home have their list; a page that is 
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 800 });
-  await page.goto("/app/#/help/code/Z0101");
+  await page.goto("/#/help/code/Z0101");
   await expect(title(page)).toHaveText("Z0101");
   await expect(parts(page)).toHaveText(["Meaning", "Common causes", "Example", "Fix"]);
-  await page.goto("/app/#/help/using/finding-help");
+  await page.goto("/#/help/using/finding-help");
   await expect(title(page)).toHaveText("Finding help");
   await expect(parts(page).first()).toBeVisible();
   expect((await placed(page)).rightOfText).toBe(true);
-  await page.goto("/app/#/help");
+  await page.goto("/#/help");
   await expect(page.getByTestId("help-counts")).toBeVisible();
   await expect(parts(page)).toHaveText([
     "Zeff",
@@ -119,7 +119,7 @@ test("a code's page, a page of the app and Home have their list; a page that is 
   ]);
   // A package's page, the codes by family and the list of the app's pages have no sections.
   for (const address of ["package/regress", "codes", "using", "packages"]) {
-    await page.goto(`/app/#/help/${address}`);
+    await page.goto(`/#/help/${address}`);
     await expect(shown(page)).toBeVisible();
     await expect(list(page), address).toHaveCount(0);
   }
@@ -130,7 +130,7 @@ test("in a place too narrow for it the list stands once under the page's title",
 }) => {
   // 1,000 pixels with Topics open leaves the page less room than the list needs beside it.
   await page.setViewportSize({ width: 1000, height: 800 });
-  await page.goto("/app/#/help/name/reg");
+  await page.goto("/#/help/name/reg");
   await expect(title(page)).toHaveText("reg");
   await expect(list(page)).toHaveCount(1);
   const narrow = await placed(page);
@@ -157,10 +157,10 @@ test("in a place too narrow for it the list stands once under the page's title",
   await expect(list(page)).toHaveCount(1);
   // Home and a page of the app, narrow: under their titles too.
   await bar(page).getByRole("button", { name: "Topics", exact: true }).click();
-  await page.goto("/app/#/help");
+  await page.goto("/#/help");
   await expect(page.getByTestId("help-counts")).toBeVisible();
   expect((await placed(page)).insideText).toBe(true);
-  await page.goto("/app/#/help/using/finding-help");
+  await page.goto("/#/help/using/finding-help");
   await expect(title(page)).toHaveText("Finding help");
   expect((await placed(page)).insideText).toBe(true);
 });

@@ -96,4 +96,6 @@ Decided by the owner (#211, stage 1), planned (`docs/releases/0.2.3.md`), built 
 
 **Done, step 1 `[engine]`.** On the owner's "Go": version `0.2.5-dev`; the choices recorded. Green here: the whole routine in both browsers (422 unit tests, 635 browser tests, 3 skipped by design; the nine sample projects identical).
 
-**Next.** Step 2 `[engine]`: the app at the root, and `/app/` going on to it.
+**Done here, step 2 `[engine]`, awaiting the check at the address.** The app is the page of the root again; `/app/` is a page that draws nothing and goes on to the same place at the root (a project, the naming of a new one, a page of Help), replacing its address so that Back does not return to it. The landing page is deleted whole, with its helpers and tests. Forty-one files of tests open the root; the checks at the address are rewritten. Green here: the whole routine in both browsers (418 unit tests, 633 browser tests, 3 skipped by design; the nine sample projects identical). The step is ticked when its commit is deployed and the checks pass at both addresses.
+
+**Next.** Step 3 `[function]`: what only the landing page used, cleared out; the words read again.

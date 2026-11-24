@@ -31,7 +31,7 @@ const SCRIPT = [
 ].join("\n");
 
 test.beforeEach(async ({ page, press }) => {
-  await page.goto("/app/");
+  await page.goto("/");
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await write(page, SCRIPT);
