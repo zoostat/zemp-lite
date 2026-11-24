@@ -313,7 +313,7 @@
                 inserting={workspace.inserting?.path === path ? workspace.inserting : null}
                 oninserted={(count) => workspace.inserted(count)}
                 diagnostics={workspace.diagnostics[path] ?? []}
-                onhover={(line, character) => workspace.hover(path, line, character)}
+                onhover={(line, character) => workspace.hoverCard(path, line, character)}
                 oncomplete={(line, character) => workspace.complete(path, line, character)}
                 onusage={(line, character) => workspace.signature(path, line, character)}
                 onhelp={(name, line, character) =>

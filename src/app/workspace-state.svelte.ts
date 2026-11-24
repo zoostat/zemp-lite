@@ -28,6 +28,7 @@ import {
   type Stop,
 } from "../help/history";
 import { formIn, formsOf } from "../help/forms";
+import { cardOf } from "../help/hover";
 import { once } from "../help/once";
 import { homesOf } from "../help/trail";
 import { usingText } from "../using/pages";
@@ -413,6 +414,16 @@ export class Workspace {
       return String((contents as { value: unknown }).value);
     }
     return null;
+  }
+
+  /**
+   * What the card under the pointer shows for the word at a place of a script (open decision
+   * #220, item 6): a function's usage block alone, read from the page the language server
+   * answers with; whatever else the server says of a word, as it says it. F1 opens the page.
+   */
+  async hoverCard(path: string, line: number, character: number): Promise<string | null> {
+    const said = await this.hover(path, line, character);
+    return said === null ? null : cardOf(said);
   }
 
   async #begin(): Promise<void> {

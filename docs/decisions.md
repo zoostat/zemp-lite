@@ -2264,3 +2264,18 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **The page's weight:** its own script 13.3 kB and its styles 7.3 kB before compression (4.7 kB and 1.8 kB with gzip), with the shared 52 kB of the interface's runtime and the fonts; nothing of the engine.
 
 **Reason.** The owner's ruling (#220, item 1; the design guide, section 9).
+
+## 24 November 2026: The hover shows the usage alone (release 0.2.4, step 9)
+
+**Choices.**
+
+1. _Read from the engine's own answer._ The language server answers a hover on a function's name with that function's page, as `zeff help` prints it, the one the call would run where a name has two functions (#215). The card now shows the page's usage block and nothing else, read out of that answer (`src/help/hover.ts`); so the usage is always the engine's own for the function under the pointer, and nothing is looked up by name.
+2. _Anything else is shown as the server says it:_ a word that is not a function, and an answer that is not one function's page or gives no usage. Nothing is hidden that has no usage to stand for it.
+3. _F1 is unchanged:_ it opens the whole page in Help, and still asks the server for the whole answer to tell which of two functions is meant.
+4. _The test of the card uses the mouse itself_ and stands aside where a test browser does not deliver the mouse where it is aimed, as the older tests that need the pointer do; on GitHub it is made in both engines.
+
+**Tested.** Under Node, on the engine the app carries (`src/help/hover.node.test.ts`): for every function of one name the usage read from its page is the usage the engine's index gives for it, and the card holds nothing else; for each of the nine names with two functions, the usage of the one the hover is the page of, and the print of both at once shown as it is; a sentence that is no function's page shown as it is. Browser (`tests/browser/hover.spec.ts`): the card on `reg` begins with its usage, ends with it, and holds no first line, heading or sentence of the page; F1 on the same word opens the whole page, whose Usage is the card's word for word; `histogram` called on a frame and on a plot each show their own usage, and the two differ.
+
+**For the specification.** Section 3 of the Zemp Specification says in its table that the hover gives "every function's help page". The coordinating session amended it and logged the change (Zeff 011f2e4: "hover in a script gives its usage block (the one the call would run, where a name has two functions; from 0.2.4, #220)"), and `docs/spec/` here is the Zeff repository's at that commit, compared byte for byte; one file differs from the copy of a110b4c, the Zemp Specification.
+
+**Reason.** The owner's ruling (#220, item 6): "If I hover over functions in scripts it should not show entire help instead it should show only the usage block."

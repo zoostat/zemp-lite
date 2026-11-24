@@ -267,7 +267,8 @@
           usageOfCalls(async (line, character) =>
             onusage === undefined ? null : onusage(line, character),
           ),
-          // What the language server knows of the word under the pointer, in its own words.
+          // The word under the pointer: a function's usage, or what the language server says of
+          // anything else, in its own words (the workspace reads the one out of the other).
           hoverTooltip(async (target, pos) => {
             if (onhover === undefined) return null;
             const line = target.state.doc.lineAt(pos);
