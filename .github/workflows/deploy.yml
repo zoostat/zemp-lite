@@ -1,6 +1,7 @@
 # The deployment of the alpha (release 0.2, step 17; open decision #27): Zemp Lite web on
 # Cloudflare Pages at lite.zeff-lang.dev. After a green run of CI on the main branch, the
-# build that run tested is sent to the host, then checked there: every answer carries the
+# build that run tested is sent beside the real one and tried there (from release 0.2.5), then
+# sent to the host and checked there: every answer carries the
 # isolation headers of public/_headers, "not modified" answers too; the engine starts in
 # Chromium and WebKit; and its first start is measured. The token is the owner's, put into the
 # repository's secrets by him (CLOUDFLARE_API_TOKEN, with the account's CLOUDFLARE_ACCOUNT_ID);
@@ -31,6 +32,9 @@ jobs:
       PROJECT_ADDRESS: https://zemp-lite.pages.dev
       ADDRESS: https://lite.zeff-lang.dev
       PROJECT: zemp-lite
+      # The branch of the host's previews that a build is tried on before it is sent to the
+      # address: it stands at https://trial.zemp-lite.pages.dev.
+      TRIAL: trial
     steps:
       - name: Stop where the owner has not yet given the host's token
         id: given
@@ -71,15 +75,42 @@ jobs:
         if: steps.given.outputs.given == 'true'
         run: npm ci
 
+      - name: Install the test browsers (Chromium and WebKit)
+        if: steps.given.outputs.given == 'true'
+        run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --with-deps chromium webkit
+
       # Wrangler, Cloudflare's own tool (MIT or Apache-2.0), at a pinned version; it is used
       # here alone and is no part of the app. The project is made on the first deployment.
-      - name: Send the build to the host
+      #
+      # The build is first sent beside the real one (release 0.2.5, step 4; open decision #224):
+      # to a preview of the host, under an address of its own, where every check that is made at
+      # the address is made first. The build carries a function of the host that sends the
+      # engine packed tight, and a fault in how the engine is sent would leave the app unable to
+      # start; so the address is given a build only after that build has started the engine,
+      # packed as the build packed it, beside it.
+      - name: Send the build beside the real one, to be tried
         if: steps.given.outputs.given == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           npx --yes wrangler@4.158.0 pages project create "${PROJECT}" --production-branch main || true
+          npx --yes wrangler@4.158.0 pages deploy dist --project-name "${PROJECT}" --branch "${TRIAL}" --commit-hash "${{ github.event.workflow_run.head_sha }}" --commit-dirty=false
+
+      - name: Try it there, every check of the address
+        if: steps.given.outputs.given == 'true'
+        env:
+          ZEMP_ADDRESS: https://trial.zemp-lite.pages.dev
+        run: |
+          node tools/check-host.mjs "${ZEMP_ADDRESS}"
+          PLAYWRIGHT_BROWSERS_PATH=0 npx playwright test --config playwright.host.config.ts
+
+      - name: Send the build to the host
+        if: steps.given.outputs.given == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
           npx --yes wrangler@4.158.0 pages deploy dist --project-name "${PROJECT}" --branch main --commit-hash "${{ github.event.workflow_run.head_sha }}" --commit-dirty=false
 
       - name: Check the headers of every answer at the address
@@ -94,10 +125,6 @@ jobs:
             echo "::notice::${ADDRESS} is not linked to the project yet; the checks are made at ${PROJECT_ADDRESS}."
             echo "address=${PROJECT_ADDRESS}" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Install the test browsers (Chromium and WebKit)
-        if: steps.given.outputs.given == 'true'
-        run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install --with-deps chromium webkit
 
       - name: Check that the engine starts there, and measure its first start
         if: steps.given.outputs.given == 'true'

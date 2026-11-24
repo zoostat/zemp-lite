@@ -80,9 +80,9 @@ test("the first step says how the engine came: the bytes that travelled, or that
   await expect(open(page)).toBeEnabled({ timeout: 30_000 });
   await page.unroute("**/*.wasm");
   // Once it has come, the step gives the bytes that did travel, as the browser's own record
-  // of the fetch has them. (The server of these tests sends the file as it is, so here that is
-  // the file's own size; at the address it is the host's compressed size, which the check
-  // after a deployment holds the screens to.)
+  // of the fetch has them. (The server of these tests sends the engine packed tight to a
+  // browser that asks for brotli, as the host does, and whole to one that does not; at the
+  // address the check after a deployment holds the screen to the bytes sent there.)
   const travelled = await page.evaluate(() => {
     const entry = (performance.getEntriesByType("resource") as PerformanceResourceTiming[])
       .filter((one) => one.name.endsWith(".wasm"))

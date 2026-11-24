@@ -9,6 +9,8 @@ import { readZip } from "../../src/project/zip";
 const READY = "engine Zeff 0.8.0 ready";
 
 test("the page is isolated, and the engine starts and runs the example", async ({ page }) => {
+  const said: string[] = [];
+  page.on("console", (message) => said.push(message.text()));
   const from = Date.now();
   await page.goto("/");
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
@@ -30,6 +32,9 @@ test("the page is isolated, and the engine starts and runs the example", async (
   await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  // The engine, sent packed tight by the host's function (open decision #224), was compiled as
+  // it arrived: the binding says so on the console when it had to wait for the whole file.
+  expect(said.filter((text) => /instantiateStreaming/.test(text))).toEqual([]);
 });
 
 test("the root is the app; an address of 0.2.4, with /app/ in it, goes on to the same place at the root, and a link into Help opens its page", async ({
@@ -92,6 +97,16 @@ test("the size the loading screen gives for the engine is the size this address 
     await expect(how).toHaveText(`${travelled.toFixed(1)} MB, once`);
     expect(Math.abs(said - travelled)).toBeLessThanOrEqual(0.1);
     expect(first.body).toBeLessThan(5_000_000);
+    // And it travelled packed tight: brotli's highest setting brings the engine under a fifth
+    // of itself, which the host's own packing as it sends does not reach (open decision #224).
+    const unpacked = await page.evaluate(
+      () =>
+        (performance.getEntriesByType("resource") as PerformanceResourceTiming[])
+          .filter((one) => one.name.endsWith(".wasm"))
+          .at(-1)?.decodedBodySize ?? 0,
+    );
+    expect(unpacked).toBeGreaterThan(first.body);
+    expect(first.body).toBeLessThan(unpacked / 4.5);
     test.info().annotations.push({
       type: "engine as it travels",
       description: `${first.body} bytes from this address; the build reckons ${said.toFixed(1)} MB`,

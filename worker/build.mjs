@@ -1,13 +1,15 @@
 // Builds the engine's worker for the browser: the Rust of this folder, on the released Zeff
 // engine, compiled to WebAssembly and bound for JavaScript twice, as the Zeff repository does
 // it: `pkg/web/` for the browser (a module the worker script imports) and `pkg/node/` for the
-// tests under Node. The output is not committed.
+// tests under Node; and the engine packed tight beside the browser's (`.wasm.br`). The output is
+// not committed.
 //
 // Usage: node worker/build.mjs
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { packedBeside } from "../tools/pack-lib.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 // The binding tool must be the version the engine's `wasm-bindgen` is pinned to.
@@ -43,4 +45,13 @@ for (const target of ["web", "nodejs"]) {
 }
 // The build for Node is a CommonJS module, in a project whose own modules are ES modules.
 fs.writeFileSync(path.join(here, "pkg", "node", "package.json"), '{ "type": "commonjs" }\n');
-console.log("The worker is built: worker/pkg/web and worker/pkg/node.");
+// The engine packed tight beside itself, for the host to send as it is (release 0.2.5, step 4;
+// open decision #224). Kept by what the engine holds, so an engine built again to the same
+// bytes is not packed again.
+const packed = packedBeside(
+  path.join(here, "pkg", "web", "zemp_worker_bg.wasm"),
+  path.join(here, "..", "node_modules", ".cache", "zemp-lite"),
+);
+console.log(
+  `The worker is built: worker/pkg/web and worker/pkg/node. The engine packed tight is ${packed.bytes} bytes of ${packed.of}.`,
+);

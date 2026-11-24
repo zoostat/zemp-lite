@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { brotliDecompressSync } from "node:zlib";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
@@ -41,18 +43,103 @@ function hostHeaders(text: string, block: string): Record<string, string> {
   return headers;
 }
 
-/** The preview of the build answers a built file with the host's headers for built files. */
-const keptAsAtTheHost: Plugin = {
-  name: "zemp-kept-as-at-the-host",
+/** Whether a browser that asks says it takes brotli. */
+const takesBrotli = (said: string | string[] | undefined): boolean =>
+  /(^|,)\s*br\s*(,|$)/i.test(Array.isArray(said) ? said.join(",") : (said ?? ""));
+
+/**
+ * The preview of the build answers as the host does. A built file is sent with the host's
+ * headers for built files; and the engine is sent packed tight to a browser that takes brotli
+ * (release 0.2.5, step 4; open decision #224), as the host's function sends it
+ * (`tools/host-worker.js`): the packed file the build put beside the engine, marked as brotli.
+ */
+const asAtTheHost: Plugin = {
+  name: "zemp-as-at-the-host",
   configurePreviewServer(server) {
+    const out = path.resolve(server.config.root, server.config.build.outDir);
     server.middlewares.use((request, response, next) => {
-      if (request.url?.startsWith("/assets/") === true) {
+      const asked = (request.url ?? "").split("?")[0] ?? "";
+      if (asked.startsWith("/assets/")) {
         for (const [name, value] of Object.entries(kept)) response.setHeader(name, value);
+      }
+      const asks = request.method === "GET" || request.method === "HEAD";
+      const packed = path.join(out, `${asked}.br`);
+      if (
+        asks &&
+        /^\/assets\/[^/]+\.wasm$/.test(asked) &&
+        takesBrotli(request.headers["accept-encoding"]) &&
+        existsSync(packed)
+      ) {
+        const bytes = readFileSync(packed);
+        for (const [name, value] of Object.entries(isolation)) response.setHeader(name, value);
+        response.setHeader("Content-Type", "application/wasm");
+        response.setHeader("Content-Encoding", "br");
+        response.setHeader("Vary", "Accept-Encoding");
+        response.setHeader("Content-Length", bytes.length);
+        response.end(request.method === "HEAD" ? undefined : bytes);
+        return;
       }
       next();
     });
   },
 };
+
+/**
+ * The engine packed tight, for the host to send as it is (release 0.2.5, step 4; open decision
+ * #224). Once the build is written: the packed engine the worker's build made is put beside
+ * the engine under the engine's built name; `_routes.json` names the engine's address as the
+ * one the host's function answers, so that no other file passes through it; and the function
+ * is written as `_worker.js`, with the headers of `public/_headers`, which the host does not
+ * add to what a function answers. The build stops where the packed file is not this engine.
+ */
+function enginePacked(): Plugin {
+  let out = "";
+  return {
+    name: "zemp-engine-packed",
+    apply: "build",
+    configResolved(config) {
+      out = path.resolve(config.root, config.build.outDir);
+    },
+    closeBundle() {
+      const assets = path.join(out, "assets");
+      const engines = existsSync(assets)
+        ? readdirSync(assets).filter((name) => name.endsWith(".wasm"))
+        : [];
+      const [engine, ...more] = engines;
+      if (engine === undefined || more.length > 0) {
+        throw new Error(
+          `the build has ${engines.length} WebAssembly files, not the engine's one: nothing can be packed for the host`,
+        );
+      }
+      const beside = new URL("./worker/pkg/web/zemp_worker_bg.wasm.br", import.meta.url);
+      if (!existsSync(beside)) {
+        throw new Error("the engine is not packed: run `npm run build:worker` first");
+      }
+      const packed = readFileSync(beside);
+      if (!brotliDecompressSync(packed).equals(readFileSync(path.join(assets, engine)))) {
+        throw new Error(
+          "the packed engine is not the engine of this build: run `npm run build:worker` again",
+        );
+      }
+      writeFileSync(path.join(assets, `${engine}.br`), packed);
+      writeFileSync(
+        path.join(out, "_routes.json"),
+        `${JSON.stringify({ version: 1, include: [`/assets/${engine}`], exclude: [] }, null, 2)}\n`,
+      );
+      const source = readFileSync(new URL("./tools/host-worker.js", import.meta.url), "utf8");
+      const put = "const HEADERS = __HOST_HEADERS__;";
+      if (source.split(put).length !== 2) {
+        throw new Error("tools/host-worker.js has no one place for the host's headers");
+      }
+      writeFileSync(
+        path.join(out, "_worker.js"),
+        source
+          .replace("/* global __HOST_HEADERS__ */\n", "")
+          .replace(put, `const HEADERS = ${JSON.stringify({ ...isolation, ...kept }, null, 2)};`),
+      );
+    },
+  };
+}
 
 // The engine's WebAssembly, as the worker's build made it: the Start screen of a first visit
 // fetches it, checks that it is this file (its SHA-256) and says how far the fetching has gone
@@ -79,7 +166,7 @@ function engineFacts(building: boolean): unknown {
 export default defineConfig(({ command }) => {
   const building = command === "build";
   return {
-    plugins: [svelte(), keptAsAtTheHost],
+    plugins: [svelte(), asAtTheHost, enginePacked()],
     server: { headers: isolation },
     preview: { headers: isolation },
     // The engine's worker is a module worker, which waits for the engine to load before it

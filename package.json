@@ -23,7 +23,7 @@
     "build:worker": "node worker/build.mjs",
     "test:worker": "node --test worker/js/worker.test.mjs",
     "measure:worker": "node tools/measure-worker.mjs",
-    "check:facts": "node --test tools/facts.test.mjs",
+    "check:facts": "node --test tools/facts.test.mjs tools/host-worker.test.mjs",
     "check:samples": "node tools/check-samples.mjs",
     "browsers": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium webkit",
     "test:browser": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
