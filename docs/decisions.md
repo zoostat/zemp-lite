@@ -2129,3 +2129,15 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Shown the drawing, the owner answered:** "Yes, as drawn" (24 November 2026). So the four are as the drawing shows them, the narrow window's rule with them.
 
 **Reason for recording here.** The owner's rulings on screens of Zemp Lite, given in this session; the row of 0.2.4 in section 15 of the Zemp Specification and the register are the Zeff repository's, and the coordinating session is told. Nothing is built: release 0.2.4 is not opened.
+
+## 24 November 2026: Release 0.2.4 is planned; the specification's copy is brought to Zeff a110b4c
+
+**The owner's word:** "Start release 0.2.4".
+
+**The specification.** `docs/spec/` is the Zeff repository's at commit a110b4c, compared byte for byte; two files differ from the copy of 674aa9b: the Zemp Specification (the row of 0.2.4, extended with the four changes of Help) and the register of open decisions (#220's items 6 to 9 with the owner's words and his "Yes, as drawn"; item 13 of #211 marked replaced; #221 to #223).
+
+**The engine.** Zeff 0.8.0, the row's, since Zeff 0.9.0 is not released (#220: "on the engine it carries"). The worker is not touched in this release.
+
+**The plan.** `docs/releases/0.2.4.md`, 16 steps, with what the reading found and four questions for the owner. Engineering choices taken in the plan, each to be recorded at its step: the build keeps one `/assets/` for the root and for `/app/`, so the engine's file keeps its address and a browser that has it does not fetch it again; an address kept from before with a project in it is forwarded from the root to `/app/`; the root is a plain page that opens the app until the landing page stands, so that no commit leaves the address without a way in; a link of the landing page into Help opens the Scratch project on the Help place at the page named.
+
+**Reason.** The standing instructions for the start of a release: the plan is shown and no code is written before the owner's "go".
