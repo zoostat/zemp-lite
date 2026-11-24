@@ -1176,6 +1176,25 @@ export class Workspace {
   }
 
   /**
+   * Return in the search field of Help, with no match marked (release 0.2.4, step 13): the
+   * page of what was typed where that is a name the engine or the project has, a function, a
+   * package, a dataset or a function of the project's own; otherwise the first match the
+   * field offers, so that a name known from R or Stata (`lm`) opens the function it found
+   * (`reg`); and where the field offers nothing, what the engine says of the name.
+   */
+  async showHelpTyped(name: string, first: Stop | null): Promise<void> {
+    const index = await this.indexHelp();
+    const known =
+      index !== null &&
+      (homesOf(index, name).length > 0 || index.packages.some((one) => one.name === name));
+    if (known || first === null) return this.showHelp(name);
+    // A function of the project's own is in no index: the engine is asked for its page.
+    const found = await this.helpPage(name).catch(() => null);
+    if (found !== null && found.page !== null) return this.showHelp(name);
+    await this.#openStop(first);
+  }
+
+  /**
    * F1 on a name in a script. Where the name has two functions (#215) the page opened is that
    * of the one the call at the cursor would run: the engine's hover there is that function's
    * page, whose first line says which it is. Where the hover is of neither, and for every

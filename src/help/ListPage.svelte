@@ -174,7 +174,7 @@
   }
   /* Which function of its name a row is: in the app's type, after the name. */
   button.link .of {
-    font-family: Inter, system-ui, sans-serif;
+    font-family: "Atkinson Hyperlegible Next", sans-serif;
     margin-left: 7px;
   }
   /* A function's usage under its one line, on the chooser of a name's functions. */

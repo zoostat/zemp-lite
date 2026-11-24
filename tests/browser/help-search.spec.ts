@@ -24,6 +24,7 @@ const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search H
 const list = (page: Page) => bar(page).getByRole("listbox", { name: "What was found" });
 const options = (page: Page) => list(page).getByRole("option");
 const title = (page: Page) => page.getByTestId("help-title");
+const shown = (page: Page) => page.getByTestId("help-page");
 const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 
 /** An option as it reads: its kind, its name and the rest, with one space between the parts. */
@@ -329,3 +330,61 @@ for (const theme of ["light", "dark"] as const) {
     expect(fits).toBe(true);
   });
 }
+
+test("Return with no match marked opens what was typed where that is a name, and otherwise the first match", async ({
+  page,
+  press,
+}) => {
+  // Release 0.2.4, step 13. Until 0.2.4, Return with no match marked always opened the page of
+  // what was typed: for a name known from R or Stata that was the engine's sentence that it has
+  // no such name, though the list under the field showed the function it had found.
+  await scratch(page, press);
+  const typed = async (text: string) => {
+    await field(page).fill(text);
+    await expect(options(page).first()).toBeVisible();
+    await field(page).press("Enter");
+  };
+  // A name of R: the function it finds.
+  await typed("lm");
+  await expect(title(page)).toHaveText("reg");
+  await expect(shown(page)).toContainText("Linear regression by least squares");
+  // A name of Stata.
+  await typed("ttest");
+  await expect(title(page)).toHaveText("t_test");
+  // A slip of one key in a name: the name meant.
+  await typed("regg");
+  await expect(title(page)).toHaveText("reg");
+  // What was typed is a name: its own page, though other names begin with it. `plot` is a
+  // package and two functions; `histogram` is two functions, and opens their chooser.
+  await typed("histogram");
+  await expect(title(page)).toHaveText("histogram");
+  await expect(shown(page)).toContainText("histogram is two functions.");
+  await typed("reg");
+  await expect(title(page)).toHaveText("reg");
+  // Nothing found: the engine's own sentence, as before.
+  await field(page).fill("zzqqzz");
+  await field(page).press("Enter");
+  await expect(shown(page)).toContainText("no function or package is called");
+});
+
+test("a name the engine suggests in its sentence is a link to that name's page", async ({
+  page,
+}) => {
+  // Release 0.2.4, step 13: the sentence said "did you mean" a name, and the name was not a link.
+  await page.goto("/app/#/help/name/lm");
+  await expect(shown(page)).toContainText("no function or package is called");
+  await expect(shown(page)).toContainText("did you mean");
+  const meant = shown(page).getByRole("button", { name: "lp", exact: true });
+  await expect(meant).toHaveAttribute("title", "Open the page of lp");
+  // The name that was not found is said, not offered.
+  await expect(shown(page).getByRole("button", { name: "lm", exact: true })).toHaveCount(0);
+  await meant.click();
+  await expect(title(page)).toHaveText("lp");
+  await expect(shown(page)).not.toContainText("no function or package is called");
+  // From the keyboard too.
+  await page.goto("/app/#/help/name/regg");
+  const other = shown(page).getByRole("button", { name: "reg", exact: true });
+  await other.focus();
+  await page.keyboard.press("Enter");
+  await expect(title(page)).toHaveText("reg");
+});

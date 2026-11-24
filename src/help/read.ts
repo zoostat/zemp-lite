@@ -429,6 +429,15 @@ export function pieces(text: string, titles = false): Piece[] {
   });
 }
 
+/**
+ * The name the engine suggests in a sentence that it has no such name ("no function or package
+ * is called `lm`; did you mean `lp`?"): the name after "did you mean", or `null` where the
+ * sentence suggests none.
+ */
+export function suggested(text: string): string | null {
+  return /\bdid you mean `([^`]+)`\?/.exec(text)?.[1] ?? null;
+}
+
 /** Words outside code: the codes among them, and in a reference the titles. */
 function words(text: string, titles: boolean): Piece[] {
   const marks = titles ? /\b[WZ]\d{4}\b|\*([^*\s][^*]*?)\*/g : /\b[WZ]\d{4}\b/g;

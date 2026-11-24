@@ -9,7 +9,7 @@
   // block, never broken. Every word is the engine's: nothing here writes one. A function named
   // in the prose, a related name and a code each open their own page.
   import Code from "../editor/Code.svelte";
-  import { pieces, type Block, type ExampleLine, type HelpDoc } from "./read";
+  import { pieces, suggested, type Block, type ExampleLine, type HelpDoc } from "./read";
 
   let {
     doc,
@@ -36,9 +36,12 @@
 </script>
 
 <!-- A line of prose: code, the functions and codes it names as links, a reference's titles. -->
-{#snippet prose(text: string, titles: boolean = false)}
-  {#each pieces(text, titles) as piece, at (at)}{#if piece.kind === "text"}{piece.text}{:else if piece.kind === "code"}<code
-        class="mono chip">{piece.text}</code
+{#snippet prose(text: string, titles: boolean = false, link: string | null = null)}
+  {#each pieces(text, titles) as piece, at (at)}{#if piece.kind === "text"}{piece.text}{:else if piece.kind === "code" && piece.text === link}<button
+        class="mono chip link"
+        title="Open the page of {piece.text}"
+        onclick={() => onname(piece.text)}>{piece.text}</button
+      >{:else if piece.kind === "code"}<code class="mono chip">{piece.text}</code
       >{:else if piece.kind === "call"}<button
         class="mono chip link"
         title="Open the page of {piece.name}"
@@ -175,7 +178,10 @@
 
 <article class="formatted" data-testid="help-page">
   {#each doc.notes as note (note.line)}
-    <p class="said" data-line={note.line}>{@render prose(note.text)}</p>
+    <!-- What the engine says outside any function: a name it suggests is a link to its page. -->
+    <p class="said" data-line={note.line}>
+      {@render prose(note.text, false, suggested(note.text))}
+    </p>
   {/each}
   {#each doc.entries as entry, at (entry.line)}
     <section class="entry">

@@ -2346,3 +2346,17 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Browser (`tests/browser/help-home.spec.ts`): the tests of 0.2.3 hold what Home says, its counts, its panels' buttons and links, the keyboard, its column, 12.5 pixels and 4.5 to 1 in both themes, unchanged and green; a new test holds the look: five cards, each on the window's own white, rounded, with a shade, its icon a hexagon at the left of the words and hidden from a screen reader; the title and **Topics** in the display type; "Open →" on the three topics' cards and on no other, drawn and not read out; the name drawn twice; a card opened by its button.
 
 **Reason.** The owner's ruling (#220, item 9): Help's landing page takes the look of 0.2.4's screens, and what it holds is unchanged.
+
+## 24 November 2026: The small faults (release 0.2.4, step 13)
+
+**The owner's word:** "Go, as recommended" took question 3 of the plan as recommended: the two faults of Help's search are mended in this release.
+
+**Choices.**
+
+1. _The font._ One rule of a list page of Help (the words that tell two functions of a name apart, as "of a frame") named a font the app does not ship, so the reader's computer chose one. It names the app's text font. Every rule of the app that names a font is now read by a test: the first font named must be one of the three shipped, and what follows it only the computer's own faces of the same kind, for the instant before the shipped font has come (#222).
+2. _Return in Help's search, with no match marked._ It opens the page of what was typed where that is a name the engine has (a function, a package, a dataset) or a function of the project's own, as before; so `histogram` still opens the chooser of its two functions, and a name is never passed over for a longer one that begins with it. Otherwise it opens the first match the field offers: `lm` opens `reg`, `ttest` opens `t_test`, and a name with a slip of one key opens the name meant. Where the field offers nothing, the engine's own sentence is shown, as before. Whether a name the index has not is a function of the project's own is asked of the engine, since no index holds those.
+3. _A suggested name is a link._ Where the engine says it has no such name and asks "did you mean" another, that other name is a link to its page. The name that was not found is said, not offered. Only the name after "did you mean" is linked; every other word of the engine's sentence is as it was.
+
+**Tested.** Unit: every source of a screen read for the fonts it names, in style sheets and in the editor's theme, more than forty rules, none naming a font not shipped (`src/theme/fonts.node.test.ts`; with the old rule put back it fails and names it); the suggestion read from the engine's sentence, and none where it suggests nothing (`src/help/suggested.test.ts`). Browser (`tests/browser/help-search.spec.ts`): `lm`, `ttest` and `regg`, each with Return, open `reg`, `t_test` and `reg`; `histogram` opens its chooser and `reg` its own page; a word nothing matches shows the engine's sentence; on the page of a name the engine has not, the suggested name is a button with its title, the name not found is none, and the button, by the mouse and by the keyboard, opens the suggested name's page.
+
+**Reason.** Faults found after 0.2.3 (`docs/progress.md`, 24 November 2026), and the owner's answer.

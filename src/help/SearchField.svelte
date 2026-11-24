@@ -59,9 +59,13 @@
     marked = null;
   }
 
-  /** Open a page of the list, or the page of what was typed; the field is left empty. */
+  /**
+   * Open a page of the list, or, with none marked, the page of what was typed where that is a
+   * name, and otherwise the first match offered (`showHelpTyped`); the field is left empty.
+   */
   function go(one: Entry | null): void {
     const name = typed.trim();
+    const first = offered[0]?.to ?? null;
     typed = "";
     close();
     if (one !== null) {
@@ -69,7 +73,7 @@
     } else if (name !== "") {
       void (/^[WZ]\d{4}$/i.test(name)
         ? workspace.showCode(name.toUpperCase())
-        : workspace.showHelp(name));
+        : workspace.showHelpTyped(name, first));
     }
   }
 
