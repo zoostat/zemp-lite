@@ -166,7 +166,7 @@ test("the two plots the returns to schooling binds with `let` are drawn under th
 test.describe("a first visit, in a browser that has never opened Zemp Lite", () => {
   test.use({ firstVisit: true });
 
-  test("opens on the Start screen: the engine fetched, checked and started, then Open Zemp Lite", async ({
+  test("opens on the Start screen: the engine fetched, checked and started, then Start", async ({
     page,
     press,
   }) => {
@@ -195,7 +195,7 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
       await expect(promises.getByText(promise, { exact: true })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: "What is counted" })).toBeVisible();
-    const open = start.getByRole("button", { name: "Open Zemp Lite" });
+    const open = start.getByRole("button", { name: "Start", exact: true });
     await expect(open).toBeEnabled();
     await press(open);
     await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
@@ -228,7 +228,7 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     await page.goto("/");
     const line = page.getByRole("note");
     await expect(line).toContainText("at least 1,200 pixels wide; this one is 1000.");
-    await press(page.getByRole("button", { name: "Open Zemp Lite" }));
+    await press(page.getByRole("button", { name: "Start", exact: true }));
     await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
     await expect(line).toContainText("No smaller layout exists yet.");
   });

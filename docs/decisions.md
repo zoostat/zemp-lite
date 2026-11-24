@@ -2571,3 +2571,26 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Under Node: the packing (it unpacks to the same bytes; packed once and kept by what the file holds; what is kept for other bytes is never used); the function, run as the host runs it with a host of the test's making (packed to a browser that takes brotli, with every header; "not modified"; the headers alone; whole to a browser that does not take it, in five ways of not taking it; whole where no packed file stands or the host fails; nothing else touched); the size reckoned. In the browser, both engines: the build carries the packed engine and the one route; the function as the build wrote it carries every header of the headers file; the engine asked for packed and whole is the same engine; a first visit fetches it, checks its digest, compiles it as it arrives and runs a script.
 
 **Reason.** The checklist's step 4; open decision #224; findings 7 and 8 of the plan.
+
+## 24 November 2026: The loading screen's button is named Start (release 0.2.5, step 4b)
+
+**The owner's word**, given in the coordinating session and read in the Zeff repository before it was taken (commit d934ffb, on the main branch there under the owner's name, "Name the loading screen's button Start in Zemp Lite 0.2.5 (#225)"): "open zemp lite ->" should be replaced by "Start". It is item 5 of open decision #225, placed in 0.2.5, and the row 0.2.5 of section 15 names it. The coordinating session then passed his "go" for building it within this release. `docs/spec/` is the copy at d934ffb, compared byte for byte; two files differ from the copy at b1597bf (the row, and #225 with the note on #220).
+
+**Choice.**
+
+1. _A step of its own, 4b_, added to the checklist after the plan and the owner's "go", before the closing steps, so that the whole-screen test, the measures, the pictures and the notes all carry the new name.
+2. _The button says "Start" and nothing else_: the name drawn with its badge and the arrow are gone from it, with the three rules of style that served them. It is drawn in capitals, as the drawing has it, and is read aloud and found as "Start". Grey until the bar is full, then open with the cursor on it, Return pressing it; the line under it says what it said ("Opens as soon as the engine is ready.", then "or press ↵").
+3. _Nothing else names the button._ No page of **Using Zemp Lite**, no page of Help and no picture shows or names it, and `README.md` does not; so no sentence is put to the owner to read.
+
+**Tested.** Browser, in both engines: the button is the loading screen's one button, says "Start" and is read as "Start", grey and then open; nothing is drawn inside it and no arrow stands on the screen; the line under it in both states; no button is named **Open Zemp Lite**. Fifteen places of the tests that pressed the button by its old name press it by its new one, and the whole-screen test finds "Start" among the stops of the Tab key. The test of the name drawn counts it twice on the loading screen (its heading and its sentence), not three times.
+
+**Reason.** The checklist's step 4b; open decision #225, item 5.
+
+## 24 November 2026: The trial of the tight packing held (release 0.2.5, step 4)
+
+**What was seen**, on GitHub, for commit f8956dd. Its check was green in both browsers. The deployment sent the build to the trial address (`https://trial.zemp-lite.pages.dev`) and there: the host sent the engine, to a browser that takes brotli, as the build packed it, to a byte (2,929,528 bytes of 15,145,953, GitHub's own build of the engine, which differs by a few thousand bytes from this machine's), marked as brotli and as WebAssembly, with every header of the headers file and the year's keeping; it unpacked to the engine sent whole; and sent whole to a browser that does not take brotli. All 16 checks of the address passed in Chromium and WebKit: the digest of what arrived was the engine's, the engine was compiled as it arrived (no word of the binding on the console), a kept engine was said to be kept, and the first start took 0.8 s in Chromium and 1.8 s in WebKit. Then the build was sent to the address, and both addresses and the 16 checks passed again: the engine travelled as 2,929,528 and 2,932,876 bytes as the two engines count them, against 4,081,843 and 4,085,764 at the deployment before; the first start took 1.5 s and 2.0 s (at the three deployments of this release before it: 1.3 to 1.6 s in Chromium, 1.6 to 2.1 s in WebKit). Read again from this machine at `https://lite.zeff-lang.dev`: the same bytes.
+
+**So.** Each of the conditions of open decision #224 is shown: the engine arrives as about 2.9 MB and is the engine; the isolation headers and the keeping are sent with it; it is compiled as it arrives; "already in this browser" is still said; the first start is no slower. The step stays, and 0.2.5 carries the tight packing. The engine travels 1.15 MB lighter, 28 per cent.
+
+**Reason.** The checklist's step 4, its "done when".
+

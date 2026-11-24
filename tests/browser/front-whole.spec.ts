@@ -95,14 +95,14 @@ for (const theme of ["light", "dark"] as const) {
           await expect(page.getByTestId("step-fetch")).toHaveClass(/going/);
           await floor(page, `the loading screen, fetching, at ${width}`);
           release();
-          const open = page.getByRole("button", { name: "Open Zemp Lite" });
+          const open = page.getByRole("button", { name: "Start", exact: true });
           await expect(open).toBeEnabled({ timeout: 30_000 });
           await page.unroute("**/*.wasm");
           await floor(page, `the loading screen, ready, at ${width}`);
           const reached = await stops(page, tab);
           expect(reached, reached.join(" | ")).not.toContain("(no name)");
           expect(reached.length, "the stops of the Tab key").toBeGreaterThan(1);
-          expect(reached).toContain("Open Zemp Lite");
+          expect(reached).toContain("Start");
           expect(reached).toContain("What is counted");
         }
       });

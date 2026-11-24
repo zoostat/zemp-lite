@@ -61,16 +61,18 @@ test("the page of what is counted draws the name, and the tab's title writes it"
 test.describe("a first visit", () => {
   test.use({ firstVisit: true });
 
-  test("the Start screen draws the name, in its heading, its sentence and its button", async ({
+  test("the Start screen draws the name wherever it shows it, and its button says Start alone", async ({
     page,
   }) => {
     await page.goto("/");
-    const open = page.getByRole("button", { name: "Open Zemp Lite" });
+    const open = page.getByRole("button", { name: "Start", exact: true });
     await expect(open).toBeEnabled({ timeout: 30_000 });
     await drawnOn(page, "the Start screen");
     const found = await nameOn(page);
-    expect(found.drawn).toBeGreaterThanOrEqual(3);
-    // Inside the filled button the badge is of the button's own ink, and reads against it.
+    // In its heading and in its sentence; the button, **Start** from 0.2.5 (open decision #225,
+    // item 5), no longer carries it.
+    expect(found.drawn).toBeGreaterThanOrEqual(2);
+    await expect(open).toHaveText("Start");
     expect(await faintText(page.getByTestId("start"))).toEqual([]);
   });
 });

@@ -107,7 +107,7 @@ test.describe("a first visit", () => {
     page,
   }) => {
     await page.goto("/#/help/using/getting-started");
-    const open = page.getByRole("button", { name: "Open Zemp Lite" });
+    const open = page.getByRole("button", { name: "Start", exact: true });
     await expect(open).toBeEnabled({ timeout: 30_000 });
     await open.click();
     await inHelp(page);

@@ -17,7 +17,7 @@ test("the page is isolated, and the engine starts and runs the example", async (
   // A first visit: the Start screen fetches, checks and starts the engine. The start is timed
   // to the engine running, which the card says of itself; the bar glides on to its end for a
   // moment after that (open decision #220, item 10), and the button opens then.
-  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  const open = page.getByRole("button", { name: "Start", exact: true });
   await expect(page.locator('[data-engine="done"]')).toBeVisible({ timeout: 30_000 });
   const started = Date.now() - from;
   await expect(open).toBeEnabled({ timeout: 30_000 });
@@ -44,7 +44,7 @@ test("the root is the app; an address of 0.2.4, with /app/ in it, goes on to the
   // `/app/`, where it stood in 0.2.4 alone, a page that goes on.
   await page.goto("/");
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
-  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  const open = page.getByRole("button", { name: "Start", exact: true });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   // Nothing of the landing page of 0.2.4 is here.
   await expect(page.getByRole("link", { name: "Open Zemp Lite" })).toHaveCount(0);
@@ -76,7 +76,7 @@ test("the size the loading screen gives for the engine is the size this address 
   // that figure until the engine has come; here the reckoning is held to the bytes this address
   // really sends, as the browser's own record of the fetch has them.
   await page.goto("/");
-  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  const open = page.getByRole("button", { name: "Start", exact: true });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   const how = page.getByTestId("step-fetch-how");
   const said = Number(((await how.getAttribute("data-reckoned")) ?? "").replace(" MB", ""));
@@ -133,7 +133,7 @@ test("Help opens on Home, the search finds reg by R's lm, and a page of the app 
 }) => {
   // Release 0.2.3 (step 10): the Help place at the address, on the engine it carries.
   await page.goto("/");
-  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  const open = page.getByRole("button", { name: "Start", exact: true });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
   await page.getByRole("button", { name: /^Scratch project/ }).click();
@@ -183,7 +183,7 @@ test("what is counted, and what is never collected, is said on a page of its own
 
 test("a statement run alone and a plot drawn afresh are timed at the address", async ({ page }) => {
   await page.goto("/");
-  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  const open = page.getByRole("button", { name: "Start", exact: true });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
   await page.getByRole("button", { name: /^Scratch project/ }).click();
@@ -255,7 +255,7 @@ test("the first drawing of a run's figures is timed at the address", async ({ pa
   // The window is tall, so that the editor draws every line and each figure is asked for.
   await page.setViewportSize({ width: 1280, height: 3000 });
   await page.goto("/");
-  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  const open = page.getByRole("button", { name: "Start", exact: true });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
   await page.getByRole("button", { name: /^Scratch project/ }).click();
@@ -294,7 +294,7 @@ test("a project is exported at the address as a zip, and the zip opened there ag
   // gives the computer is read here by the reader of this repository, and then opened at the
   // address as a new project that runs.
   await page.goto("/");
-  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  const open = page.getByRole("button", { name: "Start", exact: true });
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
   await page.getByRole("button", { name: /^Scratch project/ }).click();

@@ -1,5 +1,6 @@
 // The loading screen redrawn (release 0.2.4, step 6; open decision #220, item 3; the design
-// guide, section 9, "Loading screen"): the name large with **Open Zemp Lite**, grey until the
+// guide, section 9, "Loading screen"): the name large with **Start** (named **Open Zemp Lite**
+// until 0.2.5; open decision #225, item 5), grey until the
 // engine runs; the card **Starting the engine**, one bar over three steps; a failure with its
 // sentence and **Try again**; the four promises in their band. And item 10 (step 6b): the bar
 // glides however fast the steps finish, the button opens when the bar is full, and the first
@@ -13,7 +14,7 @@ import { expect, faintText, smallestText, test } from "./support";
 test.use({ firstVisit: true });
 
 const start = (page: Page) => page.getByTestId("start");
-const open = (page: Page) => page.getByRole("button", { name: "Open Zemp Lite" });
+const open = (page: Page) => page.getByRole("button", { name: "Start", exact: true });
 const whole = (page: Page) => page.getByTestId("start-whole");
 
 /** The facts the build took from the engine (`tools/facts.mjs`), asked for as the build asks. */
@@ -56,6 +57,37 @@ test("while the engine is fetched the button is grey and says when it will open;
   // The cursor is on the button once the engine runs: Return opens the app.
   await expect(open(page)).toBeFocused();
   await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+});
+
+test("the button is named Start: no arrow and no name after it, grey with its line until the engine runs, then open with its line", async ({
+  page,
+}) => {
+  // Release 0.2.5, step 4b (open decision #225, item 5): **Open Zemp Lite →** is **Start**.
+  let release: () => void = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/*.wasm", async (route: Route) => {
+    await held;
+    await route.continue();
+  });
+  await page.goto("/");
+  const button = start(page).getByRole("button");
+  await expect(button).toHaveCount(1);
+  await expect(button).toHaveText("Start");
+  await expect(button).toHaveAccessibleName("Start");
+  await expect(button).toBeDisabled();
+  await expect(page.getByTestId("open-hint")).toHaveText("Opens as soon as the engine is ready.");
+  release();
+  await expect(button).toBeEnabled({ timeout: 30_000 });
+  // Open, it says the same: nothing is added to it, and the name is not drawn in it.
+  await expect(button).toHaveText("Start");
+  expect(await button.locator("*").count()).toBe(0);
+  await expect(page.getByTestId("open-hint")).toHaveText("or press ↵");
+  await expect(page.getByRole("button", { name: /Open Zemp Lite/ })).toHaveCount(0);
+  await expect(start(page)).not.toContainText("→");
+  await button.click();
   await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
 });
 

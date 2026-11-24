@@ -38,7 +38,7 @@ test.describe("a first visit", () => {
   }) => {
     const asked = engineAsked(page);
     await page.goto("/");
-    const open = page.getByRole("button", { name: "Open Zemp Lite" });
+    const open = page.getByRole("button", { name: "Start", exact: true });
     await expect(open).toBeEnabled({ timeout: 30_000 });
     expect(asked.filter((path) => path.endsWith(".wasm")).length).toBeGreaterThan(0);
     await open.click();

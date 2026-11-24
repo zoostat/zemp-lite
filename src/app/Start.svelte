@@ -1,7 +1,8 @@
 <script lang="ts">
   // The loading screen of a first visit (the design guide, section 9, "Loading screen"; open
   // decision #220, item 3; release 0.2.4, step 6; first built at release 0.2, step 18b): the
-  // name large with what Zemp Lite is in one line and **Open Zemp Lite**, which is grey until
+  // name large with what Zemp Lite is in one line and **Start** (named **Open Zemp Lite** until
+  // 0.2.5; open decision #225, item 5), which is grey until
   // the engine runs; beside it a card, the engine fetched, checked and started under one bar,
   // each step with its mark, its line and its state; and the four promises in a band. The bar
   // glides however fast the steps finish, the button opens when the bar is full, and the first
@@ -155,7 +156,7 @@
     failed: "failed",
   };
 
-  // Once the engine runs the cursor is on **Open Zemp Lite**, so that Return opens it too.
+  // Once the engine runs the cursor is on **Start**, so that Return presses it too.
   let open = $state<HTMLButtonElement | null>(null);
   $effect(() => {
     if (ready) open?.focus();
@@ -186,9 +187,7 @@
         <strong>Zeff in your browser.</strong> Write a script, run it and read the results, with nothing
         to install and nothing uploaded.
       </p>
-      <button class="open" bind:this={open} disabled={!ready} onclick={onopen}
-        >Open <Name filled />{#if ready}<span class="arrow" aria-hidden="true">→</span>{/if}</button
-      >
+      <button class="open" bind:this={open} disabled={!ready} onclick={onopen}>Start</button>
       <p class="hint" data-testid="open-hint">
         {ready ? "or press ↵" : "Opens as soon as the engine is ready."}
       </p>
@@ -359,22 +358,11 @@
     padding: 18px 40px;
     text-transform: uppercase;
   }
-  .open :global(.lite) {
-    text-transform: none;
-  }
   .open:disabled {
     background: var(--soft);
     border-color: var(--line-strong);
     box-shadow: none;
     color: var(--ink-3);
-  }
-  /* In the grey button the badge has no ground of its own: the small-print ink on a tinted
-     ground falls under 4.5 to 1. */
-  .open:disabled :global(.lite) {
-    background: transparent;
-  }
-  .arrow {
-    margin-left: 12px;
   }
   .hint {
     color: var(--ink-3);

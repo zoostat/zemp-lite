@@ -38,7 +38,7 @@ export interface Steps {
 /**
  * The steps as the screen marks them: a step is done once it is done and the bar has reached
  * its end of the bar; until then it runs. So the marks and the bar never disagree, and
- * **Open Zemp Lite** opens when the bar is full. A step that failed is marked at once.
+ * **Start** opens when the bar is full. A step that failed is marked at once.
  */
 export function marked(steps: Steps, shown: number): Steps {
   /** A step after the first: it waits until the one before it is marked done. */

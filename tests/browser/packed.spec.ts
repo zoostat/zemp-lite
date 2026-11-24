@@ -101,7 +101,7 @@ test.describe("a first visit", () => {
     const asked = page.waitForRequest((one) => one.url().endsWith(".wasm"));
     await page.goto("/");
     const took = (await (await asked).allHeaders())["accept-encoding"] ?? "";
-    const open = page.getByRole("button", { name: "Open Zemp Lite" });
+    const open = page.getByRole("button", { name: "Start", exact: true });
     await expect(open).toBeEnabled({ timeout: 30_000 });
     // The digest of what arrived, unpacked, is the engine's: the second step is done.
     await expect(page.getByTestId("step-check")).toHaveClass(/done/);
