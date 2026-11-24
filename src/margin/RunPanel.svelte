@@ -5,6 +5,7 @@
   // interface measures between the engine's messages until the engine reports them, and says
   // so. Escape closes it, and the focus goes back where it was.
   import { onMount } from "svelte";
+  import Name from "../theme/Name.svelte";
   import type { Workspace } from "../app/workspace-state.svelte";
   import { blocks, said, took, type Said } from "../output/run";
   import { counted } from "./notes";
@@ -146,8 +147,8 @@
       </ol>
     {/if}
     <p class="quiet small">
-      The times are measured by Zemp Lite between the engine's messages; the bytes are the engine's
-      count. Full run records, with the inputs and outputs of every run, come with Zeff 0.11.0.
+      The times are measured by <Name /> between the engine's messages; the bytes are the engine's count.
+      Full run records, with the inputs and outputs of every run, come with Zeff 0.11.0.
     </p>
   {:else}
     {#if messages.length === 0}

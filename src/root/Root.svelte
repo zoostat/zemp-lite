@@ -4,6 +4,7 @@
   // never without one. It fetches nothing of the engine.
   import { ENGINE, VERSION, shown } from "../app/version";
   import Logo from "../theme/Logo.svelte";
+  import Name from "../theme/Name.svelte";
   import ThemeButton from "../theme/ThemeButton.svelte";
   import { APP } from "./forward";
 </script>
@@ -12,13 +13,13 @@
 <main class="front" data-testid="front">
   <header>
     <Logo size={34} />
-    <h1>Zemp Lite</h1>
+    <h1><Name /></h1>
   </header>
   <p class="lede">
     Zeff in your browser. Write a script, run it and read the results, with nothing to install and
     nothing uploaded.
   </p>
-  <p><a class="open" href={APP}>Open Zemp Lite</a></p>
+  <p><a class="open" href={APP}>Open <Name filled /></a></p>
   <p class="version">Version {shown(VERSION)}, on the Zeff {ENGINE} engine</p>
 </main>
 <footer class="bottom">

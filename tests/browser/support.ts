@@ -383,6 +383,10 @@ export async function smallestText(page: Page): Promise<number> {
   return page.evaluate(() => {
     let least = Infinity;
     for (const node of document.querySelectorAll("body *")) {
+      // The badge of the drawn name is a mark, not text of the interface: its size is the
+      // owner's ruling for it (never under 11 pixels; open decision #220, item 5), and a test
+      // of its own holds it there (`name.spec.ts`).
+      if (node.closest("[data-name-badge]") !== null) continue;
       if (node.textContent?.trim() && node.children.length === 0) {
         least = Math.min(least, parseFloat(getComputedStyle(node).fontSize));
       }

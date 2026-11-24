@@ -9,6 +9,7 @@
   // the page of the name or the code as typed, as the field did before. A screen reader is
   // told a combobox and its list. Nothing is asked of any server.
   import type { Workspace } from "../app/workspace-state.svelte";
+  import Named from "../theme/Named.svelte";
   import { USING } from "../using/pages";
   import { entriesOf, search, LEAST, type Entry, type Match, type OwnPage } from "./search";
 
@@ -168,7 +169,7 @@
               <!-- A function of a name that has two says which it is, before its package (#215). -->
               {#if one.of !== undefined}<span class="form">{one.of}</span>{/if}
               {#if one.packages.length > 0}
-                <span class="of">{one.packages.join(" · ")}</span>
+                <span class="of"><Named text={one.packages.join(" · ")} /></span>
               {/if}
               <span class="words">{before}<b>{word}</b>{after}</span>
               {#if one.why}

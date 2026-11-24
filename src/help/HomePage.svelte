@@ -9,6 +9,8 @@
   // engine's; the words are Zemp's (`home.ts`). The index of functions that stood here at
   // step 4 is gone: every function is reached from its package, from search and from links.
   import { VERSION, shown } from "../app/version";
+  import Name from "../theme/Name.svelte";
+  import Named from "../theme/Named.svelte";
   import type { CodeFamily, HelpIndex } from "../engine/messages";
   import type { Stop } from "./history";
   import { HOME_WORDS, countsOf, topicPanels } from "./home";
@@ -41,7 +43,7 @@
 
   <section class="panel" data-line="1" aria-labelledby="help-home-zemp">
     <h4 id="help-home-zemp">
-      <span class="name">Zemp Lite</span>
+      <span class="name"><Name /></span>
       <span class="version mono" data-testid="help-app">{shown(VERSION)}</span>
       <span class="version stage">{HOME_WORDS.stage}</span>
     </h4>
@@ -55,7 +57,7 @@
       <h4 id="help-home-{panel.key}">
         <!-- The button is the whole panel's: it is stretched over it, under the links inside. -->
         <button class="open" onclick={() => onopen(panel.to)}>
-          <span class="name">{panel.name}</span>
+          <span class="name"><Named text={panel.name} /></span>
           <span class="count">{panel.count}</span>
           <svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"
             ><path d="M3 8h10M9 4l4 4-4 4" /></svg

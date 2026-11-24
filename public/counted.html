@@ -53,15 +53,39 @@
       a {
         color: var(--accent);
       }
+      /* The name drawn, as in the app (`src/theme/Name.svelte`): Zemp with a raised Lite badge. */
+      .zl {
+        white-space: nowrap;
+      }
+      .zl .sp {
+        font-size: 0;
+      }
+      .zl .lite {
+        border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+        border-radius: 999px;
+        color: var(--accent);
+        display: inline-block;
+        font:
+          700 max(0.3em, 11.5px) / 1 "Atkinson Hyperlegible Next",
+          system-ui,
+          sans-serif;
+        letter-spacing: 0.04em;
+        margin-left: 0.12em;
+        padding: 0.22em 0.5em 0.2em;
+        position: relative;
+        top: -0.15em;
+        vertical-align: super;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>What is counted</h1>
       <p>
-        Zemp Lite runs in your browser. Your projects, scripts and data are kept in this browser's
-        private storage on your computer, and the engine that runs them runs here too: nothing of
-        them is sent anywhere.
+        <span class="zl">Zemp<span class="sp"> </span><sup class="lite">Lite</sup></span> runs in
+        your browser. Your projects, scripts and data are kept in this browser's private storage on
+        your computer, and the engine that runs them runs here too: nothing of them is sent
+        anywhere.
       </p>
 
       <h2>Counted</h2>
@@ -84,7 +108,13 @@
         save as a file of your own; it is never sent. You choose whether to attach it to an issue.
       </p>
 
-      <p><a href="/app/">Back to Zemp Lite</a> · <a href="/">The front page</a></p>
+      <p>
+        <a href="/app/"
+          >Back to
+          <span class="zl">Zemp<span class="sp"> </span><sup class="lite">Lite</sup></span></a
+        >
+        · <a href="/">The front page</a>
+      </p>
     </main>
   </body>
 </html>

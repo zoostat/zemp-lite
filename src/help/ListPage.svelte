@@ -4,6 +4,7 @@
   // codes by family. The names, the one lines, the families and the titles are the engine's
   // (`pages.ts`); each name opens its own page.
   import type { Stop } from "./history";
+  import Named from "../theme/Named.svelte";
   import type { ListPage } from "./pages";
   import { pieces } from "./read";
 
@@ -19,7 +20,7 @@
 
 <article class="formatted" data-testid="help-page">
   <header>
-    <h3 class:mono={list.named}>{list.title}</h3>
+    <h3 class:mono={list.named}><Named text={list.title} /></h3>
     {#if list.lead !== undefined}<p class="lead">{list.lead}</p>{/if}
     {#if list.facts.length > 0}
       <ul class="facts" aria-label="Facts of {list.title}">

@@ -14,6 +14,7 @@
   // next page opened has its neighbours beside it again. The sections of the page itself are
   // in the pane at the right, **On this page** (item 13).
   import { familyTopic, TOPICS, topicOpen } from "../app/views";
+  import Named from "../theme/Named.svelte";
   import type { Workspace } from "../app/workspace-state.svelte";
   import { aroundOf } from "./around";
   import { USING, USING_TITLE } from "../using/pages";
@@ -60,7 +61,7 @@
       onclick={() => workspace.toggleTopic(key)}
     >
       <span class="mark" aria-hidden="true">{open(key) ? "▾" : "▸"}</span>
-      <span class="words">{words}</span>
+      <span class="words"><Named text={words} /></span>
       <span class="count">{count}</span>
     </button>
   </h3>
@@ -103,15 +104,14 @@
               onclick={() => group.to !== null && void workspace.showHelpStop(group.to)}
             >
               <span class="words"
-                ><span class:mono={group.kind !== "pages"}>{group.name}</span>{group.words === ""
-                  ? ""
-                  : ` ${group.words}`}</span
+                ><span class:mono={group.kind !== "pages"}><Named text={group.name} /></span
+                >{group.words === "" ? "" : ` ${group.words}`}</span
               >
               <span class="count">{group.rows.length}</span>
             </button>
           {:else}
             <span class="fold here">
-              <span class="words mono">{group.name}</span>
+              <span class="words mono"><Named text={group.name} /></span>
               <span class="count">{group.rows.length}</span>
             </span>
           {/if}

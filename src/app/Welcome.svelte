@@ -22,6 +22,8 @@
     type Projects,
   } from "../project/projects";
   import Logo from "../theme/Logo.svelte";
+  import Name from "../theme/Name.svelte";
+  import Named from "../theme/Named.svelte";
   import ThemeButton from "../theme/ThemeButton.svelte";
   import Watermark from "../theme/Watermark.svelte";
   import NarrowLine from "./NarrowLine.svelte";
@@ -232,7 +234,7 @@
   <section class="left" aria-label="Start">
     <h1 class="brand">
       <Logo size={34} />
-      Zemp Lite <small>{shown(VERSION)}</small>
+      <Name /> <small>{shown(VERSION)}</small>
       <span class="alpha" data-testid="alpha">alpha</span>
     </h1>
     <p class="alpha-line">
@@ -263,7 +265,7 @@
             }}>Cancel</button
           >
         </div>
-        {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
+        {#if problem}<p class="problem" role="alert"><Named text={problem} /></p>{/if}
       </form>
     {:else}
       <button class="act" onclick={() => (naming = true)}>
@@ -399,7 +401,7 @@
         <li class="none">No project yet. Start with the Scratch project.</li>
       {/each}
     </ul>
-    <p class="said" role="status">{said}</p>
+    <p class="said" role="status"><Named text={said} /></p>
   </section>
 </div>
 

@@ -9,6 +9,7 @@
   import engineUrl from "../../worker/pkg/web/zemp_worker_bg.wasm?url";
   import type { Engine } from "../engine/engine";
   import Logo from "../theme/Logo.svelte";
+  import Name from "../theme/Name.svelte";
   import ThemeButton from "../theme/ThemeButton.svelte";
   import NarrowLine from "./NarrowLine.svelte";
   import { ENGINE, ENGINE_BYTES, ENGINE_SHA256, VERSION, shown } from "./version";
@@ -103,12 +104,12 @@
 <div class="start" data-testid="start">
   <header>
     <Logo size={34} />
-    <h1>Zemp Lite <span class="version">{shown(VERSION)}</span></h1>
+    <h1><Name /> <span class="version">{shown(VERSION)}</span></h1>
     <span class="alpha" data-testid="alpha">alpha</span>
   </header>
   <p class="about">
-    An <b>alpha</b>: the first public preview of Zemp Lite, the editor for Zeff in a browser. Much
-    is still to come, and what is here will change; every result is the released Zeff
+    An <b>alpha</b>: the first public preview of <Name />, the editor for Zeff in a browser. Much is
+    still to come, and what is here will change; every result is the released Zeff
     {ENGINE} engine's own.
   </p>
 
@@ -158,7 +159,7 @@
     <li><b>The next visit opens at once:</b> the browser keeps the engine.</li>
   </ul>
 
-  <button class="open" disabled={!ready} onclick={onopen}>Open Zemp Lite</button>
+  <button class="open" disabled={!ready} onclick={onopen}>Open <Name filled /></button>
 </div>
 <footer class="bottom">
   <a class="counted" href="/counted.html">What is counted</a>

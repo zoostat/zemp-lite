@@ -6,6 +6,7 @@
   // the screen made from the running app (`pictures.ts`). The words are Zemp's, read from the
   // page's own file (`read.ts`).
   import type { Stop } from "../help/history";
+  import Named from "../theme/Named.svelte";
   import { PICTURE, pictureOf } from "./pictures";
   import type { Piece, UsingDoc } from "./read";
 
@@ -20,25 +21,26 @@
 </script>
 
 {#snippet line(pieces: Piece[])}
-  {#each pieces as piece, at (at)}{#if piece.kind === "text"}{piece.text}{:else if piece.kind === "control"}<b
-        class="control">{piece.text}</b
+  {#each pieces as piece, at (at)}{#if piece.kind === "text"}<Named
+        text={piece.text}
+      />{:else if piece.kind === "control"}<b class="control"><Named text={piece.text} /></b
       >{:else if piece.kind === "code"}<code class="mono">{piece.text}</code
       >{:else if piece.kind === "key"}<kbd>{piece.text}</kbd>{:else}<button
         class="link"
         class:mono={piece.to.kind !== "using"}
         title="Open the page of {piece.text}"
-        onclick={() => onopen(piece.to)}>{piece.text}</button
+        onclick={() => onopen(piece.to)}><Named text={piece.text} /></button
       >{/if}{/each}
 {/snippet}
 
 <article class="formatted" data-testid="help-page">
   <header>
-    <h3>{doc.title}</h3>
-    <p class="does">{doc.line}</p>
+    <h3><Named text={doc.title} /></h3>
+    <p class="does"><Named text={doc.line} /></p>
   </header>
   {#each doc.blocks as block, at (at)}
     {#if block.kind === "heading"}
-      <h4 data-line={block.line}>{block.text}</h4>
+      <h4 data-line={block.line}><Named text={block.text} /></h4>
     {:else if block.kind === "paragraph"}
       <p>{@render line(block.pieces)}</p>
     {:else if block.kind === "list"}

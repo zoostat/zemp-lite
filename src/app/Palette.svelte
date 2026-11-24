@@ -2,6 +2,7 @@
   // The command palette: a box to type in and the commands that match, chosen with the arrow
   // keys and Enter, or with the pointer; Escape closes it.
   import { matching, type Command } from "./commands";
+  import Named from "../theme/Named.svelte";
 
   let { commands, onclose }: { commands: Command[]; onclose: () => void } = $props();
 
@@ -64,8 +65,8 @@
           onclick={() => run(command)}
           onpointermove={() => (chosen = at)}
         >
-          <span>{command.name}</span>
-          {#if command.hint}<em>{command.hint}</em>{/if}
+          <span><Named text={command.name} /></span>
+          {#if command.hint}<em><Named text={command.hint} /></em>{/if}
         </li>
       {:else}
         <li class="none">No command of that name.</li>

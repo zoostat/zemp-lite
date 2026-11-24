@@ -22,6 +22,7 @@
   // the engine's index (`help/pages.ts`, `help/ListPage.svelte`), so that every step of a
   // trail has a page to open.
   import HelpPage from "../help/HelpPage.svelte";
+  import Named from "../theme/Named.svelte";
   import { onMount, tick } from "svelte";
   import { shownOf } from "../help/forms";
   import { HOME, after, before, called, here } from "../help/history";
@@ -184,7 +185,7 @@
           <button
             class:on={section.line === inView}
             aria-current={section.line === inView ? "location" : undefined}
-            onclick={() => goTo(section.line)}>{section.title}</button
+            onclick={() => goTo(section.line)}><Named text={section.title} /></button
           >
         </li>
       {/each}
@@ -236,11 +237,11 @@
               <button
                 class:mono={step.name}
                 onclick={() => step.to !== null && void workspace.showHelpStop(step.to)}
-                >{step.label}</button
+                ><Named text={step.label} /></button
               >
             {:else}
               <span class="here" class:mono={step.name} aria-current="page" data-testid="help-title"
-                >{step.label}</span
+                ><Named text={step.label} /></span
               >
             {/if}
           </li>
