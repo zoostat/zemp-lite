@@ -202,9 +202,22 @@ ARGUMENTS
 VALUE
     A `Frame` with the same columns and a subset of the rows; a panel declaration survives.
 
+MISSING VALUES
+    A row where the condition is `NA` is not kept, and a note counts those rows and says how to list them.
+    To keep them on purpose, say so: `where(is_missing(age) || age > 30)`.
+
 WARNINGS AND NOTES
     Note    rows dropped because the condition was NA, with the count and a statement that lists them
     Note    no row kept: the result is empty
+
+COMING FROM R OR STATA
+    Equivalents: R subset(), dplyr::filter(); Stata keep if.
+
+    Zeff                 R                                                      Stata
+    d.where(wage > 20)   subset(d, wage > 20), or dplyr::filter(d, wage > 20)   keep if wage > 20 & !missing(wage)
+
+    In Stata a missing value is larger than any number, so `keep if wage > 20` keeps the rows with no wage;
+    R's `subset` and `filter` leave them out and say nothing.
 
 ACCURACY
     Exact: the same rows, in the same order, as dplyr::filter() once its NA rows are removed; part of
@@ -214,9 +227,12 @@ SEE ALSO
     drop_missing, select, sort, distinct, sample, is_missing
 
 EXAMPLES
+    // The rows that meet two conditions.
     > let wages = import("zeff:wages.csv")
     > wages.where(year >= 2010 && female == 1).n_rows()
     4217
+
+    // The note counts the rows where the condition was `NA`.
     > wages.where(exper > 10).n_rows()
     7902
     note: 13 rows dropped where `exper > 10` was NA; `wages.where(is_missing(exper))` lists them
@@ -228,6 +244,10 @@ a verb whose errors are part of its contract
 
 ```
 merge — Join two frames on key variables                                     data · tier 1 · since 0.6.0 · 1.0 · exact
+
+IN BRIEF
+    - `a.merge(b, on: id)`: every row of `a`, with the columns of `b` where the key matches.
+    - `a.merge(b, on: firm, relation: many_to_one)`: the key structure stated, and checked before joining.
 
 USAGE
     data.merge(frame, on: Vars, join: left | inner | full = left,
@@ -258,11 +278,32 @@ VALUE
     A `Frame` with the left frame's columns, then the right frame's non-key columns; labels, categories and
     a panel declaration on other keys are kept.
 
+MISSING VALUES
+    A key that is `NA` matches nothing, on either side: its row is counted as unmatched.
+
 WARNINGS AND NOTES
     Note    matched and unmatched rows on each side, with counts
     Z0603   the keys form a many-to-many relation, or relation: does not hold
     Z0604   a non-key column exists in both frames and no suffixes: is given
     Z0101   a key variable is missing from one frame
+
+A COMMON MISTAKE
+    Joining on one variable when the frames share another, which cannot be one column of the result:
+
+    > wages.merge(firms, on: firm)
+    error[Z0604]: columns `size` exist in both frames and are not keys
+      = help: give suffixes: ["_w", "_f"], or drop one of them first
+
+    Give the suffixes, or drop the column from one frame first.
+
+COMING FROM R OR STATA
+    Equivalents: dplyr::left_join(); Stata merge.
+
+    Zeff                 R                                   Stata
+    a.merge(b, on: id)   dplyr::left_join(a, b, by = "id")   merge 1:1 id using b, keep(master match)
+
+    dplyr matches a key that is `NA` with another that is `NA`; here `NA` matches nothing. Stata's `merge`
+    asks for the relation and adds `_merge`; here the note counts the matched and unmatched rows.
 
 ACCURACY
     Exact: the same rows and values as dplyr 1.1 joins with NA keys excluded, in the order stated above.
@@ -272,12 +313,14 @@ SEE ALSO
     append, to_long, to_wide, aggregate, rename
 
 EXAMPLES
+    // Many rows of wages to one firm; the note counts the rows matched and unmatched.
     > let firms = import("zeff:firms.csv")
     > let wages = import("zeff:wages.csv").merge(firms, on: firm, relation: many_to_one)
     merge: 18,201 rows matched; 0 left rows unmatched; 3 right rows unmatched (firms with no workers)
-    > wages.merge(firms, on: firm)
-    error[Z0604]: columns `size` exist in both frames and are not keys
-      = help: give suffixes: ["_w", "_f"], or drop one of them first
+
+    // The matched rows alone, with a column that both frames have told apart by its suffixes.
+    > wages.merge(firms, on: firm, join: inner, suffixes: ["_w", "_f"]).n_rows()
+    18201
 ```
 
 ## `zeff help dist.normal`

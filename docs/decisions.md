@@ -2099,3 +2099,11 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **The release.** Version 0.2.3 in `package.json`, `worker/Cargo.toml` and their lock files; the commit "Release 0.2.3"; the tag `v0.2.3`; a GitHub release marked a pre-release, as 0.2 to 0.2.2 were, carrying `docs/releases/0.2.3-notes.md`.
 
 **What comes next for Zemp Lite.** The owner has decided the content of 0.2.4 (open decision #220, Zeff 674aa9b): a landing page, the loading and project screens redrawn, the name drawn with a badge. The specification's copy is brought up to it after this release; nothing of it is begun before his "Start release 0.2.4".
+
+## 24 November 2026: The specification's copy is brought to Zeff 674aa9b, where release 0.2.4 is entered (#220)
+
+**The owner's word**, passed by the coordinating session on 24 November 2026 and read in the Zeff repository before it was taken (commit 674aa9b, on the main branch there under the owner's name): the content of Zemp Lite 0.2.4 is a landing page at the root of the address with the app at `/app/`, the loading and project screens redrawn, and the name drawn as "Zemp" with a raised "Lite" badge ("Record for 0.2.4", open decision #220).
+
+**Choice.** `docs/spec/` is the Zeff repository's at commit 674aa9b, compared byte for byte, made after release 0.2.3 was tagged. Four files differ from the copy of ca4c070: the Zemp Specification (the row 0.2.4 of section 15), the register of open decisions (#220, and the entries Zeff's own release 0.9.0 added since), the function catalogue and the help examples (Zeff 0.9.0's own work, nothing of Zemp Lite's). Nothing is changed in the app and nothing of 0.2.4 is begun: it opens on the owner's "Start release 0.2.4".
+
+**Reason.** The copy here is the Zeff repository's at a named commit, brought up to date before a release of Zemp Lite is planned from it.
