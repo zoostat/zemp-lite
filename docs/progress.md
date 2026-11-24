@@ -104,4 +104,6 @@ Decided by the owner (#211, stage 1), planned (`docs/releases/0.2.3.md`), built 
 
 **Done, step 4b `[function]`** (added on the owner's word of the same day, #225 item 5, read at Zeff d934ffb): the loading screen's button says **Start** alone, with no arrow and no name drawn in it; grey until the bar is full, then open, Return pressing it; the line under it unchanged. No page of Using Zemp Lite, of Help, no picture and not the README named the button, so nothing else changes. `docs/spec/` is the copy at Zeff d934ffb. Green here: the whole routine in both browsers (418 unit tests, 645 browser tests, 3 skipped by design; the nine sample projects identical).
 
-**Next.** Step 5 `[function]`: the whole, the measures and the notes.
+**Done, step 5 `[function]`.** The whole-screen test of 0.2.4 runs over the screens as they stand (the loading screen with **Start**, the project screen in its states, what is counted, Help), in both themes, at a desk's width and a phone's. The measures taken at the address by this release's deployments are gathered, and the notes drafted (`docs/releases/0.2.5-notes.md`). One test added: an address of a part of the landing page of 0.2.4 opens the app. `docs/spec/` is the copy at Zeff 6dfb777, where the trial's result is recorded (#224, R4). Green here: the whole routine in both browsers (418 unit tests, 647 browser tests, 3 skipped by design; the nine sample projects identical).
+
+**Next.** Step 6 `[function]`: the pre-release routine.

@@ -108,6 +108,15 @@ test("an address of before 0.2.4, of the root, is the app's own: nothing sends i
   expect(visited.every((path) => path === "/")).toBe(true);
 });
 
+test("an address of a part of the landing page of 0.2.4 opens the app", async ({ page }) => {
+  // The landing page's bands had addresses of their own (the root with `#see-it-work` after
+  // it). The page is gone; such an address names nothing of the app, which opens as it does
+  // for the root alone.
+  await page.goto("/#see-it-work");
+  await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
+});
+
 test("the engine's file stands in the one folder of built files", async ({ page, press }) => {
   const asked = engineAsked(page);
   await page.goto("/");

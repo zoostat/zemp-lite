@@ -2594,3 +2594,15 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **Reason.** The checklist's step 4, its "done when".
 
+## 24 November 2026: The whole, the measures and the notes (release 0.2.5, step 5)
+
+**Choice.**
+
+1. _The whole-screen test stays as 0.2.4 wrote it_, without the landing page's states (taken out at step 2) and with **Start** among the stops of the Tab key (step 4b): the loading screen while the engine comes and once it runs, the project screen empty, naming, with projects, with a menu open and with a question asked, the page of what is counted, and Help's Home and a function's page, each through 12.5 pixels, 4.5 to 1, both themes, a desk's width and a phone's. Nothing new is drawn by this release, so no state is added.
+2. _One test is added_: an address of a part of the landing page of 0.2.4 (the root with `#see-it-work` after it) opens the app, as the notes say.
+3. _The measures_ are those the checks at the address print at each deployment, read from GitHub's record of each; the notes give them as ranges over the deployments of the release, and the size of the engine before and after the packing.
+4. _The notes_ (`docs/releases/0.2.5-notes.md`) are drafted: what shipped, the three changes a reader meets (the address, the landing page gone, **Start**), the reference versions, what is left out, known issues (the function's limit of calls a day among them), the measures so far. The record of the pre-release routine and the last measures are added at step 6.
+5. _The specification's copy_ is brought to Zeff 6dfb777 ("Record that the tight packing held in Zemp Lite 0.2.5 (#224, R4)"), read there before it was taken and compared byte for byte: the register of open decisions and the risk register differ from the copy at d934ffb.
+
+**Reason.** The checklist's step 5.
+
