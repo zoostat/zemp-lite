@@ -2141,3 +2141,11 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **The plan.** `docs/releases/0.2.4.md`, 16 steps, with what the reading found and four questions for the owner. Engineering choices taken in the plan, each to be recorded at its step: the build keeps one `/assets/` for the root and for `/app/`, so the engine's file keeps its address and a browser that has it does not fetch it again; an address kept from before with a project in it is forwarded from the root to `/app/`; the root is a plain page that opens the app until the landing page stands, so that no commit leaves the address without a way in; a link of the landing page into Help opens the Scratch project on the Help place at the page named.
 
 **Reason.** The standing instructions for the start of a release: the plan is shown and no code is written before the owner's "go".
+
+## 24 November 2026: Release 0.2.4 opened, and the owner's answers (release 0.2.4, step 1)
+
+**The owner's word:** "Go, as recommended", to the checklist of `docs/releases/0.2.4.md` (16 steps) and its four questions. So: (1) the landing page stands at the root of the address and the app at `/app/`; a reader who returns to the root sees the landing page each time; (2) "Report a problem" on the landing page leads to the page **Reporting a problem** of Using Zemp Lite, in the app, not to the public list of issues; (3) the two faults of Help's search are mended in this release (↵ opens the first match when the text typed is not a name; a suggested name is a link); (4) the paragraphs of Using Zemp Lite that this release changes are put to him to read before the release.
+
+**Choices of this step.** Version `0.2.4-dev` in `package.json`, `worker/Cargo.toml` and their lock files. Nothing of the app changes. The lock file of the tools names one tool whose own version is 0.2.3; it is left as it is, the version of the project alone being changed.
+
+**Reason.** The standing instructions: a release is opened on the owner's "go" to its plan, and his answers are recorded before the first step of work.
