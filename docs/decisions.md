@@ -2620,3 +2620,19 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Under Node: the host answering with its page, to a browser that takes brotli, to one that does not, and for the headers alone, is answered 503, not to be kept, with the isolation headers and no page in the body; with the packed file there and the engine not, the packed engine is still sent to a browser that takes it.
 
 **Reason.** The pre-release routine (testing handbook, section 2.4, item 1): only fixes from here on, and this mends the release's own new piece so that it cannot carry on a fault of the host.
+
+## 24 November 2026: The pre-release routine of 0.2.5 (step 6)
+
+**What was done**, of the testing handbook's section 2.4, the items that exist here.
+
+1. _Features frozen_ after step 4b. One change followed, a mending: the host's function no longer passes the host's page on as the engine (the entry above).
+2. _The whole suite_, on the last commit that changes the app or its host (b30d349): green on this Mac and on GitHub in both browsers. GitHub's check was green on every commit of the release it checked (b52b563, 4b1ca01, f8956dd, 44b14fc, e1fd6e3, b30d349), and each was deployed.
+3. _The samples and the pictures._ The nine sample projects are identical to what `zeff run` prints, at every run of the routine. The thirteen pictures were made afresh and looked at: four identical, nine differing only in the version a screen shows (0.2.5-dev for 0.2.4) and in a time of day or a run's duration. They are made once more at the release, when the version is 0.2.5.
+4. _At the address._ The commit was sent to the trial address and then to the address, and the 16 checks passed at each in both engines; from this Mac both addresses answer as they must. The walk in both engines (a scratch test, not kept in the repository): a first visitor and a returning one, as the notes set out. In Chromium the returning visitor's project was found by its address of 0.2.4 and by its address of before 0.2.4; WebKit's test browser keeps no project between pages, so there the addresses were seen to go on to the app.
+5. _The notes_ are completed: the measures over the six deployments, the record of the trial and of this routine, the known issues.
+6. _The registers_ are the Zeff repository's: the review is sent to the coordinating session (#225 done in its five items; #224 held and built; R4's figures; the weakness of the host for the registers to place).
+
+**Not done, and said in the notes:** the reader test (carried to Zeff 0.9.0 by the owner's decision at 0.2.1) and the checks by hand.
+
+**Reason.** The checklist's step 6. The release itself waits for the owner's word.
+
