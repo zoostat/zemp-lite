@@ -155,14 +155,26 @@ test("the bar glides: a start done at once still fills it over about a second, a
     // A step is marked done only once the bar has passed it.
     if (value < 69) expect(firstDone, `the first step at ${value} %`).toBe(false);
   }
-  // It never goes back, and never leaps: no further in a frame than the whole bar in a second.
+  // It never goes back, and never leaps. The bar is drawn by the screen's own frames and looked
+  // at by this test's, which are not the same instants; so its pace is held over every stretch
+  // of a tenth of a second or more, where it must not have gone further than the whole bar
+  // goes in a second, with three frames' allowance for the two clocks.
   for (let at = 1; at < samples.length; at++) {
-    const [now, value] = samples[at] as [number, number, boolean, boolean];
-    const [before, last] = samples[at - 1] as [number, number, boolean, boolean];
+    const [, value] = samples[at] as [number, number, boolean, boolean];
+    const [, last] = samples[at - 1] as [number, number, boolean, boolean];
     expect(value).toBeGreaterThanOrEqual(last);
-    expect(value - last, `a step of the bar in ${Math.round(now - before)} ms`).toBeLessThanOrEqual(
-      ((now - before) / 1000) * 100 + 2,
-    );
+  }
+  for (let from = 0; from < samples.length; from++) {
+    for (let to = from + 1; to < samples.length; to++) {
+      const [began, low] = samples[from] as [number, number, boolean, boolean];
+      const [ended, high] = samples[to] as [number, number, boolean, boolean];
+      const lasted = ended - began;
+      if (lasted < 100) continue;
+      expect(
+        high - low,
+        `the bar from ${low} to ${high} % in ${Math.round(lasted)} ms`,
+      ).toBeLessThanOrEqual((lasted / 1000) * 100 + 7);
+    }
   }
   // So from where it began to full took about the share of a second it had left to fill.
   const took = ended[0] - began[0];

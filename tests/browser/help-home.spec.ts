@@ -328,3 +328,60 @@ for (const theme of ["light", "dark"] as const) {
     await expect(title(page)).toHaveText("Errors and warnings");
   });
 }
+
+test("Home is in the look of 0.2.4's screens: each part a white card with its icon in a hexagon, the title in the display type, and the way on said", async ({
+  page,
+  press,
+}) => {
+  // Release 0.2.4, step 12 (open decision #220, item 9). What Home holds is unchanged (#211,
+  // item 14), which the tests above hold; this one holds how it is drawn.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await scratch(page, press);
+  await press(places(page).getByRole("button", { name: "Help" }));
+  await expect(page.getByTestId("help-counts")).toBeVisible();
+  const look = await home(page).evaluate((article) => {
+    const window = getComputedStyle(document.body).backgroundColor;
+    const cards = [...article.querySelectorAll("section.panel")] as HTMLElement[];
+    return {
+      title: getComputedStyle(article.querySelector("h3") as HTMLElement).fontFamily,
+      topics: getComputedStyle(article.querySelector(".label") as HTMLElement).fontFamily,
+      cards: cards.map((card) => {
+        const style = getComputedStyle(card);
+        const icon = card.querySelector(":scope > svg");
+        const words = card.querySelector(".words") as HTMLElement;
+        return {
+          white: style.backgroundColor === window,
+          rounded: parseFloat(style.borderTopLeftRadius),
+          shade: style.boxShadow !== "none",
+          icon: icon !== null && icon.querySelector("polygon.hx") !== null,
+          hidden: icon?.getAttribute("aria-hidden"),
+          iconLeft:
+            icon !== null &&
+            icon.getBoundingClientRect().right <= words.getBoundingClientRect().left,
+          go: card.querySelector(".go")?.textContent ?? null,
+          goHidden: card.querySelector(".go")?.getAttribute("aria-hidden") ?? null,
+        };
+      }),
+    };
+  });
+  expect(look.title).toContain("Newsreader");
+  expect(look.topics).toContain("Newsreader");
+  expect(look.cards).toHaveLength(5);
+  for (const card of look.cards) {
+    expect(card.white).toBe(true);
+    expect(card.rounded).toBeGreaterThanOrEqual(12);
+    expect(card.shade).toBe(true);
+    // The icon is a drawing beside the words, which say what the card is: it is not read out.
+    expect(card.icon).toBe(true);
+    expect(card.hidden).toBe("true");
+    expect(card.iconLeft).toBe(true);
+  }
+  // Zeff and Zemp Lite are what they are; a topic's card leads on, and says so.
+  expect(look.cards.map((card) => card.go)).toEqual([null, null, "Open →", "Open →", "Open →"]);
+  expect(look.cards.slice(2).map((card) => card.goHidden)).toEqual(["true", "true", "true"]);
+  // The name is drawn in Zemp Lite's card and in the topic that names it.
+  await expect(home(page).locator(".zl")).toHaveCount(2);
+  // A card is still opened by its button, whose name is the topic and its count alone.
+  await press(opener(page, "Using Zemp Lite 13"));
+  await expect(title(page)).toHaveText("Using Zemp Lite");
+});

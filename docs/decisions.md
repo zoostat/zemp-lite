@@ -2333,3 +2333,16 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Unit (`src/app/start.test.ts`): where the steps have got to; a start done at once fills the bar in about sixty frames; a slow fetching followed, never ahead and never back, a long wait between frames carrying it no further than the steps, and the steps begun again; the marks against the bar at each of its thirds, while a step runs, and where one failed; how the engine came, for a fetched file, an uncompressed one, a kept one, one answered "not changed", and a record that does not say. Under Node (`tools/facts.test.mjs`): the travelling size at the host's setting, kept by what the files hold; more than the measure's least, less than gzip, under 5 MB. Browser (`tests/browser/start.spec.ts`): the glide, frame by frame; the first step's three wordings. At the address (`tests/host/host.spec.ts`): the screens' figure against the bytes sent, and the kept case.
 
 **Reason.** The owner's ruling (#220, item 10), and his standing rule that every number on a screen is true of the release that shows it (#211, item 12).
+
+## 24 November 2026: Home of Help in the look of the screens (release 0.2.4, step 12)
+
+**Choices.**
+
+1. _As drawn_ (`~/dev/handbook/zemp-lite-0.2.4-help-mockup.html`, which the owner approved: "Yes, as drawn"): each part of Home is a card of the project screen's kind, white with a hairline, rounded, a soft shade under it, its icon in a hexagon at the left, its name in bold and its line under it. The title **Help** and the word **Topics** are in the display type. The versions are set plainly beside the names, the stage in a small outlined pill.
+2. _The way on._ A topic's card says "Open →" at its foot, as the Scratch project's card says "Start here →". It is drawn, not read out: the card's button, whose name is the topic and its count, is the control, and it still covers the whole card. The arrow that stood at a panel's right is gone.
+3. _The icons:_ a letter Z for Zeff, a window for Zemp Lite, a box for the packages, a warning sign for the errors and warnings, an open book for the pages on the app. They say nothing to a screen reader; the words beside them do.
+4. _What Home holds is unchanged_ (#211, item 14): Zeff and Zemp Lite one after the other, each with its version and its words, the engine's counts, then the three topics, the packages' names as small links inside their card. Its sizes still follow the size chosen for code.
+
+**Tested.** Browser (`tests/browser/help-home.spec.ts`): the tests of 0.2.3 hold what Home says, its counts, its panels' buttons and links, the keyboard, its column, 12.5 pixels and 4.5 to 1 in both themes, unchanged and green; a new test holds the look: five cards, each on the window's own white, rounded, with a shade, its icon a hexagon at the left of the words and hidden from a screen reader; the title and **Topics** in the display type; "Open →" on the three topics' cards and on no other, drawn and not read out; the name drawn twice; a card opened by its button.
+
+**Reason.** The owner's ruling (#220, item 9): Help's landing page takes the look of 0.2.4's screens, and what it holds is unchanged.
