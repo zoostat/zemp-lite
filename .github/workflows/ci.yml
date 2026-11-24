@@ -128,6 +128,9 @@ jobs:
       - name: The engine's own sample projects, through this worker, against their expected output
         run: npm run check:samples
 
+      - name: The facts the landing page and the loading screen are built from, held to this worker
+        run: npm run check:facts
+
       # After the worker is built: one unit test runs the engine itself, to hold the figures
       # the interface asks for to the bytes the released command line writes.
       - name: Unit tests

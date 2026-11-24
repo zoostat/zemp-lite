@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -39,7 +40,24 @@ function hostHeaders(text: string): Record<string, string> {
 const engineFile = new URL("./worker/pkg/web/zemp_worker_bg.wasm", import.meta.url);
 const engineBytes = existsSync(engineFile) ? readFileSync(engineFile) : null;
 
-export default defineConfig({
+/**
+ * What the landing page and the loading screen say of the engine, taken from the engine this
+ * build carries (release 0.2.4, step 4; `tools/facts.mjs`): its version, its counts, the
+ * Scratch project's regressions with what it prints for them, and its travelling size. The
+ * build stops where one cannot be had; the development server and the unit tests, before the
+ * worker is built, go on without them.
+ */
+function engineFacts(building: boolean): unknown {
+  const tool = fileURLToPath(new URL("./tools/facts.mjs", import.meta.url));
+  const ran = spawnSync(process.execPath, [tool], { encoding: "utf8" });
+  if (ran.status === 0) return JSON.parse(ran.stdout) as unknown;
+  if (building) {
+    throw new Error(ran.stderr.trim() || "the facts of the engine could not be had");
+  }
+  return null;
+}
+
+export default defineConfig(({ command }) => ({
   plugins: [svelte()],
   server: { headers: isolation },
   preview: { headers: isolation },
@@ -64,8 +82,9 @@ export default defineConfig({
       engineBytes === null ? null : createHash("sha256").update(engineBytes).digest("hex"),
     ),
     __ENGINE_BYTES__: JSON.stringify(engineBytes?.length ?? null),
+    __ZEMP_FACTS__: JSON.stringify(engineFacts(command === "build")),
   },
   test: {
     include: ["src/**/*.test.ts"],
   },
-});
+}));
