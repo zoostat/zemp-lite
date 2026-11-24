@@ -94,5 +94,6 @@ Decided by the owner (#211, stage 1), planned (`docs/releases/0.2.3.md`), built 
 
 **Green.** Documents alone since `v0.2.4`; the routine was green on the release's tree.
 
-**Next.** The owner's "go"; then step 1 `[engine]`, open the release.
+**Done, step 1 `[engine]`.** On the owner's "Go": version `0.2.5-dev`; the choices recorded. Green here: the whole routine in both browsers (422 unit tests, 635 browser tests, 3 skipped by design; the nine sample projects identical).
 
+**Next.** Step 2 `[engine]`: the app at the root, and `/app/` going on to it.

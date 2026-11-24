@@ -2509,3 +2509,11 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 4. _If the trial falls_, the step's changes are taken out by a commit of their own, never by rewriting history.
 
 **Reason.** The checklist is written from the row, as the standing instructions ask; no code is written before the owner's "go".
+
+## 24 November 2026: Release 0.2.5 is opened (step 1)
+
+**The owner's word:** "Go", on the plan of `docs/releases/0.2.5.md`, which put no question to him.
+
+**Choice.** Version `0.2.5-dev`, in the app's manifest and the worker's. The findings of the reading and the four engineering choices are those of the entry above ("Release 0.2.5 planned"): `/app/` a page that goes on; the landing page deleted in the step that moves the app and its leavings cleared in the step after; the tight packing tried on a deployment beside the real one first; a fallen trial taken out by a commit of its own.
+
+**Reason.** The checklist's step 1.
