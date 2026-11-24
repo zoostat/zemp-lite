@@ -61,11 +61,10 @@ const engineFile = new URL("./worker/pkg/web/zemp_worker_bg.wasm", import.meta.u
 const engineBytes = existsSync(engineFile) ? readFileSync(engineFile) : null;
 
 /**
- * What the landing page and the loading screen say of the engine, taken from the engine this
- * build carries (release 0.2.4, step 4; `tools/facts.mjs`): its version, its counts, the
- * Scratch project's regressions with what it prints for them, and its travelling size. The
- * build stops where one cannot be had; the development server and the unit tests, before the
- * worker is built, go on without them.
+ * What the loading screen says of the engine's size, taken from the engine this build carries
+ * (release 0.2.4, step 4; `tools/facts.mjs`): its travelling size. The build stops where it
+ * cannot be had; the development server and the unit tests, before the worker is built, go on
+ * without it.
  */
 function engineFacts(building: boolean): unknown {
   const tool = fileURLToPath(new URL("./tools/facts.mjs", import.meta.url));
@@ -77,25 +76,8 @@ function engineFacts(building: boolean): unknown {
   return null;
 }
 
-/**
- * The landing page links a release to its notes in the repository (open decision #220, item 1:
- * every link goes to an address that exists). So a build of a release, whose version has
- * nothing after its three numbers, stops where the notes of that version are not written; a
- * build between two releases links to the list of releases instead.
- */
-function notesWritten(building: boolean): void {
-  if (!building || !/^\d+\.\d+\.\d+$/.test(manifest.version)) return;
-  const notes = new URL(`./docs/releases/${manifest.version}-notes.md`, import.meta.url);
-  if (!existsSync(notes)) {
-    throw new Error(
-      `the notes of release ${manifest.version} are not written (docs/releases/${manifest.version}-notes.md), and the landing page links to them`,
-    );
-  }
-}
-
 export default defineConfig(({ command }) => {
   const building = command === "build";
-  notesWritten(building);
   return {
     plugins: [svelte(), keptAsAtTheHost],
     server: { headers: isolation },

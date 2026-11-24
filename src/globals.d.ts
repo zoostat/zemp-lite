@@ -11,15 +11,7 @@ declare const __ENGINE_SHA256__: string | null;
 declare const __ENGINE_BYTES__: number | null;
 
 /**
- * What the landing page and the loading screen say of the engine, taken from the engine the
- * build carries (`tools/facts.mjs`); `null` before the worker is built, which a build refuses.
+ * What the loading screen says of the engine's size, taken from the engine the build carries
+ * (`tools/facts.mjs`); `null` before the worker is built, which a build refuses.
  */
-declare const __ZEMP_FACTS__: {
-  engine: string;
-  functions: number;
-  packages: number;
-  codes: number;
-  script: string;
-  printed: string;
-  travels: number;
-} | null;
+declare const __ZEMP_FACTS__: { travels: number } | null;

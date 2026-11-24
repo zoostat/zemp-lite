@@ -1,9 +1,10 @@
-// An address that opens a page of Help (release 0.2.4, step 3; open decision #220, item 1: the
-// landing page's links into Help). Help is a place inside a project, so the app, given such an
-// address, opens the Scratch project on the Help place at the page named. The address is the
-// app's with `#/help` and, after it, the page: nothing (Home); `using/<page>`; `name/<name>`,
-// and for one function of a name with two (#215) its package and what it is called on after
-// it; `packages`; `package/<name>`; `codes` or `codes/<family>`; `code/<code>`.
+// An address that opens a page of Help (release 0.2.4, step 3; kept at 0.2.5, open decision
+// #225, item 1, when the landing page whose links it served went). Help is a place inside a
+// project, so the app, given such an address, opens the Scratch project on the Help place at
+// the page named. The address is the app's with `#/help` and, after it, the page: nothing
+// (Home); `using/<page>`; `name/<name>`, and for one function of a name with two (#215) its
+// package and what it is called on after it; `packages`; `package/<name>`; `codes` or
+// `codes/<family>`; `code/<code>`.
 import { usingPage } from "../using/pages";
 import { HOME, type Stop } from "./history";
 

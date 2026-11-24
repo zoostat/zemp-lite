@@ -2535,3 +2535,17 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Found by the routine.** The test that reads every rule naming a font, and holds each to the three shipped faces, first makes sure its reading finds the rules at all: it asked for more than 40, and finds 35 now that the landing page's own are gone. That floor is of the reading, not of the fonts; it is set at 30 with the count beside it, and what the test holds of each rule is unchanged.
 
 **Reason.** The checklist's step 2; open decision #225, items 1 to 3.
+
+## 24 November 2026: What only the landing page used, cleared out (release 0.2.5, step 3)
+
+**Choice.**
+
+1. _The facts the build takes from the engine are the engine's travelling size alone_ (`tools/facts.mjs`, `tools/facts-lib.mjs`, `src/app/facts.ts`). The engine's version, the three counts, the part of the Scratch script and its print were shown by the landing page and by nothing else: the app names its engine from the engine itself, and Help's Home counts from the engine as it runs. With them go the build's run of the Scratch script under Node and the five tests of what could stop it; the two tests of the size stay, with the hold to the measure of risk R4.
+2. _The build no longer stops where a release's notes are not written._ It stopped because the landing page linked to them; nothing in the app does. The notes are still a part of closing a release, which the standing instructions ask for.
+3. _Four colours go from the tokens_ (the landing page's foot with its two inks, and the short rule under a band's title), with their pairings in the test of contrast; no rule of the app names them. The deep violet band stays: the loading screen has it.
+4. _The check after a deployment no longer asks GitHub's interface about links_, so the deployment's workflow no longer hands it a token.
+5. _A test holds that the build carries nothing of the landing page_: the built pages are three (the app, the page at `/app/`, what is counted); no built page, script or style holds one of the landing page's headings or its marks; and the page at `/app/` has no style, no element to draw in, and one script under a thousand characters that names no file but the small helper the build tool puts before every page's script (under two thousand characters, naming nothing).
+
+**The words, read again.** No page of **Using Zemp Lite** names the landing page, `/app/`, an address or **Open Zemp Lite**; `README.md` names neither. None of the thirteen pictures shows the landing page or an address. Nothing is changed, and nothing is put to the owner to read.
+
+**Reason.** The checklist's step 3; open decision #225, item 3.

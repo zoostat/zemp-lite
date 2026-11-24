@@ -2,6 +2,8 @@
 // address, as before 0.2.4. In 0.2.4 alone it stood at `/app/`; an address of that release, of
 // a project, of the naming of a new one or of a page of Help, goes on to the same place at the
 // root, and Back does not return to `/app/`.
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import type { Page, Request } from "@playwright/test";
 import { expect, test } from "./support";
 
@@ -127,4 +129,44 @@ test("what is counted is said on a page of its own, reached from the app and lea
   await page.getByRole("link", { name: "Back to Zemp Lite" }).click();
   expect(new URL(page.url()).pathname).toBe("/");
   await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+});
+
+test("the build carries nothing of the landing page, and the page at /app/ is one small script", async ({
+  request,
+}) => {
+  // Release 0.2.5, step 3 (open decision #225, item 3): the landing page's text and its table
+  // are shown nowhere, so no built file holds them. The build is the folder the tests are
+  // served from.
+  const dist = path.resolve("dist");
+  const files = (readdirSync(dist, { recursive: true }) as string[]).filter((name) =>
+    /\.(html|js|css)$/.test(name),
+  );
+  expect(files.length).toBeGreaterThan(5);
+  const pages = files.filter((name) => name.endsWith(".html")).sort();
+  expect(pages).toEqual([path.join("app", "index.html"), "counted.html", "index.html"]);
+  for (const name of files) {
+    const text = readFileSync(path.join(dist, name), "utf8");
+    for (const words of ["Why Zemp Lite?", "See it work", "Learn and take part", "front-printed"]) {
+      expect(text.includes(words), `${name} holds "${words}"`).toBe(false);
+    }
+  }
+  // The page at `/app/`: no style, no element to draw in, and one script of a few lines, which
+  // names no file but the small one the build tool puts before every page's script.
+  const page = await (await request.get("/app/")).text();
+  expect(page).not.toMatch(/<link[^>]+stylesheet/);
+  expect(page).not.toContain('id="app"');
+  const scripts = [...page.matchAll(/<script[^>]+src="([^"]+)"/g)].map((found) => found[1]);
+  expect(scripts).toHaveLength(1);
+  const script = await (await request.get(scripts[0] as string)).text();
+  expect(script.length).toBeLessThan(1000);
+  expect(script).toContain("location.replace");
+  const named = [...script.matchAll(/(?:import|from)\s*\(?\s*["']([^"']+)["']/g)].map(
+    (found) => found[1] as string,
+  );
+  for (const name of named) {
+    expect(name).toMatch(/^\.\/modulepreload-polyfill-[\w-]+\.js$/);
+    const helper = await (await request.get(`/assets/${name.slice(2)}`)).text();
+    expect(helper.length).toBeLessThan(2000);
+    expect(helper).not.toMatch(/(?:import|from)\s*\(?\s*["'][^"']+["']/);
+  }
 });
