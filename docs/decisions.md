@@ -2636,3 +2636,17 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **Reason.** The checklist's step 6. The release itself waits for the owner's word.
 
+## 24 November 2026: Release 0.2.5 is closed
+
+**The owner's word:** "Release 0.2.5", after the report of step 6.
+
+**What was done.** Version 0.2.5 in the app's manifest and the worker's. The worker built again (the version is in it): the engine of the release packs to 2,918,316 bytes of 15,148,342 on this machine, and the measure of risk R4 reads 2,928.2 kB. The thirteen pictures made again: nine differ, in the version a screen shows and in a time of day or a run's duration. The notes dated, with those two figures of the release's own tree.
+
+**The routine at the close.** Here, on the release's own tree, which differs from the checked and deployed commit b30d349 in the version, the pictures and the documents alone: format, lint, types, the edition check, the Rust checks and tests, the worker's messages, the measure, the nine samples identical, the eleven tests of the engine's size, its packing and the host's function, 418 unit tests, and 647 browser tests in both browsers (3 skipped by design). Green. GitHub's check of the release's commit and its deployment are read after the tag is pushed, and what they show is told to the owner.
+
+**The functions' catalogue** has no row of a Zemp release; its status column is the Zeff repository's.
+
+**The registers.** They are the Zeff repository's. The review was sent to the coordinating session at step 6, which entered the finding of the host as risk R13 and holds what says "released" for this word: #225 done in its five items; #224 held and built; R4's figures.
+
+**Reason.** The standing instructions' closing of a release.
+
