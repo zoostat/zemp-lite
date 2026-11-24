@@ -3,9 +3,11 @@
   // shows the welcome screen; the project it has open is named in its address, after `#/p/`,
   // so that a reload comes back to the same project and a second tab can hold another.
   import { browserEngine } from "../engine/browser";
+  import { stopOf } from "../help/address";
+  import type { Stop } from "../help/history";
   import { MemoryFolder, OpfsFolder } from "../project/folder";
   import { keepingOf, type Keeping } from "../project/keeping";
-  import { Projects, type Project } from "../project/projects";
+  import { Projects, SCRATCH, type Project } from "../project/projects";
   import { browserStorage } from "../theme/theme.svelte";
   import Start from "./Start.svelte";
   import { ENGINE_SHA256, VERSION } from "./version";
@@ -68,6 +70,11 @@
   let ready = $state(false);
   /** The welcome screen is to open with the new project's name asked for (`#/new`). */
   let naming = $state(false);
+  /**
+   * The page of Help an address asked for (`#/help/…`; release 0.2.4, step 3): the project
+   * opened shows it, once, and sets this down.
+   */
+  let helpAsked = $state<Stop | null>(null);
 
   async function follow(): Promise<void> {
     if (projects === null) {
@@ -77,6 +84,16 @@
       keeping = await keepingOf(navigator.storage, lasting, false);
     }
     naming = window.location.hash === "#/new";
+    // An address of Help: Help is a place inside a project, so the Scratch project is opened,
+    // made first where this browser has none, and shows the page. The address becomes the
+    // project's own without a step of the browser's history, so that Back leaves the app for
+    // the page the link was on.
+    const help = stopOf(window.location.hash);
+    if (help !== null) {
+      await projects.scratch();
+      helpAsked = help;
+      window.history.replaceState(null, "", `#/p/${SCRATCH}`);
+    }
     const folder = named();
     if (project !== null && project.info.folder !== folder) {
       // The project closes: its workers are ended, which returns their memory to the browser.
@@ -134,6 +151,8 @@
       {engine}
       {language}
       {keeping}
+      help={helpAsked}
+      onhelp={() => (helpAsked = null)}
       onask={ask}
       onclose={() => {
         asked = null;

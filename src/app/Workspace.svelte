@@ -11,7 +11,7 @@
   import { codeLarger, codeSize, codeSmaller, codeUsual } from "../theme/codesize.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
   import { sectionAt } from "../editor/sections";
-  import { after, before, called } from "../help/history";
+  import { after, before, called, type Stop } from "../help/history";
   import type { Command } from "./commands";
   import ConsoleLine from "./ConsoleLine.svelte";
   import MarginPane from "./MarginPane.svelte";
@@ -29,6 +29,8 @@
     engine,
     language = null,
     keeping = "may-clear",
+    help = null,
+    onhelp = () => {},
     onclose,
     onask = () => {},
   }: {
@@ -37,6 +39,9 @@
     language?: Engine | null;
     /** What the browser does with the projects, for the reminder to export. */
     keeping?: Keeping;
+    /** A page of Help the address asked for: shown once, and `onhelp` then says it was. */
+    help?: Stop | null;
+    onhelp?: () => void;
     onclose: () => void;
     /** A question about this project, which the start screen asks in the project's row. */
     onask?: (kind: "rename" | "duplicate" | "delete" | "reset") => void;
@@ -47,6 +52,14 @@
   const workspace = new Workspace(project, engine, language, browserStorage());
   $effect(() => {
     workspace.keeping = keeping;
+  });
+  // An address of Help (release 0.2.4, step 3): the page it names is opened in the Help place,
+  // here as the project opens, or later where the address is given while it is open.
+  $effect(() => {
+    if (help === null) return;
+    const stop = help;
+    onhelp();
+    void workspace.showHelpStop(stop);
   });
 
   let palette = $state(false);

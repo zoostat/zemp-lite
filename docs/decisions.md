@@ -2165,3 +2165,17 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Unit (`src/root/forward.test.ts`): an old address of a project and of the naming of a new one goes to the app, and nothing else does. Browser (`tests/browser/address.spec.ts`, and one test of `kept.spec.ts`): the root is the front page, opens the app and asks for nothing of the engine or its worker; a project made at `/app/` is opened, with what was written in it, by the address it would have had at the root, and Back then leaves the app; an old address of a project that is not here opens the app's welcome screen; `/#/new` asks the name in the app; the worker and the engine are asked for in `/assets/` alone; what is counted is reached from both pages and leads back to both. At the address (`tests/host/host.spec.ts`): the root is isolated, opens the app, and forwards an old address.
 
 **Reason.** The owner's decision (#220, item 2, taken as recommended and confirmed by his "Go, as recommended"): a visitor first sees what Zemp Lite is, and a click opens it; nobody's work or bookmark is lost by the move.
+
+## 24 November 2026: An address that opens a page of Help (release 0.2.4, step 3)
+
+**Choices.**
+
+1. _The address._ The app's address with `#/help` after it, and after that the page: nothing (Home); `using` and `using/<page>` (the list and a page of Using Zemp Lite, by the name of the page's file); `name/<name>`, and for one function of a name with two (#215) `name/<name>/<package>/<what it is called on>`; `packages`; `package/<name>`; `codes` and `codes/<family>`; `code/<code>` (`src/help/address.ts`, which reads an address into a page and writes a page's address).
+2. _Which project._ Help is a place inside a project. An address of Help opens the Scratch project, made first where the browser has none, on the Help place at the page named. Given while another project is open, it closes that project and opens the Scratch project, as any change of the address to another project does.
+3. _The browser's history._ The address of Help is replaced by the Scratch project's own without a step of the history, so that Back leaves the app for the page the link was on, and a reload comes back to the project, not to the link.
+4. _An address that cannot be read_ (no such kind of page, no such page of the app, parts too many or too few) opens Home. Whether the engine has the function, the package or the code named is for the engine to say: its own sentence stands on the page, as it does for a name typed into Help. The checklist's sentence is reworded so.
+5. _A first visit._ The Start screen comes first; once the engine is started the page asked for opens.
+
+**Tested.** Unit (`src/help/address.test.ts`): every kind of page is read from its address and written back to it; a name with letters an address cannot hold; what is not an address of Help; twelve addresses that name no page. Browser (`tests/browser/help-address.spec.ts`): Home, with nowhere to go back to in Help; a page of the app, a function's, a package's, a code's and a family of codes; one function of a name with two, and the bare name's chooser; a wrong page and a name the engine has not; the address given while a project is open, the page still there after a look at the script; a first visit.
+
+**Reason.** The landing page's links lead to pages of Help (#220, item 1: "every link goes to an address that exists"), and the app had no address for one.
