@@ -103,4 +103,8 @@ jobs:
         if: steps.given.outputs.given == 'true'
         env:
           ZEMP_ADDRESS: ${{ steps.checked.outputs.address }}
+          # The landing page links to this repository (its source, licence, notices and notes).
+          # Whether each is there is asked of GitHub's interface for programs, as this run,
+          # since its pages refuse a machine that asks often (they answer 429).
+          GITHUB_TOKEN: ${{ github.token }}
         run: PLAYWRIGHT_BROWSERS_PATH=0 npx playwright test --config playwright.host.config.ts

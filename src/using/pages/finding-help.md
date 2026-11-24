@@ -13,17 +13,17 @@ Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From t
 - a name from R or Stata: `lm` and `reghdfe` both find `reg`;
 - the code of an error or a warning: `W0201`.
 
-<kbd>↓</kbd> and <kbd>↑</kbd> move through the list, <kbd>↵</kbd> opens the match marked, and <kbd>Esc</kbd> closes the list.
+<kbd>↓</kbd> and <kbd>↑</kbd> move through the list, <kbd>↵</kbd> opens the match marked, and <kbd>Esc</kbd> closes the list. With no match marked, <kbd>↵</kbd> opens the page of what you typed where that is a name of Zeff's, and otherwise the first match of the list: `lm` and <kbd>↵</kbd> opens `reg`.
 
 ![The Help place with lm typed in its search field: under the field a list of two functions, reg and anova, each saying it matched R's lm().](search-in-help)
 
 ## Browse
 
-**Home** is where Help starts: what Zeff and Zemp Lite are, and a panel for each kind of page, the packages, the errors and warnings, and these pages on the app. A package's page lists its functions, each with its one line. The **Topics** pane at the left lists the packages and the errors and warnings; beside a page it lists the pages around it. At the right of a page its sections are listed, under the words On this page; press one to go to it.
+**Home** is where Help starts: what Zeff and Zemp Lite are, and a card for each kind of page, the packages, the errors and warnings, and these pages on the app. A package's page lists its functions, each with its one line. The **Topics** pane at the left has a section for each of the three; press a section's name to unfold it. Beside a page the pane lists the pages around it. At the right of a page its sections are listed, under the words On this page; press one to go to it.
 
 ## From the script
 
-Put the cursor on a function's name in the script and press <kbd>F1</kbd>: Help opens at its page. When a run gives a warning or an error, press **Explain** beside it for the page of its code.
+Rest the pointer on a function's name in the script, and its usage is shown: the function's name with its arguments. Put the cursor on the name and press <kbd>F1</kbd>: Help opens at its page. When a run gives a warning or an error, press **Explain** beside it for the page of its code.
 
 ## A name with two functions
 

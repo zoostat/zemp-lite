@@ -8,7 +8,7 @@ A project lives in the private storage this browser gives the app. Nothing of it
 
 What you type is saved as you type it. The line at the top of a project says `saved` beside the file's name when it is.
 
-![The screen of projects: at the left the release and what the app is, and at the right the Scratch project, the ways to begin a project, and the sentence that says where projects are kept.](the-screen-of-projects)
+![The screen of projects: four cards, New project…, Open project…, Open folder… and Scratch project; under them the note that says where projects are kept and how one is taken out; and at the right, where recent projects are listed, the words No project yet and a button that opens the Scratch project.](the-screen-of-projects)
 
 ## What can remove it
 

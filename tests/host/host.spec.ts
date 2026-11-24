@@ -3,7 +3,7 @@
 // example; and the first start, from a browser that has never seen the page to the engine
 // ready, is measured against the Zemp Specification's 2 seconds (section 14).
 import { readFileSync } from "node:fs";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { readZip } from "../../src/project/zip";
 
 const READY = "engine Zeff 0.8.0 ready";
@@ -46,6 +46,38 @@ test("the root is the front page, which opens the app; and an address kept from 
   await expect(page).toHaveURL(/\/app\/#?$/);
 });
 
+const SOURCE = "https://github.com/zoostat/zemp-lite";
+
+/**
+ * Whether an address the landing page links to out of the site is there. Every such link is
+ * to the repository: its front page, a file of its main branch, or its list of releases.
+ * GitHub's pages answer 429 to a machine that asks often, which says nothing of the page; so
+ * the question is put to GitHub's interface for programs, with this run's token where there
+ * is one (after a deployment) and without where there is none (from a desk).
+ */
+async function exists(page: Page, address: string): Promise<boolean> {
+  if (!address.startsWith(SOURCE)) return false;
+  const rest = address.slice(SOURCE.length);
+  const file = /^\/blob\/main\/(.+)$/.exec(rest);
+  const asked =
+    rest === ""
+      ? ""
+      : rest === "/releases"
+        ? "/releases?per_page=1"
+        : file !== null
+          ? `/contents/${file[1]}?ref=main`
+          : null;
+  if (asked === null) return false;
+  const token = process.env["GITHUB_TOKEN"];
+  const answer = await page.request.get(`https://api.github.com/repos/zoostat/zemp-lite${asked}`, {
+    headers: {
+      accept: "application/vnd.github+json",
+      ...(token === undefined || token === "" ? {} : { authorization: `Bearer ${token}` }),
+    },
+  });
+  return answer.status() === 200;
+}
+
 test("the root is the landing page, with the engine's own counts; its links out of the site answer, and a link into Help opens its page", async ({
   page,
 }) => {
@@ -62,8 +94,7 @@ test("the root is the landing page, with the engine's own counts; its links out 
     .evaluateAll((all) => [...new Set(all.map((one) => one.getAttribute("href") as string))]);
   expect(outside.length).toBeGreaterThan(2);
   for (const address of outside) {
-    const answer = await page.request.get(address);
-    expect(answer.status(), address).toBe(200);
+    expect(await exists(page, address), address).toBe(true);
   }
   await page.getByRole("link", { name: "Finding help", exact: true }).click();
   const open = page.getByRole("button", { name: "Open Zemp Lite" });

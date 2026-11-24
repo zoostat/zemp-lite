@@ -143,6 +143,9 @@ test("links go from one page to another and to the engine's pages, each into the
     "↑",
     "↵",
     "Esc",
+    // From 0.2.4 the page says what Return does with no match marked, and names the key twice.
+    "↵",
+    "↵",
     "F1",
     // The section on a name with two functions names the key once more.
     "F1",

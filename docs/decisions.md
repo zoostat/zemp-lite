@@ -2360,3 +2360,31 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** Unit: every source of a screen read for the fonts it names, in style sheets and in the editor's theme, more than forty rules, none naming a font not shipped (`src/theme/fonts.node.test.ts`; with the old rule put back it fails and names it); the suggestion read from the engine's sentence, and none where it suggests nothing (`src/help/suggested.test.ts`). Browser (`tests/browser/help-search.spec.ts`): `lm`, `ttest` and `regg`, each with Return, open `reg`, `t_test` and `reg`; `histogram` opens its chooser and `reg` its own page; a word nothing matches shows the engine's sentence; on the page of a name the engine has not, the suggested name is a button with its title, the name not found is none, and the button, by the mouse and by the keyboard, opens the suggested name's page.
 
 **Reason.** Faults found after 0.2.3 (`docs/progress.md`, 24 November 2026), and the owner's answer.
+
+## 24 November 2026: The pages of Using Zemp Lite brought to this release (release 0.2.4, step 14)
+
+**The standing rule** (#211, item 12): at every release the pages Zemp keeps itself agree with the app that release ships; every control they name is on the screen under that name, and every picture is made again from the running app.
+
+**What changed in the words**, each put to the owner to read before the release (his answer to question 4):
+
+1. **Finding help**, under _Search_, one sentence added: "With no match marked, ↵ opens the page of what you typed where that is a name of Zeff's, and otherwise the first match of the list: `lm` and ↵ opens `reg`." (Step 13.)
+2. **Finding help**, under _Browse_: "a panel for each kind of page" is "a card for each kind of page" (step 12); "The **Topics** pane at the left lists the packages and the errors and warnings; beside a page it lists the pages around it" is "The **Topics** pane at the left has a section for each of the three; press a section's name to unfold it. Beside a page the pane lists the pages around it" (step 11: the sections are closed when Help is first opened); and "**On this page**, at the right, lists the sections of the page you are reading" is "At the right of a page its sections are listed, under the words On this page; press one to go to it" (step 10).
+3. **Finding help**, under _From the script_, one sentence added before the one on F1: "Rest the pointer on a function's name in the script, and its usage is shown: the function's name with its arguments." (Step 9.)
+4. **Projects, scripts and files** and **Exporting and opening a project**: **Open a project's zip…** is **Open project…** (step 7).
+5. **Where the work is kept**: the words of its picture, for a reader who cannot see it, now describe the redrawn screen of projects: its four cards, the note under them, and at the right "No project yet" with the button that opens the Scratch project.
+
+**The pictures.** All thirteen made again from the app by the pictures' script (`npm run pictures`), in the light theme; nine of the files changed: every one that shows the screen of projects, the Help place, the name, or the version. The script needed no change but the address of the app, made at step 2.
+
+**Tested.** The tests of the pages as at 0.2.3, green: every control a page names is on the screen under that name; every function, package and code a page names is the engine's; what a page says the search finds, it finds; every picture is there with its words. One test that lists the keys **Finding help** names is brought to the page's new sentence.
+
+**Reason.** The owner's standing rule, and his answer to question 4 of this release's plan.
+
+## 24 November 2026: The check of the landing page's links out of the site asks GitHub's interface, not its pages (found on GitHub after step 8)
+
+**What was seen.** Two deployments (of steps 8 and 9, commits a5c139b and cc1a83f) were reported failed, though each was deployed and every check of the site itself passed there, in both browsers. The one test that failed was step 8's own: it asked for each address the landing page links to out of the site (the repository's front page, its licence, its notices, its list of releases), and GitHub's pages answered 429, "too many requests", to GitHub's own machines, which ask often. A 429 says nothing of whether a page is there.
+
+**Choice.** The question is put to GitHub's interface for programs instead: the repository, a file of its main branch, its releases. After a deployment it is asked with that run's own token, which the deployment job now gives the checks; from a desk it is asked without one. A link that is none of the three kinds the landing page uses fails the check outright, so a link added later has to be one the check knows how to ask about.
+
+**Tested.** From this Mac at `https://lite.zeff-lang.dev`, in both browsers: the check passes, each of the five addresses answered 200 by the interface.
+
+**Reason.** A check that fails for the asker's own frequency hides the failures that matter; #220, item 1, asks that every link goes to an address that exists, which is what is now asked.
