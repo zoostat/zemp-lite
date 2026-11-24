@@ -1,8 +1,10 @@
 // The loading screen redrawn (release 0.2.4, step 6; open decision #220, item 3; the design
 // guide, section 9, "Loading screen"): the name large with **Open Zemp Lite**, grey until the
-// engine runs; the card **Starting the engine**, one bar over three steps; the size that
-// travels, which the build takes from the engine; a failure with its sentence and **Try
-// again**; the four promises in their band.
+// engine runs; the card **Starting the engine**, one bar over three steps; a failure with its
+// sentence and **Try again**; the four promises in their band. And item 10 (step 6b): the bar
+// glides however fast the steps finish, the button opens when the bar is full, and the first
+// step says how the engine came, over the network with the bytes that travelled or from the
+// browser's own keeping.
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { Page, Route } from "@playwright/test";
@@ -57,17 +59,117 @@ test("while the engine is fetched the button is grey and says when it will open;
   await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
 });
 
-test("the size given is the size the engine travels at, not its size unpacked", async ({
+test("the first step says how the engine came: the bytes that travelled, or that it was already in this browser", async ({
   page,
 }) => {
+  // While it comes, the step gives the size the build reckons the host sends.
+  let release: () => void = () => {};
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/*.wasm", async (route: Route) => {
+    await held;
+    await route.continue();
+  });
   const { travels } = facts();
-  const said = `${(travels / 1_000_000).toFixed(1)} MB`;
+  await page.goto("/app/");
+  const how = page.getByTestId("step-fetch-how");
+  await expect(how).toHaveText(`${(travels / 1_000_000).toFixed(1)} MB, once`);
+  expect(travels).toBeLessThan(5_000_000);
+  release();
+  await expect(open(page)).toBeEnabled({ timeout: 30_000 });
+  await page.unroute("**/*.wasm");
+  // Once it has come, the step gives the bytes that did travel, as the browser's own record
+  // of the fetch has them. (The server of these tests sends the file as it is, so here that is
+  // the file's own size; at the address it is the host's compressed size, which the check
+  // after a deployment holds the screens to.)
+  const travelled = await page.evaluate(() => {
+    const entry = (performance.getEntriesByType("resource") as PerformanceResourceTiming[])
+      .filter((one) => one.name.endsWith(".wasm"))
+      .at(-1);
+    return entry === undefined ? null : entry.encodedBodySize;
+  });
+  expect(travelled).not.toBeNull();
+  await expect(how).toHaveText(`${((travelled ?? 0) / 1_000_000).toFixed(1)} MB, once`);
+
+  // The same screen again, the engine now kept by the browser. A test browser does not keep
+  // a file of this size between two visits, as a reader's browser does; so the browser's
+  // record of the fetch is given as it stands for a kept file (a body, and nothing that
+  // travelled), and the step must say so instead of a size.
+  await page.evaluate(() => localStorage.removeItem("zemp-started"));
+  await page.addInitScript(() => {
+    const read = performance.getEntriesByName.bind(performance);
+    performance.getEntriesByName = (name: string, type?: string) =>
+      name.endsWith(".wasm")
+        ? ([{ transferSize: 0, encodedBodySize: 4_080_713 }] as unknown as PerformanceEntryList)
+        : read(name, type);
+  });
+  await page.goto("/");
   await page.goto("/app/");
   await expect(open(page)).toBeEnabled({ timeout: 30_000 });
-  await expect(page.getByTestId("step-fetch")).toContainText(`${said}, once`);
-  // The file unpacked is five times that; nothing on the screen gives it.
-  expect(travels).toBeLessThan(5_000_000);
-  await expect(start(page)).not.toContainText(/1\d\.\d MB/);
+  await expect(how).toHaveText("already in this browser");
+  await expect(start(page)).not.toContainText("MB, once");
+});
+
+test("the bar glides: a start done at once still fills it over about a second, and the button opens only when it is full", async ({
+  page,
+}) => {
+  // Here the engine comes from this computer in a fraction of a second, and its three steps
+  // are done long before a second has passed. From the first frame of the screen: the bar, the
+  // button and the first step, frame by frame.
+  await page.addInitScript(() => {
+    const samples: [number, number, boolean, boolean][] = [];
+    (window as unknown as { samples: typeof samples }).samples = samples;
+    const look = () => {
+      const bar = document.querySelector('[role="progressbar"]');
+      const button = document.querySelector<HTMLButtonElement>("button.open");
+      const first = document.querySelector('[data-testid="step-fetch"]');
+      if (bar !== null && button !== null && first !== null) {
+        samples.push([
+          performance.now(),
+          Number(bar.getAttribute("aria-valuenow")),
+          button.disabled,
+          first.className.includes("done"),
+        ]);
+        if (!button.disabled) return;
+      }
+      requestAnimationFrame(look);
+    };
+    requestAnimationFrame(look);
+  });
+  await page.goto("/app/");
+  await expect(open(page)).toBeEnabled({ timeout: 30_000 });
+  const samples = await page.evaluate(
+    () => (window as unknown as { samples: [number, number, boolean, boolean][] }).samples,
+  );
+  expect(samples.length).toBeGreaterThan(20);
+  const [began] = samples;
+  const ended = samples.at(-1);
+  if (began === undefined || ended === undefined) throw new Error("the bar was not seen");
+  // It began near nought and ended full, with the button opened at the end and not before.
+  expect(began[1]).toBeLessThan(20);
+  expect(ended[1]).toBe(100);
+  expect(ended[2]).toBe(false);
+  for (const [, value, disabled, firstDone] of samples.slice(0, -1)) {
+    expect(disabled, `the button at ${value} %`).toBe(true);
+    // A step is marked done only once the bar has passed it.
+    if (value < 69) expect(firstDone, `the first step at ${value} %`).toBe(false);
+  }
+  // It never goes back, and never leaps: no further in a frame than the whole bar in a second.
+  for (let at = 1; at < samples.length; at++) {
+    const [now, value] = samples[at] as [number, number, boolean, boolean];
+    const [before, last] = samples[at - 1] as [number, number, boolean, boolean];
+    expect(value).toBeGreaterThanOrEqual(last);
+    expect(value - last, `a step of the bar in ${Math.round(now - before)} ms`).toBeLessThanOrEqual(
+      ((now - before) / 1000) * 100 + 2,
+    );
+  }
+  // So from where it began to full took about the share of a second it had left to fill.
+  const took = ended[0] - began[0];
+  expect(took).toBeGreaterThanOrEqual(((100 - began[1]) / 100) * 1000 * 0.85);
+  expect(took).toBeLessThan(5000);
+  // The engine itself was running well before the bar was full: the bar was gliding, not waiting.
+  await expect(start(page).locator("[data-engine]")).toHaveAttribute("data-engine", "done");
 });
 
 test("a fetching that fails says so in the engine's step, and Try again starts it afresh", async ({

@@ -3,8 +3,10 @@
   // decision #220, item 3; release 0.2.4, step 6; first built at release 0.2, step 18b): the
   // name large with what Zemp Lite is in one line and **Open Zemp Lite**, which is grey until
   // the engine runs; beside it a card, the engine fetched, checked and started under one bar,
-  // each step with its mark, its line and its state; and the four promises in a band. The size
-  // given is the size that travels, which the build takes from the engine (`facts.ts`). The next visit opens straight on the welcome screen, the engine being kept
+  // each step with its mark, its line and its state; and the four promises in a band. The bar
+  // glides however fast the steps finish, the button opens when the bar is full, and the first
+  // step says how the engine came: over the network, with the bytes that travelled, or from
+  // the browser's own keeping (open decision #220, item 10; release 0.2.4, step 6b). The next visit opens straight on the welcome screen, the engine being kept
   // by the browser. The check is of the engine's digest: the file fetched must be the one this
   // release was built with (its SHA-256); signed releases come later (Zemp Specification,
   // section 13).
@@ -16,17 +18,16 @@
   import { FACTS, megabytes } from "./facts";
   import FrontBar from "./FrontBar.svelte";
   import NarrowLine from "./NarrowLine.svelte";
+  import { came, glided, marked, reached, type Came, type State } from "./start";
   import { ENGINE, ENGINE_BYTES, ENGINE_SHA256 } from "./version";
 
   let { engine, onopen }: { engine: Engine; onopen: () => void } = $props();
 
-  type State = "waiting" | "going" | "done" | "failed";
   let fetching = $state<State>("waiting");
   let checking = $state<State>("waiting");
   let starting = $state<State>("waiting");
   let received = $state(0);
   let problem = $state("");
-  const ready = $derived(starting === "done");
 
   /** How much of the engine has come, of a hundred; none known before the worker is built. */
   const share = $derived(
@@ -34,17 +35,43 @@
       ? null
       : Math.min(100, Math.round((received / ENGINE_BYTES) * 100)),
   );
-  // One bar over the three steps: the fetching is the long one and has seven tenths of it.
-  const whole = $derived(
-    Math.round(
-      (fetching === "done" ? 70 : ((share ?? 0) * 70) / 100) +
-        (checking === "done" ? 15 : 0) +
-        (starting === "done" ? 15 : 0),
-    ),
-  );
-  const step = $derived(fetching !== "done" ? 1 : checking !== "done" ? 2 : 3);
-  /** The size the engine travels at, as the first step says it; nothing before the worker is built. */
+  // One bar over the three steps. Where the steps have got to is one thing, and what the bar
+  // shows another: the bar glides towards it, never faster than the whole bar in a second, so
+  // that a start that is done at once (the engine already kept) is still seen to be made.
+  const target = $derived(reached({ fetching, checking, starting }, share));
+  let glide = $state(0);
+  const quiet =
+    typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  $effect(() => {
+    let frame = 0;
+    let before = performance.now();
+    const move = (now: number) => {
+      // A reader who has asked for less motion is shown where the steps are, at once.
+      glide = quiet ? target : glided(glide, target, now - before);
+      before = now;
+      frame = requestAnimationFrame(move);
+    };
+    frame = requestAnimationFrame(move);
+    return () => cancelAnimationFrame(frame);
+  });
+  const whole = $derived(Math.round(glide));
+  // The steps as the screen marks them: each done once the bar has passed it.
+  const shown = $derived(marked({ fetching, checking, starting }, glide));
+  const ready = $derived(shown.starting === "done");
+  const step = $derived(shown.fetching !== "done" ? 1 : shown.checking !== "done" ? 2 : 3);
+  /** The size the engine travels at from the host, as the build reckons it (`facts.ts`). */
   const travels = FACTS === null ? null : megabytes(FACTS.travels);
+  /** How the engine came this time, once it has: fetched, with its bytes, or already kept. */
+  let arrived = $state<Came>(null);
+  const first = $derived(
+    arrived?.how === "kept"
+      ? "already in this browser"
+      : arrived?.how === "fetched"
+        ? `${megabytes(arrived.bytes)}, once`
+        : travels === null
+          ? "once"
+          : `${travels}, once`,
+  );
 
   /** The engine's file, fetched as it comes, so that its progress can be shown. */
   async function fetched(): Promise<Uint8Array<ArrayBuffer>> {
@@ -66,12 +93,21 @@
       whole.set(chunk, at);
       at += chunk.length;
     }
+    // The browser's own record of the fetch says how the file came.
+    const address = new URL(engineUrl, window.location.href).href;
+    arrived = came(
+      performance.getEntriesByName(address, "resource").at(-1) as
+        PerformanceResourceTiming | undefined,
+    );
     return whole;
   }
 
   async function begin(): Promise<void> {
     problem = "";
     received = 0;
+    arrived = null;
+    checking = "waiting";
+    starting = "waiting";
     try {
       fetching = "going";
       const bytes = await fetched();
@@ -152,7 +188,7 @@
       </p>
     </section>
 
-    <section class="card" aria-label="Starting the engine">
+    <section class="card" aria-label="Starting the engine" data-engine={starting}>
       <h2>Starting the engine</h2>
       <div
         class="bar"
@@ -168,40 +204,44 @@
         <span>{ready ? "Ready" : `Step ${step} of 3`}</span><span>{whole} %</span>
       </p>
       <ol class="steps">
-        <li class={fetching} data-testid="step-fetch">
-          {@render mark(fetching, 1)}
+        <li class={shown.fetching} data-testid="step-fetch">
+          {@render mark(shown.fetching, 1)}
           <div class="t">
             <b>Fetching the engine</b>
-            <span>{travels === null ? "once" : `${travels}, once`}</span>
+            <span data-testid="step-fetch-how">{first}</span>
           </div>
-          <em>{fetching === "going" && share !== null ? `${share} %` : said[fetching]}</em>
+          <em
+            >{shown.fetching === "going" && fetching === "going" && share !== null
+              ? `${share} %`
+              : said[shown.fetching]}</em
+          >
         </li>
-        <li class={checking} data-testid="step-check">
-          {@render mark(checking, 2)}
+        <li class={shown.checking} data-testid="step-check">
+          {@render mark(shown.checking, 2)}
           <div class="t">
             <b>Checking that it is the engine of this release</b>
             <span>its digest against the one this release was built with</span>
           </div>
           <em
-            >{checking === "going"
+            >{shown.checking === "going"
               ? "checking…"
-              : checking === "done" && ENGINE_SHA256 === null
+              : shown.checking === "done" && ENGINE_SHA256 === null
                 ? "no digest in this build"
-                : said[checking]}</em
+                : said[shown.checking]}</em
           >
         </li>
-        <li class={starting} data-testid="step-start">
-          {@render mark(starting, 3)}
+        <li class={shown.starting} data-testid="step-start">
+          {@render mark(shown.starting, 3)}
           <div class="t">
             <b>Starting it in this browser</b>
             <span>in a worker of its own, so the page never freezes</span>
           </div>
           <em
-            >{starting === "going"
+            >{shown.starting === "going"
               ? "starting…"
-              : starting === "done"
+              : shown.starting === "done"
                 ? `Zeff ${engine.version ?? ENGINE} ready`
-                : said[starting]}</em
+                : said[shown.starting]}</em
           >
         </li>
       </ol>
@@ -354,7 +394,6 @@
     border-radius: 999px;
     display: block;
     height: 100%;
-    transition: width 0.2s;
   }
   .barnote {
     color: var(--ink-3);
@@ -421,9 +460,6 @@
   @media (prefers-reduced-motion: reduce) {
     .going .mark {
       animation: none;
-    }
-    .bar i {
-      transition: none;
     }
   }
   .t b {

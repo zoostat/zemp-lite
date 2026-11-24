@@ -51,10 +51,23 @@ export function excerpt(script, shown = SHOWN) {
 }
 
 /**
- * The size of the engine as it travels: the worker's script and its WebAssembly, each as the
- * host sends it (brotli at its highest setting), in bytes. It is the measure of risk R4
- * (`tools/measure-worker.mjs`). Compressing the engine takes seconds, so the sizes are kept
- * beside the tools, by what the files hold, and read again while the files are the same.
+ * The setting at which the host compresses a file as it sends it. Cloudflare Pages compresses
+ * with brotli as the file goes out, at a low setting, not at the highest one, which takes most
+ * of a minute for the engine: measured at the address on 24 November 2026, the engine of
+ * 0.2.3 travelled as 4,080,713 bytes, where brotli's setting 2 gives 4,059,984 for the same
+ * file (half of one per cent less) and its highest setting 2,922,126. The build cannot ask
+ * the host, so it reckons with this setting, and the check after each deployment holds the
+ * figure the screens give to the bytes the address really sends (`tests/host/host.spec.ts`).
+ */
+export const HOST_QUALITY = 2;
+
+/**
+ * The size of the engine as it travels from the host: the worker's script and its WebAssembly,
+ * each compressed as the host sends it (`HOST_QUALITY`), in bytes. It is not the measure of
+ * risk R4 (`tools/measure-worker.mjs`), which compresses at brotli's highest setting, the
+ * least a host could send; until 0.2.4 the screens gave that figure, which this host does not
+ * reach. The sizes are kept beside the tools, by what the files hold, and read again while
+ * the files are the same.
  */
 export function travelling(web, kept = null) {
   if (!fs.existsSync(web)) {
@@ -80,17 +93,18 @@ export function travelling(web, kept = null) {
   for (const name of names) {
     const buffer = fs.readFileSync(path.join(web, name));
     const digest = createHash("sha256").update(buffer).digest("hex");
-    const known = before[digest];
+    const key = `${digest} q${HOST_QUALITY}`;
+    const known = before[key];
     const size =
       typeof known === "number"
         ? known
         : zlib.brotliCompressSync(buffer, {
             params: {
-              [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
+              [zlib.constants.BROTLI_PARAM_QUALITY]: HOST_QUALITY,
               [zlib.constants.BROTLI_PARAM_SIZE_HINT]: buffer.length,
             },
           }).length;
-    now[digest] = size;
+    now[key] = size;
     bytes += size;
   }
   if (kept !== null) {

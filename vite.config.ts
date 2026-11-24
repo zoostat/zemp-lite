@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 
 const manifest = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8")) as {
@@ -13,26 +14,45 @@ const manifest = JSON.parse(readFileSync(new URL("./package.json", import.meta.u
 // section 10): only such a page is given the shared memory through which a run is cancelled.
 // The headers are those the host sends with every answer, read from its headers file
 // (`public/_headers`, the block of `/*`), so that the page is served here as it is there.
-const isolation = hostHeaders(readFileSync(new URL("./public/_headers", import.meta.url), "utf8"));
+const headersFile = readFileSync(new URL("./public/_headers", import.meta.url), "utf8");
+const isolation = hostHeaders(headersFile, "/*");
+if (isolation["Cross-Origin-Embedder-Policy"] !== "require-corp") {
+  throw new Error("public/_headers does not make the page cross-origin isolated");
+}
+// The built files are named by what they hold, and the host tells a browser to keep them and
+// never ask again (the block of `/assets/*`). The preview of the build says the same, so that a
+// browser keeps the engine here as it does at the address, and the loading screen's "already
+// in this browser" is seen by the tests as a visitor sees it (open decision #220, item 10).
+const kept = hostHeaders(headersFile, "/assets/*");
 
-/** The headers of the block for every path, `/*`, of a headers file of the host. */
-function hostHeaders(text: string): Record<string, string> {
+/** The headers of one block of a headers file of the host: `/*`, for every path, or another. */
+function hostHeaders(text: string, block: string): Record<string, string> {
   const headers: Record<string, string> = {};
   let inBlock = false;
   for (const line of text.split("\n")) {
     if (line.trim() === "" || line.trimStart().startsWith("#")) continue;
     if (!/^\s/.test(line)) {
-      inBlock = line.trim() === "/*";
+      inBlock = line.trim() === block;
       continue;
     }
     const at = line.indexOf(":");
     if (inBlock && at > 0) headers[line.slice(0, at).trim()] = line.slice(at + 1).trim();
   }
-  if (headers["Cross-Origin-Embedder-Policy"] !== "require-corp") {
-    throw new Error("public/_headers does not make the page cross-origin isolated");
-  }
   return headers;
 }
+
+/** The preview of the build answers a built file with the host's headers for built files. */
+const keptAsAtTheHost: Plugin = {
+  name: "zemp-kept-as-at-the-host",
+  configurePreviewServer(server) {
+    server.middlewares.use((request, response, next) => {
+      if (request.url?.startsWith("/assets/") === true) {
+        for (const [name, value] of Object.entries(kept)) response.setHeader(name, value);
+      }
+      next();
+    });
+  },
+};
 
 // The engine's WebAssembly, as the worker's build made it: the Start screen of a first visit
 // fetches it, checks that it is this file (its SHA-256) and says how far the fetching has gone
@@ -77,7 +97,7 @@ export default defineConfig(({ command }) => {
   const building = command === "build";
   notesWritten(building);
   return {
-    plugins: [svelte()],
+    plugins: [svelte(), keptAsAtTheHost],
     server: { headers: isolation },
     preview: { headers: isolation },
     // The engine's worker is a module worker, which waits for the engine to load before it

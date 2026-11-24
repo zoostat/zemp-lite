@@ -12,10 +12,13 @@ test("the page is isolated, and the engine starts and runs the example", async (
   const from = Date.now();
   await page.goto("/app/");
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
-  // A first visit: the Start screen fetches, checks and starts the engine.
+  // A first visit: the Start screen fetches, checks and starts the engine. The start is timed
+  // to the engine running, which the card says of itself; the bar glides on to its end for a
+  // moment after that (open decision #220, item 10), and the button opens then.
   const open = page.getByRole("button", { name: "Open Zemp Lite" });
-  await expect(open).toBeEnabled({ timeout: 30_000 });
+  await expect(page.locator('[data-engine="done"]')).toBeVisible({ timeout: 30_000 });
   const started = Date.now() - from;
+  await expect(open).toBeEnabled({ timeout: 30_000 });
   test.info().annotations.push({
     type: "first start",
     description: `${started} ms from the first request to the engine ready (the goal: 2,000 ms)`,
@@ -67,6 +70,58 @@ test("the root is the landing page, with the engine's own counts; its links out 
   await expect(open).toBeEnabled({ timeout: 30_000 });
   await open.click();
   await expect(page.getByTestId("help-title")).toHaveText("Finding help", { timeout: 30_000 });
+});
+
+test("the size the screens give for the engine is the size this address sends, and a kept engine is said to be kept", async ({
+  page,
+}) => {
+  // Release 0.2.4, step 6b. The build cannot ask the host how it compresses a file, so it
+  // reckons the engine's travelling size (`tools/facts-lib.mjs`); here the reckoning is held to
+  // the bytes this address really sends, as the browser's own record of the fetch has them.
+  await page.goto("/");
+  const said = Number(
+    ((await page.getByTestId("front-travels").textContent()) ?? "").replace(" MB", ""),
+  );
+  expect(said).toBeGreaterThan(0);
+  await page.goto("/app/");
+  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  await expect(open).toBeEnabled({ timeout: 30_000 });
+  const record = () =>
+    page.evaluate(() => {
+      const entry = (performance.getEntriesByType("resource") as PerformanceResourceTiming[])
+        .filter((one) => one.name.endsWith(".wasm"))
+        .at(-1);
+      return entry === undefined ? null : { sent: entry.transferSize, body: entry.encodedBodySize };
+    });
+  const first = await record();
+  expect(first).not.toBeNull();
+  const how = page.getByTestId("step-fetch-how");
+  if (first !== null && first.sent >= first.body / 2) {
+    // Fetched: the step gives the bytes that travelled, and the landing page's figure is
+    // within a tenth of a megabyte of them, and under the limit of risk R4.
+    const travelled = first.body / 1_000_000;
+    await expect(how).toHaveText(`${travelled.toFixed(1)} MB, once`);
+    expect(Math.abs(said - travelled)).toBeLessThanOrEqual(0.1);
+    expect(first.body).toBeLessThan(5_000_000);
+    test.info().annotations.push({
+      type: "engine as it travels",
+      description: `${first.body} bytes from this address; the screens say ${said.toFixed(1)} MB`,
+    });
+    console.log(`engine as it travels: ${first.body} bytes; the screens say ${said} MB`);
+  }
+  // The same screen again in the same browser. Where the browser kept the engine, nothing
+  // travels and the step says so; where it fetched it again, the step gives the bytes.
+  await page.evaluate(() => localStorage.removeItem("zemp-started"));
+  await page.goto("/");
+  await page.goto("/app/");
+  await expect(open).toBeEnabled({ timeout: 30_000 });
+  const again = await record();
+  expect(again).not.toBeNull();
+  if (again !== null && again.sent < again.body / 2) {
+    await expect(how).toHaveText("already in this browser");
+  } else if (again !== null) {
+    await expect(how).toHaveText(`${(again.body / 1_000_000).toFixed(1)} MB, once`);
+  }
 });
 
 test("Help opens on Home, the search finds reg by R's lm, and a page of the app has its picture", async ({
