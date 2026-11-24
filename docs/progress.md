@@ -87,3 +87,12 @@ Decided by the owner (#211, stage 1), planned (`docs/releases/0.2.3.md`), built 
 **Green.** The whole routine here on the release's own tree, in both browsers (422 unit tests, 635 browser tests, 3 skipped by design; the engine 4.1 MB as the host sends it, of 5 MB).
 
 **Next.** Nothing is begun before the owner's word. In waiting: the pages of Help reordered (#223), a release of its own, once he has typed the order of the parts; Zemp 0.3 on "Start release 0.3" after Zeff 0.9.0. Proposed by the owner for the next release he opens (24 November 2026, after the release): the engine sent packed at brotli's highest setting, 2.9 MB in place of 4.1 MB, to be tried at the address first (`docs/decisions.md`). `docs/spec/` is the copy at Zeff 6e57f99, where this release is entered in the registers (brought up after the tag). **For the owner, if he has not yet:** to read the changed paragraphs of **Finding help** and the renamed **Open project…** in two pages. **Still the owner's from before:** the reader test, on this alpha, for Zeff 0.9.0; the checks by hand; the trademarks (#37) before the address is announced; the order of the parts for #223. Also his, if he wishes: to read again the paragraphs of **Finding help** and **Commands with ⌘K** changed after his reading at 0.2.3. **Later:** Zemp 0.3 opens on "Start release 0.3" after Zeff 0.9.0 is released; its plan holds stage 1 of Paper (#172), its first step the spike of the Typst module `[engine]` (`docs/decisions.md`, 23 November 2026).
+
+## 24 November 2026: release 0.2.5 opened and planned
+
+**Done.** On the owner's word (#225): the app goes back to the root of the address, the landing page of 0.2.4 is removed, and the tight packing of the engine (#224, his proposal of the same day) is the second step, left out if the host cannot do it. `docs/spec/` is the copy at Zeff b1597bf, where the row 0.2.5 stands. The plan is `docs/releases/0.2.5.md`, six steps; no question for the owner.
+
+**Green.** Documents alone since `v0.2.4`; the routine was green on the release's tree.
+
+**Next.** The owner's "go"; then step 1 `[engine]`, open the release.
+

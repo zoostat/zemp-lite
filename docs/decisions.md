@@ -2494,3 +2494,18 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Not begun.** The row 0.2.5 of section 15 of the Zemp Specification and the entry of the register are the Zeff repository's; the coordinating session was asked for them the same day. The plan is written from that row and shown to the owner, and no code is written before his "go".
 
 **Reason.** The owner's word on what a visitor meets at the address; a change of what the specification says of 0.2.4, so a release of its own carries it.
+
+## 24 November 2026: Release 0.2.5 planned; the specification's copy brought to Zeff b1597bf
+
+**The owner's word**, passed back by the coordinating session and read in the Zeff repository before it was taken (commit b1597bf, on the main branch there under the owner's name, "Enter Zemp Lite 0.2.5: the app back at the root, the landing page removed (#225, #224)"): the row 0.2.5 of section 15 of the Zemp Specification; open decision #225, decided, with his four answers as he gave them here; #224 placed as this release's second step; #220 noted as undone in its items 1 and 2 alone; #223's deadline now "its own release after 0.2.5".
+
+**Choice.** `docs/spec/` is the Zeff repository's at commit b1597bf, compared byte for byte. Two files differ from the copy at 6e57f99: the Zemp Specification (the row 0.2.5) and the register of open decisions (#224, #225, the notes on #220 and #223). The plan is `docs/releases/0.2.5.md`: six steps, and no question for the owner, since his four answers settle what the release carries.
+
+**Engineering, chosen in the plan.**
+
+1. _`/app/` is a page that goes on_, not a rule of the host: a page that draws nothing and replaces its address by the same place at the root. It is the way 0.2.4 led an old root address to `/app/`, turned about; it is served and tested here as at the host, and it would go with the app to another host.
+2. _The landing page is deleted in the step that moves the app_, and what only it used is cleared out in the step after, so that neither commit leaves a page with no address or a check of a page that is gone.
+3. _The tight packing is tried on a deployment beside the real one first_ (a preview of the host under its own address), and the real address is given the packed engine only when the checks pass there: a fault in how the engine is sent would leave the app unable to start.
+4. _If the trial falls_, the step's changes are taken out by a commit of their own, never by rewriting history.
+
+**Reason.** The checklist is written from the row, as the standing instructions ask; no code is written before the owner's "go".
