@@ -2126,4 +2126,6 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **So, for the checklist of 0.2.4, when he says "Start release 0.2.4":** (1) the hover on a function's name in the script shows the function's usage block alone, F1 still opening its page; (2) On this page is no longer a pane: no button in Help's bar, always shown at the right of the text on the page's own ground, with no shade and no border; this changes item 13 of open decision #211, where each pane had its link; (3) the app starts on the Script place; Help, first opened after a start, shows Home with the Topics pane's sections closed; (4) Home of Help redrawn in the look of 0.2.4's screens. A drawing of the four is outside the repositories, `~/dev/handbook/zemp-lite-0.2.4-help-mockup.html`. Taken as engineering and said to him: in a window too narrow for the list beside the text, On this page stands once under the page's title.
 
+**Shown the drawing, the owner answered:** "Yes, as drawn" (24 November 2026). So the four are as the drawing shows them, the narrow window's rule with them.
+
 **Reason for recording here.** The owner's rulings on screens of Zemp Lite, given in this session; the row of 0.2.4 in section 15 of the Zemp Specification and the register are the Zeff repository's, and the coordinating session is told. Nothing is built: release 0.2.4 is not opened.
