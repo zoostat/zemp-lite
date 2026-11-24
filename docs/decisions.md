@@ -2405,3 +2405,15 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Tested.** As above; and from this Mac at the address, the new measure and the corrected check of the links, in both browsers.
 
 **Reason.** The checklist's step 15; the testing handbook's routine before a release; and the owner's rule that what a release says of itself is true.
+
+## 24 November 2026: The test of the gliding bar does not count frames (found on GitHub after steps 12 and 13)
+
+**What was seen.** GitHub's check of steps 12 and 13 (commits 0bbf2e4 and fbb380f) failed in one test, in one browser and then in both: the test of the gliding bar, written at step 6b and loosened once at step 12. On GitHub's machines, which run many browsers at once, the loading screen drew six to ten frames in the second the bar takes; the test asked for more than twenty, and judged the bar's pace between two of its own looks at the screen, which do not fall at the instants the screen draws.
+
+**What it is not.** A fault of the bar. The bar is paced by the clock: at each frame it moves by the time that has passed, never more than the whole bar in a second and never past where the steps are (`glided`, held by unit tests). Few frames make it move in larger steps over the same second.
+
+**Choice.** The test holds what does not depend on how many frames there were: the bar was seen short of full and ended full; it never went back; the button stayed grey, and the first step unmarked, until the bar had passed them; and from where the bar was first seen to full took at least that share of a second. The count of frames and the pace from frame to frame are no longer asserted; the pace is the unit tests' to hold.
+
+**The steps' record.** The commits of steps 6b to 15 carry the test as it was, so GitHub's check of each may fail in it and in nothing else; the routine was green here at each. The check must be green on the commit that mends the test before step 16 is begun, and the notes of the release say so.
+
+**Reason.** A test must fail for the fault it is of. This one failed for the speed of the machine it ran on.
