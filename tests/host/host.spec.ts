@@ -43,6 +43,32 @@ test("the root is the front page, which opens the app; and an address kept from 
   await expect(page).toHaveURL(/\/app\/#?$/);
 });
 
+test("the root is the landing page, with the engine's own counts; its links out of the site answer, and a link into Help opens its page", async ({
+  page,
+}) => {
+  // Release 0.2.4, step 8 (open decision #220, item 1): every link goes to an address that
+  // exists. The links within the site are held by the routine; those out of it are asked for
+  // here, where there is a network to ask over.
+  test.slow();
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
+  await expect(page.getByTestId("front-functions")).toHaveText(/^\d+$/);
+  await expect(page.getByTestId("front-printed")).toContainText("(intercept)");
+  const outside = await page
+    .locator('a[href^="https://"]')
+    .evaluateAll((all) => [...new Set(all.map((one) => one.getAttribute("href") as string))]);
+  expect(outside.length).toBeGreaterThan(2);
+  for (const address of outside) {
+    const answer = await page.request.get(address);
+    expect(answer.status(), address).toBe(200);
+  }
+  await page.getByRole("link", { name: "Finding help", exact: true }).click();
+  const open = page.getByRole("button", { name: "Open Zemp Lite" });
+  await expect(open).toBeEnabled({ timeout: 30_000 });
+  await open.click();
+  await expect(page.getByTestId("help-title")).toHaveText("Finding help", { timeout: 30_000 });
+});
+
 test("Help opens on Home, the search finds reg by R's lm, and a page of the app has its picture", async ({
   page,
 }) => {

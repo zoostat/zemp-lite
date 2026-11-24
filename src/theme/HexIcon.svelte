@@ -14,7 +14,11 @@
     | "app"
     | "packages"
     | "codes"
-    | "book";
+    | "book"
+    | "same"
+    | "teach"
+    | "search"
+    | "bars";
 </script>
 
 <script lang="ts">
@@ -61,6 +65,20 @@
     <path d="M32 20 45 43H19zM32 29v6M32 39v.5" />
   {:else if name === "book"}
     <path d="M32 24c-3-2-7-3-12-3v20c5 0 9 1 12 3 3-2 7-3 12-3V21c-5 0-9 1-12 3zM32 24v20" />
+  {:else if name === "same"}
+    <path d="M21 28h22M21 36h22" />
+  {:else if name === "teach"}
+    <path d="M18 27 32 20 46 27 32 34Z" />
+    <path d="M23 30v8c0 3 4 5 9 5s9-2 9-5v-8" />
+    <path d="M46 27v9" />
+  {:else if name === "search"}
+    <circle cx="29" cy="29" r="8" />
+    <path d="M35 35 44 44" />
+  {:else if name === "bars"}
+    <path d="M19 44h26" />
+    <rect x="21" y="32" width="5" height="12" />
+    <rect x="29.5" y="24" width="5" height="20" />
+    <rect x="38" y="29" width="5" height="15" />
   {/if}
 </svg>
 

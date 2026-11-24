@@ -47,6 +47,12 @@ export const TOKENS = {
   deep: { light: "#2e1a5e", dark: "#1b1530" },
   "deep-ink": { light: "#f3effc", dark: "#f1ecfc" },
   "deep-muted": { light: "#d6ccf2", dark: "#c3b6e8" },
+  // The landing page's foot, darker than any band, with its two inks; and the short rule under
+  // a band's title, which is decoration only.
+  foot: { light: "#16121f", dark: "#08080b" },
+  "foot-ink": { light: "#e9e5f3", dark: "#e4e0ee" },
+  "foot-muted": { light: "#b7b0c9", dark: "#a7a0ba" },
+  rule: { light: "#dcd3f3", dark: "#7e62c4" },
   // Code, the same wherever code is shown.
   "code-keyword": { light: "#7b4fd6", dark: "#c4a7ff" },
   "code-function": { light: "#1f63c2", dark: "#8cbcff" },
@@ -69,6 +75,8 @@ export const TEXT_ON: Partial<Record<Token, Token[]>> = {
   "button-ink": ["button"],
   "deep-ink": ["deep"],
   "deep-muted": ["deep"],
+  "foot-ink": ["foot"],
+  "foot-muted": ["foot"],
   warning: ["window", "soft", "softer", "warning-soft"],
   ok: ["window", "soft", "ok-soft"],
   error: ["window", "soft", "softer", "error-soft"],

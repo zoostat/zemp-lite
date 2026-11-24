@@ -405,7 +405,14 @@ export async function faintText(within: Locator): Promise<string[]> {
     type Colour = { r: number; g: number; b: number; a: number };
     const colourOf = (text: string): Colour => {
       const parts = (text.match(/[\d.]+/g) ?? []).map(Number);
-      return { r: parts[0] ?? 0, g: parts[1] ?? 0, b: parts[2] ?? 0, a: parts[3] ?? 1 };
+      // A colour mixed from two is given as `color(srgb r g b / a)`, its parts from 0 to 1.
+      const scale = text.startsWith("color(srgb") ? 255 : 1;
+      return {
+        r: (parts[0] ?? 0) * scale,
+        g: (parts[1] ?? 0) * scale,
+        b: (parts[2] ?? 0) * scale,
+        a: parts[3] ?? 1,
+      };
     };
     const over = (top: Colour, under: Colour): Colour => ({
       r: top.r * top.a + under.r * (1 - top.a),

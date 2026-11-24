@@ -57,34 +57,54 @@ function engineFacts(building: boolean): unknown {
   return null;
 }
 
-export default defineConfig(({ command }) => ({
-  plugins: [svelte()],
-  server: { headers: isolation },
-  preview: { headers: isolation },
-  // The engine's worker is a module worker, which waits for the engine to load before it
-  // listens.
-  worker: { format: "es" },
-  // Two pages over one `/assets/` (release 0.2.4, step 2; open decision #220, item 2): the
-  // front page at the root and the app at `/app/`. One folder of built files for both, so a
-  // file keeps its address whichever page asks for it.
-  build: {
-    target: "es2022",
-    rollupOptions: {
-      input: {
-        front: fileURLToPath(new URL("./index.html", import.meta.url)),
-        app: fileURLToPath(new URL("./app/index.html", import.meta.url)),
+/**
+ * The landing page links a release to its notes in the repository (open decision #220, item 1:
+ * every link goes to an address that exists). So a build of a release, whose version has
+ * nothing after its three numbers, stops where the notes of that version are not written; a
+ * build between two releases links to the list of releases instead.
+ */
+function notesWritten(building: boolean): void {
+  if (!building || !/^\d+\.\d+\.\d+$/.test(manifest.version)) return;
+  const notes = new URL(`./docs/releases/${manifest.version}-notes.md`, import.meta.url);
+  if (!existsSync(notes)) {
+    throw new Error(
+      `the notes of release ${manifest.version} are not written (docs/releases/${manifest.version}-notes.md), and the landing page links to them`,
+    );
+  }
+}
+
+export default defineConfig(({ command }) => {
+  const building = command === "build";
+  notesWritten(building);
+  return {
+    plugins: [svelte()],
+    server: { headers: isolation },
+    preview: { headers: isolation },
+    // The engine's worker is a module worker, which waits for the engine to load before it
+    // listens.
+    worker: { format: "es" },
+    // Two pages over one `/assets/` (release 0.2.4, step 2; open decision #220, item 2): the
+    // front page at the root and the app at `/app/`. One folder of built files for both, so a
+    // file keeps its address whichever page asks for it.
+    build: {
+      target: "es2022",
+      rollupOptions: {
+        input: {
+          front: fileURLToPath(new URL("./index.html", import.meta.url)),
+          app: fileURLToPath(new URL("./app/index.html", import.meta.url)),
+        },
       },
     },
-  },
-  define: {
-    __ZEMP_VERSION__: JSON.stringify(manifest.version),
-    __ENGINE_SHA256__: JSON.stringify(
-      engineBytes === null ? null : createHash("sha256").update(engineBytes).digest("hex"),
-    ),
-    __ENGINE_BYTES__: JSON.stringify(engineBytes?.length ?? null),
-    __ZEMP_FACTS__: JSON.stringify(engineFacts(command === "build")),
-  },
-  test: {
-    include: ["src/**/*.test.ts"],
-  },
-}));
+    define: {
+      __ZEMP_VERSION__: JSON.stringify(manifest.version),
+      __ENGINE_SHA256__: JSON.stringify(
+        engineBytes === null ? null : createHash("sha256").update(engineBytes).digest("hex"),
+      ),
+      __ENGINE_BYTES__: JSON.stringify(engineBytes?.length ?? null),
+      __ZEMP_FACTS__: JSON.stringify(engineFacts(building)),
+    },
+    test: {
+      include: ["src/**/*.test.ts"],
+    },
+  };
+});
