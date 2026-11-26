@@ -13,7 +13,6 @@
   import { marks } from "../margin/stale";
   import { trailOf } from "../margin/trail";
   import type { Note } from "../margin/notes";
-  import { said } from "../output/run";
   import { placed } from "../output/place";
   import { took } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
@@ -56,20 +55,21 @@
     const found: Note[] = [];
     for (const statement of last.statements) {
       if (statement.state !== "failed") continue;
-      for (const one of said(statement.saidRaw)) {
-        if (one.kind !== "error") continue;
-        for (const link of trailOf(one.raw, one.sentence)) {
-          if (link.file !== path || found.some((note) => note.line === link.line)) continue;
-          found.push({
-            line: link.line,
-            main: link.raised ? "error" : (link.text.split("(")[0] ?? ""),
-            sub: link.text,
-            tags: link.raised && one.code !== null ? [{ text: one.code, kind: "error" }] : [],
-            state: link.raised ? "failed" : "fresh",
-            opens: false,
-            place: null,
-          });
-        }
+      // The engine's own record of the error that stopped the run at this statement, with
+      // its chain as fields (open decision #175, C22).
+      const error = last.info.find((one) => one.line === statement.line)?.error ?? null;
+      const code = typeof error?.["code"] === "string" ? error["code"] : null;
+      for (const link of trailOf(error)) {
+        if (link.file !== path || found.some((note) => note.line === link.line)) continue;
+        found.push({
+          line: link.line,
+          main: link.raised ? "error" : link.pass ? "loop" : (link.text.split("(")[0] ?? ""),
+          sub: link.text,
+          tags: link.raised && code !== null ? [{ text: code, kind: "error" }] : [],
+          state: link.raised ? "failed" : "fresh",
+          opens: false,
+          place: null,
+        });
       }
     }
     return found;

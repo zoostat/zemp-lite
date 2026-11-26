@@ -291,6 +291,11 @@ export interface Block {
   mark?: "edited" | "stale";
   /** The passes of a loop the engine reported. */
   passes: Pass[];
+  /**
+   * Where the statement stopped the run: the engine's own record of the error, as fields
+   * (its code, its place, its chain of calls and passes), once the run has ended.
+   */
+  error?: Record<string, unknown>;
 }
 
 /**
@@ -331,6 +336,7 @@ export function blocks(run: Run): Block[] {
     ) {
       continue;
     }
+    const stopped = run.info.find((one) => one.line === statement.line)?.error;
     found.push({
       line: statement.line,
       state: statement.state,
@@ -340,6 +346,7 @@ export function blocks(run: Run): Block[] {
       pass: statement.pass,
       passes: statement.passes,
       ...(statement.mark === undefined ? {} : { mark: statement.mark }),
+      ...(stopped === undefined || stopped === null ? {} : { error: stopped }),
     });
   }
   if (run.afterPrinted !== "" || run.afterRaw !== "") {

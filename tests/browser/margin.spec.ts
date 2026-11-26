@@ -972,6 +972,47 @@ test("an error raised inside a function has its trail, each link a way to its li
   await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
 });
 
+test("an error raised in a pass of a loop names the pass in its trail, which the engine's message does not", async ({
+  page,
+  press,
+}) => {
+  // Release 0.3, step 6d (open decision #175, C22): the trail is read from the engine's own
+  // record of the error, which carries the pass of a loop as fields.
+  await scratch(page, press);
+  await write(
+    page,
+    [
+      "/// One over a number.",
+      "fn inv(x: Float) -> Float {",
+      '    if x == 0 { error("zero") }',
+      "    1 / x",
+      "}",
+      "for k in [2.0, 1.0, 0.0] {",
+      "    print(inv(k))",
+      "}",
+      "",
+    ].join("\n"),
+  );
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  const trail = page.getByTestId("trail");
+  await expect(trail.locator("li")).toHaveText([
+    "scripts/main.zeff:6 pass 3 of 3: k = 0",
+    "scripts/main.zeff:7 inv(x: 0)",
+    "scripts/main.zeff:3 zero",
+  ]);
+  // What the engine printed of the error says the call and not the pass.
+  const said = page.locator('[data-testid="block"][data-line="6"]').getByTestId("said");
+  await expect(said.locator(".detail")).not.toContainText("pass");
+  // The line of the call has its note; the loop's own line keeps the loop's.
+  await expect(page.locator('[data-testid="note"][data-line="7"]')).toContainText("inv(x: 0)");
+  await expect(page.locator('[data-testid="note"][data-line="3"]')).toContainText("Z0001");
+  // A link of the trail puts the cursor on its line.
+  await press(trail.getByRole("button", { name: "scripts/main.zeff:6" }));
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("6");
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
+});
+
 test("a loop's output carries its passes, a long list folded to its ends until Show all", async ({
   page,
   press,

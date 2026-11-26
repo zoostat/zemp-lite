@@ -132,7 +132,7 @@
           <p class="help">{help}</p>
         {/each}
         {#if workspace !== null && one.kind === "error"}
-          {@const trail = trailOf(one.raw, one.sentence)}
+          {@const trail = trailOf(block.error)}
           {#if trail.length > 0}
             <!-- The error's trail (#183): the chain the engine named, each link a way to its line. -->
             <div class="trail" data-testid="trail">

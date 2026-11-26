@@ -2956,3 +2956,42 @@ A paper is held between settings, so a second setting reuses what the first work
 **Folding.** The engine also says where a text folds, a section among the places (`folds_of`). The app's editor folds outputs, not code, so nothing reads it yet; it is there for when code folds.
 
 **Reason.** Open decision #178, and the promise of 0.2.1: the sections are the engine's to read, and the app no longer reads Zeff's comments itself.
+
+## 27 November 2026: An error's chain of calls from the engine's fields (release 0.3, step 6d; #175, C22)
+
+**What the app did until now.** It read the trail of an error (open decision #183) out of the engine's printed message, line by line: the place after `-->`, and each line that begins `= in:` for a call and where it was called. The message does not say which pass of a loop an error was raised in, so the trail could not either; its own comment said so.
+
+**What it does now.** The outcome of a run carries, for the statement that stopped it, the engine's own record of the error (step 6a), with its chain as fields: for each call the function, what each argument was given, and the file, line and column it was called at; and for a loop the pass, of how many, the loop's variable and what it held. The trail is read from that record: from the script's line down to the line that raised the error. The reading of the printed message is removed.
+
+**A pass of a loop is a link of the trail**, written `pass 3 of 3: k = 0`: the number of the pass and of the passes, the variable and its value, each the engine's field; the three small words between them are the app's. A loop that does not know how many passes it has says the pass alone. Its link leads to the loop's line, as a call's leads to the call's.
+
+**What is the same.** For the kept script of the trail (`tests/scripts/trail.zeff`) the trail is, link for link, the one read from the message until now, and each call is written exactly as the engine's message writes it (`returns(data: a frame of 0 rows × 11 variables)`); this is held on the engine itself. The trail stands under the error, each link a way to its line; the lines it names have their notes.
+
+**One difference in time.** The record comes with the outcome of the run, which is when the run has stopped; the message was told a moment earlier, as the statement failed. So the trail appears as the run ends, with the notes, and not a moment before it. Nothing is seen of the difference: an error stops the run.
+
+**Tests.** Unit (the trail of a record of two calls; of a call inside a pass of a loop; a loop of unknown length and one with no variable; no chain, no record and a record that is not one give no trail). Unit on the engine, under Node (the kept script's error has the trail it had, and what the run said is the kept message; a function called in the third pass of a loop over three numbers gives `pass 3 of 3: k = 0`, the call and the error, and the printed message has no word of the pass; an error raised at the script's own line has no trail). Browser, both engines (the kept script's trail as before; the loop's trail of three links, the pass first, its link putting the cursor on the loop's line, with nothing run again).
+
+**Reason.** Open decision #175, C22, and #183: the trail is the engine's own account of how an error came about, read as the engine gives it and not out of its print.
+
+## 27 November 2026: The wait before a one-statement run, read a fourth time and set down
+
+**The deployment of steps 5 to 6b** (commit c2c9be4): GitHub's check green; all 16 checks at the trial address and at the address. First start 0.52 s and 1.16 s at the trial address, 0.74 s and 1.59 s at the address (Chromium, WebKit).
+
+**The wait, with every part of it now measured.** At the trial address, in Chromium: 2.99 s between the key and the start of the run. Of it, by the app's own notes: waiting for the engine 0 ms, for the browser's storage 0 ms, the engine's check 13 ms, what the statement needs 5 ms. The page itself was busy for 61 ms. Pressed again: 32 ms in all. At the address, the same build, a minute later: 15 ms before the run, 34 ms in all. In WebKit: 7 and 9 ms.
+
+**What four deployments show together.**
+
+| Deployment | Trial address, Chromium | Address, Chromium | WebKit, either |
+| --- | ---: | ---: | ---: |
+| step 3 (0b58c22) | 3.56 s | 3.41 s | 10 to 14 ms |
+| steps 3 and 3b (5bdb4d5) | 2.94 s | 12 ms | 8 to 9 ms |
+| step 4 (21eb677) | 3.03 s | 48 ms | 13 to 18 ms |
+| steps 5 to 6b (c2c9be4) | 2.99 s | 15 ms | 7 to 9 ms |
+
+The wait is there at the trial address every time and at the address once in four; the trial address is the first the checks are made at, on a machine GitHub has only just prepared, with the browser only just installed. It is about three seconds each time, whatever the app waits for, which is 12 to 34 ms. It is paid once: the second press is always tens of milliseconds. It is never in WebKit, and never on this Mac, at the same addresses, with the browser at full speed or held back.
+
+**Conclusion.** It is the first session of the test machine's Chromium, not the app, the engine or the host: nothing the app does takes the time, the page is not busy, and the same build at the address a minute later does not wait. What that browser is doing in those three seconds is not known and is not looked for further. The measure stays as it is, with its parts, so that a wait that did belong to the app would show in one of them; and the figure at the trial address in Chromium is read with this in mind. It is not listed as a known issue of the release.
+
+**Not concluded from it.** That the measure at the address before 0.3 never showed it (9 to 94 ms on 0.8.0, at both addresses): that was four readings on two deployments, and the wait has since been absent at the address three times in four. It is not evidence that the new engine brought it.
+
+**Reason.** A measure is read until it is understood or shown to be the machine's. Here it is shown not to be the app's by measuring every part of the app's wait, which is as far as can be seen from outside that machine.
