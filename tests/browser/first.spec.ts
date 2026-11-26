@@ -173,7 +173,7 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     await page.goto("/");
     const start = page.getByTestId("start");
     await expect(start.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
-    await expect(page.getByTestId("version")).toContainText("0.2");
+    await expect(page.getByTestId("version")).toContainText("0.3");
     await expect(page.getByTestId("alpha")).toHaveText("alpha");
     await expect(page.getByText("The first public preview: much is still to come")).toBeVisible();
     // The three steps, each done in turn, under one bar; the size is the size that travels

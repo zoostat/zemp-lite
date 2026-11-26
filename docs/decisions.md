@@ -2696,3 +2696,26 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 **Nothing is built.** No file of the app is changed by this entry; step 1 opens the release on the owner's "go".
 
 **Reason.** A release is planned before any code, and the plan is put to the owner in plain words with the questions only he can answer.
+
+## 27 November 2026: Release 0.3 is opened; the owner's four answers
+
+**The owner's word.** On the plan of `docs/releases/0.3.md` and its four questions, each put with a recommendation: "Go, as recommended".
+
+**His answers, so given.**
+
+1. _The Variables pane (#209): option A._ Every kind of variable in the register's table, at this release: long text by the lengths of its values, with its empty and missing rows, five values in full and the values that repeat; text of few values with a line naming `category()`; a variable whose every value differs said to look like an identifier; an ordered category in the order of its levels; a number with its unit and measure where the data carries them; an opaque column counted, with its first values as printed. Steps 20 and 21 are both in the release.
+2. _What **Run** does in Paper: the scripts whose exported files the paper uses_, in the order of their names, the page set again with what they wrote; a paper that uses none says so.
+3. _Where a new paper is made: a folder `paper/` of the project._ **New paper…** asks its name and makes it there (`paper/paper.typ` for the first); a `.typ` file anywhere in a project opens in Paper.
+4. _The Scratch project carries a short sample paper_: one page that sets a table and a figure its scripts export, fetched and set only when Paper is opened.
+
+**#228 stays in this release** (a project's other text files opened to be read): he was told it is here by its own words and is his to move, and did not move it.
+
+**For the coordinating session**, which alone edits the register and the specification: #209 decided as A at Zemp 0.3; the row of 0.3 in section 15 of the Zemp Specification to name #209 and #228; the folder `paper/` (answer 3), which the project's folders in section 2 of the Engine Specification do not name. Nothing in `docs/spec/` is changed here; the copy is brought up when those entries are made.
+
+**The version.** `0.3.0-dev` in `package.json`, `package-lock.json`, `worker/Cargo.toml` and `worker/Cargo.lock`, as each release since 0.2.1 is opened; the interface writes it as 0.3-dev (`src/app/version.ts`: the patch left out where it is 0). The engine stays Zeff 0.8.0 until step 3.
+
+**Four tests that named the release.** One unit test and three browser tests held the version to the 0.2 line (`/^0\.2\./`, "0.2" on the Start and welcome screens) or, in Help's Home, compared the screen with the version as `package.json` writes it, where the screen writes it by the app's own rule (`0.3.0-dev` is shown as 0.3-dev; the two agreed at every release since 0.2.1 because its patch was never 0). The screens were right. The tests now name the 0.3 line, and Home's test writes the version as the interface does. Each holds what it held; none is weakened. Found by the routine, which was run three times: the unit test stopped the first, the three browser tests the second, the third is green.
+
+**The engineering choices of the plan**, recorded with it in the entry above (the spike as step 2; what the editor asked of the engine taken up in steps 6 and 7; R13's remedy in step 4), stand.
+
+**Reason.** The owner's "go". A release is opened by a commit that changes the version and the records and nothing of the app, so that the routine is seen green before the first change.

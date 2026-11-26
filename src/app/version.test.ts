@@ -3,7 +3,7 @@ import { ENGINE, VERSION, shown } from "./version";
 
 describe("the version", () => {
   it("is the one `package.json` carries", () => {
-    expect(VERSION).toMatch(/^0\.2\.\d+(-dev)?$/);
+    expect(VERSION).toMatch(/^0\.3\.\d+(-dev)?$/);
   });
 
   it("names the engine of the release plan's row", () => {

@@ -9,11 +9,13 @@ import type { Locator, Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
 const READY = "engine Zeff 0.8.0 ready";
+// The version as the interface writes it (`shown` in `src/app/version.ts`): without a patch
+// of 0, so `0.3.0-dev` is 0.3-dev on the screen.
 const VERSION = (
   JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as {
     version: string;
   }
-).version;
+).version.replace(/^(\d+\.\d+)\.0(?=$|-)/, "$1");
 
 async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
   await page.goto("/");

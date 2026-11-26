@@ -1,6 +1,6 @@
 {
   "name": "zemp-lite",
-  "version": "0.2.5",
+  "version": "0.3.0-dev",
   "description": "Zemp Lite, the code-first workspace for the Zeff statistics language",
   "license": "Apache-2.0",
   "private": true,

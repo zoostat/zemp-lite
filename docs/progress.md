@@ -46,6 +46,10 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Green.** Documents alone since the last green routine (commit 23f1b6c, run again on the pushed commit: 418 unit tests, 647 browser tests).
 
-**Next.** The owner's "go" on the plan, with his answers; then step 1 `[engine]`, the opening of the release, and step 2 `[engine]`, the spike of the Typst module.
+**The owner's answers** (27 November 2026: "Go, as recommended"; then, while step 1 was being made, "Continue to next step if one step is finished. take all decisions of my behalf"): #209 as option A, every kind of variable (steps 20 and 21 both in); **Run** in Paper runs the scripts whose exported files the paper uses; a new paper is made in a folder `paper/`; the Scratch project carries a short sample paper. #228 stays in this release. From here the steps follow one another without waiting, each choice that arises taken as recommended and recorded in `docs/decisions.md`.
 
-**For the owner to decide.** Four questions of the plan: (1) the Variables pane for each kind of variable, #209: all kinds (recommended), long text alone, or nothing at 0.3; (2) what **Run** does in Paper: the scripts whose exports the paper uses (recommended), or the script last open; (3) where a new paper is made: a folder `paper/` (recommended); (4) whether the Scratch project carries a short sample paper (recommended: yes). #228 (a project's other text files opened to be read) is in this release by its own words, his to move. **Still the owner's from before:** the checks by hand; the trademarks (#37) before the address is announced; the order of the parts for #223. The reader test is moved by him to Zeff 0.11.0 (#230).
+**Done, step 1 `[engine]`.** The release opened: version `0.3.0-dev` (shown as 0.3-dev); the answers and the plan's choices recorded. Nothing of the app changes; four tests that named the 0.2 line now name the 0.3 line. Green here: the whole routine in both browsers (418 unit tests, 647 browser tests, 3 skipped by design; the nine sample projects identical; the engine 2,927.9 kB as it travels, of 5,000).
+
+**Next.** Step 2 `[engine]`: the spike of the Typst module.
+
+**For the owner to know.** For the coordinating session: #209 decided as A at Zemp 0.3; the row of 0.3 to name #209 and #228; the folder `paper/` for papers. **Still the owner's from before:** the checks by hand; the trademarks (#37) before the address is announced; the order of the parts for #223. The reader test is moved by him to Zeff 0.11.0 (#230).

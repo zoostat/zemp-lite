@@ -33,7 +33,7 @@ test("the welcome screen opens, names the release and says where projects are ke
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
-  await expect(page.getByTestId("version")).toContainText("0.2");
+  await expect(page.getByTestId("version")).toContainText("0.3");
   // The page is cross-origin isolated, so the cancel flag can be shared with the worker.
   expect(await page.evaluate(() => crossOriginIsolated)).toBe(true);
   await expect(page.getByRole("button", { name: "New project…" })).toBeEnabled();
