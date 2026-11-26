@@ -49,9 +49,11 @@ const takesBrotli = (said: string | string[] | undefined): boolean =>
 
 /**
  * The preview of the build answers as the host does. A built file is sent with the host's
- * headers for built files; and the engine is sent packed tight to a browser that takes brotli
+ * headers for built files; the engine is sent packed tight to a browser that takes brotli
  * (release 0.2.5, step 4; open decision #224), as the host's function sends it
- * (`tools/host-worker.js`): the packed file the build put beside the engine, marked as brotli.
+ * (`tools/host-worker.js`): the packed file the build put beside the engine, marked as brotli;
+ * and an address under `/assets/` that holds no file is answered "not yet", not to be kept, as
+ * that function answers it, and never with the app's page (release 0.3, step 4; risk R13).
  */
 const asAtTheHost: Plugin = {
   name: "zemp-as-at-the-host",
@@ -63,6 +65,19 @@ const asAtTheHost: Plugin = {
         for (const [name, value] of Object.entries(kept)) response.setHeader(name, value);
       }
       const asks = request.method === "GET" || request.method === "HEAD";
+      if (asks && asked.startsWith("/assets/") && !existsSync(path.join(out, asked))) {
+        for (const [name, value] of Object.entries(isolation)) response.setHeader(name, value);
+        response.statusCode = 503;
+        response.setHeader("Content-Type", "text/plain; charset=utf-8");
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Retry-After", "5");
+        response.end(
+          request.method === "HEAD"
+            ? undefined
+            : "This file is not at this place of the host yet.\n",
+        );
+        return;
+      }
       const packed = path.join(out, `${asked}.br`);
       if (
         asks &&
@@ -87,9 +102,9 @@ const asAtTheHost: Plugin = {
 /**
  * The engine packed tight, for the host to send as it is (release 0.2.5, step 4; open decision
  * #224). Once the build is written: the packed engine the worker's build made is put beside
- * the engine under the engine's built name; `_routes.json` names the engine's address as the
- * one the host's function answers, so that no other file passes through it; and the function
- * is written as `_worker.js`, with the headers of `public/_headers`, which the host does not
+ * the engine under the engine's built name; `_routes.json` names the built files (`/assets/*`)
+ * as what the host's function answers, and nothing else passes through it (from release 0.3,
+ * step 4: until then the engine's address alone); and the function is written as `_worker.js`, with the headers of `public/_headers`, which the host does not
  * add to what a function answers. The build stops where the packed file is not this engine.
  */
 function enginePacked(): Plugin {
@@ -124,7 +139,7 @@ function enginePacked(): Plugin {
       writeFileSync(path.join(assets, `${engine}.br`), packed);
       writeFileSync(
         path.join(out, "_routes.json"),
-        `${JSON.stringify({ version: 1, include: [`/assets/${engine}`], exclude: [] }, null, 2)}\n`,
+        `${JSON.stringify({ version: 1, include: ["/assets/*"], exclude: [] }, null, 2)}\n`,
       );
       const source = readFileSync(new URL("./tools/host-worker.js", import.meta.url), "utf8");
       const put = "const HEADERS = __HOST_HEADERS__;";

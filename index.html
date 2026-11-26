@@ -11,6 +11,36 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      // A script of the app that did not arrive (release 0.3, step 4; risk R13). For some
+      // seconds after a new version is put in place a part of the host may not hold a file
+      // yet, and it then answers "not yet". Nothing of the app can say so, since the app is
+      // what did not arrive: this line of the page's own does, and offers to load again.
+      addEventListener(
+        "error",
+        function (event) {
+          var from = event.target;
+          var app = document.getElementById("app");
+          if (!from || from.tagName !== "SCRIPT" || !app || app.childElementCount > 0) return;
+          var said = document.createElement("p");
+          said.setAttribute("role", "alert");
+          said.style.cssText =
+            "font: 16px/1.5 system-ui, sans-serif; margin: 3rem auto; max-width: 34rem; padding: 0 1.5rem";
+          said.textContent =
+            "Zemp Lite could not be loaded: a file of it did not arrive. That can happen for a few seconds while a new version is put in place. ";
+          var again = document.createElement("button");
+          again.type = "button";
+          again.textContent = "Load again";
+          again.style.font = "inherit";
+          again.onclick = function () {
+            location.reload();
+          };
+          said.appendChild(again);
+          app.appendChild(said);
+        },
+        true,
+      );
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -24,12 +24,14 @@ test("the build carries the engine packed beside the engine, and it is the engin
   expect(brotliDecompressSync(packed).equals(engine)).toBe(true);
   expect(packed.length).toBeLessThan(engine.length / 4);
   expect(packed.length).toBeLessThan(3_100_000);
-  // The one address the host's function answers is the engine's.
+  // The host's function answers for the built files, and for nothing else (release 0.3, step
+  // 4: every built file, where 0.2.5 gave it the engine's address alone).
   const routes = JSON.parse(readFileSync(path.join(dist, "_routes.json"), "utf8")) as {
     include: string[];
     exclude: string[];
   };
-  expect(routes.include).toEqual([ENGINE]);
+  expect(routes.include).toEqual(["/assets/*"]);
+  expect(ENGINE.startsWith("/assets/")).toBe(true);
   expect(routes.exclude).toEqual([]);
 });
 

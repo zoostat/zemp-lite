@@ -2,6 +2,8 @@
 // decision #224), run here as the host runs it, with a host of this test's making: it answers
 // the engine's address with the packed file, marked as brotli and untouched, with the headers
 // of the headers file; and whatever it does not know it leaves to the host as it always was.
+// From release 0.3 (step 4; risk R13) it answers for every built file, and never passes on the
+// app's page, or anything else that is not the file, as a file to be kept.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
@@ -223,12 +225,118 @@ test("where the host has not been given the engine yet and answers with its page
   assert.equal((await worker.fetch(asking(ENGINE), half)).headers.get("content-encoding"), "br");
 });
 
-test("anything that is not the engine asked for, the function leaves to the host", async () => {
-  const env = host({ "/assets/app-1.js": { bytes: Buffer.from("app"), type: "text/javascript" } });
-  const script = await worker.fetch(asking("/assets/app-1.js"), env);
-  assert.equal(await script.text(), "app");
-  assert.equal(script.headers.get("content-encoding"), null);
+test("a built file that is there is passed on as the host gave it, asked for once", async () => {
+  const files = {
+    "/assets/app-1.js": { bytes: Buffer.from("app"), type: "text/javascript" },
+    "/assets/app-1.css": { bytes: Buffer.from("body{}"), type: "text/css" },
+    "/assets/face-1.woff2": { bytes: Buffer.from("a face"), type: "font/woff2" },
+  };
+  const env = host(files);
+  for (const [name, file] of Object.entries(files)) {
+    const answer = await worker.fetch(asking(name), env);
+    assert.equal(answer.status, 200, name);
+    assert.equal(answer.headers.get("content-type"), file.type, name);
+    assert.equal(answer.headers.get("content-encoding"), null, name);
+    assert.equal(Buffer.from(await answer.arrayBuffer()).equals(file.bytes), true, name);
+    // A browser that has it and asks whether it has changed is told it has not, by the host.
+    const again = await worker.fetch(
+      asking(name, { headers: { "if-none-match": answer.headers.get("etag") } }),
+      env,
+    );
+    assert.equal(again.status, 304, name);
+  }
+  assert.deepEqual(
+    env.asked,
+    Object.keys(files).flatMap((name) => [name, name]),
+  );
+});
+
+test("a built file the host does not hold yet is never answered with the app's page: not yet, and not to be kept", async () => {
+  // Risk R13. As Cloudflare Pages answers an address under `/assets/` that holds no file, in
+  // the seconds after a deployment: the app's page, with the headers of a built file.
+  const early = {
+    ASSETS: {
+      async fetch() {
+        return new Response("<!doctype html><title>Zemp Lite</title>", {
+          status: 200,
+          headers: {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "public, max-age=31536000, immutable",
+          },
+        });
+      },
+    },
+  };
+  for (const name of [
+    "/assets/app-1.js",
+    "/assets/app-1.css",
+    "/assets/face-1.woff2",
+    "/assets/worker-1.js",
+    "/assets/zemp_worker_bg-abc123.wasm.br",
+  ]) {
+    const answer = await worker.fetch(asking(name), early);
+    assert.equal(answer.status, 503, name);
+    assert.equal(answer.headers.get("cache-control"), "no-store", name);
+    assert.equal(answer.headers.get("retry-after"), "5", name);
+    assert.match(answer.headers.get("content-type"), /^text\/plain/, name);
+    assert.equal(answer.headers.get("Cross-Origin-Embedder-Policy"), "require-corp", name);
+    assert.equal(await answer.text(), "This file is not at this place of the host yet.\n", name);
+    const head = await worker.fetch(asking(name, { method: "HEAD" }), early);
+    assert.equal(head.status, 503, name);
+    assert.equal(head.headers.get("cache-control"), "no-store", name);
+    assert.equal((await head.arrayBuffer()).byteLength, 0, name);
+  }
+});
+
+test("what else the host answers that is not the file is passed on by its status, and not to be kept", async () => {
+  for (const status of [404, 500, 502]) {
+    const failing = {
+      ASSETS: {
+        async fetch() {
+          return new Response("the host's own words", {
+            status,
+            headers: {
+              "content-type": "text/plain",
+              "cache-control": "public, max-age=31536000, immutable",
+            },
+          });
+        },
+      },
+    };
+    const answer = await worker.fetch(asking("/assets/app-1.js"), failing);
+    assert.equal(answer.status, status);
+    assert.equal(answer.headers.get("cache-control"), "no-store");
+    assert.equal(answer.headers.get("Cross-Origin-Opener-Policy"), "same-origin");
+    assert.equal(await answer.text(), "The host has no such file.\n");
+  }
+});
+
+test("what is not a built file asked for, the function leaves to the host as it was", async () => {
+  // The routes give the function `/assets/*` alone; were it given more, it would pass it on.
+  const page = {
+    asked: [],
+    ASSETS: {
+      async fetch(request) {
+        page.asked.push(`${request.method} ${new URL(request.url).pathname}`);
+        return new Response("<!doctype html><title>Zemp Lite</title>", {
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      },
+    },
+  };
+  for (const name of ["/", "/app/", "/counted.html"]) {
+    const answer = await worker.fetch(asking(name), page);
+    assert.equal(answer.status, 200, name);
+    assert.match(await answer.text(), /<!doctype html>/, name);
+  }
   const posted = await worker.fetch(asking(ENGINE, { method: "POST" }), both());
   assert.equal(posted.headers.get("content-encoding"), null);
-  assert.deepEqual(env.asked, ["/assets/app-1.js"]);
+  const sent = await worker.fetch(asking("/assets/app-1.js", { method: "POST" }), page);
+  assert.equal(sent.status, 200);
+  assert.deepEqual(page.asked, [
+    "GET /",
+    "GET /app/",
+    "GET /counted.html",
+    "POST /assets/app-1.js",
+  ]);
 });

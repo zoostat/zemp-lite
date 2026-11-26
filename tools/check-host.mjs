@@ -8,7 +8,9 @@
 // browser that has the file asks for it that way. And the engine is asked for as a browser that
 // takes brotli asks, and as one that does not (release 0.2.5, step 4; open decision #224): the
 // first must be sent the engine packed tight, untouched by the host, and the second the engine
-// whole; both must be the same engine. What it finds is said in plain words.
+// whole; both must be the same engine. And an address under `assets/` that holds no file must
+// be answered as no file and not to be kept, never with the app's page (release 0.3, step 4;
+// risk R13). What it finds is said in plain words.
 //
 // A deployment is not at every place of the host at the instant the host says it is done: for
 // some seconds a file a script names (the worker, the WebAssembly) may be answered with the
@@ -153,8 +155,14 @@ async function look() {
     if (seen.has(file)) continue;
     seen.add(file);
     const answer = await fetched(new URL(file, base));
-    // A name in a script that is no file of the site: the host answers it with the page.
-    if (!fromPage.has(file) && (answer.headers.get("content-type") ?? "").startsWith("text/html")) {
+    // A name in a script that is no file of the site: the host's function answers it "not
+    // yet" (release 0.3, step 4), as the host by itself answered it with the page.
+    if (
+      !fromPage.has(file) &&
+      (answer.status === 503 ||
+        answer.status === 404 ||
+        (answer.headers.get("content-type") ?? "").startsWith("text/html"))
+    ) {
       seen.delete(file);
       await answer.arrayBuffer();
       continue;
@@ -180,6 +188,30 @@ async function look() {
     } else {
       await answer.arrayBuffer();
     }
+  }
+  // A wrong file is never kept for a year (release 0.3, step 4; risk R13). The host by itself
+  // answers an address under `assets/` that holds no file with the app's page and the headers
+  // of a built file, which tell a browser to keep it for a year. So an address there that
+  // holds no file must be answered as no file, not with a page, and not to be kept.
+  let absent = 0;
+  for (const name of ["zemp-no-such-file.js", "zemp-no-such-file.css", "zemp-no-such-file.woff2"]) {
+    const what = `assets/${name}, which is no file`;
+    const answer = await fetched(new URL(`assets/${name}`, base));
+    await answer.arrayBuffer();
+    const kept = answer.headers.get("cache-control") ?? "";
+    if (answer.status < 400) {
+      problems.push(`${what}: answered ${answer.status}, as if it were one`);
+    }
+    if ((answer.headers.get("content-type") ?? "").startsWith("text/html")) {
+      problems.push(`${what}: answered with a page`);
+    }
+    if (!/\bno-store\b/.test(kept)) {
+      problems.push(
+        `${what}: a browser may keep the answer (\`cache-control\` is ${kept === "" ? "missing" : `\`${kept}\``}, not \`no-store\`)`,
+      );
+    }
+    holds(what, answer);
+    absent += 1;
   }
   const wasm = [...seen].filter((file) => file.endsWith(".wasm"));
   if (wasm.length === 0) problems.push("no WebAssembly file of the engine was found from the page");
@@ -280,7 +312,7 @@ async function look() {
   return {
     problems,
     whole: wasm.length > 0 && worker.length > 0,
-    said: `${checked} answers, the app's page and the page at app/ that goes on to it, ${seen.size} files (the worker and the engine's WebAssembly among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers${packedSaid}`,
+    said: `${checked} answers, the app's page and the page at app/ that goes on to it, ${seen.size} files (the worker and the engine's WebAssembly among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers; ${absent} addresses under assets/ that hold no file answered as no file, not to be kept${packedSaid}`,
   };
 }
 
