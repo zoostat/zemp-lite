@@ -2676,3 +2676,23 @@ A match is entered once, by the best rule that finds it, with why it matched whe
 
 **Reason.** A step is committed only when the routine is green, and a failure is told as it was.
 
+
+## 27 November 2026: Release 0.3 is planned; the specification's copy is brought to Zeff f0c83be
+
+**The owner's word.** On 26 November 2026 he asked for 0.3 and was told that it stands on Zeff 0.9.0, then finished and not released; he released it that evening, and on 27 November wrote "ready to start 0.3". That is taken as "Start release 0.3".
+
+**What was confirmed.** `v0.2.5` is tagged (b6ded13) and the working tree was clean, the three commits after the tag changing a test's helper and documents. Zeff 0.9.0 is released: the tag `v0.9.0` on commit 670e73f of the Zeff repository, with a GitHub release.
+
+**The copy.** `docs/spec/` is the copy of the Zeff repository's `docs/spec/` at commit f0c83be ("Record the signing, the installation check and the publishing of release 0.9.0"), each file taken from the commit and compared with it byte for byte. Two files differ from the copy at 6af2614: the register of open decisions (#226 to #230 entered, among them #228, a project's other text files opened to be read, decided by the owner on 25 November 2026 and placed in the next Zemp Lite release, and #230, the reader test moved to 0.11.0; the status at the close of 0.9.0) and the risk register (the review at 0.9.0).
+
+**The plan.** `docs/releases/0.3.md`: 23 steps in seven parts, with what the reading found, what the release leaves out and four questions for the owner. Three readings of it are this session's, and are said in the plan so that he may overturn them:
+
+1. _The spike of the Typst module is step 2_, straight after the opening, as the record of 23 November 2026 asks, and before the engine's steps, though Paper's own steps come later: what it finds of licences and fonts may need his answer, and the other steps go on while he gives it. A fifth thing is added to the four it settles: whether a place on the set page is traced to its place in the source, on which two pieces of the row rest.
+2. _#228 is in this release._ Its decision places it in "the release of #223 if it comes before 0.3, otherwise 0.3"; the release of #223 has not come.
+3. _What the editor asked of the engine (#175: C5, C6, C22; #197; #178) is taken up here_, in steps 6 and 7. The row names the release's methods alone, but the app's stand-ins were each recorded as lasting until the engine gave its own (the sections read from comments, 0.2.1; the plot of a name bound twice, 0.2), and Zeff 0.9.0 gives them. No screen changes by it but the one known limit lifted.
+
+**Left out, and why.** **Run section** (#178) is named by the Zemp Specification as planned "before Zemp Lite 1.0" and by no release's row, so it is not pulled into this one. The remedy of R13 is in (step 4): it was left to this release at 0.2.5, and the Typst module is one more built file to guard.
+
+**Nothing is built.** No file of the app is changed by this entry; step 1 opens the release on the owner's "go".
+
+**Reason.** A release is planned before any code, and the plan is put to the owner in plain words with the questions only he can answer.
