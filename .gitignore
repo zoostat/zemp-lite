@@ -6,3 +6,4 @@ test-results/
 playwright-report/
 .zeff/
 worker/pkg/
+paper/pkg/

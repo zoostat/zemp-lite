@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { brotliDecompressSync } from "node:zlib";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { packedOf } from "./tools/paper-lib.mjs";
 import type { Plugin } from "vite";
 import { defineConfig } from "vitest/config";
 
@@ -49,9 +50,10 @@ const takesBrotli = (said: string | string[] | undefined): boolean =>
 
 /**
  * The preview of the build answers as the host does. A built file is sent with the host's
- * headers for built files; the engine is sent packed tight to a browser that takes brotli
- * (release 0.2.5, step 4; open decision #224), as the host's function sends it
- * (`tools/host-worker.js`): the packed file the build put beside the engine, marked as brotli;
+ * headers for built files; the engine, the Paper module and its fonts are sent packed tight
+ * to a browser that takes brotli (release 0.2.5, step 4; open decision #224), as the host's
+ * function sends them (`tools/host-worker.js`): the packed file the build put beside each,
+ * marked as brotli;
  * and an address under `/assets/` that holds no file is answered "not yet", not to be kept, as
  * that function answers it, and never with the app's page (release 0.3, step 4; risk R13).
  */
@@ -79,15 +81,16 @@ const asAtTheHost: Plugin = {
         return;
       }
       const packed = path.join(out, `${asked}.br`);
+      const kind = /^\/assets\/[^/]+\.(wasm|otf|ttf)$/.exec(asked)?.[1];
       if (
         asks &&
-        /^\/assets\/[^/]+\.wasm$/.test(asked) &&
+        kind !== undefined &&
         takesBrotli(request.headers["accept-encoding"]) &&
         existsSync(packed)
       ) {
         const bytes = readFileSync(packed);
         for (const [name, value] of Object.entries(isolation)) response.setHeader(name, value);
-        response.setHeader("Content-Type", "application/wasm");
+        response.setHeader("Content-Type", kind === "wasm" ? "application/wasm" : `font/${kind}`);
         response.setHeader("Content-Encoding", "br");
         response.setHeader("Vary", "Accept-Encoding");
         response.setHeader("Content-Length", bytes.length);
@@ -100,12 +103,15 @@ const asAtTheHost: Plugin = {
 };
 
 /**
- * The engine packed tight, for the host to send as it is (release 0.2.5, step 4; open decision
- * #224). Once the build is written: the packed engine the worker's build made is put beside
- * the engine under the engine's built name; `_routes.json` names the built files (`/assets/*`)
- * as what the host's function answers, and nothing else passes through it (from release 0.3,
- * step 4: until then the engine's address alone); and the function is written as `_worker.js`, with the headers of `public/_headers`, which the host does not
- * add to what a function answers. The build stops where the packed file is not this engine.
+ * What the host sends packed tight, as it is (release 0.2.5, step 4; open decision #224): the
+ * engine; and from release 0.3, step 11b, the Paper module and the fonts a paper is set in.
+ * Once the build is written: the packed file each WebAssembly's own build made is put beside
+ * it under its built name, and each font is packed beside itself; `_routes.json` names the
+ * built files (`/assets/*`) as what the host's function answers, and nothing else passes
+ * through it (from release 0.3, step 4: until then the engine's address alone); and the
+ * function is written as `_worker.js`, with the headers of `public/_headers`, which the host
+ * does not add to what a function answers. The build stops where a packed file is not the
+ * file of this build.
  */
 function enginePacked(): Plugin {
   let out = "";
@@ -117,26 +123,48 @@ function enginePacked(): Plugin {
     },
     closeBundle() {
       const assets = path.join(out, "assets");
-      const engines = existsSync(assets)
-        ? readdirSync(assets).filter((name) => name.endsWith(".wasm"))
-        : [];
-      const [engine, ...more] = engines;
-      if (engine === undefined || more.length > 0) {
+      const built = existsSync(assets) ? readdirSync(assets) : [];
+      // Each WebAssembly file of the build with the packed file its own build made beside
+      // it: the engine's, and the Paper module's (release 0.3, step 11b), told apart by the
+      // names their builds give them.
+      const sources: [RegExp, string, string][] = [
+        [/^zemp_worker_bg-.*\.wasm$/, "./worker/pkg/web/zemp_worker_bg.wasm.br", "worker"],
+        [/^zemp_paper_bg-.*\.wasm$/, "./paper/pkg/web/zemp_paper_bg.wasm.br", "paper"],
+      ];
+      const wasm = built.filter((name) => name.endsWith(".wasm"));
+      for (const [named, beside, what] of sources) {
+        const found = wasm.filter((name) => named.test(name));
+        if (found.length !== 1) {
+          throw new Error(
+            `the build has ${found.length} WebAssembly files of the ${what}, not one: nothing can be packed for the host`,
+          );
+        }
+        const file = found[0] as string;
+        const source = new URL(beside, import.meta.url);
+        if (!existsSync(source)) {
+          throw new Error(`the ${what} is not packed: run \`npm run build:${what}\` first`);
+        }
+        const packed = readFileSync(source);
+        if (!brotliDecompressSync(packed).equals(readFileSync(path.join(assets, file)))) {
+          throw new Error(
+            `the packed ${what} is not the ${what} of this build: run \`npm run build:${what}\` again`,
+          );
+        }
+        writeFileSync(path.join(assets, `${file}.br`), packed);
+      }
+      if (wasm.length !== sources.length) {
         throw new Error(
-          `the build has ${engines.length} WebAssembly files, not the engine's one: nothing can be packed for the host`,
+          `the build has ${wasm.length} WebAssembly files, not the ${sources.length} it is known to carry`,
         );
       }
-      const beside = new URL("./worker/pkg/web/zemp_worker_bg.wasm.br", import.meta.url);
-      if (!existsSync(beside)) {
-        throw new Error("the engine is not packed: run `npm run build:worker` first");
-      }
-      const packed = readFileSync(beside);
-      if (!brotliDecompressSync(packed).equals(readFileSync(path.join(assets, engine)))) {
-        throw new Error(
-          "the packed engine is not the engine of this build: run `npm run build:worker` again",
+      // The fonts a paper is set in, packed as tight, each beside itself.
+      const cache = fileURLToPath(new URL("./node_modules/.cache/zemp-lite", import.meta.url));
+      for (const font of built.filter((name) => /\.(otf|ttf)$/.test(name))) {
+        writeFileSync(
+          path.join(assets, `${font}.br`),
+          packedOf(path.join(assets, font), cache).packed,
         );
       }
-      writeFileSync(path.join(assets, `${engine}.br`), packed);
       writeFileSync(
         path.join(out, "_routes.json"),
         `${JSON.stringify({ version: 1, include: ["/assets/*"], exclude: [] }, null, 2)}\n`,
@@ -178,6 +206,22 @@ function engineFacts(building: boolean): unknown {
   return null;
 }
 
+/**
+ * What the Paper module is as it travels (release 0.3, step 11b; `tools/paper-facts.mjs`): its
+ * WebAssembly and each font, with the digest the page checks what it fetched against. The
+ * build stops where it cannot be had; the development server and the unit tests, before the
+ * module is built, go on without it.
+ */
+function paperFacts(building: boolean): unknown {
+  const tool = fileURLToPath(new URL("./tools/paper-facts.mjs", import.meta.url));
+  const ran = spawnSync(process.execPath, [tool], { encoding: "utf8" });
+  if (ran.status === 0) return JSON.parse(ran.stdout) as unknown;
+  if (building) {
+    throw new Error(ran.stderr.trim() || "the facts of the Paper module could not be had");
+  }
+  return null;
+}
+
 export default defineConfig(({ command }) => {
   const building = command === "build";
   return {
@@ -205,6 +249,7 @@ export default defineConfig(({ command }) => {
       ),
       __ENGINE_BYTES__: JSON.stringify(engineBytes?.length ?? null),
       __ZEMP_FACTS__: JSON.stringify(engineFacts(building)),
+      __PAPER_FACTS__: JSON.stringify(paperFacts(building)),
     },
     test: {
       include: ["src/**/*.test.ts"],

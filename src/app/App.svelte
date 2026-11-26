@@ -3,6 +3,7 @@
   // shows the welcome screen; the project it has open is named in its address, after `#/p/`,
   // so that a reload comes back to the same project and a second tab can hold another.
   import { browserEngine } from "../engine/browser";
+  import { Papers } from "../paper/lazy";
   import { stopOf } from "../help/address";
   import type { Stop } from "../help/history";
   import { MemoryFolder, OpfsFolder } from "../project/folder";
@@ -37,6 +38,8 @@
   const engine = browserEngine();
   // The engine's language server runs in a worker of its own, so that typing never waits on a run.
   const language = browserEngine();
+  // The Paper module: not fetched until a paper is opened, then one for the window.
+  const papers = new Papers();
 
   /** The folder the address names, or `null`. */
   function named(): string | null {
@@ -99,6 +102,7 @@
       // The project closes: its workers are ended, which returns their memory to the browser.
       engine.close();
       language.close();
+      papers.close();
     }
     project = folder === null ? null : await projects.open(folder);
     if (folder !== null && project === null) {
@@ -150,6 +154,7 @@
       {project}
       {engine}
       {language}
+      {papers}
       {keeping}
       help={helpAsked}
       onhelp={() => (helpAsked = null)}

@@ -23,12 +23,14 @@
   import ReportWindow from "./ReportWindow.svelte";
   import TopBar from "./TopBar.svelte";
   import { fileTab } from "./views";
+  import type { Papers } from "../paper/lazy";
   import { Workspace, editable } from "./workspace-state.svelte";
 
   let {
     project,
     engine,
     language = null,
+    papers = null,
     keeping = "may-clear",
     help = null,
     onhelp = () => {},
@@ -38,6 +40,8 @@
     project: Project;
     engine: Engine;
     language?: Engine | null;
+    /** The Paper module of this window, fetched the first time a paper is opened. */
+    papers?: Papers | null;
     /** What the browser does with the projects, for the reminder to export. */
     keeping?: Keeping;
     /** A page of Help the address asked for: shown once, and `onhelp` then says it was. */
@@ -50,7 +54,7 @@
 
   // One project to a window: this component is made anew for each project it shows.
   // svelte-ignore state_referenced_locally
-  const workspace = new Workspace(project, engine, language, browserStorage());
+  const workspace = new Workspace(project, engine, language, browserStorage(), papers);
   $effect(() => {
     workspace.keeping = keeping;
   });

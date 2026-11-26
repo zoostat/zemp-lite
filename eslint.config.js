@@ -11,6 +11,8 @@ export default ts.config(
       "node_modules/",
       "**/target/",
       "worker/pkg/",
+      "paper/pkg/",
+      "paper/hypher/",
       "docs/",
       "test-results/",
       "playwright-report/",
@@ -36,8 +38,8 @@ export default ts.config(
     rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },
   {
-    // The worker's scripts run in a Web Worker of the browser and, for the tests, under Node.
-    files: ["worker/**/*.mjs", "worker/**/*.js"],
+    // The workers' scripts run in a Web Worker of the browser and, for the tests, under Node.
+    files: ["worker/**/*.mjs", "worker/**/*.js", "paper/**/*.mjs", "paper/**/*.js"],
     languageOptions: {
       globals: { ...globals.node, ...globals.worker },
     },

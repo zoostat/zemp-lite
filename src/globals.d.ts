@@ -15,3 +15,18 @@ declare const __ENGINE_BYTES__: number | null;
  * (`tools/facts.mjs`); `null` before the worker is built, which a build refuses.
  */
 declare const __ZEMP_FACTS__: { travels: number } | null;
+
+/** A file of the Paper module as the build carries it: its size, its SHA-256 in hex, and its size as it travels. */
+interface PaperFile {
+  name: string;
+  bytes: number;
+  sha256: string;
+  travels: number;
+}
+
+/**
+ * What the Paper module is as it travels (`tools/paper-lib.mjs`): its WebAssembly, each font a
+ * paper is set in, and the bytes that travel in all; `null` before the module is built, which
+ * a build refuses.
+ */
+declare const __PAPER_FACTS__: { module: PaperFile; fonts: PaperFile[]; travels: number } | null;

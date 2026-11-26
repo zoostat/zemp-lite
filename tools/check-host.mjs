@@ -6,7 +6,8 @@
 // through), a built file must be kept as never changing, and every answer that carries a tag,
 // asked for again with it, must be answered "not modified" with the same headers, since a
 // browser that has the file asks for it that way. And the engine is asked for as a browser that
-// takes brotli asks, and as one that does not (release 0.2.5, step 4; open decision #224): the
+// takes brotli asks, and as one that does not (release 0.2.5, step 4; open decision #224; and
+// so are the Paper module and the fonts of a paper, from release 0.3, step 11b): the
 // first must be sent the engine packed tight, untouched by the host, and the second the engine
 // whole; both must be the same engine. And an address under `assets/` that holds no file must
 // be answered as no file and not to be kept, never with the app's page (release 0.3, step 4;
@@ -180,7 +181,7 @@ async function look() {
     if (file.endsWith(".js")) {
       const text = await answer.text();
       for (const m of text.matchAll(
-        /["'`/](?:\.\/)?((?:assets\/)?[A-Za-z0-9_.-]+\.(?:js|wasm))["'`]/g,
+        /["'`/](?:\.\/)?((?:assets\/)?[A-Za-z0-9_.-]+\.(?:js|wasm|otf|ttf))["'`]/g,
       )) {
         const found = m[1].startsWith("assets/") ? m[1] : `assets/${m[1]}`;
         if (!seen.has(found)) named.add(found);
@@ -213,8 +214,19 @@ async function look() {
     holds(what, answer);
     absent += 1;
   }
-  const wasm = [...seen].filter((file) => file.endsWith(".wasm"));
-  if (wasm.length === 0) problems.push("no WebAssembly file of the engine was found from the page");
+  // What the build packs beforehand: the engine, and from release 0.3, step 11b, the Paper
+  // module and the fonts a paper is set in, which the page's scripts name and no start fetches.
+  const wasm = [...seen].filter((file) => /\.(wasm|otf|ttf)$/.test(file));
+  const engines = wasm.filter((file) => /zemp_worker_bg/.test(file));
+  const papers = wasm.filter((file) => /zemp_paper_bg/.test(file));
+  const fonts = wasm.filter((file) => /\.(otf|ttf)$/.test(file));
+  if (engines.length === 0) {
+    problems.push("no WebAssembly file of the engine was found from the page");
+  }
+  if (papers.length === 0) {
+    problems.push("no WebAssembly file of the Paper module was found from the page");
+  }
+  if (fonts.length === 0) problems.push("no font of a paper was found from the page");
   const worker = [...seen].filter((file) => /worker/.test(file) && file.endsWith(".js"));
   if (worker.length === 0) problems.push("no worker script was found from the page");
 
@@ -223,7 +235,11 @@ async function look() {
   // To one that does not: the engine whole. Where this machine has the build that was sent
   // (after a deployment it does), the packed bytes must be that build's packed file, to a byte.
   let packedSaid = "";
+  let fontsPacked = 0;
+  let fontsWhole = 0;
   for (const file of wasm) {
+    const ending = file.slice(file.lastIndexOf(".") + 1);
+    const type = ending === "wasm" ? "application/wasm" : `font/${ending}`;
     const url = new URL(file, base);
     const whole = await travelled(url, { "accept-encoding": "identity" });
     const tight = await travelled(url, { "accept-encoding": "gzip, deflate, br" });
@@ -246,9 +262,11 @@ async function look() {
       if (!(answer.headers["cache-control"] ?? "").includes("immutable")) {
         problems.push(`${file}, ${how}: is not kept as never changing`);
       }
-      if (!(answer.headers["content-type"] ?? "").startsWith("application/wasm")) {
+      if (!(answer.headers["content-type"] ?? "").startsWith(type)) {
         problems.push(
-          `${file}, ${how}: is sent as \`${answer.headers["content-type"]}\`, not as WebAssembly, so a browser cannot compile it as it arrives`,
+          ending === "wasm"
+            ? `${file}, ${how}: is sent as \`${answer.headers["content-type"]}\`, not as WebAssembly, so a browser cannot compile it as it arrives`
+            : `${file}, ${how}: is sent as \`${answer.headers["content-type"]}\`, not as \`${type}\``,
         );
       }
     }
@@ -273,24 +291,33 @@ async function look() {
     }
     const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
     if (digest(unpacked) !== digest(whole.bytes)) {
-      problems.push(`${file}: sent packed and sent whole, it is not the same engine`);
+      problems.push(`${file}: sent packed and sent whole, it is not the same file`);
     }
     const built = path.join(root, "dist", `${file}.br`);
     if (fs.existsSync(built)) {
       const ours = fs.readFileSync(built);
       if (!ours.equals(tight.bytes)) {
         problems.push(
-          `${file}: ${tight.bytes.length} bytes travelled packed, which are not the ${ours.length} bytes the build packed: the host did not send the build's packed engine as it is`,
+          `${file}: ${tight.bytes.length} bytes travelled packed, which are not the ${ours.length} bytes the build packed: the host did not send the build's packed file as it is`,
         );
       }
-    } else if (tight.bytes.length > whole.bytes.length / 4.5) {
+    } else if (ending === "wasm" && tight.bytes.length > whole.bytes.length / 4.5) {
       // Without the build at hand: brotli's highest setting brings the engine under a fifth
       // of itself, and the host's own packing as it sends does not reach a quarter.
       problems.push(
-        `${file}: ${tight.bytes.length} bytes travelled packed of ${whole.bytes.length}, more than the build's tight packing gives: the host packed the engine itself`,
+        `${file}: ${tight.bytes.length} bytes travelled packed of ${whole.bytes.length}, more than the build's tight packing gives: the host packed the file itself`,
       );
     }
-    packedSaid = `; the engine travels as ${tight.bytes.length} bytes packed of ${whole.bytes.length}`;
+    if (ending !== "wasm") {
+      fontsPacked += tight.bytes.length;
+      fontsWhole += whole.bytes.length;
+    } else {
+      const what = /zemp_paper_bg/.test(file) ? "the Paper module" : "the engine";
+      packedSaid += `; ${what} travels as ${tight.bytes.length} bytes packed of ${whole.bytes.length}`;
+    }
+  }
+  if (fonts.length > 0) {
+    packedSaid += `; the ${fonts.length} fonts of a paper as ${fontsPacked} bytes packed of ${fontsWhole}`;
   }
 
   // Every answer that carries a tag (`etag` or `last-modified`), asked for again as a browser
@@ -311,8 +338,8 @@ async function look() {
   const pageTagged = tags.some(({ what }) => what === "the app's page");
   return {
     problems,
-    whole: wasm.length > 0 && worker.length > 0,
-    said: `${checked} answers, the app's page and the page at app/ that goes on to it, ${seen.size} files (the worker and the engine's WebAssembly among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers; ${absent} addresses under assets/ that hold no file answered as no file, not to be kept${packedSaid}`,
+    whole: engines.length > 0 && papers.length > 0 && fonts.length > 0 && worker.length > 0,
+    said: `${checked} answers, the app's page and the page at app/ that goes on to it, ${seen.size} files (the workers, the engine's WebAssembly, the Paper module's and its fonts among them) and ${revalidated} answered "not modified" when asked again${pageTagged ? "" : " (the page carries no tag, so it is fetched whole each time)"}, each with the isolation headers; ${absent} addresses under assets/ that hold no file answered as no file, not to be kept${packedSaid}`,
   };
 }
 

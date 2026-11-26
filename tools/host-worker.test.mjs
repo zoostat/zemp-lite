@@ -133,6 +133,49 @@ test("a browser that takes brotli is sent the packed engine, untouched, marked a
   assert.deepEqual(env.asked, [packedName(ENGINE)]);
 });
 
+test("the Paper module and a font of a paper are sent packed in the same way, each as its own type", async () => {
+  // Release 0.3, step 11b: what the build packs beforehand is told by a file's ending.
+  const font = Buffer.from("a font, as its publisher gives it ".repeat(3000));
+  const MODULE = "/assets/zemp_paper_bg-def456.wasm";
+  const FONT = "/assets/LibertinusSerif-Regular-C6mmvgqg.otf";
+  const TTF = "/assets/SomeMono-Regular-abc.ttf";
+  const env = host({
+    [MODULE]: { bytes: engine, type: "application/wasm" },
+    [packedName(MODULE)]: { bytes: packed, type: "application/octet-stream" },
+    [FONT]: { bytes: font, type: "font/otf" },
+    [packedName(FONT)]: { bytes: pack(font), type: "application/octet-stream" },
+    [TTF]: { bytes: font, type: "font/ttf" },
+    [packedName(TTF)]: { bytes: pack(font), type: "application/octet-stream" },
+  });
+  for (const [address, type, whole] of [
+    [MODULE, "application/wasm", engine],
+    [FONT, "font/otf", font],
+    [TTF, "font/ttf", font],
+  ]) {
+    const answer = await worker.fetch(asking(address), env);
+    assert.equal(answer.status, 200, address);
+    assert.equal(answer.headers.get("content-encoding"), "br", address);
+    assert.equal(answer.headers.get("content-type"), type, address);
+    for (const [name, value] of Object.entries(HEADERS)) {
+      assert.equal(answer.headers.get(name), value, `${address} ${name}`);
+    }
+    assert.equal(unpacksTo(Buffer.from(await answer.arrayBuffer()), whole), true, address);
+    // To a browser that takes no brotli, the file whole, as the host has it.
+    const plain = await worker.fetch(asking(address, { takes: "gzip" }), env);
+    assert.equal(plain.headers.get("content-encoding"), null, address);
+    assert.equal(Buffer.from(await plain.arrayBuffer()).equals(whole), true, address);
+  }
+  // A font with no packed file beside it is sent as the host has it; one that is not there
+  // is "not yet", not to be kept, and never the page.
+  const bare = host({ [FONT]: { bytes: font, type: "font/otf" } });
+  const whole = await worker.fetch(asking(FONT), bare);
+  assert.equal(whole.headers.get("content-encoding"), null);
+  assert.equal(Buffer.from(await whole.arrayBuffer()).equals(font), true);
+  const absent = await worker.fetch(asking(FONT), host({}));
+  assert.equal(absent.status, 503);
+  assert.equal(absent.headers.get("cache-control"), "no-store");
+});
+
 test("a browser that has the packed engine and asks whether it changed is told it has not, with the headers", async () => {
   const env = both();
   const first = await worker.fetch(asking(ENGINE), env);

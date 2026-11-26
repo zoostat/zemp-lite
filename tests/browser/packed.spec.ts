@@ -12,8 +12,10 @@ import { brotliDecompressSync } from "node:zlib";
 import { expect, test } from "./support";
 
 const dist = path.resolve("dist");
+// The engine's WebAssembly, by the name its build gives it: from release 0.3, step 11b, the
+// build carries the Paper module's beside it.
 const [engineName] = readdirSync(path.join(dist, "assets")).filter((name) =>
-  name.endsWith(".wasm"),
+  /^zemp_worker_bg-.*\.wasm$/.test(name),
 );
 const ENGINE = `/assets/${engineName}`;
 const engine = readFileSync(path.join(dist, "assets", engineName as string));

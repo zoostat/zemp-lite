@@ -1,7 +1,8 @@
 // The function of the host that answers for every built file (`/assets/*`, by `_routes.json`).
 // It does two things.
 //
-// It sends the engine packed tight (release 0.2.5, step 4; open decision #224). Cloudflare
+// It sends the engine packed tight (release 0.2.5, step 4; open decision #224), and from
+// release 0.3, step 11b, the Paper module and its fonts in the same way. Cloudflare
 // Pages packs a file as it sends it, at a low setting, and does not of itself send one packed
 // beforehand. The build puts the engine packed at brotli's highest setting beside the engine
 // (`<name>.wasm.br`), and this function answers the engine's address with the packed file,
@@ -22,6 +23,13 @@
 
 /* global __HOST_HEADERS__ */
 const HEADERS = __HOST_HEADERS__;
+
+/**
+ * The built files the build packs beforehand, by their endings, with the type each is sent
+ * as: the engine and the Paper module (WebAssembly), and the fonts a paper is set in (release
+ * 0.3, step 11b). Any other built file is the host's to pack as it sends it.
+ */
+const TYPES = { wasm: "application/wasm", otf: "font/otf", ttf: "font/ttf" };
 
 /** Whether the browser that asks takes brotli. Inside the host the header is rewritten, and
  * what the browser itself said is kept beside the request. */
@@ -74,7 +82,8 @@ export default {
     const asks = request.method === "GET" || request.method === "HEAD";
     // Only a built file asked for is this function's: anything else is the host's as it was.
     if (!asks || !url.pathname.startsWith("/assets/")) return env.ASSETS.fetch(request);
-    if (!url.pathname.endsWith(".wasm") || !takesBrotli(request)) return asBuilt(request, env);
+    const type = TYPES[url.pathname.slice(url.pathname.lastIndexOf(".") + 1)];
+    if (type === undefined || !takesBrotli(request)) return asBuilt(request, env);
     const beside = new URL(url);
     beside.pathname = `${url.pathname}.br`;
     let packed;
@@ -85,12 +94,12 @@ export default {
     }
     // No packed file beside the engine: the host answers such an address with a page, or with
     // "not found". The engine is then sent as it always was.
-    const type = packed.headers.get("content-type") || "";
-    if ((packed.status !== 200 && packed.status !== 304) || type.startsWith("text/html")) {
+    const sent = packed.headers.get("content-type") || "";
+    if ((packed.status !== 200 && packed.status !== 304) || sent.startsWith("text/html")) {
       return asBuilt(request, env);
     }
     const headers = new Headers(HEADERS);
-    headers.set("content-type", "application/wasm");
+    headers.set("content-type", type);
     headers.set("vary", "Accept-Encoding");
     for (const name of ["etag", "last-modified"]) {
       const value = packed.headers.get(name);

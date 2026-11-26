@@ -1,0 +1,17 @@
+// The paper's worker as a worker thread of Node: what the tests start. The folder of the
+// WebAssembly build (`pkg/node/`) comes in `workerData`.
+import { parentPort, workerData } from "node:worker_threads";
+import { createRequire } from "node:module";
+import path from "node:path";
+import { serve } from "./host.mjs";
+
+const require = createRequire(import.meta.url);
+const module = require(path.resolve(workerData.pkg, "zemp_paper.js"));
+// A port in the form the browser gives: `postMessage`, and `onmessage` to be set.
+const port = {
+  postMessage: (message, transfer) => parentPort.postMessage(message, transfer),
+  set onmessage(handler) {
+    parentPort.on("message", handler);
+  },
+};
+serve(module, port);

@@ -4,6 +4,7 @@
 import { EXAMPLE_LIMIT, type Engine } from "../engine/engine";
 import { Examples } from "../engine/examples";
 import type { Drawn, ExampleRuns } from "../help/runs.svelte";
+import type { Papers } from "../paper/lazy";
 import { Language, type Diagnostic, type Range } from "../engine/language";
 import type {
   Checked,
@@ -146,6 +147,11 @@ export function applied(text: string, edits: { range: Range; newText: string }[]
 export class Workspace {
   readonly project: Project;
   readonly engine: Engine;
+  /**
+   * The Paper module of this window (release 0.3, step 11b): Typst, fetched and started the
+   * first time a paper is opened, and not before. `null` where the window has none (a test).
+   */
+  readonly papers: Papers | null;
   /** The examples of Help waiting to run in the engine, one at a time (`engine/examples.ts`). */
   readonly #examples: Examples;
   /**
@@ -401,7 +407,9 @@ export class Workspace {
     engine: Engine,
     language: Engine | null = null,
     kept: Kept | null = null,
+    papers: Papers | null = null,
   ) {
+    this.papers = papers;
     this.#record = kept;
     this.project = project;
     this.exportedAt = project.info.exported;
