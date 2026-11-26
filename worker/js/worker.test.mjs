@@ -298,6 +298,69 @@ test("the codes with an explained page are given by family, without a project", 
   );
 });
 
+test("the prints of the last run are given again at another width, and nothing is run for them", async (t) => {
+  // Release 0.3, step 6b (open decision #175, C6).
+  const root = path.resolve(here, "..", "..");
+  const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+  const script = read("tests/scripts/example/scripts/main.zeff");
+  const { worker, said, next } = await opened(t, 0);
+  worker.postMessage({ type: "run", id: 1, script: "scripts/main.zeff", text: script });
+  const done = await next("done");
+  assert.equal(done.exit_code, 0);
+  // What the run told is set aside: nothing more of it may come.
+  said.length = 0;
+  for (const width of [40, 80]) {
+    worker.postMessage({
+      type: "printedAt",
+      id: width,
+      script: "scripts/main.zeff",
+      text: script,
+      width,
+    });
+    const printed = await next("printed");
+    assert.equal(printed.id, width);
+    assert.equal(printed.width, width);
+    assert.equal(
+      printed.statements.map((one) => one.stdout).join(""),
+      read(`tests/scripts/widths/example-${width}.stdout`),
+    );
+  }
+  assert.deepEqual(
+    said.filter((message) => ["started", "finished", "output", "ranges"].includes(message.type)),
+    [],
+  );
+  // Another text than the one last run: nothing is given.
+  worker.postMessage({
+    type: "printedAt",
+    id: 9,
+    script: "scripts/main.zeff",
+    text: "print(1)\n",
+    width: 80,
+  });
+  assert.equal((await next("printed")).statements, null);
+  // Under 40 characters there is no print.
+  worker.postMessage({
+    type: "printedAt",
+    id: 10,
+    script: "scripts/main.zeff",
+    text: script,
+    width: 20,
+  });
+  const refused = await next("error");
+  assert.equal(refused.id, 10);
+  assert.equal(refused.message, "a print is at least 40 characters wide, and 20 was asked for");
+});
+
+test("the prints are not asked for before a project is opened", async (t) => {
+  const { worker, next } = started(t, 0);
+  await next("ready");
+  worker.postMessage({ type: "printedAt", id: 1, script: "s.zeff", text: "", width: 80 });
+  assert.equal(
+    (await next("error")).message,
+    "the prints were asked for at another width before a project was opened",
+  );
+});
+
 test("the engine's language server is spoken to through the worker, over the project", async (t) => {
   const { worker, next } = await opened(t, 0);
   const send = (id, body) =>

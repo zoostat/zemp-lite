@@ -27,7 +27,9 @@ use zeff_engine::interpreter::{MemoryNote, Output};
 use zeff_engine::language::outline::statements_in;
 use zeff_engine::language::{Position, Range, offset, position};
 use zeff_engine::project::Project;
-use zeff_engine::run::{Frames, RunOptions, check_in_project, run_script_keeping};
+use zeff_engine::run::{
+    Frames, RunOptions, check_in_project, run_script_keeping, run_script_showing,
+};
 use zeff_engine::statements::statement_facts;
 use zeff_ir::Statement;
 use zeff_web::{default_budget, event_json};
@@ -220,6 +222,13 @@ fn never() -> bool {
 /// the engine made of them.
 type Filtered = (String, String, zeff_core::value::Frame);
 
+/// What a statement printed: the line it begins on, its output as the run printed it, and the
+/// values in it with their places.
+type Printed = (u32, String, Vec<zeff_core::runtime::Shown>);
+
+/// The narrowest page a print is made for, as `--width` has it.
+const NARROWEST: usize = 40;
+
 /// A project in memory, and the runs made in it.
 pub struct Host {
     /// The project as the engine sees it, in memory, noting what a run writes.
@@ -230,6 +239,10 @@ pub struct Host {
     frames: RefCell<Frames>,
     /// The script and the text the last run ran, which a filter runs again with its statement.
     last: RefCell<Option<(String, String)>>,
+    /// What each statement of the last run printed, by the line it begins on, with the values
+    /// it printed and their places in it: what its print is made again from at another width,
+    /// without a new run (open decision #175, C6; from Zeff 0.9.0).
+    prints: RefCell<Vec<Printed>>,
     /// The viewer's frame kept to the rows of a condition, until the next run.
     filtered: RefCell<Option<Filtered>>,
     /// The rows of the viewer's last view, by what made them, so that a scroll does not put
@@ -276,6 +289,7 @@ impl Host {
             language: RefCell::new(zeff_lsp::Server::new()),
             frames: RefCell::default(),
             last: RefCell::default(),
+            prints: RefCell::default(),
             filtered: RefCell::default(),
             kept: RefCell::default(),
             bars: RefCell::default(),
@@ -361,6 +375,7 @@ impl Host {
             Ok(project) => project,
             Err(_) => {
                 self.frames.borrow_mut().clear();
+                self.prints.borrow_mut().clear();
                 return self.done(
                     1,
                     "",
@@ -371,6 +386,7 @@ impl Host {
         };
         if let Some(said) = another_engine(&project) {
             self.frames.borrow_mut().clear();
+            self.prints.borrow_mut().clear();
             // Told as the engine tells what its check says before the first statement, so
             // that the interface has it as a run the engine refused.
             tell(&format!(
@@ -391,7 +407,7 @@ impl Host {
         };
         let control = Control::asking(cancelled);
         let listener = |event: &Event| tell(&event_json(event));
-        let (outcome, frames) = run_script_keeping(
+        let (outcome, showing) = run_script_showing(
             &self.fs,
             &project,
             script,
@@ -401,7 +417,14 @@ impl Host {
             Some(&listener),
         );
         let each = self.each(&project, script, text, &outcome.output);
-        *self.frames.borrow_mut() = frames;
+        *self.frames.borrow_mut() = showing.frames;
+        *self.prints.borrow_mut() = outcome
+            .output
+            .statements
+            .iter()
+            .zip(showing.prints)
+            .map(|(statement, shown)| (statement.line, statement.stdout.clone(), shown))
+            .collect();
         *self.last.borrow_mut() = Some((script.to_string(), text.to_string()));
         self.filtered.borrow_mut().take();
         self.kept.borrow_mut().take();
@@ -411,6 +434,52 @@ impl Host {
             &outcome.output.stdout,
             &outcome.output.stderr,
             &each,
+        )
+    }
+
+    /// What each statement of the last run printed, made again at `width` characters without a
+    /// new run (open decision #175, C6; Zemp Specification, section 5, the opened result):
+    /// every frame and table it printed wraps at that width, and everything else is as it
+    /// was. The text of each is what `zeff run --width <width>` prints for that statement,
+    /// character for character, by the engine's own `printed_at`.
+    ///
+    /// The prints the engine holds are those of its last run, and are given only where that
+    /// run was of this text: the text itself, or the text with lines after it (a run the
+    /// interface made of the same script to draw its figures, whose statements stand on the
+    /// same lines). Where it was another (a run of some statements alone, a console line, a
+    /// project opened afresh), `statements` is `null`, and the interface runs the text again
+    /// as it did before this was there. A line of JSON of type `printed`, or of type `error`
+    /// for a width under 40.
+    pub fn printed_at(&self, script: &str, text: &str, width: usize) -> String {
+        if width < NARROWEST {
+            return format!(
+                "{{\"type\": \"error\", \"message\": {}}}",
+                json_string(&format!(
+                    "a print is at least {NARROWEST} characters wide, and {width} was asked for"
+                ))
+            );
+        }
+        let held = match self.last.borrow().as_ref() {
+            Some((ran, kept)) => ran == script && kept.starts_with(text),
+            None => false,
+        };
+        if !held {
+            return format!("{{\"type\": \"printed\", \"width\": {width}, \"statements\": null}}");
+        }
+        let listed: Vec<String> = self
+            .prints
+            .borrow()
+            .iter()
+            .map(|(line, stdout, shown)| {
+                format!(
+                    "{{\"line\": {line}, \"stdout\": {}}}",
+                    json_string(&zeff_core::runtime::printed_at(stdout, shown, width))
+                )
+            })
+            .collect();
+        format!(
+            "{{\"type\": \"printed\", \"width\": {width}, \"statements\": [{}]}}",
+            listed.join(", ")
         )
     }
 

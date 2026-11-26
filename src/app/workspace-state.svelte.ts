@@ -13,6 +13,7 @@ import type {
   Report,
   Rows,
   View,
+  Reprinted,
 } from "../engine/messages";
 import {
   HOME as HELP_HOME,
@@ -1179,9 +1180,34 @@ export class Workspace {
   }
 
   /**
-   * Print the last run's results again at the width of their place: the same text run again,
-   * which by the determinism of the engine gives the same results, laid out at the new width.
-   * The run keeps its number, its time and what it said; only what it printed changes.
+   * What each statement of the run on the page printed, made again at `width` by the engine
+   * from what its last run kept, with nothing run (open decision #175, C6; from Zeff 0.9.0):
+   * what `zeff run --width` prints for it, character for character. `null` where the engine
+   * cannot give them all: the page holds results of more than one run of the engine's (a run
+   * of some statements alone keeps the others' from the run before), or the engine's last run
+   * was of another text (a console line), or its worker was started afresh.
+   */
+  async #reprinted(run: Run, width: number): Promise<Reprinted[] | null> {
+    if (run.partial != null || run.statements.some((one) => one.mark != null)) {
+      return null;
+    }
+    try {
+      const again = await this.engine.printedAt(run.script, run.text, width);
+      if (again === null) return null;
+      // Every statement the page shows a print of must be among them.
+      const given = again.map((one) => one.line);
+      return run.statements.every((one) => given.includes(one.line)) ? again : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Print the last run's results again at the width of their place. The engine makes each
+   * statement's print again from what the run kept, and nothing is run (`#reprinted`); where
+   * it cannot, the same text is run again, which by the determinism of the engine gives the
+   * same results, laid out at the new width, as before Zeff 0.9.0. The run keeps its number,
+   * its time and what it said; only what it printed changes.
    */
   async relayout(): Promise<void> {
     const run = this.lastRun;
@@ -1193,6 +1219,18 @@ export class Workspace {
       await before;
       if (this.lastRun !== run || this.running) return;
       try {
+        const again = await this.#reprinted(run, width);
+        if (this.lastRun !== run) return;
+        if (again !== null) {
+          for (const { line, stdout } of again) {
+            const statement = run.statements.find((one) => one.line === line);
+            if (statement !== undefined) statement.printed = stdout;
+            const info = run.info.find((one) => one.line === line);
+            if (info !== undefined) info.stdout = stdout;
+          }
+          run.width = width;
+          return;
+        }
         await this.#saving;
         const outcome = await this.session.run(run.script, run.text, undefined, width);
         if (this.lastRun !== run) return;
@@ -1213,7 +1251,8 @@ export class Workspace {
   /**
    * Copy what the statement on `line` printed, as `zeff run` prints it: at the engine's own
    * width, 118, whatever the width of the window (the design, 7.4). Where the run was printed
-   * at another width, the text that ran is run again at 118 for it.
+   * at another width, the engine makes the print again at 118 from what the run kept; where
+   * it cannot (`#reprinted`), the text that ran is run again at 118 for it.
    */
   async copyText(line: number): Promise<void> {
     const run = this.lastRun;
@@ -1223,6 +1262,11 @@ export class Workspace {
       const before = this.#busy;
       const work = (async () => {
         await before;
+        const again = await this.#reprinted(run, 118);
+        if (again !== null) {
+          text = again.find((one) => one.line === line)?.stdout ?? "";
+          return;
+        }
         const outcome = await this.session.run(run.script, run.text, undefined, 0);
         text = outcome.statements.find((one) => one.line === line)?.stdout ?? "";
       })();

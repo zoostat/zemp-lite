@@ -51,6 +51,15 @@ export interface StatementInfo extends Ranged {
   error: Record<string, unknown> | null;
 }
 
+/**
+ * What a statement of the last run printed, made again at another width without a new run
+ * (open decision #175, C6; from Zeff 0.9.0): the line the statement begins on, and its print.
+ */
+export interface Reprinted {
+  line: number;
+  stdout: string;
+}
+
 /** The engine's check of a text, as `zeff check` makes it. */
 export interface Checked {
   /** 1 where it found an error, 0 otherwise. */
@@ -252,6 +261,7 @@ export type Request =
    */
   | { type: "run"; script: string; text: string; width?: number; only?: number[] }
   | { type: "check"; script: string; text: string }
+  | { type: "printedAt"; script: string; text: string; width: number }
   | { type: "explain"; code: string }
   | { type: "language"; body: string }
   | { type: "help"; name: string }
@@ -301,6 +311,7 @@ export type Reply =
       ranges: Ranged[];
     }
   | { type: "dependencies"; statements: Needs[] }
+  | { type: "printed"; width: number; statements: Reprinted[] | null }
   | { type: "explained"; page: ExplainedPage }
   | { type: "language"; messages: string[] }
   | { type: "help"; page: string | null; message: string }

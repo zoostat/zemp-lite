@@ -70,7 +70,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **The wait before a one-statement run, still open.** Seen a third time on GitHub's Chromium (3.0 s); neither the engine (12 ms) nor the page (0.3 s of long tasks) was busy; the app now also notes its wait for the browser's storage, the one part not yet measured.
 
-**Next.** Step 6b `[engine]`: a print made again at another width, without a run.
+**Done, step 6b `[engine]`.** Where the width of the place changes, the engine makes each statement's print again from what the run kept, and the script is not run again; **Copy as text** is made the same way. The app ran the whole script again for both until now. Where the engine does not hold the page's run (after a statement run alone, a console line, a worker started afresh) the script is run again as before. Green here: the whole routine in both browsers (421 unit tests, 677 browser tests, 3 skipped by design; 39 tests of the worker, 22 under Node; the engine 3,089.1 kB as it travels).
+
+**Next.** Step 6c `[engine]`: the sections of a script from the language server.
 
 **For the owner to read, when he wishes (added).** In **Finding help**, the description of the picture of the search: "a list of three functions, reg, anova and posthoc". In **The notes**, the sentence that a fit or a test carries the observations it used, as `m3 RegFit · N 15,366`.
 

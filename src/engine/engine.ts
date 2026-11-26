@@ -17,6 +17,7 @@ import type {
   Outcome,
   Ranged,
   Reply,
+  Reprinted,
   Request,
   RunEvent,
 } from "./messages";
@@ -257,6 +258,17 @@ export class Engine {
   /** The statements of a text as the engine reads them, without running it. */
   async statements(script: string, text: string): Promise<Ranged[]> {
     return expect(await this.#ask({ type: "statements", script, text }), "statements").statements;
+  }
+
+  /**
+   * What each statement of the last run printed, made again at `width` characters without a
+   * new run: what `zeff run --width` prints for it, character for character. `null` where the
+   * engine's last run was not of this text (a run of some statements alone, a console line, a
+   * worker started afresh): the text is then run again to have it.
+   */
+  async printedAt(script: string, text: string, width: number): Promise<Reprinted[] | null> {
+    return expect(await this.#ask({ type: "printedAt", script, text, width }), "printed")
+      .statements;
   }
 
   /** The engine's check of a text of the project, as `zeff check` makes it. */

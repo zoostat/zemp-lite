@@ -1571,3 +1571,101 @@ fn a_project_that_names_another_engine_is_refused_in_the_command_lines_words() {
     assert_eq!(done["exit_code"], 0);
     assert_eq!(done["stdout"], "2\n");
 }
+
+#[test]
+fn a_run_s_prints_are_made_again_at_another_width_without_a_new_run() {
+    // Open decision #175, C6. tests/scripts/widths/: what the released `zeff run --width`
+    // printed for the example at 40 and at 80 characters.
+    let text = read("tests/scripts/example/scripts/main.zeff");
+    let host = Host::new("scratch");
+    let told: RefCell<Vec<String>> = RefCell::default();
+    let done: Value = serde_json::from_str(&host.run(
+        "scripts/main.zeff",
+        &text,
+        &Asked::default(),
+        never,
+        &|json| told.borrow_mut().push(json.to_string()),
+    ))
+    .unwrap();
+    let events = told.borrow().len();
+    let at = |width: usize| -> Value {
+        serde_json::from_str(&host.printed_at("scripts/main.zeff", &text, width)).unwrap()
+    };
+    for width in [40, 80] {
+        let printed = at(width);
+        assert_eq!(printed["type"], "printed");
+        assert_eq!(printed["width"], width);
+        let each = printed["statements"].as_array().unwrap();
+        // One for each statement that ran, on its line, in order.
+        let lines: Vec<u64> = each
+            .iter()
+            .map(|one| one["line"].as_u64().unwrap())
+            .collect();
+        assert_eq!(lines, [4, 5, 8, 12, 13, 16, 17, 20, 21]);
+        // Put together, they are what `zeff run --width` prints, character for character.
+        let joined: String = each
+            .iter()
+            .map(|one| one["stdout"].as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(
+            joined,
+            read(&format!("tests/scripts/widths/example-{width}.stdout")),
+            "at {width}"
+        );
+    }
+    // At the width of the run they are what the run printed.
+    let own: String = at(118)["statements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|one| one["stdout"].as_str().unwrap().to_string())
+        .collect();
+    assert_eq!(own, done["stdout"].as_str().unwrap());
+    // Nothing was run for any of them: no event was told after the run's own.
+    assert_eq!(told.borrow().len(), events);
+    // The same script with lines after it, as the interface runs it to draw its figures: the
+    // prints of its statements are given for the script itself.
+    let with_more = format!("{text}print(\"a line the interface added\")\n");
+    run_at(&host, &with_more, 0);
+    let joined: String = at(80)["statements"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|one| one["line"].as_u64().unwrap() <= 21)
+        .map(|one| one["stdout"].as_str().unwrap().to_string())
+        .collect();
+    assert_eq!(joined, read("tests/scripts/widths/example-80.stdout"));
+    // Another text than the one last run: nothing is given, and the interface runs it again.
+    let other: Value =
+        serde_json::from_str(&host.printed_at("scripts/main.zeff", "print(1)\n", 80)).unwrap();
+    assert_eq!(other["statements"], Value::Null);
+    let elsewhere: Value =
+        serde_json::from_str(&host.printed_at("scripts/other.zeff", &text, 80)).unwrap();
+    assert_eq!(elsewhere["statements"], Value::Null);
+    // A run of some statements alone ran a text of its own, with the others blanked.
+    let part: Value = serde_json::from_str(&host.run(
+        "scripts/main.zeff",
+        &text,
+        &Asked {
+            only: Some(&[4, 5]),
+            ..Asked::default()
+        },
+        never,
+        &|_| {},
+    ))
+    .unwrap();
+    assert_eq!(part["exit_code"], 0);
+    assert_eq!(at(80)["statements"], Value::Null);
+    // No print is narrower than 40 characters.
+    let narrow = at(39);
+    assert_eq!(narrow["type"], "error");
+    assert_eq!(
+        narrow["message"],
+        "a print is at least 40 characters wide, and 39 was asked for"
+    );
+    // A project in which nothing has run holds no print.
+    let fresh = Host::new("scratch");
+    let none: Value =
+        serde_json::from_str(&fresh.printed_at("scripts/main.zeff", &text, 80)).unwrap();
+    assert_eq!(none["statements"], Value::Null);
+}

@@ -696,6 +696,89 @@ test("the engine prints at the width of the place, and again at a new width when
   await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
 });
 
+test("a print is made again at another width by the engine, and the script is not run again", async ({
+  page,
+  press,
+  browserName,
+  context,
+}) => {
+  // Release 0.3, step 6b (open decision #175, C6): the engine keeps what each statement
+  // printed and makes it again at any width. Every run asked of the engine is counted here,
+  // by its message to the engine's worker; a script with no plot, since a figure is still
+  // redrawn by a run (until step 7).
+  await page.addInitScript(() => {
+    const counted = window as unknown as { zempRuns: number };
+    counted.zempRuns = 0;
+    const post = Worker.prototype.postMessage;
+    Worker.prototype.postMessage = function (this: Worker, ...given: unknown[]) {
+      if ((given[0] as { type?: string } | null)?.type === "run") counted.zempRuns += 1;
+      return (post as (...all: unknown[]) => void).apply(this, given);
+    } as typeof Worker.prototype.postMessage;
+  });
+  const runs = () => page.evaluate(() => (window as unknown as { zempRuns: number }).zempRuns);
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  await page.setViewportSize({ width: 1000, height: 3200 });
+  await page.goto("/");
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  const script =
+    "let wages = dataset(wages)\nwages.summary([wage, educ, exper, hours, age])\nwages\n";
+  await write(page, script);
+  await expect(page.locator("header.top")).toContainText("· saved");
+  await runUnfolded(page, press);
+  expect(await runs()).toBe(1);
+  const width = async () => Number(await page.locator(".sheet").getAttribute("data-width"));
+  const longest = async () =>
+    Math.max(...(await printed(page)).split("\n").map((line) => [...line].length));
+  const wide = await width();
+  await expect.poll(longest).toBeLessThanOrEqual(wide);
+  const atWide = await printed(page);
+  const longestWide = await longest();
+  // Narrower than the widest table as it stands: the tables wrap, and nothing is run.
+  await page.setViewportSize({ width: 760, height: 3200 });
+  await expect.poll(width).toBeLessThan(longestWide);
+  const narrow = await width();
+  await expect.poll(longest).toBeLessThanOrEqual(narrow);
+  const atNarrow = await printed(page);
+  expect(atNarrow).not.toBe(atWide);
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
+  expect(await runs()).toBe(1);
+  // Copy as text, while the place is narrow, is the print at the engine's own width, 118,
+  // made again and not run for.
+  await press(
+    page
+      .locator('[data-testid="block"][data-line="3"]')
+      .getByRole("button", { name: "Copy as text" }),
+  );
+  await expect(page.getByTestId("copied")).toHaveText(/^copied line 3 as text: \d+ lines$/);
+  expect(await runs()).toBe(1);
+  if (browserName === "chromium") {
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    // Wider than the place as it now stands, and the print the wide place showed.
+    expect(Math.max(...copied.split("\n").map((line) => [...line].length))).toBeGreaterThan(narrow);
+    expect(atWide).toContain(copied);
+    expect(copied.startsWith("wages · 18,412 rows × 11 variables")).toBe(true);
+  }
+  // Wide again: the prints are what they were at that width, to the character.
+  await page.setViewportSize({ width: 1000, height: 3200 });
+  await expect.poll(width).toBe(wide);
+  await expect.poll(() => printed(page)).toBe(atWide);
+  expect(await runs()).toBe(1);
+  // A statement run alone leaves the page with results of two runs of the engine's, which
+  // the engine cannot print again as one: there the text is run again, as before, and the
+  // prints still fit the new width.
+  await cursorTo(page, 2);
+  await page.keyboard.press("ControlOrMeta+Enter");
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 2 · /);
+  const after = await runs();
+  await page.setViewportSize({ width: 760, height: 3200 });
+  await expect.poll(width).toBe(narrow);
+  await expect.poll(longest).toBeLessThanOrEqual(narrow);
+  await expect.poll(runs).toBeGreaterThan(after);
+});
+
 test("Copy as text gives what `zeff run` prints, at the engine's own width", async ({
   page,
   press,

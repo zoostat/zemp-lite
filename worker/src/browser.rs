@@ -133,6 +133,13 @@ impl Project {
         self.host.language(body)
     }
 
+    /// What each statement of the last run printed, made again at another width without a
+    /// new run, as a line of JSON; its statements are `null` where the last run was not of
+    /// this text.
+    pub fn printed_at(&self, script: &str, text: &str, width: usize) -> String {
+        self.host.printed_at(script, text, width)
+    }
+
     /// The engine's check of a text, as `zeff check` makes it, as a line of JSON.
     pub fn check(&self, script: &str, text: &str) -> String {
         self.host.check(script, text)

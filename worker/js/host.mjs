@@ -130,6 +130,7 @@ export function serve(engine, port, deviceBytes) {
         "frame",
         "read",
         "check",
+        "printedAt",
         "dependencies",
         "language",
         "help",
@@ -150,6 +151,7 @@ export function serve(engine, port, deviceBytes) {
         frame: "a frame was asked for",
         read: "a file was asked for",
         check: "a check was asked for",
+        printedAt: "the prints were asked for at another width",
         dependencies: "the dependencies were asked for",
         language: "the language server was asked",
         help: "a help page was asked for",
@@ -214,6 +216,13 @@ export function serve(engine, port, deviceBytes) {
         break;
       case "check":
         answer(JSON.parse(project.check(String(said.script), String(said.text))));
+        break;
+      case "printedAt":
+        answer(
+          JSON.parse(
+            project.printed_at(String(said.script), String(said.text), Number(said.width) || 0),
+          ),
+        );
         break;
       case "dependencies":
         answer(JSON.parse(project.dependencies(String(said.script), String(said.text))));
