@@ -23,7 +23,7 @@ use zeff_diagnostics::{Diagnostic, Severity, Source, Sources};
 use zeff_engine::control::{Control, Event};
 use zeff_engine::dependencies::graph;
 use zeff_engine::fs::FileSystem;
-use zeff_engine::interpreter::{MemoryNote, Output};
+use zeff_engine::interpreter::{MemoryNote, Output, PlotMade};
 use zeff_engine::language::outline::{sections_of, statements_in};
 use zeff_engine::language::{Position, Range, offset, position};
 use zeff_engine::project::Project;
@@ -283,6 +283,10 @@ pub struct Host {
     /// it printed and their places in it: what its print is made again from at another width,
     /// without a new run (open decision #175, C6; from Zeff 0.9.0).
     prints: RefCell<Vec<Printed>>,
+    /// The plots the statements of the last run made, each with the line of its statement and
+    /// the name that binds it where one does: what a figure is laid out from at the size of
+    /// its place, without a new run (open decision #197; from Zeff 0.9.0).
+    plots: RefCell<Vec<PlotMade>>,
     /// The viewer's frame kept to the rows of a condition, until the next run.
     filtered: RefCell<Option<Filtered>>,
     /// The rows of the viewer's last view, by what made them, so that a scroll does not put
@@ -330,6 +334,7 @@ impl Host {
             frames: RefCell::default(),
             last: RefCell::default(),
             prints: RefCell::default(),
+            plots: RefCell::default(),
             filtered: RefCell::default(),
             kept: RefCell::default(),
             bars: RefCell::default(),
@@ -416,6 +421,7 @@ impl Host {
             Err(_) => {
                 self.frames.borrow_mut().clear();
                 self.prints.borrow_mut().clear();
+                self.plots.borrow_mut().clear();
                 return self.done(
                     1,
                     "",
@@ -427,6 +433,7 @@ impl Host {
         if let Some(said) = another_engine(&project) {
             self.frames.borrow_mut().clear();
             self.prints.borrow_mut().clear();
+            self.plots.borrow_mut().clear();
             // Told as the engine tells what its check says before the first statement, so
             // that the interface has it as a run the engine refused.
             tell(&format!(
@@ -458,6 +465,7 @@ impl Host {
         );
         let each = self.each(&project, script, text, &outcome.output);
         *self.frames.borrow_mut() = showing.frames;
+        *self.plots.borrow_mut() = showing.plots;
         *self.prints.borrow_mut() = outcome
             .output
             .statements
@@ -475,6 +483,58 @@ impl Host {
             &outcome.output.stderr,
             &each,
         )
+    }
+
+    /// Whether the engine's last run was of this text: the text itself, or the text with lines
+    /// after it (a line of the console, or the run the interface makes of a script with
+    /// `export`s added, whose statements stand on the same lines). What the run kept (its
+    /// prints, its plots) is then the page's; after a run of some statements alone, or in a
+    /// project opened afresh, it is not.
+    fn holds(&self, script: &str, text: &str) -> bool {
+        match self.last.borrow().as_ref() {
+            Some((ran, kept)) => ran == script && kept.starts_with(text),
+            None => false,
+        }
+    }
+
+    /// The plot the statement on `line` of the last run made, as an SVG on a page `width` by
+    /// `height` millimetres, without a new run (open decision #197; Zemp Specification,
+    /// section 7, "Redraw to fit"): the engine's own layout and writer, those of `export`, so
+    /// that at a size it is, byte for byte, the file `export(..., size: [width, height])`
+    /// writes; the millimetres become points as `export` makes them (72 to the inch of 25.4,
+    /// multiplied before divided). The plot has the theme its script gave it.
+    ///
+    /// A line of JSON of type `plot`: with `svg`, the figure; or with `svg` null and
+    /// `message`, the engine's words where it will not draw the plot at that size (`of_size`
+    /// says whether the size is at fault, as a pane too small for the labels, or the plot);
+    /// or with `held` false, where the engine does not hold a plot for that statement of this
+    /// text (see [`Host::holds`]; or the statement gave no plot of its own, as `print(p)`),
+    /// and the interface draws it as it did before this was there, by a run with an `export`.
+    pub fn plot_svg(&self, script: &str, text: &str, line: u32, width: f64, height: f64) -> String {
+        let none = || {
+            format!(
+                "{{\"type\": \"plot\", \"line\": {line}, \"held\": false, \"svg\": null, \"message\": \"\", \"of_size\": false}}"
+            )
+        };
+        if !self.holds(script, text) {
+            return none();
+        }
+        let plots = self.plots.borrow();
+        let Some(made) = plots.iter().find(|made| made.line == line) else {
+            return none();
+        };
+        let points = |millimetres: f64| millimetres * 72.0 / 25.4;
+        match zeff_plot::figure::svg_at(&made.plot, points(width), points(height), None) {
+            Ok(svg) => format!(
+                "{{\"type\": \"plot\", \"line\": {line}, \"held\": true, \"svg\": {}, \"message\": \"\", \"of_size\": false}}",
+                json_string(&svg)
+            ),
+            Err(problem) => format!(
+                "{{\"type\": \"plot\", \"line\": {line}, \"held\": true, \"svg\": null, \"message\": {}, \"of_size\": {}}}",
+                json_string(&problem.message),
+                problem.of_size
+            ),
+        }
     }
 
     /// What each statement of the last run printed, made again at `width` characters without a
@@ -499,11 +559,7 @@ impl Host {
                 ))
             );
         }
-        let held = match self.last.borrow().as_ref() {
-            Some((ran, kept)) => ran == script && kept.starts_with(text),
-            None => false,
-        };
-        if !held {
+        if !self.holds(script, text) {
             return format!("{{\"type\": \"printed\", \"width\": {width}, \"statements\": null}}");
         }
         let listed: Vec<String> = self
@@ -1118,6 +1174,30 @@ impl Host {
                 )
             })
             .collect();
+        // The plots the statements made, as the engine's own host for the browser lists them:
+        // each with the line of its statement, the name that binds it where one does, its
+        // kind (the marks of its layers) and its theme.
+        let plots: Vec<String> = self
+            .plots
+            .borrow()
+            .iter()
+            .map(|made| {
+                let mut marks: Vec<&str> = Vec::new();
+                for layer in &made.plot.layers {
+                    let mark = layer.mark.name();
+                    if !marks.contains(&mark) {
+                        marks.push(mark);
+                    }
+                }
+                format!(
+                    "{{\"line\": {}, \"name\": {}, \"kind\": {}, \"theme\": {}}}",
+                    made.line,
+                    made.name.as_deref().map_or("null".to_string(), json_string),
+                    json_string(&marks.join(", ")),
+                    json_string(made.plot.theme.name.name())
+                )
+            })
+            .collect();
         // The files the run wrote, by their paths from the project's folder; the engine's own
         // folder, `.zeff/`, is rebuilt on every run and is not the project's to keep.
         let written: Vec<String> = self
@@ -1130,10 +1210,11 @@ impl Host {
             .map(|path| json_string(&path))
             .collect();
         format!(
-            "{{\"type\": \"done\", \"exit_code\": {exit_code}, \"stdout\": {}, \"stderr\": {}, \"statements\": {statements}, \"frames\": [{}], \"written\": [{}]}}",
+            "{{\"type\": \"done\", \"exit_code\": {exit_code}, \"stdout\": {}, \"stderr\": {}, \"statements\": {statements}, \"frames\": [{}], \"plots\": [{}], \"written\": [{}]}}",
             json_string(stdout),
             json_string(stderr),
             frames.join(", "),
+            plots.join(", "),
             written.join(", ")
         )
     }

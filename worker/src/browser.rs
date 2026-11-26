@@ -133,6 +133,13 @@ impl Project {
         self.host.language(body)
     }
 
+    /// The plot a statement of the last run made, as an SVG on a page of a size in
+    /// millimetres, without a new run, as a line of JSON; not held where the last run was not
+    /// of this text.
+    pub fn plot_svg(&self, script: &str, text: &str, line: u32, width: f64, height: f64) -> String {
+        self.host.plot_svg(script, text, line, width, height)
+    }
+
     /// What each statement of the last run printed, made again at another width without a
     /// new run, as a line of JSON; its statements are `null` where the last run was not of
     /// this text.

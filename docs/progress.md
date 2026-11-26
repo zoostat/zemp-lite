@@ -76,7 +76,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 6d `[engine]`.** The trail of an error is read from the engine's own record of it, as fields, and no longer out of its printed message; an error raised in a pass of a loop now says the pass (`pass 3 of 3: k = 0`), which the message never did. For the kept script the trail is link for link what it was. With it step 6 is whole: results, prints, sections and errors are each the engine's own answer. Green here: the whole routine in both browsers (419 unit tests, 679 browser tests, 3 skipped by design; the ten sample projects identical).
 
-**Next.** Step 7 `[engine]`: the plots of a run kept by the engine (a figure laid out again at another size with no new run; the plot of a name bound twice, and of a run that fails later, drawn).
+**Done, step 7a `[engine]`** (step 7 is split in two: the worker, then the screens). The worker keeps the plots the statements of a run made and lays one out at a size by the engine's own layout and writer, with nothing run. At the size `export` was given, the figure is the kept file `export` wrote, byte for byte; the plot of a name bound again further down is its own statement's, and plots made before a statement that fails are kept. No screen is changed yet. Green here: the whole routine in both browsers (419 unit tests, 679 browser tests, 3 skipped by design; 42 tests of the worker, 23 under Node; the engine 3,084.8 kB as it travels).
+
+**Next.** Step 7b `[engine]`: the screens draw from the plots the engine kept (no run for a figure or for a window resized; the two limits lifted).
 
 **For the owner to read, when he wishes (added).** In **Finding help**, the description of the picture of the search: "a list of three functions, reg, anova and posthoc". In **The notes**, the sentence that a fit or a test carries the observations it used, as `m3 RegFit · N 15,366`.
 

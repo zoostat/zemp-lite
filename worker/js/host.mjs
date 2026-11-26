@@ -131,6 +131,7 @@ export function serve(engine, port, deviceBytes) {
         "read",
         "check",
         "printedAt",
+        "plotSvg",
         "dependencies",
         "language",
         "help",
@@ -152,6 +153,7 @@ export function serve(engine, port, deviceBytes) {
         read: "a file was asked for",
         check: "a check was asked for",
         printedAt: "the prints were asked for at another width",
+        plotSvg: "a plot was asked for at a size",
         dependencies: "the dependencies were asked for",
         language: "the language server was asked",
         help: "a help page was asked for",
@@ -216,6 +218,19 @@ export function serve(engine, port, deviceBytes) {
         break;
       case "check":
         answer(JSON.parse(project.check(String(said.script), String(said.text))));
+        break;
+      case "plotSvg":
+        answer(
+          JSON.parse(
+            project.plot_svg(
+              String(said.script),
+              String(said.text),
+              Number(said.line) || 0,
+              Number(said.width) || 0,
+              Number(said.height) || 0,
+            ),
+          ),
+        );
         break;
       case "printedAt":
         answer(

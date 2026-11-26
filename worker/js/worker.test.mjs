@@ -365,6 +365,58 @@ test("the prints of the last run are given again at another width, and nothing i
   assert.equal(refused.message, "a print is at least 40 characters wide, and 20 was asked for");
 });
 
+test("a plot of the last run is laid out at a size, as export writes it, and nothing is run for it", async (t) => {
+  // Release 0.3, step 7a (open decision #197).
+  const root = path.resolve(here, "..", "..");
+  const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+  const script = read("tests/scripts/example/scripts/main.zeff");
+  const { worker, said, next } = await opened(t, 0);
+  worker.postMessage({ type: "run", id: 1, script: "scripts/main.zeff", text: script });
+  const done = await next("done");
+  assert.deepEqual(
+    done.plots.map((one) => [one.line, one.name]),
+    [
+      [16, "schooling"],
+      [17, null],
+      [20, "shape"],
+      [21, null],
+    ],
+  );
+  said.length = 0;
+  // The size in millimetres that `export` was given for the kept figures.
+  const ask = (id, line, more = {}) =>
+    worker.postMessage({
+      type: "plotSvg",
+      id,
+      script: "scripts/main.zeff",
+      text: script,
+      line,
+      width: 150.02,
+      height: 93.13,
+      ...more,
+    });
+  ask(2, 16);
+  const first = await next("plot");
+  assert.equal(first.id, 2);
+  assert.equal(first.held, true);
+  assert.equal(first.svg, read("tests/scripts/figures/example-figure-1.svg"));
+  ask(3, 20);
+  assert.equal((await next("plot")).svg, read("tests/scripts/figures/example-figure-2.svg"));
+  assert.deepEqual(
+    said.filter((message) => ["started", "finished", "output", "ranges"].includes(message.type)),
+    [],
+  );
+  // A page too small: the engine's words, and that the size is at fault.
+  ask(4, 16, { width: 8, height: 6 });
+  const small = await next("plot");
+  assert.equal(small.svg, null);
+  assert.equal(small.of_size, true);
+  assert.ok(small.message.length > 0);
+  // A statement that made no plot is not held.
+  ask(5, 4);
+  assert.equal((await next("plot")).held, false);
+});
+
 test("the prints are not asked for before a project is opened", async (t) => {
   const { worker, next } = started(t, 0);
   await next("ready");

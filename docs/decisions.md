@@ -2995,3 +2995,21 @@ The wait is there at the trial address every time and at the address once in fou
 **Not concluded from it.** That the measure at the address before 0.3 never showed it (9 to 94 ms on 0.8.0, at both addresses): that was four readings on two deployments, and the wait has since been absent at the address three times in four. It is not evidence that the new engine brought it.
 
 **Reason.** A measure is read until it is understood or shown to be the machine's. Here it is shown not to be the app's by measuring every part of the app's wait, which is as far as can be seen from outside that machine.
+
+## 27 November 2026: The worker keeps a run's plots and lays one out at a size (release 0.3, step 7a; #197)
+
+**The split.** Step 7 is two steps: the worker's half (7a), which is whole and proven by itself and changes no screen, and the screens' half (7b), which replaces how every figure is drawn. The first is committed green before the second is begun.
+
+**What the app does today.** A plot leaves the engine only as a file `export` writes. So to draw a figure the interface runs the script again with an `export` added after it, at the size of the figure's place, and reads the file (the record of 15 November 2026). A window made narrower runs the script once more for its figures. Two limits follow from adding lines after the script: the plot of a name bound again further down is not drawn, since the name then holds another value; and no plot of a run is drawn where a later statement fails, since the lines added are never reached.
+
+**What the worker does now.** `run_script_showing` gives back the plots the statements of a run made, each with the line of its statement and the name that binds it. The worker keeps them, lists them in the run's outcome (line, name, kind, theme, as the engine's own host for the browser lists them), and answers a new message, `plotSvg`, with the plot of a statement laid out on a page of a size by the engine's `svg_at`: the same layout and the same writer as `export`.
+
+**The size is given in millimetres**, as the interface already reckons a place (a pixel is 1/96 of an inch, to a hundredth of a millimetre), and becomes points in the worker exactly as `export` makes them (72 to the inch of 25.4, multiplied before divided). So a figure on the screen is, byte for byte, the file `export(…, size: [width, height])` writes for the same plot, and the statement the plot viewer shows for it is true of what is seen. This is held to the two figures kept from the released `zeff run`.
+
+**Not held.** As for the prints (step 6b): the engine holds the plots of its last run, and gives one only where that run was of the text asked about. Where the statement gave no plot of its own (`print(p)` prints a plot's summary and gives nothing), it is not held either, and the interface draws it as before.
+
+**The kind in the engine's list is the mark a layer is drawn with** (`bars`, `ribbon, points, lines`), where a plot's print names the layer (`histogram`, `fit band, points, fit line`). The interface shows the print's words, as it does now, and does not show the list's.
+
+**Tests.** Rust: the outcome's list for the example (four plots: two bound, and the two statements that are those names alone); each laid out at the size `export` was given is the kept file, byte for byte; another size is another figure; nothing is told of a run; a page of 8 by 6 mm gives the engine's words and says the size is at fault; a statement that made no plot, another text and a project in which nothing ran are not held. The two limits: in a script that binds `p` to a plot, then to another, then makes a third, then fails, each of the three is held as its own statement's, and each is what `export` writes for that plot in a script of its own; the statement after the failure made nothing. Under Node: the same through the worker's messages.
+
+**Reason.** Open decision #197: the engine hands the plots of a run to the interface, and a figure is laid out, not run for.

@@ -57,7 +57,7 @@ fn a_run_tells_each_event_as_a_line_of_json_and_gives_its_outcome() {
             // from the checked program).
             r#"{"line": 1, "end": 1, "kind": "statement", "name": null, "type": null, "ran": true, "stdout": "one\n", "stderr": "", "frame": null, "memory": null, "rows": null, "columns": null, "length": null, "n": null, "error": null}, "#,
             r#"{"line": 2, "end": 2, "kind": "statement", "name": "a", "type": "Int", "ran": true, "stdout": "", "stderr": "", "frame": null, "memory": null, "rows": null, "columns": null, "length": null, "n": null, "error": null}"#,
-            r#"], "frames": [], "written": []}"#
+            r#"], "frames": [], "plots": [], "written": []}"#
         )
     );
 }
@@ -238,7 +238,9 @@ fn a_frame_of_the_last_run_is_given_as_an_arrow_stream() {
         "let pay = frame(region = [\"north\", \"south\"], wage = [23.5, NA])\nlet n = pay.n_rows()\n",
     );
     assert!(
-        done.ends_with(r#""frames": [{"name": "pay", "rows": 2, "variables": 2}], "written": []}"#),
+        done.ends_with(
+            r#""frames": [{"name": "pay", "rows": 2, "variables": 2}], "plots": [], "written": []}"#
+        ),
         "{done}"
     );
     let bytes = host.frame("pay").unwrap();
@@ -1772,4 +1774,146 @@ fn the_sections_of_a_script_are_the_engines_reading_of_its_headings() {
         both["sections"],
         serde_json::json!([{"line": 1, "end": 2, "level": 1, "title": "A"}])
     );
+}
+
+#[test]
+fn a_run_s_plots_are_laid_out_at_a_size_without_a_new_run_as_export_writes_them() {
+    // Open decision #197. tests/scripts/figures/: the two figures the released `zeff run`
+    // wrote for the example with `export("…", size: [150.02, 93.13])` added for its two plots.
+    let text = read("tests/scripts/example/scripts/main.zeff");
+    let host = Host::new("scratch");
+    let told: RefCell<Vec<String>> = RefCell::default();
+    let done: Value = serde_json::from_str(&host.run(
+        "scripts/main.zeff",
+        &text,
+        &Asked::default(),
+        never,
+        &|json| told.borrow_mut().push(json.to_string()),
+    ))
+    .unwrap();
+    let events = told.borrow().len();
+    // The outcome lists the plots the statements made: the two bound with `let`, and the two
+    // statements that are those names alone, each with its line, its name, its theme and its
+    // kind, which is the marks its layers are drawn with (a histogram is drawn with bars; the
+    // word of its print, `histogram`, is the layer's, and is what the interface shows).
+    assert_eq!(
+        done["plots"],
+        serde_json::json!([
+            {"line": 16, "name": "schooling", "kind": "ribbon, points, lines", "theme": "journal"},
+            {"line": 17, "name": null, "kind": "ribbon, points, lines", "theme": "journal"},
+            {"line": 20, "name": "shape", "kind": "bars", "theme": "journal"},
+            {"line": 21, "name": null, "kind": "bars", "theme": "journal"},
+        ])
+    );
+    let at = |line: u32, width: f64, height: f64| -> Value {
+        serde_json::from_str(&host.plot_svg("scripts/main.zeff", &text, line, width, height))
+            .unwrap()
+    };
+    // At the size `export` was given, the figure is the file `export` wrote, byte for byte:
+    // from the `let`, and from the statement that is the name alone.
+    for (line, kept) in [(16, 1), (17, 1), (20, 2), (21, 2)] {
+        let plot = at(line, 150.02, 93.13);
+        assert_eq!(plot["type"], "plot");
+        assert_eq!(plot["held"], true);
+        assert_eq!(plot["line"], line);
+        assert_eq!(
+            plot["svg"].as_str().unwrap(),
+            read(&format!("tests/scripts/figures/example-figure-{kept}.svg")),
+            "line {line}"
+        );
+    }
+    // Another size is another figure; nothing was run for any of them.
+    assert_ne!(at(16, 89.0, 66.0)["svg"], at(16, 150.02, 93.13)["svg"]);
+    assert_eq!(told.borrow().len(), events);
+    // A page too small for the plot's labels: the engine's own words, and that the size is
+    // at fault.
+    let small = at(16, 8.0, 6.0);
+    assert_eq!(small["held"], true);
+    assert_eq!(small["svg"], Value::Null);
+    assert_eq!(small["of_size"], true);
+    assert!(!small["message"].as_str().unwrap().is_empty());
+    // A statement that made no plot, another text, and a project in which nothing ran: not held.
+    assert_eq!(at(4, 150.02, 93.13)["held"], false);
+    let other: Value =
+        serde_json::from_str(&host.plot_svg("scripts/main.zeff", "print(1)\n", 16, 150.02, 93.13))
+            .unwrap();
+    assert_eq!(other["held"], false);
+    let fresh: Value = serde_json::from_str(&Host::new("scratch").plot_svg(
+        "scripts/main.zeff",
+        &text,
+        16,
+        150.02,
+        93.13,
+    ))
+    .unwrap();
+    assert_eq!(fresh["held"], false);
+}
+
+#[test]
+fn a_plot_is_held_where_its_name_is_bound_again_and_where_a_later_statement_fails() {
+    // The two limits of drawing a plot by a run with an `export` added after the script: the
+    // plot of a name bound again further down, where the name at the end holds another value;
+    // and the plot of a run that fails further down, which never reaches the lines added.
+    let text = "let pay = frame(educ = [10.0, 12, 14, 16], wage = [11.0, 14, 19, 26])\n\
+                let p = pay.plot(x: educ, y: wage).points()\n\
+                let p = pay.plot(x: educ).histogram(bins: 3)\n\
+                let q = pay.scatter(wage, educ)\n\
+                error(\"stop\")\n\
+                let r = pay.scatter(educ, wage)\n";
+    let host = Host::new("demo");
+    let done: Value = serde_json::from_str(&run(&host, text).1).unwrap();
+    assert_eq!(done["exit_code"], 1);
+    let listed: Vec<(u64, String, String)> = done["plots"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|one| {
+            (
+                one["line"].as_u64().unwrap(),
+                one["name"].as_str().unwrap().to_string(),
+                one["kind"].as_str().unwrap().to_string(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        listed,
+        [
+            (2, "p".to_string(), "points".to_string()),
+            (3, "p".to_string(), "bars".to_string()),
+            (4, "q".to_string(), "points".to_string()),
+        ]
+    );
+    let figure = |line: u32| -> String {
+        let plot: Value =
+            serde_json::from_str(&host.plot_svg("scripts/main.zeff", text, line, 120.0, 80.0))
+                .unwrap();
+        assert_eq!(plot["held"], true, "line {line}");
+        plot["svg"].as_str().unwrap().to_string()
+    };
+    // Each is the plot of its own statement: the first `p` is the points, not the histogram.
+    let (first, second, third) = (figure(2), figure(3), figure(4));
+    assert_ne!(first, second);
+    assert_ne!(first, third);
+    // And each is what `export` writes for that plot at that size, in a script of its own.
+    for (made, svg) in [
+        ("pay.plot(x: educ, y: wage).points()", &first),
+        ("pay.plot(x: educ).histogram(bins: 3)", &second),
+        ("pay.scatter(wage, educ)", &third),
+    ] {
+        let alone = Host::new("demo");
+        let script = format!(
+            "let pay = frame(educ = [10.0, 12, 14, 16], wage = [11.0, 14, 19, 26])\n\
+             {made}.export(\"output/figure.svg\", size: [120, 80])\n"
+        );
+        assert!(run(&alone, &script).1.contains(r#""exit_code": 0"#));
+        assert_eq!(
+            String::from_utf8(alone.file("output/figure.svg").unwrap()).unwrap(),
+            **svg,
+            "{made}"
+        );
+    }
+    // The statement after the one that failed made nothing.
+    let after: Value =
+        serde_json::from_str(&host.plot_svg("scripts/main.zeff", text, 6, 120.0, 80.0)).unwrap();
+    assert_eq!(after["held"], false);
 }
