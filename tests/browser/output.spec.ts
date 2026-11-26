@@ -97,12 +97,14 @@ test("the outputs' text for the example is the text kept for it", async ({ page,
   expect(`${text}\n`).toMatchSnapshot("example-output.txt");
 });
 
-for (const name of ["plain", "warning", "error", "refused"]) {
+// `binary` is the release's methods (Zeff 0.9.0): a logit, its odds ratios, a marginal effect,
+// the classification table, the ROC curve, and a fit the engine refuses for separation.
+for (const name of ["plain", "warning", "error", "refused", "binary"]) {
   test(`the script "${name}" is shown as \`zeff run\` 0.9.0 prints it`, async ({ page, press }) => {
     await scratch(page, press);
     await write(page, file(`tests/scripts/${name}.zeff`));
     await press(page.getByRole("button", { name: "Run", exact: true }));
-    const failing = name === "error" || name === "refused";
+    const failing = name === "error" || name === "refused" || name === "binary";
     await expect(page.getByRole("status")).toHaveText(failing ? "ended with exit code 1" : "done");
     await expect(page.locator(".sheet")).toHaveAttribute("data-width", "118");
     expect(await printed(page)).toBe(file(`tests/scripts/${name}.stdout`));

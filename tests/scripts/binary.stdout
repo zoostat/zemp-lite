@@ -1,0 +1,63 @@
+glm · union ~ educ + exper + female · binomial, logit
+N = 18,390 (22 rows dropped for NA in model variables)
+standard errors: classical
+
+  term          estimate   std.error   z value   p value   95% CI
+  (intercept)    -1.2274      0.1100    -11.16    <0.001   [-1.4429, -1.0119]
+  educ            0.0009      0.0068      0.14     0.892   [-0.0123, 0.0142]
+  exper           0.0277      0.0022     12.32    <0.001   [0.0233, 0.0321]
+  female          0.0556      0.0318      1.75     0.081   [-0.0068, 0.1180]
+
+log-likelihood -11,415.06 · AIC 22,838.13 · McFadden R² 0.007
+deviance 22,830.13 on 18,386 df · null deviance 23,001.97 on 18,389 df
+converged in 5 iterations of Fisher scoring
+glm · union ~ educ + exper + female · binomial, logit
+N = 18,390 (22 rows dropped for NA in model variables)
+standard errors: classical
+odds ratios: exp of the coefficients, standard errors by the delta method; z and p are those of the coefficients
+
+  term          odds ratio   std.error   z value   p value   95% CI
+  (intercept)       0.2931      0.0322    -11.16    <0.001   [0.2362, 0.3635]
+  educ              1.0009      0.0068      0.14     0.892   [0.9877, 1.0143]
+  exper             1.0281      0.0023     12.32    <0.001   [1.0236, 1.0326]
+  female            1.0571      0.0337      1.75     0.081   [0.9932, 1.1252]
+
+log-likelihood -11,415.06 · AIC 22,838.13 · McFadden R² 0.007
+deviance 22,830.13 on 18,386 df · null deviance 23,001.97 on 18,389 df
+converged in 5 iterations of Fisher scoring
+margins · lg · average marginal effects
+glm · union ~ educ + exper + female · binomial, logit
+on the scale of the probability, averaged over the 18,390 observations the fit used
+standard errors: classical, by the delta method
+
+  variable   contrast   estimate   std.error   z value   p value   95% CI
+  educ       dy/dx        0.0002      0.0015      0.14     0.892   [-0.0027, 0.0030]
+confusion · lg · cutoff 0.5
+glm · union ~ educ + exper + female · binomial, logit
+N = 18,390: 5,849 with `union` 1 and 12,541 with 0
+a row is predicted 1 when its fitted probability is at least 0.5
+
+            predicted 1   predicted 0    total
+  union 1             0         5,849    5,849
+  union 0             0        12,541   12,541
+  ────────────────────────────────────────────
+  total               0        18,390   18,390
+
+sensitivity 0.0000 · specificity 1.0000 · accuracy 0.6819
+positive predictive value NA · negative predictive value 0.6819
+plot · sensitivity against false_positive_rate
+
+  axis   title             scale    limits          breaks
+  x      1 − specificity   linear   -0.05 to 1.05   0, 0.2, 0.4, 0.6, 0.8, 1
+  y      sensitivity       linear   -0.05 to 1.05   0, 0.2, 0.4, 0.6, 0.8, 1
+
+  layer   mark    data            marks
+      1   lines   its own frame       2
+      2   lines   the frame         770
+
+  settings
+  x false_positive_rate, y sensitivity, color grey, width 0.5, linetype dashed, 1 line
+  width 1, 1 line
+
+caption: area under the curve 0.5600
+coordinates: fixed, one unit of `y` as long as one of `x`

@@ -58,3 +58,10 @@ page to it, and a unit test holds it to what the worker gives.
 `zeff check` of 0.9.0 in the same words (both end with exit code 4): a project runs on the engine it
 names and on no other (Z0710). The worker makes the same refusal, held to this file (release 0.3,
 step 3b).
+
+`binary.zeff` is the methods Zeff 0.9.0 brought, in eleven lines: a logistic regression, the same
+read as odds ratios, a marginal effect, the classification table, the ROC curve drawn, and a fit the
+engine refuses because one variable separates the outcomes (Z0803), after which nothing runs.
+`binary.stdout` and `binary.stderr` are what the released `zeff run` of 0.9.0 printed and said for it
+(it ends with exit code 1), and `check/binary.stderr` what `zeff check` said. The browser tests hold
+what the page shows for it to these files (release 0.3, step 5).

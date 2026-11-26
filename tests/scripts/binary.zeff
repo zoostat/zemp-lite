@@ -1,0 +1,11 @@
+let wages = dataset(wages)
+let lg = wages.glm(union ~ educ + exper + female, family: binomial)
+lg
+lg.summary(exponentiate: true)
+lg.margins(educ)
+lg.confusion()
+let roc = lg.curve(type: roc)
+roc.plot()
+let apart = frame(dose = [1, 2, 3, 4, 5, 6], cured = [0, 0, 0, 1, 1, 1])
+apart.glm(cured ~ dose, family: binomial)
+print("not reached")

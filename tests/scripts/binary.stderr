@@ -1,0 +1,7 @@
+error[Z0803]: glm: `dose` perfectly predicts `cured` (separation)
+ --> scripts/main.zeff:10:7
+   |
+10 | apart.glm(cured ~ dose, family: binomial)
+   |       ^^^ estimates diverge; maximum likelihood does not exist
+   |
+   = help: drop or combine the predictor, or check how `cured` was coded

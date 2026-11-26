@@ -64,7 +64,11 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Steps 3 and 3b at the address (commit 5bdb4d5).** GitHub's check green; all 16 checks at the trial address and at the address. The measure by phase: the 3 s wait before a one-statement run was seen again once (Chromium, the trial address), and of it the engine's check and what the statement needs took 34 ms; pressed again, 40 ms in all; at the address the same build took 32 ms. So it is not the engine or the worker, it is paid once, and it is not always there; the page itself was busy on that machine. The measure now reports the browser's own long tasks, for the next time it shows. First start on these deployments: 0.59 to 0.81 s in Chromium and 1.20 to 1.57 s in WebKit, half of step 3's figures for the same engine: the machine's variation.
 
-**Next.** The push and trial of step 4; then step 5 `[function]`: the release's methods in the app.
+**Done, step 5 `[function]`.** The methods of Zeff 0.9.0 held through the screens, with nothing built for them: a script of a logit, its odds ratios, a marginal effect, the classification table, the ROC curve and a separated fit is shown as the released `zeff run` prints it, to the byte; Zeff's own sample of binary outcomes reads in the page as `zeff run` prints it; notes, the error Z0803 under its line with **Explain**, the ROC curve under its statement and in Plots, the new names coloured, completed and opened with F1, and Help with the package `glm` found by Stata's `logit`. The thirteen pictures made again on this engine; one sentence of **Finding help** changed with its picture. A limit met and placed in step 7: a plot is not drawn where a later statement of the run fails. Green here: the whole routine in both browsers (420 unit tests, 673 browser tests, 3 skipped by design; the ten sample projects identical).
+
+**Next.** The reading of step 4's trial at the host; then step 6 `[engine]`: what the editor asked of the engine, taken from the engine (sections, results and errors).
+
+**For the owner to read, when he wishes (added).** In **Finding help**, the description of the picture of the search: "a list of three functions, reg, anova and posthoc".
 
 **For the owner to read, when he wishes.** The new section _A project that names another Zeff_, at the foot of **Projects, scripts and files** in Help's **Using Zemp Lite** (seven sentences).
 

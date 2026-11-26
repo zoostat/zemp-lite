@@ -481,7 +481,7 @@ fn a_refused_script_runs_nothing_and_lists_its_statements() {
 
 #[test]
 fn the_check_finds_what_zeff_check_finds_and_says_it_the_same_way() {
-    for name in ["plain", "warning", "error", "refused"] {
+    for name in ["plain", "warning", "error", "refused", "binary"] {
         let host = Host::new("demo");
         let checked: Value = serde_json::from_str(&host.check(
             "scripts/main.zeff",

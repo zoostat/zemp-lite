@@ -2873,3 +2873,21 @@ A paper is held between settings, so a second setting reuses what the first work
 **The first start, on the same deployments.** 0.59 s and 1.20 s at the trial address, 0.81 s and 1.57 s at the address (Chromium, WebKit), against 1.70 s and 1.97 s at the deployment before for the same engine. So the first start moves by a factor of two from one run of GitHub's machine to the next, and the figures of step 3 were a slow run, not a slower engine.
 
 **Reason.** A measure is read until it is understood or shown to be the machine's; here it is shown to be neither the engine's nor the worker's, and the rest is still to be seen.
+
+## 27 November 2026: The release's methods in the app (release 0.3, step 5; #112)
+
+**Decision.** Nothing is built for the methods of Zeff 0.9.0: the engine gives each its print, its type, its page and its plot, and the app shows them as it shows every other function's. The step is the tests that hold this through the screens, and the pictures made again.
+
+**Held by tests, in both browsers.**
+
+1. _A script of the methods_ (`tests/scripts/binary.zeff`, eleven lines: a logit with `glm`, the same read as odds ratios, a marginal effect, the classification table, the ROC curve drawn, and a fit the engine refuses for separation) is shown in the page as the released `zeff run` of 0.9.0 prints and says it, to the byte, and checked as `zeff check` checks it; its kept output was made with the released command line.
+2. _Zeff's own sample project of binary outcomes_ (`samples/binary`, 79 lines of script, 216 printed) reads in the page as `zeff run` prints it, beside the three samples held before.
+3. _Through the screens_ (`tests/browser/binary.spec.ts`): each statement's note with the name it binds and the type the engine names (`lg`, `GlmFit`); the odds ratios, the marginal effect and the classification table in their blocks; the separated fit's error under its line (Z0803, with the engine's excerpt and advice), its code on the note, the statement after it not run, and **Explain** opening the code's page in place; the ROC curve drawn under its statement and standing in the Plots place, where it stays light in the dark theme as every figure does; the new names coloured as functions in both themes, `glm` completed after a dot, its usage shown as the call is opened, and F1 opening its page; in Help, `glm` found by Stata's `logit` after Zeff's own `logit` and `inv_logit`, its page read whole (its sections, the table of R and Stata), `curve` found by Stata's `lroc`, `margins` by its own name, and the package's page listing its three functions.
+
+**The search, looked at as step 3 promised.** With 84 more pages carrying a table of R and Stata, more words of those tables are names the search knows (`by()`, `level()`, `predict`, `table()`). Typed, each gives Zeff's own names first and then the functions matched by a name of R or Stata, in a list of eight at most, as the search was built at 0.2.3 (`by`: six of Zeff's own, then `kruskal_test` and `t_test`; `predict`: `predict` and `margins`, then `influence`, `confusion` and `curve`). The suggestions are not crowded, and the rule is left as it is.
+
+**A limit met, and placed.** A plot is drawn by a run of the script with the lines the interface adds after it, so where a later statement of the run fails, the plot of an earlier one is not drawn. The script of the tests ends in a fit that fails, so its ROC curve is tested in the same script without those lines. It is the limit the engine's handing-over of plots lifts, and step 7's text in the checklist now names it beside the plot of a name bound twice.
+
+**The pictures.** All thirteen are made again from the running app: they show Zeff 0.9.0, its 266 functions, 11 packages and 148 codes, and the package `glm` on Help's Home; the picture of the search shows three functions for `lm` where it showed two. Its description in the page **Finding help** says so now: one sentence changed, "a list of three functions, reg, anova and posthoc", for the owner to read with the others.
+
+**Reason.** The row of 0.3: the preview gains the release's methods through the engine. What the app adds is the proof that it shows them truly.

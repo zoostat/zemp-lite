@@ -15,7 +15,7 @@ Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From t
 
 <kbd>↓</kbd> and <kbd>↑</kbd> move through the list, <kbd>↵</kbd> opens the match marked, and <kbd>Esc</kbd> closes the list. With no match marked, <kbd>↵</kbd> opens the page of what you typed where that is a name of Zeff's, and otherwise the first match of the list: `lm` and <kbd>↵</kbd> opens `reg`.
 
-![The Help place with lm typed in its search field: under the field a list of two functions, reg and anova, each saying it matched R's lm().](search-in-help)
+![The Help place with lm typed in its search field: under the field a list of three functions, reg, anova and posthoc, each saying it matched R's lm().](search-in-help)
 
 ## Browse
 

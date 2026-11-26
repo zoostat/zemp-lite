@@ -2,7 +2,7 @@
 // released Zeff engine run through the interface itself, and what the page shows under the
 // statements held to what the Zeff repository expects `zeff run` to print for them. The samples are those of
 // the engine's own source at the pinned commit, which cargo fetched to build the worker;
-// `tools/check-samples.mjs` runs all nine through the worker alone.
+// `tools/check-samples.mjs` runs all ten through the worker alone.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -27,8 +27,10 @@ function samples(): string {
   return path.resolve(crate.manifest_path, "..", "..", "..", "samples");
 }
 
-// Three projects that need no file of their own: they run on the data shipped with the engine.
-for (const name of ["regression", "simulation", "plots"]) {
+// Four projects that need no file of their own: they run on the data shipped with the engine.
+// `binary` is the sample of Zeff 0.9.0: logit and probit, odds ratios, marginal effects, two
+// tests, the ROC curve, the classification table, and a separated fit caught with `attempt`.
+for (const name of ["regression", "simulation", "plots", "binary"]) {
   test(`the sample project "${name}" of Zeff 0.9.0 reads in the prototype as \`zeff run\` prints it`, async ({
     page,
     press,
