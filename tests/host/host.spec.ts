@@ -234,11 +234,40 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   );
   await page.keyboard.press("ControlOrMeta+Enter");
   const statement = await timed;
-  // That a second run was made, and how long the engine took over it, as the run's own facts
+  // Where the time before the run went, as the app noted it (release 0.3, step 3: on
+  // GitHub's Chromium 3.4 s passed before the run began, which no other machine showed).
+  const phases = () =>
+    page.evaluate(() =>
+      performance
+        .getEntriesByType("measure")
+        .filter((one) => one.name.startsWith("zemp one statement: "))
+        .map((one) => `${one.name.slice(20)} ${Math.round(one.duration)} ms`)
+        .join(", "),
+    );
+  const first = await phases();
+  // And once more, to tell what is paid once from what is paid at every statement.
+  await page.evaluate(() => performance.clearMeasures());
+  const again = page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        const status = document.querySelector('[role="status"]')!;
+        const from = performance.now();
+        let left = false;
+        new MutationObserver(() => {
+          if ((status.textContent ?? "") !== "done") left = true;
+          else if (left) resolve(Math.round(performance.now() - from));
+        }).observe(status, { childList: true, characterData: true, subtree: true });
+      }),
+  );
+  await page.keyboard.press("ControlOrMeta+Enter");
+  const second = await again;
+  const secondPhases = await phases();
+  // That the runs were made (the third is the statement pressed again), and how long the
+  // engine took over the last, as the run's own facts
   // say: the time from the key to "done" holds more than the run (the check before it, and
   // the page drawn after it), so both are reported.
   const facts = page.getByTestId("run-facts");
-  await expect(facts).toHaveText(/^run 2 · .* in [\d.,]+ m?s$/);
+  await expect(facts).toHaveText(/^run 3 · .* in [\d.,]+ m?s$/);
   const ran = (await facts.textContent()) ?? "";
   // A plot drawn afresh for a new place: the interface reports how long the run took.
   await page
@@ -253,6 +282,7 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
       "one statement",
       `${statement.whole} ms for ⌘↵ on the last statement, from the key to done, ${statement.before} ms of it before the run began (${ran})`,
     ],
+    ["one statement, by phase", `${first}; pressed again, ${second} ms in all (${secondPhases})`],
     ["redraw", redraw],
   ] as const) {
     test.info().annotations.push({ type, description });

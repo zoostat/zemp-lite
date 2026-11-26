@@ -58,7 +58,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 3b `[function]`.** A project whose `zeff.toml` names another engine than the one Zemp Lite carries is refused a run by the worker in the command line's own words (Z0710, held byte for byte to what the released `zeff run` of 0.9.0 says); a line under the bar says which engine it names, with **Move to Zeff 0.9.0**, which rewrites the one line of the manifest; the Scratch project of an earlier visit is moved without the asking. One section added to **Projects, scripts and files**. Green here: the whole routine in both browsers (420 unit tests, 653 browser tests, 3 skipped by design; the ten sample projects identical; the engine 3,080.1 kB as it travels).
 
-**Next.** Step 4 `[engine]`: a wrong file never kept for a year (R13).
+**Step 3 at the address (commit 0b58c22).** GitHub's check green in both browsers; the build sent to the trial address and then to the address, all 16 checks passing at each. The engine travels as 3.07 MB. First start 1.70 s in Chromium and 1.97 s in WebKit: within what earlier deployments showed, and in WebKit at the goal of 2 s with no room (2.25 s at the trial address). **One measure is not yet explained:** on GitHub's machine, in Chromium alone, a statement run alone waited 3.4 s before its run began (9 to 60 ms on 0.8.0; 20 to 30 ms on this Mac at the same address; the engine's own check is 10 ms on both engines). The app now notes where that time goes and the measure at the address reports it, and presses twice; the next deployment tells. Green here with that change: the whole routine (420 unit tests, 653 browser tests, 3 skipped by design).
+
+**Next.** Step 4 `[engine]`: a wrong file never kept for a year (R13); first, the reading of the next deployment's measure.
 
 **For the owner to read, when he wishes.** The new section _A project that names another Zeff_, at the foot of **Projects, scripts and files** in Help's **Using Zemp Lite** (seven sentences).
 

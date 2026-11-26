@@ -1064,14 +1064,23 @@ export class Workspace {
     line: number,
     last: number,
   ): Promise<void> {
+    // Where the time before the run goes is noted for the measures taken at the address (the
+    // browser's own user timings, which cost nothing and are read by no one else): waiting
+    // for the engine to end what it was doing, the engine's check, and what the statement needs.
+    const noted = (what: string, from: number) =>
+      performance.measure(`zemp one statement: ${what}`, { start: from, end: performance.now() });
+    const asked = performance.now();
     await before;
+    noted("waited", asked);
     const script = this.scriptPath;
     await this.#load(script);
     const text = this.buffers[script]?.text ?? "";
     this.running = true;
     try {
       await this.#saving;
+      const checking = performance.now();
       const checked = await this.session.check(script, text);
+      noted("checked", checking);
       if (checked.exitCode !== 0) {
         // Refused: nothing runs, and the findings stand under their lines, as Check shows them.
         this.#showChecked(script, text, checked);
@@ -1079,7 +1088,9 @@ export class Workspace {
         this.status = "done";
         return;
       }
+      const needing = performance.now();
       const graph = await this.session.dependencies(script, text);
+      noted("needs", needing);
       const target = graph
         .filter((one) => one.line <= line)
         .reduce<number | null>((at, one) => Math.max(at ?? 0, one.line), null);
