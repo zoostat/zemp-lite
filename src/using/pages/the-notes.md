@@ -4,7 +4,7 @@ Beside each statement a note says what it made; press one to see what the statem
 
 ## What a note says
 
-A note names what its statement made, in the engine's words: the name it bound, the type, and for a frame its rows and variables, as `wages Frame · 15,571 × 13`. A statement that only prints has the head of what it printed. A warning's code stands at the end of the note.
+A note names what its statement made, in the engine's words: the name it bound, the type, and its size: for a frame its rows and variables, as `wages Frame · 15,571 × 13`, and for a fit or a test the observations it used, as `m3 RegFit · N 15,366`. A statement that only prints has the head of what it printed. A warning's code stands at the end of the note.
 
 ![The Script place after a run with every output folded: beside each statement a note with a name, a type and a size, and nothing between the lines of the script.](the-notes)
 

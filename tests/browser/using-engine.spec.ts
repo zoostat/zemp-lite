@@ -51,6 +51,14 @@ const SCENES: Record<
     await run(page, press);
     return (quoted) => shown(page, quoted);
   },
+  // The same with every output folded, so that the whole script and all its notes are on
+  // the page: unfolded, the editor draws only the lines near its window.
+  "a run, its outputs folded": async (page, press) => {
+    await scratch(page, press);
+    await run(page, press);
+    await press(page.getByRole("button", { name: "Fold all", exact: true }));
+    return (quoted) => shown(page, quoted);
+  },
   // A statement changed after a run: it, and what stands under it.
   "an edit after a run": async (page, press) => {
     await scratch(page, press);

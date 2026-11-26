@@ -22,6 +22,7 @@ export type Held =
 /** The scenes of the app a page quotes from; the browser's test brings the app to each. */
 export type Scene =
   | "a run"
+  | "a run, its outputs folded"
   | "an edit after a run"
   | "a run that fails"
   | "a long run"
@@ -95,6 +96,7 @@ export const HELD: Record<string, Record<string, Held>> = {
   },
   "the-notes": {
     "wages Frame · 15,571 × 13": screen("a run"),
+    "m3 RegFit · N 15,366": screen("a run, its outputs folded"),
     "edited · not run": screen("an edit after a run"),
     stale: screen("an edit after a run"),
     "not run": screen("a run that fails"),

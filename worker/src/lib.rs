@@ -23,12 +23,13 @@ use zeff_diagnostics::{Diagnostic, Severity, Source, Sources};
 use zeff_engine::control::{Control, Event};
 use zeff_engine::dependencies::graph;
 use zeff_engine::fs::FileSystem;
-use zeff_engine::interpreter::{MemoryNote, StatementOutput};
+use zeff_engine::interpreter::{MemoryNote, Output};
 use zeff_engine::language::outline::statements_in;
 use zeff_engine::language::{Position, Range, offset, position};
 use zeff_engine::project::Project;
 use zeff_engine::run::{Frames, RunOptions, check_in_project, run_script_keeping};
-use zeff_ir::{Program, Statement, Ty};
+use zeff_engine::statements::statement_facts;
+use zeff_ir::Statement;
 use zeff_web::{default_budget, event_json};
 
 #[cfg(target_arch = "wasm32")]
@@ -184,29 +185,6 @@ pub fn only(script: &str, text: &str, lines: &[u32]) -> String {
         }
     }
     String::from_utf8(bytes).unwrap_or_else(|_| text.to_string())
-}
-
-/// What the checked program says a top-level statement makes: the name it binds, if any, and
-/// the type the engine names (`Frame`, `RegFit`, `Plot`), by the line the statement begins on.
-fn made(program: &Program, text: &str) -> Vec<(u32, Option<String>, Option<String>)> {
-    let line = |byte: usize| position(text, byte).line + 1;
-    let named = |ty: &Ty| (*ty != Ty::Unknown).then(|| ty.to_string());
-    program
-        .statements
-        .iter()
-        .filter_map(|statement| match statement {
-            Statement::Let { binding, span, .. } => {
-                let binding = program.bindings.get(*binding)?;
-                Some((
-                    line(span.start),
-                    Some(binding.name.clone()),
-                    named(&binding.ty),
-                ))
-            }
-            Statement::Print { value, span } => Some((line(span.start), None, named(&value.ty))),
-            _ => None,
-        })
-        .collect()
 }
 
 /// How a run is asked for: the memory the device reports, where it reports any; the width
@@ -422,14 +400,7 @@ impl Host {
             &control,
             Some(&listener),
         );
-        let each = self.each(
-            &project,
-            script,
-            text,
-            &outcome.output.statements,
-            &outcome.output.memory,
-            &frames,
-        );
+        let each = self.each(&project, script, text, &outcome.output);
         *self.frames.borrow_mut() = frames;
         *self.last.borrow_mut() = Some((script.to_string(), text.to_string()));
         self.filtered.borrow_mut().take();
@@ -943,51 +914,43 @@ impl Host {
     }
 
     /// For each statement of the text, in order, as a JSON array: where it begins and ends;
-    /// the name it binds and the type the engine names for what it makes, from the check;
-    /// whether it ran, and what it printed and said; for a frame bound by `let`, its rows and
-    /// variables, and the memory the engine counts for it (Engine Specification, section 8.3,
-    /// point 7). Every word and number is the engine's.
-    fn each(
-        &self,
-        project: &Project,
-        script: &str,
-        text: &str,
-        outputs: &[StatementOutput],
-        memory: &[MemoryNote],
-        frames: &Frames,
-    ) -> String {
-        let made = match zeff_engine::registry::registry() {
-            Ok(registry) => made(
+    /// the name it binds; whether it ran, and what it printed and said; the type of what it
+    /// made and its dimensions (the rows and columns of a frame or a table, the length of a
+    /// column or a list, the observations of a fit or a test); for a frame bound by `let`,
+    /// its rows and variables, and the memory the engine counts for it (Engine Specification,
+    /// section 8.3, point 7); and, where it stopped the run, the engine's record of the error.
+    /// Every word and number is the engine's own fact of the statement (open decision #175,
+    /// C5 and C22, from Zeff 0.9.0: `zeff_engine::statements`), as the engine's own host for
+    /// the browser reads them: the script is checked in the project and the run's record is
+    /// set beside it. Until release 0.3 the worker read the name and the type from the checked
+    /// program itself and matched the frames to their statements by their order.
+    fn each(&self, project: &Project, script: &str, text: &str, output: &Output) -> String {
+        let facts = match zeff_engine::registry::registry() {
+            Ok(registry) => statement_facts(
                 &check_in_project(&self.fs, project, script, text, registry)
                     .checked
                     .program,
+                script,
                 text,
+                registry,
+                output,
             ),
             Err(_) => Vec::new(),
         };
-        // The frames come back in the order they were bound, so the lets that made them are
-        // matched to them in order, by name.
-        let mut unmatched = frames.iter().peekable();
         let mut listed = Vec::new();
         for statement in statements(script, text) {
-            let (name, ty) = made
-                .iter()
-                .find(|(line, _, _)| *line == statement.line)
-                .map(|(_, name, ty)| (name.clone(), ty.clone()))
-                .unwrap_or((None, None));
-            let output = outputs.iter().find(|one| one.line == statement.line);
-            let mut frame = "null".to_string();
-            if let Some(name) = &name
-                && unmatched.peek().is_some_and(|(bound, _)| bound == name)
-                && let Some((_, kept)) = unmatched.next()
-            {
-                frame = format!(
+            let fact = facts.iter().find(|one| one.line == statement.line);
+            let name = fact.and_then(|one| one.name.clone());
+            let result = fact.and_then(|one| one.result.as_ref());
+            let frame = match result {
+                Some(made) if made.ty == "Frame" && name.is_some() => format!(
                     "{{\"rows\": {}, \"variables\": {}}}",
-                    kept.table.rows(),
-                    kept.table.names().len()
-                );
-            }
-            let held = memory.iter().find_map(|note| match note {
+                    made.rows.unwrap_or(0),
+                    made.columns.unwrap_or(0)
+                ),
+                _ => "null".to_string(),
+            };
+            let held = output.memory.iter().find_map(|note| match note {
                 MemoryNote::Bound {
                     name: bound,
                     line,
@@ -998,21 +961,32 @@ impl Host {
                 }
                 _ => None,
             });
-            let text_of = |value: &Option<String>| match value {
+            let text_of = |value: Option<&str>| match value {
                 Some(value) => json_string(value),
                 None => "null".to_string(),
             };
+            let count = |value: Option<u64>| match value {
+                Some(value) => value.to_string(),
+                None => "null".to_string(),
+            };
             listed.push(format!(
-                "{{\"line\": {}, \"end\": {}, \"kind\": \"{}\", \"name\": {}, \"type\": {}, \"ran\": {}, \"stdout\": {}, \"stderr\": {}, \"frame\": {frame}, \"memory\": {}}}",
+                "{{\"line\": {}, \"end\": {}, \"kind\": \"{}\", \"name\": {}, \"type\": {}, \"ran\": {}, \"stdout\": {}, \"stderr\": {}, \"frame\": {frame}, \"memory\": {}, \"rows\": {}, \"columns\": {}, \"length\": {}, \"n\": {}, \"error\": {}}}",
                 statement.line,
                 statement.end,
                 statement.kind,
-                text_of(&name),
-                text_of(&ty),
-                output.is_some(),
-                json_string(output.map_or("", |one| one.stdout.as_str())),
-                json_string(output.map_or("", |one| one.stderr.as_str())),
+                text_of(name.as_deref()),
+                text_of(result.map(|made| made.ty.as_str())),
+                fact.is_some_and(|one| one.ran),
+                json_string(fact.map_or("", |one| one.stdout.as_str())),
+                json_string(fact.map_or("", |one| one.stderr.as_str())),
                 held.unwrap_or_else(|| "null".to_string()),
+                count(result.and_then(|made| made.rows)),
+                count(result.and_then(|made| made.columns)),
+                count(result.and_then(|made| made.length)),
+                count(result.and_then(|made| made.n)),
+                // The engine's record of the error is a line of JSON already.
+                fact.and_then(|one| one.error.clone())
+                    .unwrap_or_else(|| "null".to_string()),
             ));
         }
         format!("[{}]", listed.join(", "))

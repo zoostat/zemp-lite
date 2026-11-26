@@ -80,10 +80,21 @@ export function notesOf(run: Run, marked: ReadonlyMap<number, { mark: Mark }> = 
     let sub = "";
     if (info?.name != null) {
       main = info.name;
-      sub =
-        info.frame === null
-          ? (type ?? "")
-          : `${type ?? "Frame"} · ${counted(info.frame.rows)} × ${counted(info.frame.variables)}`;
+      // The type and the dimensions the engine gives (Zemp Specification, section 5: `wages
+      // Frame · 15,571 × 13`, `m3 RegFit · N 15,366`): a frame's or a table's rows and
+      // columns, and the observations of a fit or a test. They are the engine's own facts of
+      // the result (open decision #175, C5), never counted here.
+      const size =
+        info.frame !== null
+          ? `${counted(info.frame.rows)} × ${counted(info.frame.variables)}`
+          : info.rows !== null && info.columns !== null
+            ? `${counted(info.rows)} × ${counted(info.columns)}`
+            : info.n !== null
+              ? `N ${counted(info.n)}`
+              : "";
+      sub = [type ?? (info.frame !== null ? "Frame" : ""), size]
+        .filter((part) => part !== "")
+        .join(" · ");
     } else if (printed !== "") {
       const first = firstLine(printed);
       const at = first.indexOf(" · ");

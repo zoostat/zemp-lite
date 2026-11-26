@@ -93,9 +93,11 @@ test("a run tells its steps and what it prints, then its outcome", async (t) => 
   assert.deepEqual(
     done.statements.map((one) => [one.line, one.name, one.type, one.stdout]),
     [
-      [1, null, "Nothing", "one\n"],
+      // A statement that gives nothing has no type (release 0.3, step 6a: the engine's own
+      // facts name the type of a result).
+      [1, null, null, "one\n"],
       [2, "d", "Frame", ""],
-      [3, null, "Nothing", "2\n"],
+      [3, null, null, "2\n"],
     ],
   );
   assert.deepEqual(done.statements[1].frame, { rows: 3, variables: 1 });

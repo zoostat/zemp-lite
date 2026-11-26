@@ -93,6 +93,11 @@ describe("where a block stands", () => {
       stderr: "",
       frame: null,
       memory: null,
+      rows: null,
+      columns: null,
+      length: null,
+      n: null,
+      error: null,
     };
     end(
       run,

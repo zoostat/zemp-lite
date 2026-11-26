@@ -22,6 +22,11 @@ const info = (line: number, stdout: string): StatementInfo => ({
   stderr: "",
   frame: null,
   memory: null,
+  rows: null,
+  columns: null,
+  length: null,
+  n: null,
+  error: null,
 });
 
 /** A run of `text` in which the statements on `lines` ran, each printing its line's text. */

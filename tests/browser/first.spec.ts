@@ -121,9 +121,12 @@ test("each statement of the returns to schooling has its note beside it once it 
     [5, /^wages\s*Frame · [\d,]+ × 13/],
     [10, /^summary\s*Table · by female\s*W0201/],
     [11, /^shape\s*Plot/],
-    [14, /^m1\s*RegFit/],
-    [15, /^m2\s*RegFit/],
-    [17, /^m3\s*RegFit/],
+    // A fit with the observations it used, as the engine's own facts of it give them
+    // (release 0.3, step 6a; Zemp Specification, section 5: `m3 RegFit · N 15,366`).
+    // (A note that has something to unfold ends with its mark, ›.)
+    [14, /^m1\s*RegFit · N [\d,]+\s*›?$/],
+    [15, /^m2\s*RegFit · N [\d,]+\s*›?$/],
+    [17, /^m3\s*RegFit · N 15,366\s*›?$/],
     // A statement that binds no name is noted by what the engine printed: the models' columns.
     [19, /\(1\)\s+\(2\)\s+\(3\)\s*Table/],
     [22, /^y2019\s*Frame · [\d,]+ × 13/],

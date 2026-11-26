@@ -34,6 +34,21 @@ export interface StatementInfo extends Ranged {
   stderr: string;
   frame: { rows: number; variables: number } | null;
   memory: { own: number; kept: number } | null;
+  /**
+   * The dimensions of what the statement made, as the engine's own facts of its result give
+   * them (open decision #175, C5; from Zeff 0.9.0), each `null` where the result has none: the
+   * rows and the columns of a frame or of a table; the length of a column or of a list; the
+   * observations a fit or a test used.
+   */
+  rows: number | null;
+  columns: number | null;
+  length: number | null;
+  n: number | null;
+  /**
+   * Where the statement stopped the run: the engine's own record of the error, with its code,
+   * its message, its place, its advice and its chain of calls as fields (C22).
+   */
+  error: Record<string, unknown> | null;
 }
 
 /** The engine's check of a text, as `zeff check` makes it. */

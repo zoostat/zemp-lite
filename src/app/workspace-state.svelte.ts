@@ -1066,7 +1066,8 @@ export class Workspace {
   ): Promise<void> {
     // Where the time before the run goes is noted for the measures taken at the address (the
     // browser's own user timings, which cost nothing and are read by no one else): waiting
-    // for the engine to end what it was doing, the engine's check, and what the statement needs.
+    // for the engine to end what it was doing, for the browser's storage to take what waits
+    // to be written, the engine's check, and what the statement needs.
     const noted = (what: string, from: number) =>
       performance.measure(`zemp one statement: ${what}`, { start: from, end: performance.now() });
     const asked = performance.now();
@@ -1077,7 +1078,10 @@ export class Workspace {
     const text = this.buffers[script]?.text ?? "";
     this.running = true;
     try {
+      // What waits to be written to the browser's storage is written first.
+      const saving = performance.now();
       await this.#saving;
+      noted("stored", saving);
       const checking = performance.now();
       const checked = await this.session.check(script, text);
       noted("checked", checking);

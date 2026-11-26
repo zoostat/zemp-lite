@@ -14,6 +14,11 @@ const info = (line: number, more: Partial<StatementInfo>): StatementInfo => ({
   stderr: "",
   frame: null,
   memory: null,
+  rows: null,
+  columns: null,
+  length: null,
+  n: null,
+  error: null,
   ...more,
 });
 
@@ -105,7 +110,8 @@ describe("a note", () => {
       outcome([
         info(1, { type: "RegFit", stdout: "reg · log(wage) ~ educ\n\n  term  estimate\n" }),
         info(2, { type: "Float", stdout: "2.5\n" }),
-        info(3, { type: "Nothing" }),
+        // A statement that gives nothing has no type: the engine names the type of a result.
+        info(3, { type: null }),
       ]),
       3,
     );
@@ -114,6 +120,44 @@ describe("a note", () => {
       ["reg", "RegFit · log(wage) ~ educ"],
       ["2.5", "Float"],
       ["", ""],
+    ]);
+  });
+
+  it("writes beside a name the type and the dimensions the engine gives for what it binds", () => {
+    // Zemp Specification, section 5: `wages Frame · 15,571 × 13`, `m3 RegFit · N 15,366`.
+    // The dimensions are the engine's own facts of each result (open decision #175, C5).
+    const run = begin("s.zeff", "a\nb\nc\nd\ne\nf\n", 0, "9:42");
+    hear(run, { type: "ranges", statements: ranges(1, 2, 3, 4, 5, 6) }, 0);
+    for (const line of [1, 2, 3, 4, 5, 6]) {
+      hear(run, { type: "started", statement: line, of: 6, line }, 1);
+      hear(run, { type: "finished", statement: line, of: 6, line, failed: false }, 2);
+    }
+    end(
+      run,
+      outcome([
+        info(1, {
+          name: "wages",
+          type: "Frame",
+          frame: { rows: 15571, variables: 13 },
+          rows: 15571,
+          columns: 13,
+        }),
+        info(2, { name: "m3", type: "RegFit", n: 15366 }),
+        info(3, { name: "roc", type: "TestResult", n: 18390 }),
+        info(4, { name: "by_year", type: "Table", rows: 8, columns: 1200 }),
+        // A column has a length, which the specification's notes do not write.
+        info(5, { name: "ages", type: "Column", length: 15571 }),
+        info(6, { name: "share", type: "Float" }),
+      ]),
+      3,
+    );
+    expect(notesOf(run).map((note) => `${note.main} ${note.sub}`)).toEqual([
+      "wages Frame · 15,571 × 13",
+      "m3 RegFit · N 15,366",
+      "roc TestResult · N 18,390",
+      "by_year Table · 8 × 1,200",
+      "ages Column",
+      "share Float",
     ]);
   });
 

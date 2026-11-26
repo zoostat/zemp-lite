@@ -52,8 +52,11 @@ fn a_run_tells_each_event_as_a_line_of_json_and_gives_its_outcome() {
         done,
         concat!(
             r#"{"type": "done", "exit_code": 0, "stdout": "one\n", "stderr": "", "statements": ["#,
-            r#"{"line": 1, "end": 1, "kind": "statement", "name": null, "type": "Nothing", "ran": true, "stdout": "one\n", "stderr": "", "frame": null, "memory": null}, "#,
-            r#"{"line": 2, "end": 2, "kind": "statement", "name": "a", "type": "Int", "ran": true, "stdout": "", "stderr": "", "frame": null, "memory": null}"#,
+            // A statement that gives nothing has no type: the engine names the type of a
+            // result, and `print` has none (until release 0.3 the worker wrote `Nothing` here,
+            // from the checked program).
+            r#"{"line": 1, "end": 1, "kind": "statement", "name": null, "type": null, "ran": true, "stdout": "one\n", "stderr": "", "frame": null, "memory": null, "rows": null, "columns": null, "length": null, "n": null, "error": null}, "#,
+            r#"{"line": 2, "end": 2, "kind": "statement", "name": "a", "type": "Int", "ran": true, "stdout": "", "stderr": "", "frame": null, "memory": null, "rows": null, "columns": null, "length": null, "n": null, "error": null}"#,
             r#"], "frames": [], "written": []}"#
         )
     );
@@ -411,6 +414,77 @@ fn each_statement_of_the_example_has_what_it_printed_what_it_made_and_its_size()
     assert_eq!(each[3]["frame"], Value::Null);
     assert_eq!(each[5]["type"], "Plot");
     assert!(each[3]["type"].as_str().unwrap().len() > 1, "{}", each[3]);
+    // The dimensions are the engine's own facts of each result (open decision #175, C5; Zeff
+    // 0.9.0): a frame's rows and columns, a table's, and the observations of a fit, which is
+    // the N its print gives.
+    assert_eq!(wages["rows"], 18412);
+    assert_eq!(wages["columns"], 11);
+    assert_eq!(wages["frame"]["variables"], 11);
+    assert_eq!(each[1]["rows"], 537);
+    assert_eq!(each[2]["rows"], 8);
+    assert_eq!(each[2]["columns"], 8);
+    assert_eq!(each[2]["n"], Value::Null);
+    assert_eq!(each[3]["type"], "RegFit");
+    assert_eq!(each[3]["n"], 18179);
+    assert_eq!(each[3]["rows"], Value::Null);
+    assert!(
+        each[4]["stdout"].as_str().unwrap().contains("N = 18,179"),
+        "{}",
+        each[4]["stdout"]
+    );
+    assert!(each.iter().all(|one| one["error"] == Value::Null));
+}
+
+#[test]
+fn a_statement_s_result_is_the_engines_own_fact_of_it_for_each_kind_of_result() {
+    // tests/scripts/binary.zeff: a frame, a fit bound and printed, a table, three results of
+    // tests, a plot, and a statement that stops the run.
+    let host = Host::new("demo");
+    let done = run_at(&host, &read("tests/scripts/binary.zeff"), 0);
+    let each = done["statements"].as_array().unwrap();
+    let facts: Vec<(Value, Value, Value)> = each
+        .iter()
+        .map(|one| (one["name"].clone(), one["type"].clone(), one["n"].clone()))
+        .collect();
+    let fact = |name: Option<&str>, ty: Option<&str>, n: Option<u64>| {
+        (
+            name.map_or(Value::Null, Value::from),
+            ty.map_or(Value::Null, Value::from),
+            n.map_or(Value::Null, Value::from),
+        )
+    };
+    assert_eq!(
+        facts,
+        [
+            fact(Some("wages"), Some("Frame"), None),
+            fact(Some("lg"), Some("GlmFit"), Some(18390)),
+            fact(None, Some("GlmFit"), Some(18390)),
+            fact(None, Some("Table"), None),
+            fact(None, Some("TestResult"), Some(18390)),
+            fact(None, Some("TestResult"), Some(18390)),
+            fact(Some("roc"), Some("TestResult"), Some(18390)),
+            fact(None, Some("Plot"), None),
+            fact(Some("apart"), Some("Frame"), None),
+            // The fit that fails gives no result, and the statement after it did not run.
+            fact(None, None, None),
+            fact(None, None, None),
+        ]
+    );
+    assert_eq!(each[3]["rows"], 4);
+    assert_eq!(each[3]["columns"], 6);
+    assert_eq!(each[8]["frame"]["rows"], 6);
+    // The statement that stopped the run carries the engine's record of the error, as fields.
+    let error = &each[9]["error"];
+    assert_eq!(error["code"], "Z0803");
+    assert_eq!(error["severity"], "error");
+    assert_eq!(
+        error["message"],
+        "glm: `dose` perfectly predicts `cured` (separation)"
+    );
+    assert_eq!(error["span"]["line"], 10);
+    assert_eq!(each[9]["ran"], true);
+    assert_eq!(each[10]["ran"], false);
+    assert_eq!(each[10]["error"], Value::Null);
 }
 
 #[test]

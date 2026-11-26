@@ -55,12 +55,11 @@ test("a binary model runs as any other: each statement with its note and its pri
   await wholeScript(page);
   // The notes: the name each statement binds and the type the engine names; a statement that
   // prints is named by the first line of its print.
-  await expect(note(page, 2)).toContainText("lg");
-  await expect(note(page, 2)).toContainText("GlmFit");
+  await expect(note(page, 2)).toHaveText(/^lg\s*GlmFit · N 18,390\s*›?$/);
   await expect(note(page, 3)).toContainText("glm");
   await expect(note(page, 3)).toContainText("union ~ educ + exper + female");
   await expect(note(page, 5)).toContainText("margins");
-  await expect(note(page, 7)).toContainText("roc");
+  await expect(note(page, 7)).toHaveText(/^roc\s*TestResult · N 18,390\s*›?$/);
   // The odds ratios, the marginal effect and the classification table, as the engine prints them.
   await expect(block(page, 4)).toContainText("odds ratio");
   await expect(block(page, 4)).toContainText("exp of the coefficients");

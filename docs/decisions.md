@@ -2891,3 +2891,34 @@ A paper is held between settings, so a second setting reuses what the first work
 **The pictures.** All thirteen are made again from the running app: they show Zeff 0.9.0, its 266 functions, 11 packages and 148 codes, and the package `glm` on Help's Home; the picture of the search shows three functions for `lm` where it showed two. Its description in the page **Finding help** says so now: one sentence changed, "a list of three functions, reg, anova and posthoc", for the owner to read with the others.
 
 **Reason.** The row of 0.3: the preview gains the release's methods through the engine. What the app adds is the proof that it shows them truly.
+
+## 27 November 2026: Step 6 split in four; a statement's result as the engine gives it (release 0.3, step 6a; #175, C5)
+
+**The split.** Step 6 of the checklist ("what the editor asked of the engine, taken from the engine") covered four stand-ins that share nothing but their reason: each statement's facts, a print made again at another width, a script's sections, an error's chain of calls. They are steps 6a to 6d, each a commit of its own.
+
+**What the worker did until now (6a).** After each run it checked the script again and read, from the checked program, the name each `let` binds and the type the check gives it; and it matched the frames the run kept to the statements that bound them by their order. A fit's or a test's observations it could not say.
+
+**What it does now.** It takes the engine's own facts of each statement (`zeff_engine::statements::statement_facts`, new in Zeff 0.9.0 for this purpose, C5), exactly as the engine's own host for the browser takes them: the name a statement binds; the type of what it made, as `type_of` names it; the rows and columns of a frame or a table; the length of a column or a list; the observations a fit or a test used; and, where the statement stopped the run, the engine's record of the error with its chain as fields (which step 6d reads). The worker's own reading of the checked program (`made`) is removed. The outcome of a run gains `rows`, `columns`, `length`, `n` and `error` for each statement, and keeps every field it had.
+
+**What changes on the screen.**
+
+1. _The note of a fit or a test bound to a name carries its N_: `m3 RegFit · N 15,366`, as section 5 of the Zemp Specification writes a note, which the app could not until the engine gave the number. A table bound to a name carries its rows and columns, as a frame does. (The record of the plan said no screen would change by these steps but one limit lifted: that was wrong for this one, and the specification is the authority.)
+2. _A statement that gives nothing has no type._ The worker wrote `Nothing` for `print(...)`, from the check; the engine names the type of a result, and such a statement has none. No note showed the word, so nothing is seen of it.
+3. _A statement that did not run has no type beside its name._ The type was the check's forecast; the engine's facts are of what ran. Its note says "not run", as before.
+4. _The type is the type of the value made_, not the check's forecast of it. They agree wherever both exist; a value an `attempt` kept as a failure is named as what it is.
+
+**Not shown.** The length of a column or a list bound to a name: the specification's notes show a frame's size and a fit's N and no other, so the length is carried and not written. It is the owner's to add.
+
+**The words.** One sentence of **The notes** (Using Zemp Lite) now says that a fit or a test carries the observations it used, with the example `m3 RegFit · N 15,366`, held to the screen by a scene of its own (a run with its outputs folded, where the whole script's notes are on the page). The pictures that show notes are made again.
+
+**Tests.** Rust (the facts of the example's nine statements: a frame's rows and columns, a table's, a fit's N, which is the N its print gives; of the script of binary models: a `GlmFit` and three results of tests with N 18,390, a table of 4 by 6, the statement that stops the run with the engine's record of the error, code Z0803, and the statement after it not run). Unit (a note for a frame, a fit, a test, a table, a column and a number; the test that every word of a note is one the engine returned now also holds a fit's N to the engine's number). Browser, both engines (the Scratch project's notes with `m3 RegFit · N 15,366`; the binary script's `lg GlmFit · N 18,390`).
+
+**Reason.** Open decision #175, C5: the app says beside a statement what the engine says of its result, and counts nothing itself.
+
+## 27 November 2026: Step 4 tried at the host, and the measure read again
+
+**The trial of step 4** (commit 21eb677). GitHub's check is green in both browsers. The build was sent to the trial address, where the check of the host found nothing lacking: 45 answers with the isolation headers, 19 files, 19 answered "not modified" when asked again, **the three addresses under `assets/` that hold no file answered as no file and not to be kept**, and the engine sent packed as the build packed it (3,069,496 bytes of 15,871,958); and all 16 checks in the two browsers passed. It was then sent to the address, where the same held at `zemp-lite.pages.dev` and at `lite.zeff-lang.dev`. The risk R13 is closed for every built file at the address. First start with the function over every built file: 0.93 s and 2.03 s at the trial address, 1.68 s and 1.91 s at the address (Chromium, WebKit): within what the same machines showed before it (0.59 to 1.70 s and 1.20 to 2.25 s on this engine), so the function costs nothing that can be seen in the start.
+
+**The wait before a one-statement run, a third reading.** Seen again once, in Chromium at the trial address: 3.03 s before the run began; the engine's check and what the statement needs took 12 ms of it; the browser's long tasks in that time add to 0.29 s (102, 58, 82 and 52 ms), so the page was not busy either; pressed again, 37 ms. At the address, 48 ms and 18 ms. So the app is waiting, not working. Between the key and the engine's check it waits for two things: the engine to end what it was doing (measured, 0 ms) and the browser's storage to take what waits to be written (not measured until now). The app now notes that wait too. If it is the storage, it is the test machine's disk under a file being written, and what a reader would see of it is a first statement that starts late once after a run; the next deployment says.
+
+**Reason.** The checklist's "done when" of step 4: the checks pass at the trial address and at both addresses.

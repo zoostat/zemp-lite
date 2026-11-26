@@ -45,12 +45,17 @@ const one = {
   end: 1,
   kind: "statement",
   name: null,
-  type: "Nothing",
+  type: null,
   ran: true,
   stdout: "one\n",
   stderr: "",
   frame: null,
   memory: null,
+  rows: null,
+  columns: null,
+  length: null,
+  n: null,
+  error: null,
 };
 
 /** An engine, and the stand-ins it has started, the newest last. */

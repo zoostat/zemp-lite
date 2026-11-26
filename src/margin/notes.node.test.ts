@@ -74,6 +74,9 @@ describe("the notes of the example", () => {
     expect(at(8).sub).toBe("Table · by female");
     expect(at(8).tags).toEqual([{ text: "W0201", kind: "warning" }]);
     expect(at(12).main).toBe("fit");
+    // The observations the fit used, which is the N its print gives (line 13 prints it).
+    expect(at(12).sub).toBe("RegFit · N 18,179");
+    expect(run.info.find((one) => one.line === 13)?.stdout).toContain("N = 18,179");
     expect(at(17).place).toBe("plots");
     expect(at(17).main).toBe("plot");
     // A `let` that printed and said nothing has nothing to unfold; one the engine said a
@@ -94,7 +97,13 @@ describe("the notes of the example", () => {
       ]) {
         if (word === "") continue;
         // A frame's size is written as the engine writes a count, with its thousands set apart.
-        const parts = word.split(" × ").map((part) => part.replaceAll(",", ""));
+        // The observations of a fit are the engine's number under the letter the engine's own
+        // print gives them, `N` (Zemp Specification, section 5: `m3 RegFit · N 15,366`): the
+        // one letter of a note that is not the engine's own word here.
+        const parts = word
+          .replace(/^N (?=[\d,]+$)/, "")
+          .split(" × ")
+          .map((part) => part.replaceAll(",", ""));
         for (const part of parts) {
           expect(returned.includes(part) || returned.includes(word), `${note.line}: ${word}`).toBe(
             true,
