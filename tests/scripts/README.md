@@ -65,3 +65,10 @@ engine refuses because one variable separates the outcomes (Z0803), after which 
 `binary.stdout` and `binary.stderr` are what the released `zeff run` of 0.9.0 printed and said for it
 (it ends with exit code 1), and `check/binary.stderr` what `zeff check` said. The browser tests hold
 what the page shows for it to these files (release 0.3, step 5).
+
+`code-examples.txt` lists every explained code of the engine with whether its example, run as it stands in
+the session of the examples of Help, prints what its page says (`as its page says`) or not (`otherwise`).
+An explained code's example is an illustration the engine does not hold to itself, so the app does not run
+it as its page opens (release 0.3, steps 9 and 10). The file is written by the test that holds it
+(`src/help/examples.node.test.ts`), with `ZEMP_KEEP_CODE_EXAMPLES=1 npx vitest run src/help/examples.node.test.ts`
+after `npm run build:worker`, at a new engine, and read in the change it makes.

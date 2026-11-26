@@ -147,6 +147,8 @@ test("links go from one page to another and to the engine's pages, each into the
     "↵",
     "↵",
     "F1",
+    // From 0.3 the section on running an example names the keys that run one.
+    "⌘↵",
     // The section on a name with two functions names the key once more.
     "F1",
     "⌘[",

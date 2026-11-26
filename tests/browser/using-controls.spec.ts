@@ -178,6 +178,12 @@ const SCREENS: Record<
     await press(places(page).getByRole("button", { name: "Help" }));
     await expect(page.getByTestId("help-counts")).toBeVisible();
     await see();
+    // A function's page, for what stands under its examples.
+    await page.getByRole("combobox", { name: /^Search Help/ }).fill("mean");
+    await page.keyboard.press("Enter");
+    await expect(page.getByTestId("help-title")).toHaveText("mean");
+    await expect(page.getByTestId("example").first()).toBeVisible();
+    await see();
   },
 };
 

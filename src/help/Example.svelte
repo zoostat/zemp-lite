@@ -34,7 +34,11 @@
   const said = $derived(statusOf(item.held, page.seconds));
   // An illustration is not run as its page opens, and says so until it is run or changed.
   const status = $derived(
-    said === "" && page.illustrated && item.held.phase === "kept" ? ILLUSTRATION : said,
+    item.note !== ""
+      ? item.note
+      : said === "" && page.illustrated && item.held.phase === "kept"
+        ? ILLUSTRATION
+        : said,
   );
   const going = $derived(busy(item.held));
 
@@ -86,6 +90,11 @@
         title="Put back the statements of the page, and run them"
         disabled={going || !changed(item.held)}
         onclick={() => void page.reset(item)}>Reset</button
+      >
+      <button
+        class="copy"
+        title="Put these statements into the open script, at the cursor"
+        onclick={() => void page.copy(item)}>Copy to script</button
       >
       <!-- Not the app's one status line, which says how the reader's own run stands. -->
       <span class="status" role="note" aria-live="polite" data-testid="example-status"

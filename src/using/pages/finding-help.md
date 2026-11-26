@@ -25,6 +25,16 @@ Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From t
 
 Rest the pointer on a function's name in the script, and its usage is shown: the function's name with its arguments. Put the cursor on the name and press <kbd>F1</kbd>: Help opens at its page. When a run gives a warning or an error, press **Explain** beside it for the page of its code.
 
+## Running an example
+
+Every example on a function's page can be run where it stands. The engine in your browser runs a page's examples as the page opens, so what stands under each, and any plot, is what your engine gives. Change the statements, then press **Run**, or <kbd>⌘↵</kbd> in them, to see what the change does; **Reset** puts the page's own statements back. The code of a warning or an error under an example opens its page.
+
+An example runs in a session of its own. It sees the datasets that come with Zeff and nothing of your project, and it changes nothing there: your script, its results and your files stay as they are. An example is run together with those above it on its page, because a later one often uses what an earlier one made.
+
+**Copy to script** puts an example's statements, as they stand, into your open script at the cursor, and shows the script. Undo takes them out again.
+
+On the page of an error or a warning the example is an illustration of the message. It is not run until you press **Run**, and it may name a frame that the page does not make.
+
 ## A name with two functions
 
 A few names are two functions: `histogram` draws a variable of a frame in one call, and it is also a layer added to a plot. Each has a page of its own, and the title says which by what the function is called on: histogram · of a frame, histogram · of a plot. The search, the **Topics** pane and a package's page list the two apart. The name alone, typed in the field or met as a link, opens a short page with both, each with its usage and its one line, to choose from. <kbd>F1</kbd> in the script opens the one your call runs.

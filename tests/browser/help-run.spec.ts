@@ -4,7 +4,16 @@
 // example run as its page opens, in a session of its own that holds nothing of the reader's
 // project and leaves the reader's results as they were.
 import type { Locator, Page } from "@playwright/test";
-import { countAsked, expect, printed, test, useExample } from "./support";
+import {
+  countAsked,
+  editor,
+  expect,
+  printed,
+  scriptText,
+  test,
+  useExample,
+  write,
+} from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const shown = (page: Page) => page.getByTestId("help-page");
@@ -300,6 +309,7 @@ test("an example is reached and run through the keyboard, and its words are no s
   await expect(field(first)).toHaveValue("let wages = dataset(wages)\nwages.mean(wage)");
   // Run and Reset are buttons, pressed by the keys that press a button.
   await field(first).fill("let wages = dataset(wages)\nwages.mean(educ)");
+  await expect(status(first)).toHaveText("edited · not run");
   await run(first).press("Enter");
   await expect(output(first)).toHaveText("13.4914");
   await reset(first).press("Space");
@@ -316,4 +326,69 @@ test("an example is reached and run through the keyboard, and its words are no s
     ),
   );
   expect(Math.min(...sizes)).toBeGreaterThanOrEqual(12.5);
+});
+
+test("Copy to script puts an example's statements, as they stand, into the open script at the cursor, and undo takes them out", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await write(page, "let a = 6\n\nprint(a)\n");
+  // The cursor on the blank second line of the script.
+  await editor(page).locator(".cm-line").nth(1).click();
+  await press(places(page).getByRole("button", { name: "Help" }));
+  await page.getByRole("combobox", { name: /^Search Help/ }).fill("mean");
+  await page.keyboard.press("Enter");
+  await expect(title(page)).toHaveText("mean");
+  await allRan(page);
+  // The first example as the page has it: its statements, without its comment or its output.
+  const first = listed(page).first();
+  await press(first.getByRole("button", { name: "Copy to script" }));
+  // The script is shown, with the statements where the cursor was.
+  await expect(places(page).getByRole("button", { name: "Script" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect
+    .poll(() => scriptText(page))
+    .toBe("let a = 6\nlet wages = dataset(wages)\nwages.mean(wage)\nprint(a)\n");
+  // Undo in the script takes them out, as one edit.
+  await editor(page).press("ControlOrMeta+z");
+  await expect.poll(() => scriptText(page)).toBe("let a = 6\n\nprint(a)\n");
+  // An example changed in the page is copied as it stands; on a line that holds a statement it
+  // goes on lines of its own after it.
+  await editor(page).locator(".cm-line").nth(2).click();
+  await press(places(page).getByRole("button", { name: "Help" }));
+  await expect(title(page)).toHaveText("mean");
+  const second = listed(page).nth(1);
+  await field(second).fill("wages.mean(hours, by: female)");
+  await press(second.getByRole("button", { name: "Copy to script" }));
+  await expect
+    .poll(() => scriptText(page))
+    .toBe("let a = 6\n\nprint(a)\nwages.mean(hours, by: female)\n");
+});
+
+test("Copy to script from a page opened by its address puts the statements at the end of the script, where the cursor has not been", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/#/help/name/mean");
+  await expect(title(page)).toHaveText("mean");
+  await allRan(page);
+  await press(listed(page).first().getByRole("button", { name: "Copy to script" }));
+  await expect(places(page).getByRole("button", { name: "Script" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  const statements = "let wages = dataset(wages)\nwages.mean(wage)";
+  await expect.poll(() => scriptText(page)).toContain(statements);
+  const copied = await scriptText(page);
+  await editor(page).press("ControlOrMeta+z");
+  await expect.poll(() => scriptText(page)).not.toContain(statements);
+  const before = await scriptText(page);
+  // After everything the script held: on its last line where that is empty.
+  expect(copied.startsWith(before.replace(/\n$/, ""))).toBe(true);
+  expect(copied.trimEnd().endsWith(statements)).toBe(true);
 });

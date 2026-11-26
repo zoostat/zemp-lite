@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ExampleOutcome, StatementInfo } from "../engine/messages";
 import {
   answered,
+  apartFrom,
   asPages,
   busy,
   changed,
@@ -189,15 +190,31 @@ describe("what the engine gave for an example", () => {
     ]);
   });
 
-  it("shows a diagnostic as the engine's pages do: without its source excerpt, its help two spaces in", () => {
-    const said =
-      "error[Z0401]: `var` of `mean` takes a variable of the frame, not an expression\n" +
-      " --> examples.zeff:12:22\n" +
-      "   |\n" +
-      "12 | dataset(wages).mean(log(wage))\n" +
-      "   |                     ^^^^^^^^^ this is an expression\n" +
-      "   |\n" +
-      "   = help: compute it first";
+  it("shows the diagnostic of a call that stands apart as the engine's pages do: without its source excerpt, its help two spaces in", () => {
+    const said = [
+      "error[Z0401]: `var` of `mean` takes a variable of the frame, not an expression",
+      " --> examples.zeff:12:22",
+      "   |",
+      "12 | dataset(wages).mean(log(wage))",
+      "   |                     ^^^^^^^^^ this is an expression",
+      "   |",
+      "   = help: compute it first",
+    ];
+    // One of the page's EXAMPLES shows it as the engine prints it, excerpt and all.
+    const whole = outcome([statement(1, "", `${said.join("\n")}\n`, { error: {} })], {
+      exitCode: 1,
+    });
+    const given = givenBy(whole, composed(["a"]).ranges)[0]!;
+    expect(given.parts).toEqual([{ kind: "text", lines: said }]);
+    expect(apartFrom(given).parts).toEqual([
+      {
+        kind: "text",
+        lines: [
+          "error[Z0401]: `var` of `mean` takes a variable of the frame, not an expression",
+          "  = help: compute it first",
+        ],
+      },
+    ]);
     expect(asPages(said)).toEqual([
       "error[Z0401]: `var` of `mean` takes a variable of the frame, not an expression",
       "  = help: compute it first",
@@ -220,7 +237,12 @@ describe("what the engine gave for an example", () => {
     const given = givenBy(refused, ranges, 0);
     expect(given[0]).toEqual({ parts: [], ran: false, failed: false });
     expect(given[1]).toEqual({
-      parts: [{ kind: "text", lines: ["error[Z0103]: no function is called `nosuch`"] }],
+      parts: [
+        {
+          kind: "text",
+          lines: ["error[Z0103]: no function is called `nosuch`", " --> examples.zeff:2:1"],
+        },
+      ],
       ran: false,
       failed: true,
     });

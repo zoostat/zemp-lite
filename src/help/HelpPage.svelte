@@ -11,7 +11,7 @@
   import Code from "../editor/Code.svelte";
   import Example from "./Example.svelte";
   import { pieces, suggested, type Block, type ExampleLine, type HelpDoc } from "./read";
-  import { PageRuns, type ExampleRuns } from "./runs.svelte";
+  import { PageRuns, exampleBlocks, examplesKey, type ExampleRuns } from "./runs.svelte";
 
   let {
     doc,
@@ -50,7 +50,15 @@
   const BREAK = "\n";
 
   // The page's examples, held while this page is shown: run as it opens, dropped as it is left.
-  const held = $derived(runs === undefined ? null : new PageRuns(doc, runs, illustrated));
+  // They are kept for as long as the page's examples are the same lines: a page read again
+  // to the same text (the engine's index arrived after it) keeps them as the reader has them.
+  const key = $derived(examplesKey(doc));
+  const held = $derived.by(() => {
+    void key;
+    return untrack(() => (runs === undefined ? null : new PageRuns(doc, runs, illustrated)));
+  });
+  /** The blocks of examples of the page as it is now read, by which each finds its examples. */
+  const ordered = $derived(exampleBlocks(doc));
   let article = $state<HTMLElement | null>(null);
   /**
    * The width a figure of an example is laid out at: the page's, less the example's own edges
@@ -186,7 +194,7 @@
       {@render names(block.names)}
     {:else if block.kind === "example"}
       {#if held !== null}
-        {#each held.of(block) as item, index (index)}
+        {#each held.of(ordered.indexOf(block)) as item, index (index)}
           <Example {item} page={held} {oncode} />
         {/each}
       {:else}

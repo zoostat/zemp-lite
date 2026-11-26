@@ -6,6 +6,7 @@
 import type { ExampleOutcome } from "../engine/messages";
 import {
   answered,
+  apartFrom,
   composed,
   examplesOf,
   fresh,
@@ -43,6 +44,11 @@ export interface ExampleRuns {
   run(owner: string, text: string, width: number, began?: () => void): Promise<Ran | null>;
   /** Drop what an owner has asked for and not yet had. */
   drop(owner: string): void;
+  /**
+   * Put statements into the open script at the cursor, the script shown. `false` where no
+   * script is open.
+   */
+  copy(text: string): Promise<boolean>;
   /** The seconds an example may run. */
   readonly seconds: number;
 }
@@ -58,6 +64,8 @@ export class Item {
   held: Held;
   /** Its figures, by the place of each plot among its pieces. */
   figures = $state<Record<number, Drawn>>({});
+  /** What the app says of it beside its buttons until the next thing is done with it. */
+  note = $state("");
 
   constructor(example: PageExample, chained: boolean) {
     this.example = example;
@@ -71,14 +79,17 @@ export class Item {
   }
 }
 
+/** What an example says where **Copy to script** finds no script open. */
+export const NO_SCRIPT = "no script is open: open one in the Script place, then copy again";
+
 let pages = 0;
 
 export class PageRuns {
   readonly #runs: ExampleRuns;
   /** The name this page's examples are asked under, by which they are dropped together. */
   readonly owner: string;
-  /** The examples of each block of the page, by the block. */
-  readonly #byBlock: { block: Block; items: Item[] }[] = [];
+  /** The examples of each block of examples of the page, the blocks in the page's order. */
+  readonly #byBlock: Item[][] = [];
   /** The page's EXAMPLES, in order, and the examples that stand elsewhere on it. */
   readonly chain: Item[] = [];
   readonly apart: Item[] = [];
@@ -103,7 +114,7 @@ export class PageRuns {
         for (const block of section.blocks) {
           if (block.kind !== "example") continue;
           const items = examplesOf(block.lines).map((example) => new Item(example, chained));
-          this.#byBlock.push({ block, items });
+          this.#byBlock.push(items);
           for (const item of items) {
             if (!item.runnable) continue;
             (chained ? this.chain : this.apart).push(item);
@@ -117,9 +128,9 @@ export class PageRuns {
     return this.#runs.seconds;
   }
 
-  /** The examples of a block of the page. */
-  of(block: Block): Item[] {
-    return this.#byBlock.find((one) => one.block === block)?.items ?? [];
+  /** The examples of a block of examples of the page, by its place among them (`exampleBlocks`). */
+  of(place: number): Item[] {
+    return this.#byBlock[place] ?? [];
   }
 
   /** Every example of the page that can be run. */
@@ -146,6 +157,15 @@ export class PageRuns {
     this.#runs.drop(this.owner);
   }
 
+  /**
+   * Copy to script: the statements of an example, as they stand in the page, go into the open
+   * script at the cursor, and the script is shown. Where no script is open the example says so.
+   */
+  async copy(item: Item): Promise<void> {
+    item.note = "";
+    if (!(await this.#runs.copy(statementsOf(item)))) item.note = NO_SCRIPT;
+  }
+
   /** The statements of an example are put back as the page has them, and run. */
   async reset(item: Item): Promise<void> {
     item.held = { ...item.held, text: item.held.own };
@@ -157,6 +177,7 @@ export class PageRuns {
    * shown afresh with it; one that stands apart after all of them, alone shown afresh.
    */
   async run(item: Item): Promise<void> {
+    item.note = "";
     await this.#run(item, (one) => one.held.text);
   }
 
@@ -213,8 +234,11 @@ export class PageRuns {
     const given = givenBy(back.outcome, script.ranges, ran.length - 1);
     for (const one of shown) {
       const index = ran.indexOf(one);
-      const mine = given[index];
-      if (mine === undefined) continue;
+      const raw = given[index];
+      if (raw === undefined) continue;
+      // A call that stands apart from the page's EXAMPLES is shown as the engine's pages
+      // show it, without the excerpt of a script the page does not show.
+      const mine = one.chained ? raw : apartFrom(raw);
       one.held = answered(one.held, texts[index] ?? "", mine, back.outcome, ms);
       // An example the run never reached keeps its figures with what it showed.
       if (one.held.phase === "unreached" || (one.held.phase === "slow" && !mine.ran)) continue;
@@ -226,6 +250,31 @@ export class PageRuns {
       one.figures = figures;
     }
   }
+}
+
+/** The blocks of examples of a page, in the page's order. */
+export function exampleBlocks(doc: HelpDoc): Block[] {
+  return doc.entries.flatMap((entry) =>
+    entry.sections.flatMap((section) => section.blocks.filter((block) => block.kind === "example")),
+  );
+}
+
+/**
+ * What tells a page's examples apart from another's: every line of them. A page read again
+ * to the same lines (the engine's index arrived after it) is the same page, and keeps its
+ * examples as the reader has them.
+ */
+export function examplesKey(doc: HelpDoc): string {
+  return JSON.stringify(
+    doc.entries.map((entry) => [
+      entry.name,
+      entry.sections.flatMap((section) =>
+        section.blocks.flatMap((block) =>
+          block.kind === "example" ? [[section.heading, block.lines]] : [],
+        ),
+      ),
+    ]),
+  );
 }
 
 /** The statements of an example as a reader copies or runs them: its lines, as they stand. */

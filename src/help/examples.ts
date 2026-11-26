@@ -86,15 +86,25 @@ export function isExcerpt(line: string): boolean {
 }
 
 /**
- * What the engine said, as its pages show a diagnostic: without the source excerpt, which
- * names the examples' script and a line of it and not the page; a `= help:` line two spaces
- * in, wherever the statement stood (`help_line`).
+ * Lines the engine said, as its pages show the wrong call of a common mistake: without the
+ * source excerpt, which depends on where the call stands in the examples' script; a `= help:`
+ * line two spaces in, wherever that is (`help_line`). The examples of a page's EXAMPLES are
+ * shown as the engine prints them, excerpt and all: so the engine holds them.
  */
-export function asPages(said: string): string[] {
-  return said
-    .split("\n")
+export function asPages(lines: string[]): string[] {
+  return lines
     .filter((line) => !isExcerpt(line))
     .map((line) => (line.trimStart().startsWith("= ") ? `  ${line.trimStart()}` : line));
+}
+
+/** What a run gave for an example that stands apart from the page's EXAMPLES (`asPages`). */
+export function apartFrom(given: Given): Given {
+  return {
+    ...given,
+    parts: given.parts.map((part) =>
+      part.kind === "text" ? { kind: "text", lines: asPages(part.lines) } : part,
+    ),
+  };
 }
 
 /** The lines of a text, a last line break being no line. */
@@ -135,10 +145,7 @@ export function givenBy(
       ran ||= statement.ran;
       failed ||= statement.error !== null && statement.error !== undefined;
       // What it printed, then what the engine said of it, as the engine's pages order them.
-      const text = [
-        ...lined(statement.stdout),
-        ...(statement.stderr === "" ? [] : asPages(statement.stderr.replace(/\n$/, ""))),
-      ];
+      const text = [...lined(statement.stdout), ...lined(statement.stderr)];
       const last = parts.at(-1);
       if (text.length > 0) {
         if (last?.kind === "text") last.lines.push(...text);
@@ -156,7 +163,7 @@ export function givenBy(
     const pointed = ranges.findIndex((range) => at >= range.first && at <= range.last);
     const to = all[pointed >= 0 ? pointed : Math.min(Math.max(asked, 0), all.length - 1)];
     if (to !== undefined) {
-      to.parts.push({ kind: "text", lines: asPages(outcome.stderr.replace(/\n$/, "")) });
+      to.parts.push({ kind: "text", lines: lined(outcome.stderr) });
       to.failed = true;
     }
   }

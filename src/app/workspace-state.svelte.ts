@@ -194,6 +194,7 @@ export class Workspace {
       return outcome === null ? null : { outcome, figures, ms };
     },
     drop: (owner) => this.#examples.drop(owner),
+    copy: (text) => this.copyExample(text),
   };
   readonly session: Session;
 
@@ -764,6 +765,29 @@ export class Workspace {
     await this.open(path);
     this.#insertions += 1;
     this.inserting = { path, text: statement, count: this.#insertions };
+  }
+
+  /**
+   * Copy to script, under an example of Help (release 0.3, step 10): the example's statements
+   * put into the open script at the cursor, as one edit that undo takes back, and the script
+   * shown, as ⌘↵ on the console line does it. The cursor is where the reader left it in that
+   * script; in a script the cursor has not been in, the statements go at its end. `false`
+   * where no script is open: none is opened for it.
+   */
+  async copyExample(text: string): Promise<boolean> {
+    const statements = text.replace(/\n+$/, "");
+    const path = [this.activePath, ...this.views.tabs.map(tabPath)].find(
+      (one): one is string => one !== null && one.endsWith(".zeff"),
+    );
+    if (path === undefined || statements.trim() === "") return false;
+    const line = this.cursor?.path === path ? this.cursor.line : Number.MAX_SAFE_INTEGER;
+    await this.open(path);
+    // The editor of a place that was not shown opens with its cursor at the top: it is put
+    // back first, and the statements then go in there.
+    this.reveal = { path, line, count: (this.reveal?.count ?? 0) + 1, top: false };
+    this.#insertions += 1;
+    this.inserting = { path, text: statements, count: this.#insertions };
+    return true;
   }
 
   /** The editor put the statement in. */
