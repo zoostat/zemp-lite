@@ -1669,3 +1669,107 @@ fn a_run_s_prints_are_made_again_at_another_width_without_a_new_run() {
         serde_json::from_str(&fresh.printed_at("scripts/main.zeff", &text, 80)).unwrap();
     assert_eq!(none["statements"], Value::Null);
 }
+
+#[test]
+fn the_sections_of_a_script_are_the_engines_reading_of_its_headings() {
+    // Open decision #178, from Zeff 0.9.0. The cases are those the interface's own reader of
+    // comments was held to until release 0.3 (`src/editor/sections.test.ts`), and the engine
+    // answers each as that reader did, but for one, said below.
+    use zemp_worker::{Sectioned, sections};
+    let of = |text: &str| sections("scripts/main.zeff", text);
+    let section = |line: u32, level: u8, title: &str, end: u32| Sectioned {
+        line,
+        end,
+        level,
+        title: title.to_string(),
+    };
+    let script = [
+        "// Returns to schooling.",
+        "",
+        "// # Sample",
+        "let wages = dataset(wages)",
+        "    .where(year >= 2012)",
+        "",
+        "// # Models",
+        "// ## Pooled",
+        "let m1 = wages.reg(lwage ~ educ)",
+        "// ## Fixed effects",
+        "let m3 = wages.reg(lwage ~ educ, fe: year)",
+        "",
+        "// # Figure",
+        "let shape = wages.plot(x: lwage).histogram()",
+        "",
+    ]
+    .join("\n");
+    assert_eq!(
+        of(&script),
+        [
+            section(3, 1, "Sample", 6),
+            section(7, 1, "Models", 12),
+            section(8, 2, "Pooled", 9),
+            section(10, 2, "Fixed effects", 12),
+            section(13, 1, "Figure", 14),
+        ]
+    );
+    // None in a script without headings, and none in an empty one.
+    assert_eq!(of("// a comment\nprint(1)\n"), []);
+    assert_eq!(of(""), []);
+    // Whatever the spaces round its marks, and the title as written.
+    assert_eq!(
+        of("//# Data\n//  ##   Cleaning the wages  \n"),
+        [
+            section(1, 1, "Data", 2),
+            section(2, 2, "Cleaning the wages", 2)
+        ]
+    );
+    assert_eq!(
+        of("// # Models: pooled, then fixed effects (#2)\n"),
+        [section(1, 1, "Models: pooled, then fixed effects (#2)", 1)]
+    );
+    // What is not a heading: no title, no space after the mark, three marks, a comment after
+    // code, no comment at all, a line of help text, the mark at the end.
+    for line in [
+        "// #",
+        "// #Data",
+        "// ### Deeper",
+        "print(1) // # After code",
+        "# Data",
+        "/// # Data",
+        "// Data #",
+    ] {
+        assert_eq!(of(&format!("{line}\nprint(1)\n")), [], "{line}");
+    }
+    // A heading-like line inside a statement that runs over several lines is a comment.
+    assert_eq!(
+        of(
+            "// # Real\nlet fit = wages.reg(lwage ~ educ,\n// # Not a section\n    se: robust)\nprint(fit)"
+        ),
+        [section(1, 1, "Real", 5)]
+    );
+    // A subsection ends at the next heading of any level, and a section at the next section.
+    assert_eq!(
+        of("// ## Loose\nprint(1)\n// # A\n// ## B\nprint(2)\n// ## C\nprint(3)"),
+        [
+            section(1, 2, "Loose", 2),
+            section(3, 1, "A", 7),
+            section(4, 2, "B", 5),
+            section(6, 2, "C", 7),
+        ]
+    );
+    // The one case the reader answered otherwise: a heading set in from the margin, between
+    // two statements. The reader passed it over, taking any indent for the inside of a block;
+    // the engine knows where a statement begins and ends, and it stands between two.
+    assert_eq!(
+        of("  // # Indented\nprint(1)\n"),
+        [section(1, 1, "Indented", 2)]
+    );
+    // And as a line of JSON, with the statements of the same text.
+    let both: Value =
+        serde_json::from_str(&statements_json("scripts/main.zeff", "// # A\nprint(1)\n")).unwrap();
+    assert_eq!(both["type"], "statements");
+    assert_eq!(both["statements"].as_array().unwrap().len(), 1);
+    assert_eq!(
+        both["sections"],
+        serde_json::json!([{"line": 1, "end": 2, "level": 1, "title": "A"}])
+    );
+}

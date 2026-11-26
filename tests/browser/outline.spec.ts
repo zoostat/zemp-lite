@@ -166,7 +166,10 @@ test("the outline follows the script as it is typed, a subsection under its sect
       "let a = 1",
       "// ## Cleaning",
       "let b = a + 1",
-      "  // # Indented, so not a section",
+      // (A heading set in from the margin between two statements was passed over by the
+      // interface's own reader; the engine, which reads the sections from release 0.3,
+      // counts it, as the worker's tests hold. So another line that is no heading stands here.)
+      "// #No space after the mark, so not a section",
       "// ### Three marks, so not a section",
       "let c = max(a,",
       "// # Inside a call, so not a section",

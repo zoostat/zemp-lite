@@ -70,7 +70,7 @@ import {
   type PlaceName,
   type ViewState,
 } from "./views";
-import { sectionsOf, type Section } from "../editor/sections";
+import type { Section } from "../editor/sections";
 import { exportFolder, exportProject } from "../project/export";
 import { own, placeOf } from "../project/files";
 import { reminderOf, type Keeping } from "../project/keeping";
@@ -179,7 +179,7 @@ export class Workspace {
    * The statements of a script as it stands, as the engine reads them, read a moment after
    * each edit: what marks the results on the page against the script (`src/margin/stale.ts`).
    */
-  now = $state<{ path: string; text: string; ranges: Ranged[] } | null>(null);
+  now = $state<{ path: string; text: string; ranges: Ranged[]; sections: Section[] } | null>(null);
   /**
    * The page the Help place shows (#74, #203): a function's as `zeff help` prints it, or a
    * code's as `zeff explain` does, with the name it is known by; none until one is asked for.
@@ -566,18 +566,18 @@ export class Workspace {
   }
 
   /**
-   * The sections of the script shown, read from its comments (`src/editor/sections.ts`), with
-   * the engine's reading of its statements where that is of the text as it stands.
+   * The sections of the script shown, as the engine reads them (open decision #178; from Zeff
+   * 0.9.0, what its language server reports as the outline of a document). They are the
+   * engine's reading of the text, asked for with its statements a moment after the last key:
+   * for that moment the sections are those of the text as it was last read, so that the
+   * outline does not empty and fill again at every letter typed. Until release 0.3 the
+   * interface read the comments itself.
    */
   get sections(): Section[] {
     const path = this.activePath ?? this.scriptPath;
-    const text = this.buffers[path]?.text;
-    if (text === undefined || !path.endsWith(".zeff")) return [];
+    if (this.buffers[path]?.text === undefined || !path.endsWith(".zeff")) return [];
     const now = this.now;
-    return sectionsOf(
-      text,
-      now !== null && now.path === path && now.text === text ? now.ranges : [],
-    );
+    return now !== null && now.path === path ? now.sections : [];
   }
 
   /** Run a section: its statements, from its heading to its last line, with what they need. */
@@ -1031,8 +1031,8 @@ export class Workspace {
     try {
       // The window can be ready before the engine's worker is: it is waited for.
       await this.engine.start();
-      const ranges = await this.engine.statements(path, text);
-      if (this.buffers[path]?.text === text) this.now = { path, text, ranges };
+      const { ranges, sections } = await this.engine.reading(path, text);
+      if (this.buffers[path]?.text === text) this.now = { path, text, ranges, sections };
     } catch {
       // The engine is not there to ask: the marks wait for the next edit or run.
     }

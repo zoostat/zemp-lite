@@ -72,7 +72,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 6b `[engine]`.** Where the width of the place changes, the engine makes each statement's print again from what the run kept, and the script is not run again; **Copy as text** is made the same way. The app ran the whole script again for both until now. Where the engine does not hold the page's run (after a statement run alone, a console line, a worker started afresh) the script is run again as before. Green here: the whole routine in both browsers (421 unit tests, 677 browser tests, 3 skipped by design; 39 tests of the worker, 22 under Node; the engine 3,089.1 kB as it travels).
 
-**Next.** Step 6c `[engine]`: the sections of a script from the language server.
+**Done, step 6c `[engine]`.** The sections of a script are the engine's own reading, given by the worker with the statements of the same text; the Outline pane, **Run section** and the section under the cursor read them, and the interface's own reader of comments is removed. The engine answers every case the reader's tests held as the reader did, but one, rightly: a heading set in from the margin between two statements is a section. Green here: the whole routine in both browsers (415 unit tests, the reader's six now held in the worker's; 677 browser tests, 3 skipped by design; 40 tests of the worker, 22 under Node).
+
+**Next.** Step 6d `[engine]`: an error's chain of calls as the engine's fields.
 
 **For the owner to read, when he wishes (added).** In **Finding help**, the description of the picture of the search: "a list of three functions, reg, anova and posthoc". In **The notes**, the sentence that a fit or a test carries the observations it used, as `m3 RegFit · N 15,366`.
 

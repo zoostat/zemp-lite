@@ -18,6 +18,7 @@ import type {
   Ranged,
   Reply,
   Reprinted,
+  Sectioned,
   Request,
   RunEvent,
 } from "./messages";
@@ -258,6 +259,18 @@ export class Engine {
   /** The statements of a text as the engine reads them, without running it. */
   async statements(script: string, text: string): Promise<Ranged[]> {
     return expect(await this.#ask({ type: "statements", script, text }), "statements").statements;
+  }
+
+  /**
+   * The engine's reading of a text, without running it: its statements, and its sections
+   * (open decision #178), which are of the same text by the one question.
+   */
+  async reading(
+    script: string,
+    text: string,
+  ): Promise<{ ranges: Ranged[]; sections: Sectioned[] }> {
+    const read = expect(await this.#ask({ type: "statements", script, text }), "statements");
+    return { ranges: read.statements, sections: read.sections ?? [] };
   }
 
   /**

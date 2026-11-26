@@ -24,7 +24,7 @@ use zeff_engine::control::{Control, Event};
 use zeff_engine::dependencies::graph;
 use zeff_engine::fs::FileSystem;
 use zeff_engine::interpreter::{MemoryNote, Output};
-use zeff_engine::language::outline::statements_in;
+use zeff_engine::language::outline::{sections_of, statements_in};
 use zeff_engine::language::{Position, Range, offset, position};
 use zeff_engine::project::Project;
 use zeff_engine::run::{
@@ -148,11 +148,51 @@ fn ranges_json(script: &str, text: &str) -> String {
     format!("[{}]", listed.join(", "))
 }
 
-/// The statements of a text as a line of JSON of type `statements`.
+/// A section of a script (open decision #178): the line of its heading and its last line,
+/// counted from 1, its level (1 for `// # Title`, 2 for `// ## Title`) and its title.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Sectioned {
+    pub line: u32,
+    pub end: u32,
+    pub level: u8,
+    pub title: String,
+}
+
+/// The sections of a text, in the order written, as the engine reads them (`sections_of`,
+/// from Zeff 0.9.0: what its language server reports as the outline of a document). A
+/// heading counts where it stands between the statements of the script. Until release 0.3
+/// the interface read the comments itself.
+pub fn sections(script: &str, text: &str) -> Vec<Sectioned> {
+    sections_of(script, text)
+        .into_iter()
+        .map(|section| Sectioned {
+            line: section.line + 1,
+            end: section.end_line + 1,
+            level: section.level,
+            title: section.title,
+        })
+        .collect()
+}
+
+/// The statements of a text as a line of JSON of type `statements`, with its sections: both
+/// are the engine's reading of the same text, asked for by one question.
 pub fn statements_json(script: &str, text: &str) -> String {
+    let sections: Vec<String> = sections(script, text)
+        .iter()
+        .map(|one| {
+            format!(
+                "{{\"line\": {}, \"end\": {}, \"level\": {}, \"title\": {}}}",
+                one.line,
+                one.end,
+                one.level,
+                json_string(&one.title)
+            )
+        })
+        .collect();
     format!(
-        "{{\"type\": \"statements\", \"statements\": {}}}",
-        ranges_json(script, text)
+        "{{\"type\": \"statements\", \"statements\": {}, \"sections\": [{}]}}",
+        ranges_json(script, text),
+        sections.join(", ")
     )
 }
 

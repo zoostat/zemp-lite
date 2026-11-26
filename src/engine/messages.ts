@@ -52,6 +52,18 @@ export interface StatementInfo extends Ranged {
 }
 
 /**
+ * A section of a script as the engine reads it (open decision #178; from Zeff 0.9.0, what its
+ * language server reports as the outline): the line of its heading and its last line, counted
+ * from 1; its level, 1 for `// # Title` and 2 for `// ## Title`; and its title.
+ */
+export interface Sectioned {
+  line: number;
+  end: number;
+  level: 1 | 2;
+  title: string;
+}
+
+/**
  * What a statement of the last run printed, made again at another width without a new run
  * (open decision #175, C6; from Zeff 0.9.0): the line the statement begins on, and its print.
  */
@@ -300,7 +312,7 @@ export type Reply =
       frames: FrameInfo[];
       written: string[];
     }
-  | { type: "statements"; statements: Ranged[] }
+  | { type: "statements"; statements: Ranged[]; sections: Sectioned[] }
   | {
       type: "checked";
       exit_code: number;

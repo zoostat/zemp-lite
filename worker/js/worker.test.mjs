@@ -145,7 +145,7 @@ test("a run prints at the width asked, as `zeff run --width` does", async (t) =>
   }
 });
 
-test("the statements of a text are given without a project and without a run", async (t) => {
+test("the statements of a text, and its sections, are given without a project and without a run", async (t) => {
   const { worker, next } = started(t, 0);
   await next("ready");
   worker.postMessage({
@@ -161,7 +161,21 @@ test("the statements of a text are given without a project and without a run", a
       { line: 2, end: 3, kind: "statement" },
       { line: 5, end: 5, kind: "statement" },
     ],
+    // A comment that is no heading begins no section.
+    sections: [],
   });
+  // The sections of the same text, as the engine reads them (release 0.3, step 6c; #178).
+  worker.postMessage({
+    type: "statements",
+    id: 8,
+    script: "scripts/main.zeff",
+    text: "// # Sample\nlet w = dataset(wages)\n// ## One year\nlet y = w.where(year == 2010)\n// # Print\ny\n",
+  });
+  assert.deepEqual((await next("statements")).sections, [
+    { line: 1, end: 4, level: 1, title: "Sample" },
+    { line: 3, end: 4, level: 2, title: "One year" },
+    { line: 5, end: 6, level: 1, title: "Print" },
+  ]);
 });
 
 test("the check of a text is what `zeff check` says of it, and runs nothing", async (t) => {
