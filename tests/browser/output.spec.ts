@@ -18,7 +18,7 @@ import {
 // output of a run, so they are given a window tall enough to hold the script with them all.
 test.use({ viewport: { width: 1100, height: 3600 } });
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
@@ -98,7 +98,7 @@ test("the outputs' text for the example is the text kept for it", async ({ page,
 });
 
 for (const name of ["plain", "warning", "error", "refused"]) {
-  test(`the script "${name}" is shown as \`zeff run\` 0.8.0 prints it`, async ({ page, press }) => {
+  test(`the script "${name}" is shown as \`zeff run\` 0.9.0 prints it`, async ({ page, press }) => {
     await scratch(page, press);
     await write(page, file(`tests/scripts/${name}.zeff`));
     await press(page.getByRole("button", { name: "Run", exact: true }));

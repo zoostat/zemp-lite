@@ -69,7 +69,7 @@ async function opened(): Promise<{ engine: Engine; worker: Stand; workers: Stand
   const { engine: made, workers } = engine();
   const start = made.start();
   const worker = workers[0]!;
-  worker.say({ type: "ready", version: "0.8.0" });
+  worker.say({ type: "ready", version: "0.9.0" });
   await start;
   const open = made.open("demo");
   await Promise.resolve();
@@ -88,10 +88,10 @@ describe("the engine, from the interface's side", () => {
     const first = made.start();
     const second = made.start();
     expect(workers).toHaveLength(1);
-    workers[0]!.say({ type: "ready", version: "0.8.0" });
-    expect(await first).toBe("0.8.0");
-    expect(await second).toBe("0.8.0");
-    expect(made.version).toBe("0.8.0");
+    workers[0]!.say({ type: "ready", version: "0.9.0" });
+    expect(await first).toBe("0.9.0");
+    expect(await second).toBe("0.9.0");
+    expect(made.version).toBe("0.9.0");
   });
 
   it("opens a project with a cancel flag the two sides share", async () => {
@@ -231,7 +231,7 @@ describe("the engine, from the interface's side", () => {
     // The next project starts a new worker.
     const start = made.start();
     expect(workers).toHaveLength(2);
-    workers[1]!.say({ type: "ready", version: "0.8.0" });
+    workers[1]!.say({ type: "ready", version: "0.9.0" });
     await start;
   });
 
@@ -392,7 +392,7 @@ describe("the index of the help", () => {
     await settle();
     expect(worker.last).toMatchObject({ type: "helpIndex" });
     const index = {
-      engine: "0.8.0",
+      engine: "0.9.0",
       packages: [
         {
           name: "regress",

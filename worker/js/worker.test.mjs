@@ -53,9 +53,9 @@ async function opened(t, deviceBytes) {
 const bytes = (text) => new TextEncoder().encode(text);
 const text = (some) => new TextDecoder().decode(some);
 
-test("the engine in the worker is the released Zeff 0.8.0", async (t) => {
+test("the engine in the worker is the released Zeff 0.9.0", async (t) => {
   const { next } = started(t, 0);
-  assert.deepEqual(await next("ready"), { type: "ready", version: "0.8.0" });
+  assert.deepEqual(await next("ready"), { type: "ready", version: "0.9.0" });
 });
 
 test("a run tells its steps and what it prints, then its outcome", async (t) => {
@@ -104,7 +104,7 @@ test("a run tells its steps and what it prints, then its outcome", async (t) => 
   assert.equal(pieces.map((piece) => piece.stderr).join(""), done.stderr);
 });
 
-test("the example prints, in the worker, what `zeff run` 0.8.0 prints, byte for byte", async (t) => {
+test("the example prints, in the worker, what `zeff run` 0.9.0 prints, byte for byte", async (t) => {
   const example = path.resolve(here, "..", "..", "tests", "scripts", "example");
   const read = (file) => fs.readFileSync(path.join(example, file), "utf8");
   const { worker, said, next } = await opened(t, 0);
@@ -231,10 +231,22 @@ test("the index of the help is given without a project: the packages, their func
   worker.postMessage({ type: "helpIndex", id: 6 });
   const index = await next("helpIndex");
   assert.equal(index.id, 6);
-  assert.equal(index.engine, "0.8.0");
+  assert.equal(index.engine, "0.9.0");
   assert.deepEqual(
     index.packages.map((one) => one.name),
-    ["core", "time", "text", "data", "dist", "results", "stats", "plot", "datasets", "regress"],
+    [
+      "core",
+      "time",
+      "text",
+      "data",
+      "dist",
+      "results",
+      "stats",
+      "plot",
+      "datasets",
+      "regress",
+      "glm",
+    ],
   );
   // A package's functions are those the released `zeff help stats` lists, in its order.
   const printed = fs
@@ -280,7 +292,7 @@ test("the codes with an explained page are given by family, without a project", 
   });
   assert.equal(
     codes.families.reduce((sum, one) => sum + one.codes.length, 0),
-    144,
+    148,
   );
 });
 

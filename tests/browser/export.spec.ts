@@ -7,7 +7,7 @@ import type { Download, Page } from "@playwright/test";
 import { readZip } from "../../src/project/zip";
 import { expect, scriptText, test, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const LIMITS = { whole: 50_000_000, entries: 1_000 };
 const scratch = (file: string) =>
   readFileSync(new URL(`../../examples/scratch/${file}`, import.meta.url), "utf8");
@@ -77,7 +77,7 @@ test("Export project…, from ⌘K, gives the project as a zip: its files, what 
   expect(zip.files["Scratch/zeff.toml"]).toBe(
     "[project]\n" +
       'name = "Scratch"          # the project\'s name\n' +
-      'zeff = "0.8.0"            # the engine this project runs on, exactly\n' +
+      'zeff = "0.9.0"            # the engine this project runs on, exactly\n' +
       'edition = "preview"       # "2027" from Zeff 1.0.0\n',
   );
   expect(zip.files["Scratch/output/pay.csv"]).toBe("educ,wage\n10.0,11.0\n12.0,14.0\n");

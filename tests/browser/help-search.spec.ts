@@ -6,7 +6,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
   await page.goto("/");
@@ -45,8 +45,9 @@ test("the field suggests from the second letter: what each match is, its one lin
   await expect(list(page)).toBeHidden();
   await field(page).pressSequentially("m");
   await expect(field(page)).toHaveAttribute("aria-expanded", "true");
-  // `reg`, whose first R name it is, before `anova`, which R also writes with `lm`.
-  await expect(options(page)).toHaveCount(2);
+  // `reg`, whose first R name it is, before `anova`, which R also writes with `lm`, and
+  // `posthoc`, whose page writes it in R from Zeff 0.9.0.
+  await expect(options(page)).toHaveCount(3);
   expect(await reads(options(page).first())).toBe(
     "function reg regress Linear regression by least squares, with fixed effects matched R lm()",
   );
@@ -310,7 +311,7 @@ for (const theme of ["light", "dark"] as const) {
     expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
     expect(await faintText(bar(page).locator(".found"))).toEqual([]);
     await field(page).fill("lm");
-    await expect(options(page)).toHaveCount(2);
+    await expect(options(page)).toHaveCount(3);
     expect(await faintText(bar(page).locator(".found"))).toEqual([]);
     await page.keyboard.press("ArrowDown");
     expect(await faintText(bar(page).locator(".found"))).toEqual([]);

@@ -15,7 +15,7 @@ const fn = (name: string, summary = `what ${name} does`, on = "Frame") => ({
   names: [],
 });
 const index: HelpIndex = {
-  engine: "0.8.0",
+  engine: "0.9.0",
   packages: [
     { name: "data", tier: 1, functions: [fn("summary"), fn("mean")] },
     {
@@ -124,7 +124,7 @@ describe("a package's page", () => {
     const page = packagePage(index, "stats")!;
     expect(page.title).toBe("stats");
     expect(page.named).toBe(true);
-    expect(page.facts).toEqual(["package · tier 1", "1 function in Zeff 0.8.0"]);
+    expect(page.facts).toEqual(["package · tier 1", "1 function in Zeff 0.9.0"]);
     expect(page.groups).toEqual([
       {
         key: "functions",
@@ -134,12 +134,12 @@ describe("a package's page", () => {
         ],
       },
     ]);
-    expect(packagePage(index, "data")!.facts[1]).toBe("2 functions in Zeff 0.8.0");
+    expect(packagePage(index, "data")!.facts[1]).toBe("2 functions in Zeff 0.9.0");
   });
 
   it("lists the shipped datasets under `datasets`, after its functions", () => {
     const page = packagePage(index, "datasets")!;
-    expect(page.facts).toEqual(["package · tier 1", "2 functions in Zeff 0.8.0", "2 datasets"]);
+    expect(page.facts).toEqual(["package · tier 1", "2 functions in Zeff 0.9.0", "2 datasets"]);
     expect(page.groups.map((group) => group.rows.map((row) => row.name))).toEqual([
       ["dataset", "datasets"],
       ["sleep", "wages"],
@@ -165,7 +165,7 @@ describe("Home, the landing page", () => {
     expect(codesIn(families)).toBe(3);
     expect(codesIn(null)).toBe(0);
     expect(countsOf(index, families)).toBe("9 functions · 5 packages · 3 codes");
-    expect(countsOf({ engine: "0.8.0", packages: [index.packages[2]!], datasets: [] }, null)).toBe(
+    expect(countsOf({ engine: "0.9.0", packages: [index.packages[2]!], datasets: [] }, null)).toBe(
       "1 function · 1 package · 0 codes",
     );
   });
@@ -204,7 +204,7 @@ describe("the page of the packages", () => {
     const page = packagesPage(index)!;
     expect(page.title).toBe("Packages");
     expect(page.named).toBe(false);
-    expect(page.facts).toEqual(["5 packages", "9 functions in Zeff 0.8.0"]);
+    expect(page.facts).toEqual(["5 packages", "9 functions in Zeff 0.9.0"]);
     expect(page.groups[0]?.rows.map((row) => `${row.name}: ${row.words}`)).toEqual([
       "data: 2 functions · tier 1",
       "results: 2 functions · tier 1",

@@ -14,7 +14,7 @@ import {
 const example = (file: string) =>
   readFileSync(new URL(`../scripts/example/${file}`, import.meta.url), "utf8");
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 /** Open the Scratch project from the welcome screen and wait for the engine. */
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
@@ -53,7 +53,7 @@ test("the welcome screen opens, names the release and says where projects are ke
     "Taking a project out. Choose Export project… in its ⋯ menu to save it as a zip on this computer, or in ⌘K while it is open; Open project… opens it again, here or in another browser.",
   );
   await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
-  await expect(page.getByText("engine Zeff 0.8.0 · in this browser")).toBeVisible();
+  await expect(page.getByText("engine Zeff 0.9.0 · in this browser")).toBeVisible();
   // The shipped fonts are the ones drawn: no outside server is asked for one.
   await page.evaluate(() => document.fonts.ready);
   expect(await page.evaluate(() => document.fonts.check('16px "Atkinson Hyperlegible Next"'))).toBe(
@@ -86,7 +86,7 @@ test("with no choice made, the theme is the system's", async ({ page }) => {
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
 
-test("the example prints what `zeff run` 0.8.0 prints, byte for byte", async ({ page, press }) => {
+test("the example prints what `zeff run` 0.9.0 prints, byte for byte", async ({ page, press }) => {
   // A window tall enough for the whole script with its outputs: the editor draws only the
   // lines near its window.
   await page.setViewportSize({ width: 1100, height: 3600 });

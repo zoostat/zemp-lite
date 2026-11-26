@@ -5,7 +5,7 @@
 import type { Page } from "@playwright/test";
 import { expect, faintText, test } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 /**
  * What a screen shows of the name: how many times it is drawn; the words a reader of the

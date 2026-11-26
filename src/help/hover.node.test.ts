@@ -29,7 +29,7 @@ function engine(): Built {
 /** A usage with its line breaks and its indents taken out, to set one beside another. */
 const flat = (usage: string) => usage.replace(/\s+/g, " ").trim();
 
-describe("the usage a hover shows, on the whole index of Zeff 0.8.0", () => {
+describe("the usage a hover shows, on the whole index of Zeff 0.9.0", () => {
   const built = engine();
   const index = JSON.parse(built.helpIndex()) as HelpIndex;
   const project = new built.Project("hover");

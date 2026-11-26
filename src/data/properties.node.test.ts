@@ -1,6 +1,6 @@
 // One variable's properties (release 0.2.1, step 7b): the statements asked of the engine, and
 // the cells read out of what it prints, held to tests/scripts/properties.json, which the
-// released `zeff run` 0.8.0 printed and the worker's native tests run through the engine again.
+// released `zeff run` 0.9.0 printed and the worker's native tests run through the engine again.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {

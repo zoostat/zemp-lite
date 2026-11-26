@@ -7,7 +7,7 @@ import path from "node:path";
 import type { Page, Request } from "@playwright/test";
 import { expect, test } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 /** The requests a page makes for the engine or its worker, by the path of each. */
 function engineAsked(page: Page): string[] {

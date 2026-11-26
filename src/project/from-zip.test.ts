@@ -112,13 +112,13 @@ describe("a manifest with its project named anew", () => {
   });
 
   it("keeps a manifest's own way of writing, and gives a name to one that has none", () => {
-    expect(renamed('[project]\nname="a"\nzeff = "0.8.0"\n', "b")).toBe(
-      '[project]\nname="b"\nzeff = "0.8.0"\n',
+    expect(renamed('[project]\nname="a"\nzeff = "0.9.0"\n', "b")).toBe(
+      '[project]\nname="b"\nzeff = "0.9.0"\n',
     );
-    expect(renamed('[project]\nzeff = "0.8.0"\n', "b")).toBe(
-      '[project]\nname = "b"\nzeff = "0.8.0"\n',
+    expect(renamed('[project]\nzeff = "0.9.0"\n', "b")).toBe(
+      '[project]\nname = "b"\nzeff = "0.9.0"\n',
     );
-    expect(renamed('zeff = "0.8.0"\n', "b")).toBe('[project]\nname = "b"\nzeff = "0.8.0"\n');
+    expect(renamed('zeff = "0.9.0"\n', "b")).toBe('[project]\nname = "b"\nzeff = "0.9.0"\n');
   });
 
   it("finds a name no project has, whatever the capitals", () => {
@@ -166,7 +166,7 @@ describe("a project made of a zip", () => {
 
   it("takes the name of its file where its manifest gives none", async () => {
     const projects = new Projects(new MemoryFolder(), kept());
-    const nameless = projectOf(held({ "zeff.toml": 'zeff = "0.8.0"\n', "scripts/main.zeff": "" }));
+    const nameless = projectOf(held({ "zeff.toml": 'zeff = "0.9.0"\n', "scripts/main.zeff": "" }));
     const made = await projects.adopt(nameless, "Sent by a colleague");
     expect(made.name).toBe("Sent by a colleague");
     expect((await projects.list())[0]?.name).toBe("Sent by a colleague");

@@ -16,7 +16,7 @@ const SIZE = { width: 1200, height: 750 };
 const KEPT = 0.86;
 
 const folder = fileURLToPath(new URL("../../src/using/pictures/", import.meta.url));
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 type Press = (target: Locator) => Promise<void>;
 
 /** The Scratch project as a reader first opens it, with its own example. */

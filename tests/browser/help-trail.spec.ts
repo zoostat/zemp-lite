@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
@@ -86,7 +86,7 @@ test("the trail says where a page stands, and each step opens its page", async (
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("stats");
   await expect(
     shown(page).getByRole("list", { name: "Facts of stats" }).getByRole("listitem"),
-  ).toHaveText(["package · tier 1", "14 functions in Zeff 0.8.0"]);
+  ).toHaveText(["package · tier 1", "14 functions in Zeff 0.9.0"]);
   expect(await rows(page)).toEqual(printed("stats"));
   // A function of the list opens its page; the steps went into the history, one by one.
   await press(shown(page).getByRole("button", { name: "anova", exact: true }));
@@ -105,7 +105,7 @@ test("the trail says where a page stands, and each step opens its page", async (
   await expect(title(page)).toHaveText("Packages");
   await expect.poll(() => reads(page)).toBe("Packages");
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("Packages");
-  await expect(shown(page).getByRole("row")).toHaveCount(10);
+  await expect(shown(page).getByRole("row")).toHaveCount(11);
   await expect(onThisPage(page)).toHaveCount(0);
   await press(back(page));
   await expect(title(page)).toHaveText("t_test");
@@ -139,7 +139,7 @@ test("a package has a page of its own, apart from the function of its name", asy
   await expect.poll(() => reads(page)).toBe("Packages › plot");
   await expect(
     shown(page).getByRole("list", { name: "Facts of plot" }).getByRole("listitem"),
-  ).toHaveText(["package · tier 1", "35 functions in Zeff 0.8.0"]);
+  ).toHaveText(["package · tier 1", "35 functions in Zeff 0.9.0"]);
   const listed = await rows(page);
   expect(listed).toHaveLength(35);
   expect(listed.map(([name]) => name)).toEqual(expect.arrayContaining(["plot", "text", "points"]));
@@ -164,7 +164,7 @@ test("a package has a page of its own, apart from the function of its name", asy
   await press(step(page, "datasets"));
   await expect(
     shown(page).getByRole("list", { name: "Facts of datasets" }).getByRole("listitem"),
-  ).toHaveText(["package · tier 1", "2 functions in Zeff 0.8.0", "4 datasets"]);
+  ).toHaveText(["package · tier 1", "2 functions in Zeff 0.9.0", "4 datasets"]);
   const parts = shown(page).locator("section");
   expect((await rows(page, parts.nth(0))).map(([name]) => name)).toEqual(["dataset", "datasets"]);
   await expect(parts.nth(1).getByRole("heading", { level: 4 })).toHaveText("Datasets");
@@ -196,14 +196,14 @@ test("the codes by family are a page, and a code stands under its family", async
   await expect.poll(() => reads(page)).toBe("Errors and warnings");
   await expect(
     shown(page).getByRole("list", { name: "Facts of Errors and warnings" }).getByRole("listitem"),
-  ).toHaveText(["144 codes", "12 families"]);
+  ).toHaveText(["148 codes", "12 families"]);
   const families = shown(page).getByRole("heading", { level: 4 });
   await expect(families).toHaveCount(12);
   await expect(families.first()).toHaveText(/^Z00xx\s*Errors a script raises itself$/);
   await expect(families.nth(1)).toHaveText(
     /^Z01xx\s*Names: variables, bindings, functions, packages$/,
   );
-  expect(await rows(page)).toHaveLength(144);
+  expect(await rows(page)).toHaveLength(148);
   expect((await rows(page, shown(page).locator("section").nth(1)))[0]).toEqual([
     "Z0101",
     "no such name",
@@ -279,7 +279,7 @@ for (const theme of ["light", "dark"] as const) {
     expect(await faintText(shown(page))).toEqual([]);
     await ask(page, "Z0101");
     await press(step(page, "Errors and warnings"));
-    await expect(shown(page).getByRole("row")).toHaveCount(144);
+    await expect(shown(page).getByRole("row")).toHaveCount(148);
     expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
     expect(await faintText(shown(page))).toEqual([]);
 

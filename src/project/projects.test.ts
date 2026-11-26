@@ -81,11 +81,11 @@ describe("the projects of a browser", () => {
   });
 
   it("writes the manifest `zeff new` of the same engine writes, to the character, and reads the name back", () => {
-    // What the released command line of Zeff 0.8.0 writes for `zeff new demo`.
+    // What the released command line of Zeff 0.9.0 writes for `zeff new demo`.
     expect(manifest("demo")).toBe(
       "[project]\n" +
         'name = "demo"             # the project\'s name\n' +
-        'zeff = "0.8.0"            # the engine this project runs on, exactly\n' +
+        'zeff = "0.9.0"            # the engine this project runs on, exactly\n' +
         'edition = "preview"       # "2027" from Zeff 1.0.0\n',
     );
     expect(nameIn(manifest("demo"))).toBe("demo");
@@ -95,7 +95,7 @@ describe("the projects of a browser", () => {
     expect(nameIn(manifest(long))).toBe(long);
     expect(nameIn(manifest('A "quoted" name'))).toBe('A "quoted" name');
     expect(nameIn('[project]\n  name = "x"  # the name\n')).toBe("x");
-    expect(nameIn('[project]\nzeff = "0.8.0"\n')).toBeNull();
+    expect(nameIn('[project]\nzeff = "0.9.0"\n')).toBeNull();
   });
 
   it("creates a project with its manifest, a script and a data folder, and lists it", async () => {

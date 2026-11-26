@@ -60,7 +60,7 @@ describe("the reader of a help page, on every page of the engine", () => {
 
   it("has the pages to read: the catalogue's functions and the engine's codes", () => {
     expect(pages.length).toBeGreaterThanOrEqual(596);
-    expect(codes.length).toBeGreaterThanOrEqual(144);
+    expect(codes.length).toBeGreaterThanOrEqual(148);
   });
 
   it("is given the kept pages as the worker gives them", () => {
@@ -147,7 +147,11 @@ describe("the reader of a help page, on the kept pages", () => {
       "summary · results",
     ]);
     expect(doc.entries[0]?.line).toBe(0);
-    expect(doc.entries[0]?.sections[0]?.title).toBe("Usage");
+    // The page of `data` is in the fuller form from Zeff 0.9.0 and begins with In brief; that
+    // of `results` is not yet, and begins with Usage.
+    expect(doc.entries[0]?.sections[0]?.title).toBe("In brief");
+    expect(doc.entries[0]?.sections.map((section) => section.title)).toContain("Usage");
+    expect(doc.entries[1]?.sections[0]?.title).toBe("Usage");
     for (const entry of doc.entries) {
       for (const section of entry.sections) {
         expect(kept("help-summary.txt").split("\n")[section.line]).toBe(section.heading);
@@ -162,7 +166,7 @@ describe("the reader of a help page, on the kept pages", () => {
       "summary · results",
     ]);
     expect(outline[0]).toEqual({ title: "summary · data", line: 0, entry: true });
-    expect(outline[1]?.title).toBe("Usage");
+    expect(outline[1]?.title).toBe("In brief");
     // A page of one function names no function in its outline, and keeps a name's own capitals.
     const one = outlineOf(readPage(kept("help-add.txt")));
     expect(one.every((item) => !item.entry)).toBe(true);

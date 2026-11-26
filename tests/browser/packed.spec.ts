@@ -127,7 +127,7 @@ test.describe("a first visit", () => {
     }
     await open.click();
     await page.getByRole("button", { name: /^Scratch project/ }).click();
-    await expect(page.getByRole("status")).toHaveText("engine Zeff 0.8.0 ready", {
+    await expect(page.getByRole("status")).toHaveText("engine Zeff 0.9.0 ready", {
       timeout: 30_000,
     });
     await page.getByRole("button", { name: "Run", exact: true }).click();

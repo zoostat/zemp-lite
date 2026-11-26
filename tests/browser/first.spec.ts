@@ -1,13 +1,13 @@
 // The first visit (release 0.2, step 18): the Scratch project a visitor opens holds the
 // returns to schooling on `wages`, the script the margin editor's design is drawn on, the
-// engine's own sample of 0.8.0 on instrumental variables (the owner's answer to question 7
-// of the release), and the showcase of plots (his answer of 21 November 2026); each prints what the released `zeff run` 0.8.0 prints for it, kept in
+// engine's own sample of 0.9.0 on instrumental variables (the owner's answer to question 7
+// of the release), and the showcase of plots (his answer of 21 November 2026); each prints what the released `zeff run` 0.9.0 prints for it, kept in
 // `examples/scratch/expected/`.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { expect, placeOf, printed, saidAsWritten, scriptText, test, wholeScript } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const scratch = (file: string) =>
   readFileSync(new URL(`../../examples/scratch/${file}`, import.meta.url), "utf8");
 
@@ -182,7 +182,7 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     await expect(start.getByTestId("step-fetch")).toContainText(/[\d.]+ MB, once/);
     await expect(start.getByTestId("step-check")).toHaveClass(/done/);
     await expect(start.getByTestId("step-start")).toHaveClass(/done/);
-    await expect(start.getByTestId("step-start")).toContainText("Zeff 0.8.0 ready");
+    await expect(start.getByTestId("step-start")).toContainText("Zeff 0.9.0 ready");
     await expect(start.getByTestId("start-whole")).toHaveText(/Ready\s*100 %/);
     // The four promises, in their band.
     const promises = page.getByRole("region", { name: "What Zemp Lite promises" });

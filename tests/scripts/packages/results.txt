@@ -1,4 +1,4 @@
-results · tier 1 · 23 of 24 functions in this release
+results · tier 1 · 24 of 24 functions in this release
 
   summary        The printed summary of a result as a table
   estimates      The estimates of a result as a frame
@@ -21,6 +21,7 @@ results · tier 1 · 23 of 24 functions in this release
   test           Wald test of linear restrictions on the coefficients
   compare        Compare two nested regressions on the same rows
   derive         Nonlinear combinations of the estimates with delta-method standard errors
+  margins        Marginal effects and adjusted predictions, with delta-method standard errors
   export         Write a table, a result or a plot to a file
   report         Publication table of several regressions
 

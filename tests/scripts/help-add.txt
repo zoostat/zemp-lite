@@ -41,7 +41,8 @@ DETAILS
     `data` (`mean`, `sd`, `sum`, `n`, `min`, `max` and the rest), which gives one value for the frame, or
     one for each group under `by:`, written into every row of it; a column of the same length, such as
     `lag(wage)` on a panel; a single value. A list, a record or a frame is not a variable and is refused
-    (Z0401).
+    (Z0401). `len` of a text variable is one number too, the count of its rows, and not the length of each
+    value: a note says so and names `n_chars`, which gives that.
 
     Replacing a variable
 
@@ -51,6 +52,8 @@ DETAILS
 
 WARNINGS AND NOTES
     Note    a definition replaced a variable of that name
+    Note    a definition is len of a text variable, the number of its rows on every row, where n_chars gives
+            the length of each value
     W0102   a name in a definition is both a variable and a binding
     Z0101   a definition names a variable the frame does not have
     Z0217   a definition's column has another number of rows

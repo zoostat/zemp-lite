@@ -2771,3 +2771,31 @@ A paper is held between settings, so a second setting reuses what the first work
 **Not measured.** The time to fetch 8 MB at a visitor's line (it is a second fetch, made once, after the app has started); the module's memory over a long sitting (what no setting has used for ten settings is dropped, by Typst's own means); a paper of a hundred pages.
 
 **Reason.** Each of the five could have changed the plan. Two did change how the module must be built: the fonts Typst assumes are not all ones this project may ship, and the same bytes as the desktop are had only from the same pinned parts.
+
+## 27 November 2026: The worker on Zeff 0.9.0 (release 0.3, step 3)
+
+**Decision.** The worker is built on the released Zeff 0.9.0: its nine pins name the commit of the tag `v0.9.0` (670e73f) in place of that of `v0.8.0`, and `worker/Cargo.lock` is brought to them. The lock file changes in the engine's own crates alone (0.8.0 to 0.9.0, and `zeff-glm` added); no third-party crate changes version, so nothing is added to the list of dependencies. The compiler is the one Zeff pins for 0.9.0, the same 1.99.1, and the binding tool the same `wasm-bindgen` 0.2.129.
+
+**What the engine's changed interfaces required of the worker: nothing.** It compiles and passes `clippy` with warnings denied without a line of its code changed.
+
+**The ten sample projects** of the released engine, `binary` among them, run through the worker and print and say what the Zeff repository keeps for them, byte for byte.
+
+**Measured (R4).** The engine as it travels: 3,069,812 bytes packed at brotli's highest setting, of 15,870,911 (2,918,316 of 15,148,342 on 0.8.0), 5 per cent more than at 0.2.5; by the measure of R4, with the worker's script, 3,082.8 kB of the 5,000 allowed. Cold start under Node 56 ms.
+
+**The released command line** was built from the same commit with its own lock file (`cargo install --git … --rev 670e73f… --locked zeff-cli`; kept at `worker/target/zeff-0.9.0/`, not committed, beside that of 0.8.0), and made every kept output of this repository again. The way of making each was first proved by making the kept files of 0.8.0 again with the command line of 0.8.0, to the byte, and then used with 0.9.0. What it found:
+
+- _The same bytes as 0.8.0:_ the five short scripts with what they print, say and what `zeff check` says of them; the example; the Scratch project's `main` and `plots`; the specification's sample refused; `zeff explain W0201`; `zeff help` of a name that is none; the lists of `time`, `dist`, `stats` and `regress`; what `:vars` prints and the script `:save` writes; and every figure: the example's two, the 21 of the showcase by their digests, and the saved plot as SVG, PDF and PNG.
+- _Changed, each as the notes of 0.9.0 say:_ the Scratch project's `instruments` (a coefficient that printed as `0.000` in `report` is written to two significant digits, `-0.00041`, and the columns are wider by it); the pages of `add` (a second note, of `len` of a text variable, naming `n_chars`) and of `summary` (the frame's page in the fuller form); the lists of `core` (`timer`; the words of `first` and `last`), `data` (`row_number`; the words of `row`) and `results` (`margins`); the console's first line, which names the engine; and the two reports, whose line of the version and so whose names changed.
+- The `zeff.toml` that `zeff new` writes is the same but for the version.
+
+**Counts of this engine**, held by the tests: 266 functions of 262 names by package, nine names with two functions as before; 11 packages (`glm`, tier 2, last); 148 codes with an explained page (Z0708, Z0711, Z0717 and W1008 are new) in the same 12 families; 4 datasets.
+
+**The tests brought to it.** No behaviour of the app is changed by this step, and no test is weakened: each that named the engine, a count, a list or the order of a page's sections now names what 0.9.0 gives, checked against the released command line or the engine's own index. Three kinds are worth saying:
+
+1. _A page's first section._ The pages of `data`, `datasets`, `dist` and `stats` are in the fuller form and begin with **In brief**, where tests took **Usage** to be first. The reader of a page reads every part of the fuller form already (it was written on the page of `add` at 0.2.3); the tests now say In brief where it is, and still hold that Usage is there.
+2. _R and Stata names from the pages._ Eighty-four more pages carry the table under **Coming from R or Stata**, so their names are now the page's and no longer the catalogue's (`rnorm()` where the catalogue wrote `rnorm`; `lm` now also leads to `posthoc`, whose page writes it). From a Stata cell the index reads a word written with brackets as it reads a function called, so the options `by()` and `level()` are among the names of `t_test`, as `vce()` has been among those of `ivreg` since 0.2.3. That is the rule as it was written, generous on purpose, and it is left; whether common options now crowd the search's suggestions is looked at in step 5, through the screens.
+3. _Four tests that named a release's line_ were mended at step 1; the same file's `ENGINE` is now 0.9.0.
+
+**Found, and made a step of its own (3b).** A project whose `zeff.toml` names Zeff 0.8.0 **runs on this engine without a word**. At 0.2 the engine itself refused a project pinned to another version (Z0710), and the interface showed its refusal (the record of 21 November 2026). In Zeff 0.9.0 that check is made by the command line, which now stands behind a launcher that finds the engine a project pins; the engine's library runs what it is given. Every project a visitor made in the hosted alpha names 0.8.0, so this is no longer the owner's own trial projects alone. The Zemp Specification says what the desktop does (several engines side by side, and **Update engine**, section 9.1) and nothing of the web, which carries one engine. The design question goes to the coordinating session for the register. What is built meanwhile, taken on the owner's behalf under his instruction of this day, is step 3b in the checklist, and its reasons are recorded with it.
+
+**Reason.** The row of 0.3; the standing rule that Zemp uses the engine through its released versions.

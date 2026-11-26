@@ -24,7 +24,7 @@ import {
 // a window tall enough to hold it.
 test.use({ viewport: { width: 1280, height: 3200 } });
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 type Press = (target: ReturnType<Page["locator"]>) => Promise<void>;
@@ -123,7 +123,7 @@ test("each statement's output is directly under it, and the script itself is not
     "let shape = w2010.plot(x: log(wage)).histogram(bins: 30)",
     "shape",
   ]);
-  // What is printed and said is what `zeff run` 0.8.0 prints and says, to the byte.
+  // What is printed and said is what `zeff run` 0.9.0 prints and says, to the byte.
   expect(await printed(page)).toBe(file("tests/scripts/example/expected/stdout.txt"));
   expect(await saidAsWritten(page)).toBe(file("tests/scripts/example/expected/stderr.txt"));
   // Inline output is never written into the script: the editor holds the file as it was.
@@ -826,7 +826,7 @@ test("the run's facts give the engine, the seed, and where the time and the memo
   await press(page.getByTestId("run-facts"));
   const record = page.getByTestId("run-record");
   await expect(record).toBeVisible();
-  await expect(record).toContainText(/engine Zeff 0\.8\.0 · run 1 · \d+:\d\d/);
+  await expect(record).toContainText(/engine Zeff 0\.9\.0 · run 1 · \d+:\d\d/);
   await expect(record.getByTestId("seeds")).toHaveText("No statement sets the seed.");
   // Every statement of the run by its time, and the two frames by the bytes the engine counts.
   await expect(record.getByTestId("times").locator("li")).toHaveCount(9);

@@ -4,7 +4,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
   await page.goto("/");

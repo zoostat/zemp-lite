@@ -9,7 +9,7 @@ import type { Locator, Page } from "@playwright/test";
 import { HELD, type Scene } from "../../src/using/held";
 import { cursorTo, editor, expect, test, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 type Press = (target: Locator) => Promise<void>;
 
 async function scratch(page: Page, press: Press): Promise<void> {

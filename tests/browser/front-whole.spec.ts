@@ -7,7 +7,7 @@
 import type { Page } from "@playwright/test";
 import { expect, faintText, smallestText, test } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 /** The floor every screen keeps to: sizes, contrast, and nothing wider than the window. */
 async function floor(page: Page, what: string): Promise<void> {

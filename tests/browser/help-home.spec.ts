@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import type { Locator, Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 // The version as the interface writes it (`shown` in `src/app/version.ts`): without a patch
 // of 0, so `0.3.0-dev` is 0.3-dev on the screen.
 const VERSION = (
@@ -37,16 +37,17 @@ const opener = (page: Page, name: string) =>
 const onThisPage = (page: Page) => page.getByRole("navigation", { name: "On this page" });
 
 const PACKAGES = [
-  ["core", 71],
+  ["core", 72],
   ["time", 16],
-  ["text", 13],
-  ["data", 56],
+  ["text", 14],
+  ["data", 57],
   ["dist", 19],
-  ["results", 23],
+  ["results", 24],
   ["stats", 14],
   ["plot", 35],
   ["datasets", 2],
   ["regress", 10],
+  ["glm", 3],
 ] as const;
 const PANELS = ["Zeff", "Zemp Lite", "Packages", "Errors and warnings", "Using Zemp Lite"];
 
@@ -64,13 +65,13 @@ test("Home is a landing page: Zeff and Zemp Lite with their versions, and a pane
   await expect(home(page).getByRole("heading", { level: 3 })).toHaveText("Help");
   await expect(homeButton(page)).toHaveAttribute("aria-current", "page");
   // Zeff: its version and its counts are the engine's.
-  await expect(panel(page, "Zeff 0.8.0").getByRole("heading")).toHaveText(/^Zeff\s*0\.8\.0$/);
-  await expect(panel(page, "Zeff 0.8.0")).toContainText(
+  await expect(panel(page, "Zeff 0.9.0").getByRole("heading")).toHaveText(/^Zeff\s*0\.9\.0$/);
+  await expect(panel(page, "Zeff 0.9.0")).toContainText(
     "A language for statistics. You write a script; the engine reads the data, runs the tests, fits the models and prints tables and plots. The same script gives the same numbers on every computer, and every function is checked against R and Stata.",
   );
-  await expect(page.getByTestId("help-engine")).toHaveText("0.8.0");
+  await expect(page.getByTestId("help-engine")).toHaveText("0.9.0");
   await expect(page.getByTestId("help-counts")).toHaveText(
-    "259 functions · 10 packages · 144 codes",
+    "266 functions · 11 packages · 148 codes",
   );
   // Zemp Lite: its version is the app's own, and its stage.
   await expect(page.getByTestId("help-app")).toHaveText(VERSION);
@@ -83,14 +84,14 @@ test("Home is a landing page: Zeff and Zemp Lite with their versions, and a pane
   );
   // Under Topics, a panel for each section of the Topics pane, with its count and a sentence.
   await expect(home(page).getByText("Topics", { exact: true })).toBeVisible();
-  await expect(opener(page, "Packages 10")).toHaveText(/^Packages\s*10\s*$/);
-  await expect(panel(page, "Packages 10")).toContainText(
+  await expect(opener(page, "Packages 11")).toHaveText(/^Packages\s*11\s*$/);
+  await expect(panel(page, "Packages 11")).toContainText(
     "Every function, grouped by what it does. A package's page lists its functions, each with one line.",
   );
-  await expect(opener(page, "Errors and warnings 144")).toHaveText(
-    /^Errors and warnings\s*144\s*$/,
+  await expect(opener(page, "Errors and warnings 148")).toHaveText(
+    /^Errors and warnings\s*148\s*$/,
   );
-  await expect(panel(page, "Errors and warnings 144")).toContainText(
+  await expect(panel(page, "Errors and warnings 148")).toContainText(
     "Every message Zeff gives has a code, such as Z0103. Its page gives the meaning, the usual causes, an example and the fix.",
   );
   await expect(opener(page, "Using Zemp Lite 13")).toHaveText(/^Using Zemp Lite\s*13\s*$/);
@@ -99,7 +100,7 @@ test("Home is a landing page: Zeff and Zemp Lite with their versions, and a pane
   );
   // The packages' names as small links inside their panel, in the engine's order.
   await expect(
-    panel(page, "Packages 10").getByRole("list", { name: "The packages" }).getByRole("button"),
+    panel(page, "Packages 11").getByRole("list", { name: "The packages" }).getByRole("button"),
   ).toHaveText(PACKAGES.map(([name]) => name));
 
   // One after another, not side by side: each panel under the one before, the same width.
@@ -139,12 +140,12 @@ test("each topic's panel opens its page, and a package's link its package", asyn
 }) => {
   await open(page, press);
   // Packages: the list of the packages, each with its count, a page of the history.
-  await press(opener(page, "Packages 10"));
+  await press(opener(page, "Packages 11"));
   await expect(title(page)).toHaveText("Packages");
   await expect(home(page).getByRole("heading", { level: 3 })).toHaveText("Packages");
   await expect(
     home(page).getByRole("list", { name: "Facts of Packages" }).getByRole("listitem"),
-  ).toHaveText(["10 packages", "259 functions in Zeff 0.8.0"]);
+  ).toHaveText(["11 packages", "266 functions in Zeff 0.9.0"]);
   await expect(home(page).getByRole("row")).toHaveText(
     PACKAGES.map(([name, count]) => new RegExp(`^${name}\\s*${count} functions · tier \\d$`)),
   );
@@ -155,7 +156,7 @@ test("each topic's panel opens its page, and a package's link its package", asyn
   await press(back(page));
   await expect(homeButton(page)).toHaveAttribute("aria-current", "page");
   // Errors and warnings: the codes by family.
-  await press(opener(page, "Errors and warnings 144"));
+  await press(opener(page, "Errors and warnings 148"));
   await expect(title(page)).toHaveText("Errors and warnings");
   await expect(home(page).getByRole("heading", { level: 4 })).toHaveCount(12);
   await press(back(page));
@@ -165,14 +166,14 @@ test("each topic's panel opens its page, and a package's link its package", asyn
   await expect(home(page).getByRole("row")).toHaveCount(13);
   await press(back(page));
   // A package's own link, inside the panel, opens that package and not the list.
-  await press(panel(page, "Packages 10").getByRole("button", { name: "regress", exact: true }));
+  await press(panel(page, "Packages 11").getByRole("button", { name: "regress", exact: true }));
   await expect(title(page)).toHaveText("regress");
   await expect(home(page).getByRole("row")).toHaveCount(10);
   await press(back(page));
   await expect(home(page).getByRole("heading", { level: 3 })).toHaveText("Help");
   // The panel answers anywhere on it, not on its heading alone.
-  await panel(page, "Errors and warnings 144").scrollIntoViewIfNeeded();
-  const box = (await panel(page, "Errors and warnings 144").boundingBox())!;
+  await panel(page, "Errors and warnings 148").scrollIntoViewIfNeeded();
+  const box = (await panel(page, "Errors and warnings 148").boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height - 12);
   await expect(title(page)).toHaveText("Errors and warnings");
 });
@@ -248,7 +249,7 @@ test("there is no Index of functions: every function is reached from its package
     }
     return { packages: packages.length, functions, missing };
   });
-  expect(reached).toEqual({ packages: 10, functions: 259, missing: [] });
+  expect(reached).toEqual({ packages: 11, functions: 266, missing: [] });
 
   // From search, and from a link of a page.
   const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
@@ -272,7 +273,7 @@ test("Help: home, from ⌘K, opens Home from any place", async ({ page, press })
   await expect(home(page).getByRole("heading", { level: 3 })).toHaveText("Help");
   await expect(homeButton(page)).toHaveAttribute("aria-current", "page");
   // From a page of Help it is Home too, and Back returns to the page.
-  await press(panel(page, "Packages 10").getByRole("button", { name: "regress", exact: true }));
+  await press(panel(page, "Packages 11").getByRole("button", { name: "regress", exact: true }));
   await expect(title(page)).toHaveText("regress");
   await page.keyboard.press("ControlOrMeta+k");
   await box.fill("help home");
@@ -319,13 +320,14 @@ for (const theme of ["light", "dark"] as const) {
     expect(await faintText(home(page))).toEqual([]);
     // From the keyboard alone: a panel's button, then the links inside it, then the next panel.
     const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
-    await opener(page, "Packages 10").focus();
+    await opener(page, "Packages 11").focus();
     await page.keyboard.press(tab);
     await expect(
-      panel(page, "Packages 10").getByRole("button", { name: "core", exact: true }),
+      panel(page, "Packages 11").getByRole("button", { name: "core", exact: true }),
     ).toBeFocused();
-    for (let at = 0; at < 10; at++) await page.keyboard.press(tab);
-    await expect(opener(page, "Errors and warnings 144")).toBeFocused();
+    // The other packages, then the next panel's own button.
+    for (let at = 0; at < PACKAGES.length; at++) await page.keyboard.press(tab);
+    await expect(opener(page, "Errors and warnings 148")).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(title(page)).toHaveText("Errors and warnings");
   });

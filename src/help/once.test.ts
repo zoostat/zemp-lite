@@ -6,7 +6,7 @@ describe("what is asked once and kept", () => {
     let asked = 0;
     const index = once(async () => {
       asked += 1;
-      return { engine: "0.8.0" };
+      return { engine: "0.9.0" };
     });
     const [first, second] = await Promise.all([index(), index()]);
     const third = await index();

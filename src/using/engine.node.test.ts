@@ -163,8 +163,8 @@ describe("Home of Help, held to the engine the app carries", () => {
   });
 
   it("counts what this engine has, and what the app has pages for", () => {
-    expect(countsOf(index, families)).toBe("259 functions · 10 packages · 144 codes");
-    expect(topicPanels(index, families).map((panel) => panel.count)).toEqual([10, 144, 13]);
+    expect(countsOf(index, families)).toBe("266 functions · 11 packages · 148 codes");
+    expect(topicPanels(index, families).map((panel) => panel.count)).toEqual([11, 148, 13]);
     // "A package's page lists its functions, each with one line": every function has its line.
     for (const one of index.packages) {
       for (const each of one.functions) expect(each.summary, each.name).not.toBe("");

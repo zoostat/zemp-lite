@@ -4,7 +4,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { editor, expect, test, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const card = (page: Page) => page.getByTestId("hover");
 const shown = (page: Page) => page.getByTestId("help-page");
 

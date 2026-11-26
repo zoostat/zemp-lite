@@ -13,7 +13,7 @@ const fn = (name: string, summary = `what ${name} does`, on = "Frame") => ({
   names: [],
 });
 const index: HelpIndex = {
-  engine: "0.8.0",
+  engine: "0.9.0",
   packages: [
     { name: "data", tier: 1, functions: [fn("summary"), fn("mean")] },
     {

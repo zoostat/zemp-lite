@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import { readZip } from "../../src/project/zip";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 test("the page is isolated, and the engine starts and runs the example", async ({ page }) => {
   const said: string[] = [];
@@ -158,9 +158,9 @@ test("Help opens on Home, the search finds reg by R's lm, and a page of the app 
   // Home, with the engine's version and its counts, read from the engine at the address.
   const shown = page.getByTestId("help-page");
   await expect(shown.getByRole("heading", { level: 3 })).toHaveText("Help", { timeout: 30_000 });
-  await expect(page.getByTestId("help-engine")).toHaveText("0.8.0");
+  await expect(page.getByTestId("help-engine")).toHaveText("0.9.0");
   await expect(page.getByTestId("help-counts")).toHaveText(
-    "259 functions · 10 packages · 144 codes",
+    "266 functions · 11 packages · 148 codes",
   );
   // The search, by a name of R: `lm` finds `reg`, and its page opens.
   const field = page.getByRole("combobox", { name: /^Search Help/ });

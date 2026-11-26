@@ -1,5 +1,11 @@
 summary — Table of N, missing, mean, SD, min and max                   data · tier 1 · since 0.1.0 · 1.0 · closed form
 
+IN BRIEF
+    - `d.summary()`: every variable of numbers, one row each: N, missing, mean, sd, min and max.
+    - `d.summary([wage, hours])`: the variables named.
+    - `d.summary([wage], stats: [n, mean, sd])`: the statistics chosen, in the order wanted.
+    - `d.summary([wage], by: year)`: group by group.
+
 USAGE
     data.summary(vars: Vars, stats: List<n | missing | mean | sd | min | max>, by: Vars, weights: Var,
                  weight_type: frequency | analytic | sampling = sampling)
@@ -16,9 +22,6 @@ DESCRIPTION
     and `sd` on their own print six significant digits. A variable whose values are all missing shows `NA`
     throughout, with a warning; one value alone has an `NA` standard deviation, and so has a variable
     holding `Inf`.
-
-    Like R's `summary` on numeric columns and Stata's `summarize`, with the count of missing values beside
-    the count of observations.
 
 ARGUMENTS
     data          Frame. The frame.
@@ -37,6 +40,11 @@ VALUE
     A `Table`, with the `by:` variables as its first columns when groups are asked for, which prints as
     shown and can be passed to `print`.
 
+MISSING VALUES
+    Each statistic is taken over the values present. The table counts the missing values of each variable in
+    a column of its own, and one warning under it counts the rows skipped. A variable whose values are all
+    missing shows `NA` throughout.
+
 DETAILS
     The mean is a compensated sum corrected once; the standard deviation is the corrected two-pass algorithm
     with the deviations scaled before squaring; see `mean` and `sd`. Minimum and maximum are taken over the
@@ -53,6 +61,34 @@ WARNINGS AND NOTES
             of the six words
     Z0402   stats: names a word that is not a statistic
 
+A COMMON MISTAKE
+    Asking for a statistic the table does not have, such as the median. `stats:` chooses among six words:
+
+    > dataset(wages).summary([wage], stats: [median])
+    error[Z0402]: `median` is not one of the allowed words
+      = help: did you mean `mean`?
+
+    For other statistics name them yourself: `dataset(wages).aggregate(median = median(wage), p90 =
+    quantile(wage, p: 0.9))`.
+
+COMING FROM R OR STATA
+    Equivalents: R summary(); Stata summarize.
+
+    Zeff                          R                                  Stata
+    d.summary([wage, hours])      summary(d[, c("wage", "hours")])   summarize wage hours
+    d.summary([wage], by: year)   tapply(d$wage, d$year, summary)    tabstat wage, by(year) statistics(n mean sd min max)
+
+    R's `summary` gives the quartiles and the mean, no standard deviation, and the count of `NA` only where
+    there are some. Stata's `summarize` gives the count, the mean, the standard deviation, the minimum and
+    the maximum, as here, without the count of missing values.
+
+RELATED TASKS
+    - For the type and an example of each variable, use `describe`.
+    - For statistics of your own choosing, group by group, use `aggregate`.
+    - For the quantiles of a variable, use `quantile`.
+    - For the count of each value of a category, use `tabulate`.
+    - For one statistic as a number, use `mean`.
+
 ACCURACY
     Closed form.
 
@@ -64,28 +100,56 @@ SEE ALSO
     mean, sd, describe
 
 EXAMPLES
-    > let wages = import("data/wages.csv")
-    note: data/wages.csv read as CSV: 3 rows × 3 variables, types guessed; CSV carries no labels, value labels or categories (line 1)
-    > wages.summary([wage, hours])
+    // Three variables of the shipped wages. The warning counts the rows skipped, variable by variable.
+    > let wages = dataset(wages)
+    > wages.summary([wage, hours, educ])
     summary · wages
 
-      variable   N   missing     mean      sd      min      max
-      wage       3         0   24.533   6.178   19.000   31.200
-      hours      2         1   37.500   3.536   35.000   40.000
-    warning[W0201]: 1 row with NA in hours was skipped (line 2)
-    > wages.summary(stats: [n, mean])
+      variable        N   missing     mean       sd     min       max
+      wage       18,201       211   27.370   14.027   3.530   152.390
+      hours      18,377        35   37.945    8.158   7.000    69.200
+      educ       18,412         0   13.491    2.485   8.000    20.000
+    warning[W0201]: 211 rows with NA in wage and 35 with NA in hours were skipped (line 2)
+
+    // Every variable of numbers when none is named.
+    > dataset(firms).summary()
+    summary · firms
+
+      variable     N   missing      mean        sd     min       max
+      firm       400         0   200.500   115.614   1.000   400.000
+      size       400         0     9.777     9.677   0.000    39.000
+
+    // The statistics chosen, in the order wanted.
+    > wages.summary([wage, hours], stats: [mean, sd, n])
     summary · wages
 
-      variable   N     mean
-      id         3    2.000
-      wage       3   24.533
-      hours      2   37.500
-    warning[W0201]: 1 row with NA in hours was skipped (line 3)
+      variable     mean       sd        N
+      wage       27.370   14.027   18,201
+      hours      37.945    8.158   18,377
+    warning[W0201]: 211 rows with NA in wage and 35 with NA in hours were skipped (line 4)
+
+    // Group by group with `by:`.
+    > wages.summary([wage], by: female)
+    summary · by female
+
+      female   variable       N   missing     mean       sd     min       max
+      male     wage       9,375       116   29.189   14.787   4.740   152.390
+      female   wage       8,826        95   25.437   12.895   3.530   140.240
+    warning[W0201]: 211 rows with NA in wage were skipped (line 5)
+
+    // The variables by the name of the argument, and the counts alone.
+    > wages.summary(vars: [wage, exper], stats: [n, missing])
+    summary · wages
+
+      variable        N   missing
+      wage       18,201       211
+      exper      18,390        22
+    warning[W0201]: 211 rows with NA in wage and 22 with NA in exper were skipped (line 6)
 
 summary — The printed summary of a result as a table                      results · tier 1 · since 0.4.0 · 1.0 · exact
 
 USAGE
-    fit.summary(standardized: Bool = false, fit_measures: Bool = false)
+    fit.summary(standardized: Bool = false, fit_measures: Bool = false, exponentiate: Bool = false)
 
 DESCRIPTION
     Gives the summary a result prints, as a `Table` that can be exported: for a fitted model the title, the
@@ -96,10 +160,25 @@ DESCRIPTION
     the log-likelihood, AIC and BIC under the fit measures, which count the variance as a parameter as R's
     `AIC` and `BIC` do. Like R's `summary` on a fit and Stata's `regress, beta`.
 
+    The summary of a `glm` fit gives its log-likelihood and AIC already, so `fit_measures: true` adds the
+    BIC alone; `standardized: true` is for a regression and is refused on a `glm` fit (Z0401), whose
+    coefficients have no one standardization.
+
+    `exponentiate: true` gives the odds ratios of a `glm` fit with a logit link in the place of its
+    coefficients. Each estimate is exp(b), under the heading `odds ratio`: the factor by which the odds are
+    multiplied when the regressor rises by one. Its standard error is exp(b) times that of b, by the delta
+    method, and its interval is the interval of b with each end exponentiated, so it is not symmetric about
+    the ratio. The z and the p-value are those of the coefficient, since b = 0 is a ratio of 1. The
+    intercept's row is the odds when every regressor is zero. A probit link and a regression are refused
+    (Z0401): their coefficients are not logarithms of a ratio. Like Stata's `logit, or`, and R's
+    `exp(coef(m))` with `exp(confint.default(m))`.
+
 ARGUMENTS
     fit            Result. The result.
     standardized:  Bool = false. Whether to add the standardized coefficients.
     fit_measures:  Bool = false. Whether to add the line of fit measures.
+    exponentiate:  Bool = false. Whether to give the odds ratios of a `glm` fit with a logit link, exp of
+                   each coefficient, in the place of the coefficients.
 
 VALUE
     A `Table`.
@@ -125,3 +204,21 @@ EXAMPLES
 
     R² 0.203 · adjusted R² 0.203
     log-likelihood -10,563.8 · AIC 21,137.5 · BIC 21,176.5
+
+    // The odds ratios of a logit: each year of schooling multiplies the odds of union membership by the
+    // ratio in its row.
+    > dataset(wages).glm(union ~ educ + exper + female, family: binomial).summary(exponentiate: true)
+    glm · union ~ educ + exper + female · binomial, logit
+    N = 18,390 (22 rows dropped for NA in model variables)
+    standard errors: classical
+    odds ratios: exp of the coefficients, standard errors by the delta method; z and p are those of the coefficients
+
+      term          odds ratio   std.error   z value   p value   95% CI
+      (intercept)       0.2931      0.0322    -11.16    <0.001   [0.2362, 0.3635]
+      educ              1.0009      0.0068      0.14     0.892   [0.9877, 1.0143]
+      exper             1.0281      0.0023     12.32    <0.001   [1.0236, 1.0326]
+      female            1.0571      0.0337      1.75     0.081   [0.9932, 1.1252]
+
+    log-likelihood -11,415.06 · AIC 22,838.13 · McFadden R² 0.007
+    deviance 22,830.13 on 18,386 df · null deviance 23,001.97 on 18,389 df
+    converged in 5 iterations of Fisher scoring

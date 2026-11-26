@@ -23,7 +23,7 @@ const fn = (
 });
 const frame = { name: "data", type: "Frame" };
 const index: HelpIndex = {
-  engine: "0.8.0",
+  engine: "0.9.0",
   packages: [
     {
       name: "core",
@@ -101,7 +101,7 @@ describe("the words that tell two functions of a name apart", () => {
 
   it("say the package too where two functions are called on the same type", () => {
     const alike: HelpIndex = {
-      engine: "0.8.0",
+      engine: "0.9.0",
       packages: [
         { name: "data", tier: 1, functions: [fn("rank", "Ranks", frame)] },
         { name: "stats", tier: 1, functions: [fn("rank", "Ranks, tested", frame)] },
@@ -276,7 +276,7 @@ describe("a name with two functions, in the history, the trail and the lists", (
 
   it("is listed twice on its package's page, each row saying which and opening its own page", () => {
     const page = packagePage(index, "plot")!;
-    expect(page.facts[1]).toBe("3 functions in Zeff 0.8.0");
+    expect(page.facts[1]).toBe("3 functions in Zeff 0.9.0");
     expect(page.groups[0]?.rows.map((row) => `${row.name} ${row.of ?? ""}`.trim())).toEqual([
       "histogram of a plot",
       "point",

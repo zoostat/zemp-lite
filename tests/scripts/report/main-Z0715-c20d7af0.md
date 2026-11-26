@@ -21,7 +21,7 @@ The script stopped with an error:
 
 ## Zeff
 
-- version: 0.8.0
+- version: 0.9.0
 - edition: preview
 - platform: aarch64 macos
 

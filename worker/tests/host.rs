@@ -31,7 +31,7 @@ fn run(host: &Host, text: &str) -> (Vec<String>, String) {
 
 #[test]
 fn the_engine_is_the_released_one() {
-    assert_eq!(engine_version(), "0.8.0");
+    assert_eq!(engine_version(), "0.9.0");
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn a_file_put_into_the_project_is_read_by_a_run_and_given_back() {
     );
     // The manifest the host wrote is a file of the project like any other.
     let manifest = String::from_utf8(host.file("zeff.toml").unwrap()).unwrap();
-    assert!(manifest.contains("zeff = \"0.8.0\""), "{manifest}");
+    assert!(manifest.contains("zeff = \"0.9.0\""), "{manifest}");
 }
 
 #[test]
@@ -243,7 +243,7 @@ fn a_frame_of_the_last_run_is_given_as_an_arrow_stream() {
     assert_eq!(host.frame("n"), None);
 }
 
-/// A script of the repository and what `zeff run` of the released 0.8.0 printed and said for
+/// A script of the repository and what `zeff run` of the released 0.9.0 printed and said for
 /// it, run through the host: the two must be the same, byte for byte, as the run goes and in
 /// its outcome; the outcome is given back.
 fn prints_as_zeff_run(host: &Host, script: &str, text: &str, stdout: &str, stderr: &str) -> String {
@@ -287,7 +287,7 @@ fn the_example_prints_what_zeff_run_prints() {
 
 /// The three scripts of the Scratch project a first visitor opens (`examples/scratch/`): the
 /// returns to schooling, the engine's own sample on instrumental variables, and the showcase of
-/// plots, each printing what `zeff run` of the released 0.8.0 printed for it.
+/// plots, each printing what `zeff run` of the released 0.9.0 printed for it.
 #[test]
 fn the_scratch_projects_scripts_print_what_zeff_run_prints() {
     let host = Host::new("scratch");
@@ -1037,8 +1037,8 @@ fn a_report_of_a_failure_is_what_zeff_report_bug_writes() {
     // tests/scripts/report/: the reports the released `zeff report-bug` wrote for two scripts
     // run as a project's `scripts/main.zeff`, on this machine (`aarch64 macos`).
     for (script, written) in [
-        ("error.zeff", "main-Z0715-2c0bfa05.md"),
-        ("framed.zeff", "main-Z0707-e8fac637.md"),
+        ("error.zeff", "main-Z0715-c20d7af0.md"),
+        ("framed.zeff", "main-Z0707-5e4b623a.md"),
     ] {
         let host = Host::new("demo");
         let text = read(&format!("tests/scripts/report/{script}"));
@@ -1161,7 +1161,7 @@ fn name(name: &str, shown: &str, from: &str) -> (String, String, String) {
 fn the_index_of_the_help_lists_the_packages_shipped_in_the_tiers_order_and_the_datasets() {
     let index: Value = serde_json::from_str(&help_index()).unwrap();
     assert_eq!(index["type"], "helpIndex");
-    assert_eq!(index["engine"], "0.8.0");
+    assert_eq!(index["engine"], "0.9.0");
     let packages: Vec<(String, u64)> = indexed()
         .into_iter()
         .map(|(name, tier, _)| (name, tier))
@@ -1177,6 +1177,7 @@ fn the_index_of_the_help_lists_the_packages_shipped_in_the_tiers_order_and_the_d
         ("plot", 1),
         ("datasets", 1),
         ("regress", 2),
+        ("glm", 2),
     ];
     assert_eq!(
         packages,
@@ -1205,7 +1206,7 @@ fn the_index_of_the_help_lists_the_packages_shipped_in_the_tiers_order_and_the_d
 
 #[test]
 fn each_package_s_functions_are_those_zeff_help_prints_for_it_in_its_order() {
-    // What the released `zeff help <package>` of 0.8.0 printed (`tests/scripts/packages/`).
+    // What the released `zeff help <package>` of 0.9.0 printed (`tests/scripts/packages/`).
     // Three packages have a function of their own name (`text`, `plot`, `datasets`), whose
     // page the command prints in place of the list: the list of those is not printed anywhere.
     for package in [
@@ -1286,15 +1287,15 @@ fn the_index_holds_every_function_this_engine_runs_and_none_of_a_later_release()
             ours.push((package.clone(), name));
         }
     }
-    // Every registered function is there: 259, of 255 names by package.
-    assert_eq!(apart.len(), 259);
+    // Every registered function is there: 266, of 262 names by package.
+    assert_eq!(apart.len(), 266);
     assert_eq!(
         apart.len(),
         zeff_engine::registry::registry().unwrap().functions().len()
     );
     ours.sort();
     ours.dedup();
-    assert_eq!(ours.len(), 255);
+    assert_eq!(ours.len(), 262);
     // Every function the catalogue has as implemented is there, once.
     let mut theirs: Vec<(String, String)> = catalogue
         .rows()
@@ -1306,8 +1307,8 @@ fn the_index_holds_every_function_this_engine_runs_and_none_of_a_later_release()
     theirs.dedup();
     ours.sort();
     assert_eq!(ours, theirs);
-    // Functions of Zeff 0.9.0 and of the roadmap, which the catalogue lists, are not.
-    for later in ["n_chars", "row_number", "xtreg", "logit_reg"] {
+    // Functions of Zeff 0.10.0 and of the roadmap, which the catalogue lists, are not.
+    for later in ["mcnemar_test", "reliability", "xtreg", "logit_reg"] {
         assert!(ours.iter().all(|(_, name)| name != later), "{later}");
     }
 }
@@ -1389,16 +1390,23 @@ fn a_name_with_two_functions_is_listed_twice_each_with_what_it_is_called_on() {
 
 #[test]
 fn a_function_s_r_and_stata_names_come_from_its_page_and_from_the_catalogue() {
-    // Neither page has the table: every name is the catalogue's.
+    // A page with the table, from Zeff 0.9.0 (the pages of `stats` in the fuller form): the
+    // names are the page's own.
     let t_test = indexed_function("stats", "t_test");
-    assert_eq!(
-        names_of(&t_test, "R"),
-        [name("t.test", "t.test()", "catalogue")]
-    );
+    assert_eq!(names_of(&t_test, "R"), [name("t.test", "t.test()", "page")]);
+    // Of Stata, the command and what its table writes with brackets, which the index reads as
+    // it reads a function called (`vce()` on the page of `ivreg`, since 0.2.3): generous by
+    // its rule, so that a reader who types `by` or `level` is led here too.
     assert_eq!(
         names_of(&t_test, "Stata"),
-        [name("ttest", "ttest", "catalogue")]
+        [
+            name("ttest", "ttest", "page"),
+            name("by", "by()", "page"),
+            name("level", "level()", "page")
+        ]
     );
+    // A page without the table (those of `regress` wait for 0.10.0): every name is the
+    // catalogue's.
     let reg = indexed_function("regress", "reg");
     assert_eq!(
         names_of(&reg, "R"),

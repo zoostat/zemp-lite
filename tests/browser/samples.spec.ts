@@ -9,7 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, placeOf, printed, saidAsWritten, test, wholeScript, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 /** The folder of the engine's sample projects. */
 function samples(): string {
@@ -29,7 +29,7 @@ function samples(): string {
 
 // Three projects that need no file of their own: they run on the data shipped with the engine.
 for (const name of ["regression", "simulation", "plots"]) {
-  test(`the sample project "${name}" of Zeff 0.8.0 reads in the prototype as \`zeff run\` prints it`, async ({
+  test(`the sample project "${name}" of Zeff 0.9.0 reads in the prototype as \`zeff run\` prints it`, async ({
     page,
     press,
   }) => {
@@ -64,7 +64,7 @@ for (const name of ["regression", "simulation", "plots"]) {
   });
 }
 
-test("the specification's sample script, written for Zeff 1.0, is refused as `zeff run` 0.8.0 refuses it", async ({
+test("the specification's sample script, written for Zeff 1.0, is refused as `zeff run` 0.9.0 refuses it", async ({
   page,
   press,
 }) => {

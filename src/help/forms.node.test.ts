@@ -25,7 +25,7 @@ function engine(): Built {
   return createRequire(import.meta.url)(built) as Built;
 }
 
-describe("the names with two functions, on the whole index of Zeff 0.8.0", () => {
+describe("the names with two functions, on the whole index of Zeff 0.9.0", () => {
   const built = engine();
   const index = JSON.parse(built.helpIndex()) as HelpIndex;
   const project = new built.Project("forms");
@@ -93,7 +93,10 @@ describe("the names with two functions, on the whole index of Zeff 0.8.0", () =>
         const outline = outlineOf(shown.doc);
         expect(outline.some((item) => item.entry)).toBe(false);
         expect(new Set(outline.map((item) => item.title)).size).toBe(outline.length);
-        expect(outline[0]?.title).toBe("Usage");
+        // Its first section is the function's own: Usage, or In brief on a page in the fuller
+        // form (Zeff 0.9.0: the pages of `data`, `datasets`, `dist` and `stats`).
+        expect(["In brief", "Usage"]).toContain(outline[0]?.title);
+        expect(outline.map((item) => item.title)).toContain("Usage");
       }
     }
   });
@@ -119,7 +122,7 @@ describe("the names with two functions, on the whole index of Zeff 0.8.0", () =>
   });
 
   it("leave every other name one page, as the engine prints it", () => {
-    expect(index.packages.reduce((sum, one) => sum + one.functions.length, 0)).toBe(259);
+    expect(index.packages.reduce((sum, one) => sum + one.functions.length, 0)).toBe(266);
     for (const name of ["reg", "t_test", "mean", "text", "datasets"]) {
       expect(formsOf(index, name), name).toHaveLength(1);
       const doc = readPage(print(name));

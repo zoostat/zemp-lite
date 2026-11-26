@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { expect, printed, scriptText, test, wholeScript, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const recent = (page: Page) => page.getByRole("region", { name: "Recent projects" });
 const row = (page: Page, name: string) =>
   recent(page).getByRole("button", { name: new RegExp(`^${name} in this browser`) });
@@ -86,7 +86,7 @@ test("a project is renamed and duplicated from its row of the start screen, and 
   expect(readFileSync(await manifest.path(), "utf8")).toBe(
     "[project]\n" +
       'name = "Returns to schooling" # the project\'s name\n' +
-      'zeff = "0.8.0"            # the engine this project runs on, exactly\n' +
+      'zeff = "0.9.0"            # the engine this project runs on, exactly\n' +
       'edition = "preview"       # "2027" from Zeff 1.0.0\n',
   );
   // Duplicated: a second project, of a name of its own, with all the first holds.

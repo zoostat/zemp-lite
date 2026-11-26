@@ -2,7 +2,7 @@
 import type { Page } from "@playwright/test";
 import { cursorTo, editor, expect, printed, scriptText, test, write, useExample } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.emulateMedia({ colorScheme: "light" });
@@ -214,7 +214,7 @@ test("the last line says how the output stands to the script, and names the engi
   await page.keyboard.press("ControlOrMeta+End");
   await page.keyboard.type("\nprint(1)");
   await expect(sync).toHaveText("edited · not run · 1 warning");
-  await expect(page.getByText("engine Zeff 0.8.0 · in this browser")).toBeVisible();
+  await expect(page.getByText("engine Zeff 0.9.0 · in this browser")).toBeVisible();
 });
 
 test("every control of the window can be reached from the keyboard", async ({ page, press }) => {
@@ -498,8 +498,8 @@ test("what release 0.2.3 added is reached from the keyboard: every control of th
     "Topics",
     "Home",
     "Search Help",
-    "Packages 10",
-    "Errors and warnings 144",
+    "Packages 11",
+    "Errors and warnings 148",
     "Using Zemp Lite 13",
     "regress",
     "Close Topics",

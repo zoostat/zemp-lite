@@ -7,7 +7,7 @@ import type { Locator, Page } from "@playwright/test";
 import { readUsing, type Piece } from "../../src/using/read";
 import { expect, test, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const folder = new URL("../../src/using/pages/", import.meta.url);
 type Press = (target: Locator) => Promise<void>;
 

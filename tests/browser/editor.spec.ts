@@ -3,7 +3,7 @@
 import type { Page } from "@playwright/test";
 import { editor, expect, printed, scriptText, test, write, useExample } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.emulateMedia({ colorScheme: "light" });

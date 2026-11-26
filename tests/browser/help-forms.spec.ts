@@ -7,7 +7,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { cursorTo, expect, faintText, smallestText, test, useExample, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
   await page.goto("/");
@@ -60,7 +60,7 @@ async function open(page: Page, press: (target: Locator) => Promise<void>) {
   await expect(page.getByTestId("help-counts")).toBeVisible();
 }
 
-/** The nine names of Zeff 0.8.0 with two functions, each by what its two are called on. */
+/** The nine names of Zeff 0.9.0 with two functions, each by what its two are called on. */
 const NAMES: [string, string, string][] = [
   ["append", "of a list", "of a frame"],
   ["boxplot", "of a plot", "of a frame"],
@@ -206,7 +206,7 @@ test("search, Topics and a package's page list the two functions apart", async (
   // The package's page: 35 functions, the two apart, each opening its own page.
   await press(step(page, "plot"));
   await expect(shown(page).getByRole("list", { name: "Facts of plot" })).toContainText(
-    "35 functions in Zeff 0.8.0",
+    "35 functions in Zeff 0.9.0",
   );
   await expect(row(page, "histogram", "of a plot")).toBeVisible();
   await press(row(page, "histogram", "of a frame"));

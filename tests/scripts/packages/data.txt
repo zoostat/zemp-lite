@@ -1,4 +1,4 @@
-data · tier 1 · 56 of 56 functions in this release
+data · tier 1 · 57 of 57 functions in this release
 
   frame          Create a frame from named lists of values
   import         Read a data file into a frame
@@ -34,6 +34,7 @@ data · tier 1 · 56 of 56 functions in this release
   lead           Next values
   diff           x − lag(x, n), so it respects the panel's time order and gaps
   fill_missing   Replace NA with a value, or with the last or the next value present
+  row_number     The position of each row, from 1
   running        Running sum or product down the rows
   rank           Rank of each value, smallest first; NA stays NA
   bin            Ordered category from a number, by quantile groups or by intervals
@@ -46,7 +47,7 @@ data · tier 1 · 56 of 56 functions in this release
   to_long        Turn repeated columns into rows
   to_wide        Turn rows into repeated columns
   save           Save as CSV or TSV, chosen by the extension
-  row            Mean or sum across variables in each row
+  row            Mean, sum or count of missing values across variables in each row
   drop_missing   Remove rows with NA in the variables and report how many
   between        True where low <= x <= high
   center         Subtract the mean

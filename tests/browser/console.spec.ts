@@ -9,7 +9,7 @@ import { editor, expect, scriptText, test, write, useExample } from "./support";
 
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
   await page.goto("/");

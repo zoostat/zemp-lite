@@ -7,7 +7,7 @@ describe("the version", () => {
   });
 
   it("names the engine of the release plan's row", () => {
-    expect(ENGINE).toBe("0.8.0");
+    expect(ENGINE).toBe("0.9.0");
   });
 
   it("is written without a patch of 0", () => {

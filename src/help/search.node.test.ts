@@ -25,7 +25,7 @@ function engine(): Built {
   return createRequire(import.meta.url)(built) as Built;
 }
 
-describe("the search, on the whole index of Zeff 0.8.0", () => {
+describe("the search, on the whole index of Zeff 0.9.0", () => {
   const built = engine();
   const index = JSON.parse(built.helpIndex()) as HelpIndex;
   const families = (JSON.parse(built.codesExplained()) as { families: CodeFamily[] }).families;
@@ -35,15 +35,15 @@ describe("the search, on the whole index of Zeff 0.8.0", () => {
 
   it("looks through every function, package, dataset and code the engine has", () => {
     const count = (kind: string) => entries.filter((one) => one.kind === kind).length;
-    expect(index.engine).toBe("0.8.0");
-    // Every function the engine registers: 250 names, nine of which name two functions (#215).
-    expect(count("function")).toBe(259);
+    expect(index.engine).toBe("0.9.0");
+    // Every function the engine registers: 257 names, nine of which name two functions (#215).
+    expect(count("function")).toBe(266);
     expect(
       new Set(entries.filter((one) => one.kind === "function").map((one) => one.name)).size,
-    ).toBe(250);
-    expect(count("package")).toBe(10);
+    ).toBe(257);
+    expect(count("package")).toBe(11);
     expect(count("dataset")).toBe(4);
-    expect(count("code")).toBe(144);
+    expect(count("code")).toBe(148);
     // The two of a name are apart, each saying which it is and opening its own page.
     const formed = entries.filter((one) => one.of !== undefined);
     expect([...new Set(formed.map((one) => one.name))].sort()).toEqual([
@@ -96,8 +96,8 @@ describe("the search, on the whole index of Zeff 0.8.0", () => {
       ["collapse", "aggregate", "Stata collapse"],
       ["xtset", "panel", "Stata xtset"],
       ["ivregress", "ivreg", "Stata ivregress"],
-      ["rnorm", "dist.normal", "R rnorm"],
-      ["pbinom", "dist.binomial", "R pbinom"],
+      ["rnorm", "dist.normal", "R rnorm()"],
+      ["pbinom", "dist.binomial", "R pbinom()"],
       ["ggplot", "plot", "R ggplot2::ggplot()"],
       ["geom_point", "points", "R geom_point()"],
       ["%in%", "is_in", "R %in%"],
@@ -116,7 +116,8 @@ describe("the search, on the whole index of Zeff 0.8.0", () => {
     // `ttest` is Stata's name and that alone: `test`, one key away, is not guessed beside it.
     expect(names("ttest")).toEqual(["t_test"]);
     // `lm` is the first name of `reg`; `anova`, which R also writes with `lm`, comes after it.
-    expect(names("lm")).toEqual(["reg", "anova"]);
+    // `posthoc`, whose page writes it in R from Zeff 0.9.0 (`emmeans` after `lm`), after both.
+    expect(names("lm")).toEqual(["reg", "anova", "posthoc"]);
     // Where nothing else is called so, the function is the first match.
     for (const typed of ["lm", "ttest", "t.test", "left_join", "xtset", "rnorm", "kwallis"]) {
       expect(first(typed)?.rule, typed).toBe("foreign");
@@ -173,7 +174,7 @@ describe("the search, on the whole index of Zeff 0.8.0", () => {
   });
 
   it("answers what the engine does not have with a sentence and the nearest names", () => {
-    // A command of Stata that Zeff 0.8.0 has no function for.
+    // A command of Stata that Zeff 0.9.0 has no function for.
     const found = search(entries, "xtreg");
     expect(found.matches).toEqual([]);
     expect(found.nothing?.nearest.map((one) => one.name)).toContain("reg");

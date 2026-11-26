@@ -2,7 +2,7 @@
 // type-checked with the tools; it needs the worker built (`npm run build:worker`).
 //
 // The text the interface sends for the figures of the example, run through the engine's
-// worker build, writes the files the released `zeff run` 0.8.0 wrote for the same text
+// worker build, writes the files the released `zeff run` 0.9.0 wrote for the same text
 // (`tests/scripts/figures/`), byte for byte: the figure a pane shows is the figure `export`
 // writes at that size, and nothing of the interface's is in it.
 import { createHash } from "node:crypto";
@@ -28,7 +28,7 @@ function engine(): { Project: new (name: string) => Project } {
 }
 
 describe("the figures the interface asks the engine for", () => {
-  it("are, byte for byte, the files `zeff run` 0.8.0 writes for the same text", () => {
+  it("are, byte for byte, the files `zeff run` 0.9.0 writes for the same text", () => {
     const project = new (engine().Project)("figures");
     const text = read("tests/scripts/figures/example-with-exports.zeff").toString("utf8");
     const done = JSON.parse(project.run("scripts/main.zeff", text, 0)) as {
@@ -54,7 +54,7 @@ describe("the figures the interface asks the engine for", () => {
     ).toMatch(/<svg [^>]*width="425\.2\d*pt" height="26[34]\.\d+pt"/);
   });
 
-  it("of the showcase of plots are, byte for byte, the 21 files `zeff run` 0.8.0 writes", () => {
+  it("of the showcase of plots are, byte for byte, the 21 files `zeff run` 0.9.0 writes", () => {
     const project = new (engine().Project)("scratch");
     const text = read("tests/scripts/figures/plots-with-exports.zeff").toString("utf8");
     const done = JSON.parse(project.run("scripts/plots.zeff", text, 0)) as {

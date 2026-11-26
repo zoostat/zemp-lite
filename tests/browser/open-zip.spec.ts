@@ -8,7 +8,7 @@ import { join } from "node:path";
 import type { Page } from "@playwright/test";
 import { expect, printed, scriptText, test, wholeScript, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const folder = mkdtempSync(join(tmpdir(), "zemp-open-zip-"));
 test.afterAll(() => rmSync(folder, { recursive: true, force: true }));
 
@@ -96,7 +96,7 @@ test("a project exported and opened again from its zip is the same project, unde
   expect(readFileSync(await manifest.path(), "utf8")).toBe(
     "[project]\n" +
       'name = "Scratch 2"        # the project\'s name\n' +
-      'zeff = "0.8.0"            # the engine this project runs on, exactly\n' +
+      'zeff = "0.9.0"            # the engine this project runs on, exactly\n' +
       'edition = "preview"       # "2027" from Zeff 1.0.0\n',
   );
   // Both projects are listed, and the first is as it was.
@@ -119,7 +119,7 @@ test("a project's folder zipped by another tool is opened: its one folder taken 
     "made.zip",
     "z = zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED)\n" +
       "z.writestr('returns/', b'')\nz.writestr('returns/data/', b'')\nz.writestr('returns/scripts/', b'')\n" +
-      'z.writestr(\'returns/zeff.toml\', b\'[project]\\nname = "Returns"\\nzeff = "0.8.0"\\nedition = "preview"\\n\')\n' +
+      'z.writestr(\'returns/zeff.toml\', b\'[project]\\nname = "Returns"\\nzeff = "0.9.0"\\nedition = "preview"\\n\')\n' +
       "z.writestr('returns/scripts/main.zeff', b'print(\"made on the computer\")\\n')\n" +
       "z.writestr('returns/.gitignore', b'data/\\n')\n" +
       "z.writestr('returns/.DS_Store', b'junk')\nz.writestr('__MACOSX/returns/._zeff.toml', b'junk')\n" +
@@ -181,7 +181,7 @@ test("a zip that cannot be opened is refused in a sentence, and no project is ma
   // A zip that opens takes the sentence away with it.
   const good = written(
     "good.zip",
-    "z = zipfile.ZipFile(path, 'w')\nz.writestr('zeff.toml', b'[project]\\nname = \"Good\"\\nzeff = \"0.8.0\"\\n')\n" +
+    "z = zipfile.ZipFile(path, 'w')\nz.writestr('zeff.toml', b'[project]\\nname = \"Good\"\\nzeff = \"0.9.0\"\\n')\n" +
       "z.writestr('scripts/main.zeff', b'print(1)\\n')\nz.close()",
   );
   await chooser(page).setInputFiles(good);

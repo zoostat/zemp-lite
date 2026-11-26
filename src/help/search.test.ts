@@ -25,7 +25,7 @@ const fn = (name: string, summary: string, names: ForeignName[] = [], on = "Fram
 });
 
 const index: HelpIndex = {
-  engine: "0.8.0",
+  engine: "0.9.0",
   packages: [
     {
       name: "data",
@@ -283,7 +283,7 @@ describe("the rules of the search, each by itself", () => {
     // `t_test`, which it finds as Stata's name, and nothing else is guessed beside it.
     const among = entriesOf(
       {
-        engine: "0.8.0",
+        engine: "0.9.0",
         packages: [
           {
             name: "p",
@@ -311,7 +311,7 @@ describe("the order of the search", () => {
   it("is the order of the rules: exact, begun, a part, a word, R and Stata, a code begun, a slip", () => {
     const among: Entry[] = entriesOf(
       {
-        engine: "0.8.0",
+        engine: "0.9.0",
         packages: [
           {
             name: "p",
@@ -363,7 +363,7 @@ describe("the order of the search", () => {
     // A code begun stands between the R and Stata names and a slip.
     const coded = entriesOf(
       {
-        engine: "0.8.0",
+        engine: "0.9.0",
         packages: [
           {
             name: "p",
@@ -424,7 +424,7 @@ describe("the order of the search", () => {
   it("gives eight matches at the most, the best of them", () => {
     const many = entriesOf(
       {
-        engine: "0.8.0",
+        engine: "0.9.0",
         packages: [
           {
             name: "p",
@@ -457,7 +457,7 @@ describe("the functions an R or a Stata name finds", () => {
   it("come in the order of where the name stands among each one's names, then by name", () => {
     const among = entriesOf(
       {
-        engine: "0.8.0",
+        engine: "0.9.0",
         packages: [
           {
             name: "p",
@@ -488,7 +488,7 @@ describe("the places of the eight", () => {
   const crowded = (foreign: number) =>
     entriesOf(
       {
-        engine: "0.8.0",
+        engine: "0.9.0",
         packages: [
           {
             name: "p",
@@ -537,7 +537,7 @@ describe("the places of the eight", () => {
     // A name begun is never given up for them.
     const named = entriesOf(
       {
-        engine: "0.8.0",
+        engine: "0.9.0",
         packages: [
           {
             name: "p",

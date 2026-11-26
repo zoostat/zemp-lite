@@ -147,7 +147,7 @@ describe("the text sent for the figures of a run", () => {
       { key: "17@567x352", file: "output/zemp-figure-1.svg", line: 22 },
       { key: "21@567x352", file: "output/zemp-figure-2.svg", line: 24 },
     ]);
-    // This is the text kept beside the figures the released `zeff run` 0.8.0 wrote for it.
+    // This is the text kept beside the figures the released `zeff run` 0.9.0 wrote for it.
     expect(sent.text).toBe(composedExample);
   });
 

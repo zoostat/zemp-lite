@@ -7,7 +7,7 @@ import type { Download, Page } from "@playwright/test";
 import { readZip } from "../../src/project/zip";
 import { expect, scriptText, test, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const LIMITS = { whole: 50_000_000, entries: 1_000 };
 
 const tree = (page: Page) =>

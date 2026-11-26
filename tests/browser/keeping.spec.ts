@@ -5,7 +5,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Stand in for the browser's answer: whether it agrees to keep the storage when asked. */

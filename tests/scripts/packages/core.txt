@@ -1,4 +1,4 @@
-core · tier 0 · 71 of 74 functions in this release
+core · tier 0 · 72 of 74 functions in this release
 
   print        Print values
   abs          Absolute value
@@ -37,6 +37,7 @@ core · tier 0 · 71 of 74 functions in this release
   is_missing   True where x is NA
   coalesce     First non-missing value
   attempt      Run an expression and carry on if it fails
+  timer        Run an expression and note the time it took
   iterate      Iterate to convergence without mutation
   map          Apply a function to each item of a list
   filter       Keep the items of a list a function answers true for
@@ -62,8 +63,8 @@ core · tier 0 · 71 of 74 functions in this release
   equal        True when two values are identical
   vars         Variable list outside a frame method, for loops and functions that build lists
   len          Items in a list, or code points in a string
-  first        First item of a list
-  last         Last item of a list
+  first        First item of a list, or the value of the first row of a column
+  last         Last item of a list, or the value of the last row of a column
   append       A new list with an item added
   reversed     Reversed copy of a list
   table        A table from named lists or columns

@@ -9,7 +9,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 async function scratch(page: Page, press: (target: Locator) => Promise<void>, unfolded = true) {
   await page.goto("/");
@@ -58,16 +58,17 @@ async function ask(page: Page, name: string) {
 }
 
 const PACKAGES = [
-  ["core", 71],
+  ["core", 72],
   ["time", 16],
-  ["text", 13],
-  ["data", 56],
+  ["text", 14],
+  ["data", 57],
   ["dist", 19],
-  ["results", 23],
+  ["results", 24],
   ["stats", 14],
   ["plot", 35],
   ["datasets", 2],
   ["regress", 10],
+  ["glm", 3],
 ] as const;
 
 test("Topics holds sections that fold, each with its count, by the mouse and by the keyboard", async ({
@@ -77,8 +78,8 @@ test("Topics holds sections that fold, each with its count, by the mouse and by 
   await scratch(page, press, false);
   // Help, first opened after a start: every section closed, each with its count.
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
-    /^▸\s*Packages\s*10$/,
-    /^▸\s*Errors and warnings\s*144$/,
+    /^▸\s*Packages\s*11$/,
+    /^▸\s*Errors and warnings\s*148$/,
     /^▸\s*Using Zemp Lite\s*\d+$/,
   ]);
   await expect(topics(page).getByRole("list")).toHaveCount(0);
@@ -87,8 +88,8 @@ test("Topics holds sections that fold, each with its count, by the mouse and by 
   }
   // Unfolded: the packages and the codes, each section open, with its count.
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
-    /^▾\s*Packages\s*10$/,
-    /^▾\s*Errors and warnings\s*144$/,
+    /^▾\s*Packages\s*11$/,
+    /^▾\s*Errors and warnings\s*148$/,
     /^▾\s*Using Zemp Lite\s*\d+$/,
   ]);
   await expect(listOf(page, "Packages").getByRole("button")).toHaveText(
@@ -106,16 +107,16 @@ test("Topics holds sections that fold, each with its count, by the mouse and by 
   const counts = await families.evaluateAll((all) =>
     all.map((one) => Number(one.querySelector(".count")?.textContent)),
   );
-  expect(counts.reduce((sum, count) => sum + count, 0)).toBe(144);
+  expect(counts.reduce((sum, count) => sum + count, 0)).toBe(148);
 
   // By the mouse: a section folds to its head and unfolds.
   await expect(head(page, "Packages")).toHaveAttribute("aria-expanded", "true");
   await press(head(page, "Packages"));
   await expect(head(page, "Packages")).toHaveAttribute("aria-expanded", "false");
-  await expect(head(page, "Packages")).toHaveText(/^▸\s*Packages\s*10$/);
+  await expect(head(page, "Packages")).toHaveText(/^▸\s*Packages\s*11$/);
   await expect(listOf(page, "Packages")).toHaveCount(0);
   await press(head(page, "Packages"));
-  await expect(listOf(page, "Packages").getByRole("button")).toHaveCount(10);
+  await expect(listOf(page, "Packages").getByRole("button")).toHaveCount(11);
   // A family unfolds to its codes with their titles.
   await press(family(page, "Z01xx"));
   await expect(family(page, "Z01xx")).toHaveAttribute("aria-expanded", "true");
@@ -146,7 +147,7 @@ test("Topics holds sections that fold, each with its count, by the mouse and by 
     page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Help" }),
   );
   await expect(head(page, "Packages")).toHaveAttribute("aria-expanded", "false");
-  await expect(listOf(page, "The codes of W1xxx").getByRole("button")).toHaveCount(6);
+  await expect(listOf(page, "The codes of W1xxx").getByRole("button")).toHaveCount(7);
 });
 
 test("every package and every code of Topics opens its page", async ({ page, press }) => {
@@ -220,7 +221,7 @@ test("every package and every code of Topics opens its page", async ({ page, pre
     expect(wrong.wrong).toEqual([]);
     pressed += wrong.count;
   }
-  expect(pressed).toBe(144);
+  expect(pressed).toBe(148);
 });
 
 test("beside a function's page Topics holds its package, the open function marked; the page's sections are at the right", async ({
@@ -252,7 +253,9 @@ test("beside a function's page Topics holds its package, the open function marke
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([/^stats\s*14$/]);
   await expect(topics(page).getByText("On this page")).toHaveCount(0);
   const sections = onThisPage(page).getByRole("list").getByRole("button");
-  await expect(sections.first()).toHaveText("Usage");
+  // The page of `t_test` is in the fuller form from Zeff 0.9.0: In brief comes first.
+  await expect(sections.first()).toHaveText("In brief");
+  await expect(sections.filter({ hasText: /^Usage$/ })).toHaveCount(1);
   await expect(sections.first()).toBeInViewport();
   // A section goes to its place and is marked, as in the Outline pane it was.
   await press(sections.filter({ hasText: /^Examples$/ }));
@@ -289,13 +292,13 @@ test("beside a function's page Topics holds its package, the open function marke
   await expect(title(page)).toHaveText("t_test");
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("t_test");
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
-    /^▾\s*Packages\s*10$/,
-    /^▾\s*Errors and warnings\s*144$/,
+    /^▾\s*Packages\s*11$/,
+    /^▾\s*Errors and warnings\s*148$/,
     /^▾\s*Using Zemp Lite\s*\d+$/,
   ]);
   await expect(allTopics(page)).toHaveCount(0);
   // The page's sections are where they were, at the right; the next page has its neighbours.
-  await expect(sections.first()).toHaveText("Usage");
+  await expect(sections.first()).toHaveText("In brief");
   await ask(page, "reg");
   await expect(allTopics(page)).toBeVisible();
   await expect(
@@ -320,7 +323,7 @@ test("a name of two packages has both beside it, a dataset its package, and a co
     topics(page)
       .getByRole("region", { name: /^Beside this page/ })
       .getByRole("heading", { level: 3 }),
-  ).toHaveText([/^data\s*56$/, /^results\s*23$/]);
+  ).toHaveText([/^data\s*57$/, /^results\s*24$/]);
   for (const [name, which] of [
     ["data", "of a frame"],
     ["results", "of a result"],

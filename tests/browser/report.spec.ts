@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { expect, test, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 async function ranWith(
@@ -39,7 +39,7 @@ test("Report a problem builds the report zeff report-bug writes, shows it whole,
   await expect(window_.getByTestId("report-what")).toHaveText(
     "an error, Z0715; 1 of the 4 statements of scripts/main.zeff are kept",
   );
-  const released = file("tests/scripts/report/main-Z0715-2c0bfa05.md").replace(
+  const released = file("tests/scripts/report/main-Z0715-c20d7af0.md").replace(
     "- platform: aarch64 macos",
     "- platform: wasm32 browser",
   );

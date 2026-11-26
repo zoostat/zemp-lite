@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { cursorTo, expect, test, write, useExample } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
 
 async function scratch(page: Page, press: (target: ReturnType<Page["locator"]>) => Promise<void>) {
@@ -143,7 +143,7 @@ test("the Help place has the page's outline at its left, each section gone to an
   );
   await expect(
     topics(page).getByRole("list", { name: "Packages" }).getByRole("button").first(),
-  ).toHaveText(/^core\s*71$/);
+  ).toHaveText(/^core\s*72$/);
   const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
   await field.fill("summary");
   await field.press("Enter");
@@ -154,26 +154,35 @@ test("the Help place has the page's outline at its left, each section gone to an
   await press(page.getByTestId("help-page").getByRole("button", { name: "summary · of a frame" }));
   await expect(page.getByTestId("help-title")).toHaveText("of a frame");
   const entries = outline(page).getByRole("button");
+  // The page of a frame's `summary` is in the fuller form from Zeff 0.9.0.
   await expect(entries).toHaveText([
+    "In brief",
     "Usage",
     "Description",
     "Arguments",
     "Value",
+    "Missing values",
     "Details",
     "Warnings and notes",
+    "A common mistake",
+    "Coming from R or Stata",
+    "Related tasks",
     "Accuracy",
     "References",
     "See also",
     "Examples",
   ]);
   // A section gone to stands at the top of the page's own pane, and is the one marked.
-  const examples = entries.nth(9);
+  const examples = entries.nth(14);
   await press(examples);
   await expect(examples).toHaveAttribute("aria-current", "location");
   await expect
     .poll(async () => {
       const pane = (await page.getByTestId("help").locator(".page").boundingBox())!;
-      const part = (await page.getByTestId("help-page").locator('[data-line="65"]').boundingBox())!;
+      const part = (await page
+        .getByTestId("help-page")
+        .locator('[data-line="101"]')
+        .boundingBox())!;
       return Math.round(part.y - pane.y);
     })
     .toBeLessThan(30);
@@ -313,13 +322,15 @@ test("a page of every kind of part is set in type, and every word of it is the e
   const codes = formatted.locator("table.codes");
   await expect(codes.locator("th")).toHaveText([
     "Note",
+    "Note",
     "W0102",
     "Z0101",
     "Z0217",
     "Z0219",
     "Z0401",
   ]);
-  await expect(codes.locator(".badge.note")).toHaveCount(1);
+  // Two notes from Zeff 0.9.0: the second, of `len` of a text variable, names `n_chars`.
+  await expect(codes.locator(".badge.note")).toHaveCount(2);
   await expect(codes.locator("button.badge.warning")).toHaveCount(1);
   await expect(codes.locator("button.badge.error")).toHaveCount(4);
   await expect(formatted.getByRole("columnheader")).toHaveText(["Zeff", "R", "Stata"]);
@@ -460,7 +471,7 @@ test("a package's page is set from the engine's list, and a line the reader does
   const formatted = page.getByTestId("help-page");
   await expect(formatted.getByRole("heading", { level: 3 })).toHaveText("regress");
   await expect(formatted).toContainText("package · tier 2");
-  await expect(formatted).toContainText("10 functions in Zeff 0.8.0");
+  await expect(formatted).toContainText("10 functions in Zeff 0.9.0");
   await expect(formatted.getByRole("row").first()).toHaveText(
     /^reg\s*Linear regression by least squares, with fixed effects$/,
   );

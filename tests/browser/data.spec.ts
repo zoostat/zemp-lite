@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { EXAMPLE, expect, scriptText, test, useExample, write } from "./support";
 
-const READY = "engine Zeff 0.8.0 ready";
+const READY = "engine Zeff 0.9.0 ready";
 
 // Copying asks the browser for the clipboard; Chromium under test grants it only when told.
 test.beforeEach(async ({ browserName, context }) => {
