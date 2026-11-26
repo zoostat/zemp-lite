@@ -14,6 +14,13 @@ import { boundPlots, type Run } from "../output/run";
  * it binds a name to a plot, which prints nothing.
  */
 export interface PlotStatement {
+  /**
+   * What the viewer knows it by from one run to the next (the plot shown, the pins, the order
+   * of the strip): its `source`, which stays the same where lines are added above it; and for
+   * the second plot of a run with the same source (a name bound to a plot and bound again, a
+   * name printed twice), the source with ` · 2` after it, and so on.
+   */
+  id: string;
   /** The lines it begins and ends on, counted from 1. */
   line: number;
   last: number;
@@ -57,13 +64,14 @@ const HEAD = "plot · ";
 export function plotsOf(run: Run): PlotStatement[] {
   const lines = linesOf(run);
   const bound = boundPlots(run);
-  return run.statements
+  const found = run.statements
     .filter((statement) => statement.state === "done")
     .flatMap((statement) => {
       const last = Math.min(endOf(run.ranges, statement.line), Math.max(lines.length, 1));
       if (statement.printed.startsWith(HEAD)) {
         return [
           {
+            id: "",
             line: statement.line,
             last,
             source: lines.slice(statement.line - 1, last).join("\n"),
@@ -76,8 +84,16 @@ export function plotsOf(run: Run): PlotStatement[] {
       const name = bound.get(statement.line);
       return name === undefined
         ? []
-        : [{ line: statement.line, last, source: name, title: name, kind: "" }];
+        : [{ id: "", line: statement.line, last, source: name, title: name, kind: "" }];
     });
+  // Each is known by its source, and a second of the same source by its count after it.
+  const seen = new Map<string, number>();
+  for (const plot of found) {
+    const count = (seen.get(plot.source) ?? 0) + 1;
+    seen.set(plot.source, count);
+    plot.id = count === 1 ? plot.source : `${plot.source} · ${count}`;
+  }
+  return found;
 }
 
 /** A page of a journal or a slide, by the word `export` knows it by (Language Reference, section 7.6). */
@@ -108,6 +124,17 @@ export const sizeArgument = (wanted: Wanted) =>
   wanted.page === undefined
     ? `[${millimetres(wanted.width)}, ${millimetres(wanted.height)}]`
     : wanted.page;
+
+/**
+ * The size of a figure asked for, in millimetres: a named page's own, or the place's pixels as
+ * `export` would be given them. It is what the engine lays a kept plot out at, so that the
+ * figure on the screen is the one the statement with that size writes.
+ */
+export function sizeIn(wanted: Wanted): { width: number; height: number } {
+  return wanted.page === undefined
+    ? { width: millimetres(wanted.width), height: millimetres(wanted.height) }
+    : { width: PAGES[wanted.page].width, height: PAGES[wanted.page].height };
+}
 
 /** A length of the screen in millimetres, to a hundredth: a pixel is 1/96 of an inch. */
 export function millimetres(pixels: number): number {
@@ -179,6 +206,12 @@ export type Format = "svg" | "pdf" | "png";
 /**
  * The script with one `export` added, of a plot to a file of the format and size chosen: what
  * the interface runs to save a figure. Gives the file to read back.
+ *
+ * The `export` is written straight after the plot's own statement (from release 0.3, step 7b;
+ * until then, after the script). There the plot's name still holds that plot, where a name
+ * bound again further down would hold another; and the file is written before any statement
+ * further down can fail. The lines below it move down, which matters to nothing: the run is
+ * made for the file alone.
  */
 export function withExport(
   text: string,
@@ -187,9 +220,12 @@ export function withExport(
   size: string,
 ): { text: string; file: string } {
   const script = text.replace(/\n+$/, "");
+  const lines = script === "" ? [] : script.split("\n");
   const file = `zemp-export.${format}`;
+  const at = Math.min(Math.max(plot.last, 0), lines.length);
+  const added = [`(${plot.source}`, `).export("${file}", size: ${size})`];
   return {
-    text: `${script === "" ? "" : `${script}\n`}(${plot.source}\n).export("${file}", size: ${size})\n`,
+    text: `${[...lines.slice(0, at), ...added, ...lines.slice(at)].join("\n")}\n`,
     file: `output/${file}`,
   };
 }

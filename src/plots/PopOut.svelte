@@ -17,7 +17,7 @@
   });
 
   // The plot of the same statement in the run shown now, where it still has one.
-  const now = $derived(workspace.plots.find((one) => one.source === plot.source) ?? null);
+  const now = $derived(workspace.plots.find((one) => one.id === plot.id) ?? null);
 </script>
 
 <main>

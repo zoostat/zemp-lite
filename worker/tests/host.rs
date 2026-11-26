@@ -1832,12 +1832,17 @@ fn a_run_s_plots_are_laid_out_at_a_size_without_a_new_run_as_export_writes_them(
     assert_eq!(small["svg"], Value::Null);
     assert_eq!(small["of_size"], true);
     assert!(!small["message"].as_str().unwrap().is_empty());
-    // A statement that made no plot, another text, and a project in which nothing ran: not held.
+    // A statement that made no plot, another text, and a project in which nothing ran: not
+    // held; and which of them it is, since only where the run was of another text would a
+    // run of this one bring the plot.
+    assert_eq!(at(16, 150.02, 93.13)["ran"], true);
     assert_eq!(at(4, 150.02, 93.13)["held"], false);
+    assert_eq!(at(4, 150.02, 93.13)["ran"], true);
     let other: Value =
         serde_json::from_str(&host.plot_svg("scripts/main.zeff", "print(1)\n", 16, 150.02, 93.13))
             .unwrap();
     assert_eq!(other["held"], false);
+    assert_eq!(other["ran"], false);
     let fresh: Value = serde_json::from_str(&Host::new("scratch").plot_svg(
         "scripts/main.zeff",
         &text,
@@ -1847,6 +1852,7 @@ fn a_run_s_plots_are_laid_out_at_a_size_without_a_new_run_as_export_writes_them(
     ))
     .unwrap();
     assert_eq!(fresh["held"], false);
+    assert_eq!(fresh["ran"], false);
 }
 
 #[test]
@@ -1916,4 +1922,5 @@ fn a_plot_is_held_where_its_name_is_bound_again_and_where_a_later_statement_fail
     let after: Value =
         serde_json::from_str(&host.plot_svg("scripts/main.zeff", text, 6, 120.0, 80.0)).unwrap();
     assert_eq!(after["held"], false);
+    assert_eq!(after["ran"], true);
 }

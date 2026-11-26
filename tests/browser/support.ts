@@ -173,6 +173,24 @@ export const test = base.extend<Each, Shared>({
 
 export { expect };
 
+/**
+ * Count the runs asked of the engine from here on, by the messages to its worker: every run,
+ * whether a reader began it or the interface made it for itself. To be called before the page
+ * is loaded; gives what reads the count.
+ */
+export async function countRuns(page: Page): Promise<() => Promise<number>> {
+  await page.addInitScript(() => {
+    const counted = window as unknown as { zempRuns: number };
+    counted.zempRuns = 0;
+    const post = Worker.prototype.postMessage;
+    Worker.prototype.postMessage = function (this: Worker, ...given: unknown[]) {
+      if ((given[0] as { type?: string } | null)?.type === "run") counted.zempRuns += 1;
+      return (post as (...all: unknown[]) => void).apply(this, given);
+    } as typeof Worker.prototype.postMessage;
+  });
+  return () => page.evaluate(() => (window as unknown as { zempRuns: number }).zempRuns);
+}
+
 /** The editor of the script shown. */
 export const editor = (page: Page) =>
   page.getByRole("textbox", { name: "The script", exact: true });

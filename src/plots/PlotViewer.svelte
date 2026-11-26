@@ -48,6 +48,16 @@
   const paged = $derived<Page | null>(page === "fit" ? null : page);
   // Two plots stand side by side; three or four in two rows of two.
   const rows = $derived(pinned.length > 2 ? 2 : 1);
+  // How the figures last drawn were made, and how long it took.
+  const drawnIn = $derived(
+    workspace.drawMs === null
+      ? ""
+      : `${
+          workspace.drawnBy === "engine"
+            ? "laid out by the engine in"
+            : "drawn by a run of the script in"
+        } ${took(workspace.drawMs)}`,
+  );
 
   // Saving a figure.
   let format = $state<Format>("svg");
@@ -145,9 +155,9 @@
     <p class="none">No plot yet.</p>
   {:else}
     <ul class="strip" aria-label="Plots of the last run" bind:this={list}>
-      {#each strip as plot, at (plot.source)}
+      {#each strip as plot, at (plot.id)}
         <li
-          class:on={pinned.length === 0 && shown?.source === plot.source}
+          class:on={pinned.length === 0 && shown?.id === plot.id}
           class:over={dragged !== null && dragged !== at}
           draggable="true"
           ondragstart={(event) => {
@@ -167,7 +177,7 @@
             onclick={() => workspace.showPlot(plot)}
             onkeydown={(event) => void key(event, at)}
             aria-label="Show the plot {plot.title}"
-            aria-current={shown?.source === plot.source}
+            aria-current={shown?.id === plot.id}
           >
             <span class="small"><Figure {workspace} {plot} most={440} /></span>
             <span class="name">{plot.title}</span>
@@ -180,8 +190,8 @@
           <label class="pin">
             <input
               type="checkbox"
-              checked={workspace.views.plots.pinned.includes(plot.source)}
-              disabled={!workspace.views.plots.pinned.includes(plot.source) &&
+              checked={workspace.views.plots.pinned.includes(plot.id)}
+              disabled={!workspace.views.plots.pinned.includes(plot.id) &&
                 workspace.views.plots.pinned.length >= MOST_PINNED}
               onchange={() => workspace.pinPlot(plot)}
             />
@@ -276,7 +286,7 @@
               style:grid-template-columns="repeat({pinned.length > 2 ? 2 : pinned.length}, minmax(0,
               1fr))"
             >
-              {#each pinned as plot (plot.source)}
+              {#each pinned as plot (plot.id)}
                 <div class="cell">
                   <h2><span class="mono">line {plot.line}</span> {plot.title}</h2>
                   <Figure
@@ -293,7 +303,7 @@
             </div>
           {:else if shown !== null}
             <h2><span class="mono">line {shown.line}</span> {shown.title}</h2>
-            {#key shown.source}
+            {#key shown.id}
               <Figure
                 {workspace}
                 plot={shown}
@@ -313,9 +323,7 @@
               >{copied ? "Copied" : "Copy as Zeff"}</button
             >
             {#if workspace.drawMs !== null}
-              <span class="about time" data-testid="draw-time"
-                >drawn by a run of the script in {took(workspace.drawMs)}</span
-              >
+              <span class="about time" data-testid="draw-time">{drawnIn}</span>
             {/if}
           </div>
         {/if}

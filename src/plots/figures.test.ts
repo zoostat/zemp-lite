@@ -69,13 +69,74 @@ describe("the plots of a run", () => {
   it("are the statements for which the engine printed a plot's summary", () => {
     expect(plotsOf(exampleRun())).toEqual([
       {
+        id: "schooling",
         line: 17,
         last: 17,
         source: "schooling",
         title: "w2010 · log(wage) against educ",
         kind: "",
       },
-      { line: 21, last: 21, source: "shape", title: "w2010 · log(wage)", kind: "" },
+      { id: "shape", line: 21, last: 21, source: "shape", title: "w2010 · log(wage)", kind: "" },
+    ]);
+  });
+
+  it("are also the plots bound to a name, each its own statement's, a name bound again among them", () => {
+    // Release 0.3, step 7b: the engine keeps the plots of a run by their statements, so the
+    // plot of a name bound again further down is drawn, where until then it was left out.
+    const text = [
+      "let p = d.plot(x: a).points()", // 1
+      "let p = d.plot(x: a).histogram()", // 2
+      "let q = d.scatter(a, b)", // 3
+      "q", // 4
+      "let r = d.scatter(b, a)", // 5
+      "",
+    ].join("\n");
+    const bound = (line: number, name: string) => ({
+      line,
+      end: line,
+      kind: "statement" as const,
+      name,
+      type: "Plot",
+      ran: true,
+      stdout: "",
+      stderr: "",
+      frame: null,
+      memory: null,
+      rows: null,
+      columns: null,
+      length: null,
+      n: null,
+      error: null,
+    });
+    const made = () => {
+      const run = ran(text, [
+        [1, ""],
+        [2, ""],
+        [3, ""],
+        [4, "plot · d · b against a\n"],
+        [5, ""],
+      ]);
+      run.info = [bound(1, "p"), bound(2, "p"), bound(3, "q"), bound(5, "r")];
+      return run;
+    };
+    // One run of the engine's: both plots called `p`, each on its own line; `q` where it is
+    // printed, by the statement that is its name alone, and not twice; and `r`.
+    expect(plotsOf(made()).map((plot) => [plot.line, plot.source])).toEqual([
+      [1, "p"],
+      [2, "p"],
+      [4, "q"],
+      [5, "r"],
+    ]);
+    // The viewer tells the two called `p` apart: each has an identity of its own.
+    expect(plotsOf(made()).map((plot) => plot.id)).toEqual(["p", "p · 2", "q", "r"]);
+    // A page that holds results of more than one run of the engine's (a statement run alone):
+    // a plot is then drawn by its name after the script, where the first `p` is the second.
+    const merged = made();
+    merged.partial = [5];
+    expect(plotsOf(merged).map((plot) => [plot.line, plot.source])).toEqual([
+      [2, "p"],
+      [4, "q"],
+      [5, "r"],
     ]);
   });
 
@@ -89,6 +150,7 @@ describe("the plots of a run", () => {
     ]);
     expect(plotsOf(run)).toEqual([
       {
+        id: "w.plot(x: log(wage))\n    .histogram(bins: 30) // the shape",
         line: 2,
         last: 3,
         source: "w.plot(x: log(wage))\n    .histogram(bins: 30) // the shape",
@@ -154,7 +216,7 @@ describe("the text sent for the figures of a run", () => {
   it("asks for one plot at two sizes with two exports, and passes over a plot that is not there", () => {
     const sent = withExports(
       "p\n",
-      [{ line: 1, last: 1, source: "p", title: "t", kind: "" }],
+      [{ id: "p", line: 1, last: 1, source: "p", title: "t", kind: "" }],
       [
         { line: 1, width: 400, height: 300 },
         { line: 9, width: 400, height: 300 },
@@ -169,6 +231,7 @@ describe("the text sent for the figures of a run", () => {
 
   it("keeps a comment at the end of the statement from swallowing what is added", () => {
     const plot = {
+      id: "w.plot(x: a)\n    .points() // the cloud",
       line: 1,
       last: 2,
       source: "w.plot(x: a)\n    .points() // the cloud",

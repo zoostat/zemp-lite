@@ -379,11 +379,26 @@ export function took(ms: number): string {
 const PLOT_HEAD = "plot · ";
 
 /**
+ * Whether what the page shows of a run is one run of the engine's: not a run of some
+ * statements alone, which keeps the other statements' results from the run before. The engine
+ * holds the prints and the plots of its last run, by their statements; where the page holds
+ * results of more than one, they are not all there to be asked for again.
+ */
+export function oneRun(run: Pick<Run, "partial" | "statements">): boolean {
+  return run.partial == null && run.statements.every((one) => one.mark == null);
+}
+
+/**
  * The plots bound with `let` that are drawn where they are bound, by the line each statement
  * begins on, with the name: a statement whose value the engine names `Plot`, which binds a name
- * and printed nothing. Left out are a name bound again later, which at the end of the script
- * holds another value, and a plot printed later by a statement that is its name alone, which is
- * drawn there, as it was printed.
+ * and printed nothing. Left out is a plot printed later by a statement that is its name alone,
+ * which is drawn there, as it was printed.
+ *
+ * A name bound again later holds another value at the end of the script. The engine keeps the
+ * plots of a run by their statements (from Zeff 0.9.0; release 0.3, step 7b), so such a plot
+ * is its own statement's and is drawn. Only where the page holds results of more than one run
+ * of the engine's (`oneRun`), and a plot is drawn by its name after the script, is it left out,
+ * as it always was until then.
  */
 export function boundPlots(run: Run): Map<number, string> {
   const found = new Map<number, string>();
@@ -402,7 +417,7 @@ export function boundPlots(run: Run): Map<number, string> {
     if (name === null || info.type !== "Plot" || info.stdout !== "") continue;
     if (statement?.state !== "done" || statement.printed !== "") continue;
     const later = (line: number) => line > info.line;
-    if (run.info.some((one) => later(one.line) && one.name === name)) continue;
+    if (!oneRun(run) && run.info.some((one) => later(one.line) && one.name === name)) continue;
     const printedLater = run.statements.some(
       (other) =>
         later(other.line) && other.printed.startsWith(PLOT_HEAD) && textOf(other.line) === name,

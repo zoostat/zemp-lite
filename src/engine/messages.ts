@@ -52,6 +52,21 @@ export interface StatementInfo extends Ranged {
 }
 
 /**
+ * The plot a statement of the last run made, laid out by the engine on a page of a size
+ * without a new run (open decision #197; from Zeff 0.9.0): the figure as an SVG; or, where the
+ * engine will not draw it at that size, its words; or not held, where the engine's last run
+ * was not of the text asked about (`ran` is then false) or the statement gave no plot of its
+ * own.
+ */
+export interface LaidOut {
+  /** Whether the engine's last run was of the text asked about. */
+  ran: boolean;
+  held: boolean;
+  svg: string | null;
+  message: string;
+}
+
+/**
  * A section of a script as the engine reads it (open decision #178; from Zeff 0.9.0, what its
  * language server reports as the outline): the line of its heading and its last line, counted
  * from 1; its level, 1 for `// # Title` and 2 for `// ## Title`; and its title.
@@ -274,6 +289,7 @@ export type Request =
   | { type: "run"; script: string; text: string; width?: number; only?: number[] }
   | { type: "check"; script: string; text: string }
   | { type: "printedAt"; script: string; text: string; width: number }
+  | { type: "plotSvg"; script: string; text: string; line: number; width: number; height: number }
   | { type: "explain"; code: string }
   | { type: "language"; body: string }
   | { type: "help"; name: string }
@@ -324,6 +340,15 @@ export type Reply =
     }
   | { type: "dependencies"; statements: Needs[] }
   | { type: "printed"; width: number; statements: Reprinted[] | null }
+  | {
+      type: "plot";
+      line: number;
+      ran: boolean;
+      held: boolean;
+      svg: string | null;
+      message: string;
+      of_size: boolean;
+    }
   | { type: "explained"; page: ExplainedPage }
   | { type: "language"; messages: string[] }
   | { type: "help"; page: string | null; message: string }

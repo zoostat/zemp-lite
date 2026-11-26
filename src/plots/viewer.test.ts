@@ -11,6 +11,7 @@ import {
 import { compared, moved, ordered, toggled } from "./viewer";
 
 const plot = (line: number, source: string): PlotStatement => ({
+  id: source,
   line,
   last: line,
   kind: "",
@@ -75,6 +76,31 @@ describe("saving a figure", () => {
       text: 'let p = 1\np\n(p\n).export("zemp-export.pdf", size: one_column)\n',
       file: "output/zemp-export.pdf",
     });
+  });
+
+  it("writes the export straight after the plot's own statement, where its name is still its own", () => {
+    // Release 0.3, step 7b. A name bound again further down holds another plot at the end of
+    // the script, and a statement further down may fail: the file is written before either.
+    const script = 'let p = 1\nlet p = 2\nerror("stop")\n';
+    expect(withExport(script, plot(1, "p"), "png", "[120, 80]").text).toBe(
+      'let p = 1\n(p\n).export("zemp-export.png", size: [120, 80])\nlet p = 2\nerror("stop")\n',
+    );
+    // After the last line of a statement written over several.
+    expect(
+      withExport(
+        "d.plot(x: a)\n    .points()\nprint(1)\n",
+        { ...plot(1, "x"), last: 2 },
+        "svg",
+        "slide",
+      ).text,
+    ).toBe('d.plot(x: a)\n    .points()\n(x\n).export("zemp-export.svg", size: slide)\nprint(1)\n');
+    // A script with no line break at its end, and an empty one.
+    expect(withExport("p", plot(1, "p"), "svg", "slide").text).toBe(
+      'p\n(p\n).export("zemp-export.svg", size: slide)\n',
+    );
+    expect(withExport("", plot(1, "p"), "svg", "slide").text).toBe(
+      '(p\n).export("zemp-export.svg", size: slide)\n',
+    );
   });
 
   it("offers the statement that does the same, named after the plot where it has a name", () => {

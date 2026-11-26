@@ -3013,3 +3013,23 @@ The wait is there at the trial address every time and at the address once in fou
 **Tests.** Rust: the outcome's list for the example (four plots: two bound, and the two statements that are those names alone); each laid out at the size `export` was given is the kept file, byte for byte; another size is another figure; nothing is told of a run; a page of 8 by 6 mm gives the engine's words and says the size is at fault; a statement that made no plot, another text and a project in which nothing ran are not held. The two limits: in a script that binds `p` to a plot, then to another, then makes a third, then fails, each of the three is held as its own statement's, and each is what `export` writes for that plot in a script of its own; the statement after the failure made nothing. Under Node: the same through the worker's messages.
 
 **Reason.** Open decision #197: the engine hands the plots of a run to the interface, and a figure is laid out, not run for.
+
+## 27 November 2026: The screens draw from the plots the engine kept (release 0.3, step 7b; #197)
+
+**What changed.** A figure under its statement, in the Plots place, in a comparison and in a window of its own is laid out by the engine from the plot its run kept, at the size of its place. Nothing is run for it, and nothing is run when a place changes its size. The Plots place says so under the figure: `laid out by the engine in 3 ms`, where it said `drawn by a run of the script in …`.
+
+**The two limits are lifted.** A name bound to a plot and bound again further down: each statement's plot is drawn, its own. A run that fails at a later statement: the plots made before it are drawn.
+
+**Where the engine's last run was not the page's** (a line of the console after the script was edited, a plot saved as a file, a worker started afresh), the text of the page's run is run again once, with nothing told, and the engine is asked again; the place then says `drawn by a run of the script in …`. The worker's answer says which of two things "not held" is (`ran`): the last run was of another text, where a run brings the plot; or it was of this text and the statement gave no plot of its own (a list of plots, say), where the figure is drawn as it was, by a run with an `export`.
+
+**After a statement run alone** the page shows results of more than one run of the engine's, which holds the plots of the last only. The figures are then drawn as before, by a run with an `export` after the script, and with the limits as before (a name bound again is left out). The next whole run puts it right.
+
+**Save… stays a run with an `export`**, which is what writes PDF and PNG. Its `export` is now written straight after the plot's own statement, not after the script: there the name still holds that plot, and the file is written before anything further down can fail. So a saved file is the plot seen, in both cases the limits covered.
+
+**A fault found by the new test, and mended.** The Plots place knew a plot by the text of its statement. Two plots of one run with the same text (a name bound twice; a name printed twice, which was there before this step) broke its list. Each plot now has an identity of its own: its text, and for a second of the same text the text with ` · 2` after it. Views kept by a browser from before are read as they were.
+
+**Not done, and why.** The engine's list of the plots of a run (step 7a) is not what decides which statements are plots: the page still reads the engine's facts of each statement (a print that begins `plot ·`, or a value named `Plot` that printed nothing), which say the same and are there after a statement run alone too.
+
+**Tests.** Unit: the plots of a run with a name bound twice, each with its identity; the same on a page of more than one run; the size in millimetres; the `export` written after the plot's statement. Browser, both engines: a window made narrower in four steps with one run asked of the engine in all; a name bound twice drawn at each statement, listed twice in Plots, saved as its own, then laid out again after the save by one run and after that by none; a plot drawn above a fit that fails (and the ROC curve of the binary script, which now runs whole with its failing fit); after a statement run alone, drawn by a run; the kept figures of the example and of the showcase's 21 plots as before. The worker's tests hold `ran`.
+
+**Reason.** Open decision #197 and the Zemp Specification, section 7 ("the engine returns a resolution-independent scene, and the viewer redraws it to the exact size of its pane"): a figure is laid out, not run for.

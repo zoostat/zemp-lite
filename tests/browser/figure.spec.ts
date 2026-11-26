@@ -1,7 +1,17 @@
 // A plot from the engine, at the size of its pane (release 0.1, step 11).
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, printed, saidAsWritten, scriptText, test, write, useExample } from "./support";
+import {
+  countRuns,
+  cursorTo,
+  expect,
+  printed,
+  saidAsWritten,
+  scriptText,
+  test,
+  write,
+  useExample,
+} from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const file = (path: string) => readFileSync(new URL(`../../${path}`, import.meta.url), "utf8");
@@ -146,8 +156,8 @@ test("a plot is under its statement in the script and in the Plots place, laid o
   await press(plots.getByRole("button", { name: "Plots of the run", exact: true }));
   await press(plots.getByRole("button", { name: "The plot", exact: true }));
   await expect(plots.getByRole("list", { name: "Plots of the last run" })).toBeHidden();
-  // The plot is laid out again for the wider place, by a run at the new width: it is read
-  // once the place has widened and the drawing shown is the one made for it, the same at two
+  // The plot is laid out again for the wider place, by the engine from the plot its run kept:
+  // it is read once the place has widened and the drawing shown is the one made for it, the same at two
   // readings in a row (on a slow machine the place can still be widening, or the drawing on
   // its way, at the first readings).
   const inPlots = await steady(
@@ -160,7 +170,7 @@ test("a plot is under its statement in the script and in the Plots place, laid o
   // Larger than under its statement, and a different drawing: laid out for this place.
   expect(inPlots.shown[0]!).toBeGreaterThan(inScript.shown[0]!);
   expect(inPlots.svg).not.toBe(inScript.svg);
-  await expect(page.getByTestId("draw-time")).toHaveText(/^drawn by a run of the script in \d/);
+  await expect(page.getByTestId("draw-time")).toHaveText(/^laid out by the engine in \d/);
   test.info().annotations.push({
     type: "redraw",
     description: (await page.getByTestId("draw-time").textContent()) ?? "",
@@ -171,10 +181,13 @@ test("when its place is made narrower a plot is laid out afresh, never stretched
   page,
   press,
 }) => {
+  // Every run asked of the engine is counted: the one the reader begins, and no other.
+  const runs = await countRuns(page);
   await page.setViewportSize({ width: 1400, height: 900 });
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
+  expect(await runs()).toBe(1);
   await press(
     page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
   );
@@ -206,6 +219,136 @@ test("when its place is made narrower a plot is laid out afresh, never stretched
     /<text[^>]*font-size="([\d.]+)"[^>]*>Years of schooling<\/text>/.exec(svg)?.[1];
   expect(title(wide.svg)).toBeDefined();
   expect(title(narrow.svg)).toBe(title(wide.svg));
+  // Nothing was run for any of it: the engine laid each figure out from the plot its one run
+  // kept (release 0.3, step 7b; open decision #197).
+  expect(await runs()).toBe(1);
+  await expect(page.getByTestId("draw-time")).toHaveText(/^laid out by the engine in \d/);
+});
+
+/** The words a figure sets as text, in the order it sets them. */
+const wordsOf = (svg: string) => [...svg.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((m) => m[1]);
+
+test("a name bound to a plot and bound again is drawn at each statement, each plot its own, and saved as its own", async ({
+  page,
+  press,
+}) => {
+  const runs = await countRuns(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await scratch(page, press);
+  const script =
+    "let w = dataset(wages).where(year == 2010)\n" +
+    'let p = w.plot(educ, log(wage)).points().labels(x: "Years of schooling")\n' +
+    'let p = w.plot(x: log(wage)).histogram(bins: 20).labels(x: "Log of the wage")\n' +
+    'print("after")\n';
+  await write(page, script);
+  await expect(page.locator("header.top")).toContainText("· saved");
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
+  // Under each statement the plot that statement made: until Zeff 0.9.0 the first was not
+  // drawn, the name holding the second by the end of the script.
+  const first = await figure(page, 2);
+  const second = await figure(page, 3);
+  expect(wordsOf(first.svg)).toContain("Years of schooling");
+  expect(wordsOf(first.svg)).not.toContain("Log of the wage");
+  expect(wordsOf(second.svg)).toContain("Log of the wage");
+  expect(wordsOf(second.svg)).not.toContain("Years of schooling");
+  expect(await runs()).toBe(1);
+  // Both stand in the Plots place, the first shown.
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
+  );
+  const plots = page.getByTestId("plots");
+  await expect(
+    page
+      .getByRole("complementary", { name: "Plots: the left pane" })
+      .getByRole("region", { name: "Plots of the run" })
+      .getByRole("listitem"),
+  ).toHaveCount(2);
+  const large = await figure(page, 2, plots.locator(".stage"));
+  expect(wordsOf(large.svg)).toContain("Years of schooling");
+  expect(await runs()).toBe(1);
+  // Saved as a file, the first plot is the first: the `export` the interface runs for it is
+  // written straight after its statement, where the name still holds it.
+  await plots.getByLabel("Save as").selectOption("svg");
+  const download = page.waitForEvent("download");
+  await press(plots.getByRole("button", { name: "Save…" }));
+  const saved = readFileSync(await (await download).path(), "utf8");
+  expect(wordsOf(saved)).toContain("Years of schooling");
+  expect(wordsOf(saved)).not.toContain("Log of the wage");
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  expect(await runs()).toBe(2);
+  // The engine's last run is now the one that wrote the file. A figure wanted at a new size
+  // has the page's run made again, once, and is then laid out from it: still its own plot.
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await expect
+    .poll(async () => (await figure(page, 2, plots.locator(".stage"))).shown[0], {
+      timeout: 20_000,
+    })
+    .toBeLessThan(large.shown[0]!);
+  await expect
+    .poll(async () => wordsOf((await figure(page, 2, plots.locator(".stage"))).svg))
+    .toContain("Years of schooling");
+  await expect(page.getByTestId("draw-time")).toHaveText(/^drawn by a run of the script in \d/);
+  expect(await runs()).toBe(3);
+  // And from then on by the engine again, with nothing run.
+  await page.setViewportSize({ width: 1000, height: 900 });
+  await expect(page.getByTestId("draw-time")).toHaveText(/^laid out by the engine in \d/);
+  expect(await runs()).toBe(3);
+  // The script is as it was written: the lines added for the file never show.
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Script" }),
+  );
+  expect(await scriptText(page)).toBe(script);
+});
+
+test("a plot is drawn where a statement further down the script fails", async ({ page, press }) => {
+  const runs = await countRuns(page);
+  await scratch(page, press);
+  await write(
+    page,
+    "let w = dataset(wages).where(year == 2010)\n" +
+      "w.scatter(educ, log(wage))\n" +
+      "let apart = frame(dose = [1, 2, 3, 4, 5, 6], cured = [0, 0, 0, 1, 1, 1])\n" +
+      "apart.glm(cured ~ dose, family: binomial)\n" +
+      'print("not reached")\n',
+  );
+  await expect(page.locator("header.top")).toContainText("· saved");
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
+  // The plot was made before the run ended, and the engine kept it: it is drawn. Until Zeff
+  // 0.9.0 a figure was drawn by a run with lines after the script, which such a run never
+  // reached.
+  const drawn = await figure(page, 2);
+  expect(drawn.svg).toContain("<svg");
+  expect(Math.abs(drawn.own![0]! - drawn.shown[0]!)).toBeLessThan(1);
+  expect(await runs()).toBe(1);
+});
+
+test("after a statement run alone, the figures are drawn by a run of the script, as before", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
+  // The statement of line 17 alone: the page then shows results of two runs of the engine's,
+  // which holds the plots of the last only.
+  await cursorTo(page, 17);
+  await page.keyboard.press("ControlOrMeta+Enter");
+  await expect(page.getByTestId("run-facts")).toHaveText(/^run 2 · /);
+  await expect(page.getByRole("status")).toHaveText("done");
+  // The Plots place, in a window of an ordinary height.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Plots" }),
+  );
+  const plots = page.getByTestId("plots");
+  const large = await steady(page, plots.locator(".stage"), () => true);
+  expect(large.svg).toContain("<svg");
+  await expect(page.getByTestId("draw-time")).toHaveText(/^drawn by a run of the script in \d/);
 });
 
 test("a plot that is not given a name is drawn too, and a figure stays light in the dark theme", async ({

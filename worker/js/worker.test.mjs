@@ -412,9 +412,12 @@ test("a plot of the last run is laid out at a size, as export writes it, and not
   assert.equal(small.svg, null);
   assert.equal(small.of_size, true);
   assert.ok(small.message.length > 0);
-  // A statement that made no plot is not held.
+  // A statement that made no plot is not held, in a run that was of this text.
   ask(5, 4);
-  assert.equal((await next("plot")).held, false);
+  const none = await next("plot");
+  assert.equal(none.held, false);
+  assert.equal(none.ran, true);
+  assert.equal(first.ran, true);
 });
 
 test("the prints are not asked for before a project is opened", async (t) => {

@@ -11,12 +11,6 @@ import { cursorTo, editor, expect, test, wholeScript, write } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const SCRIPT = readFileSync(new URL("../scripts/binary.zeff", import.meta.url), "utf8");
-/**
- * The same without the fit that fails (its last three lines). A plot is drawn by a run of the
- * script with the lines the interface adds after it, so the plot of a run that fails further
- * down is not drawn: a known limit until the engine hands the plots of a run over (step 7).
- */
-const FITS = SCRIPT.split("\n").slice(0, 8).join("\n") + "\n";
 type Press = (target: Locator) => Promise<void>;
 
 const note = (page: Page, line: number) =>
@@ -88,12 +82,11 @@ test("the ROC curve is drawn under its statement and stands in the Plots place, 
   press,
 }) => {
   await scratch(page, press);
-  await write(page, FITS);
-  await expect(page.locator("header.top")).toContainText("· saved");
   await press(page.getByRole("button", { name: "Run", exact: true }));
-  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(page.getByRole("status")).toHaveText("ended with exit code 1");
   await wholeScript(page);
-  // Under its statement, by the engine.
+  // Under its statement, by the engine, from the plot its run kept: the fit that fails
+  // further down the script takes no figure with it (release 0.3, step 7b).
   const figure = page.locator('[data-testid="figure"][data-line="8"] img');
   await expect(figure).toBeVisible({ timeout: 30_000 });
   expect(await figure.getAttribute("src")).toMatch(/^data:image\/svg\+xml/);

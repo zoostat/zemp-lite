@@ -14,6 +14,7 @@ import type {
   Rows,
   View,
   Reprinted,
+  LaidOut,
 } from "../engine/messages";
 import {
   HOME as HELP_HOME,
@@ -36,7 +37,7 @@ import { usingText } from "../using/pages";
 import { engineIn, movedTo, ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
-import { begin, blocks, clockOf, end, hear, refused, said, type Run } from "../output/run";
+import { begin, blocks, clockOf, end, hear, refused, said, type Run, oneRun } from "../output/run";
 import {
   keyOf,
   plotsOf,
@@ -45,6 +46,7 @@ import {
   type Format,
   type PlotStatement,
   type Wanted,
+  sizeIn,
 } from "../plots/figures";
 import { compared, moved, ordered, toggled } from "../plots/viewer";
 import { Session } from "../project/session";
@@ -221,8 +223,14 @@ export class Workspace {
    * `problem` holds the engine's words where it could not be drawn.
    */
   figures = $state<Record<string, { svg: string | null; problem: string }>>({});
-  /** How long the last drawing of figures took, in milliseconds: one run of the script. */
+  /** How long the last drawing of figures took, in milliseconds. */
   drawMs = $state<number | null>(null);
+  /**
+   * How the figures last drawn were made: laid out by the engine from the plots its run kept,
+   * with nothing run (open decision #197; from Zeff 0.9.0), or, where the engine did not hold
+   * them, by a run of the script with an `export` added for each, as before.
+   */
+  drawnBy = $state<"engine" | "run">("engine");
   // What is wanted is a plain list, never shown: nothing on the screen follows it.
   // eslint-disable-next-line svelte/prefer-svelte-reactivity
   readonly #wanted = new Map<string, Wanted>();
@@ -1188,9 +1196,7 @@ export class Workspace {
    * was of another text (a console line), or its worker was started afresh.
    */
   async #reprinted(run: Run, width: number): Promise<Reprinted[] | null> {
-    if (run.partial != null || run.statements.some((one) => one.mark != null)) {
-      return null;
-    }
+    if (!oneRun(run)) return null;
     try {
       const again = await this.engine.printedAt(run.script, run.text, width);
       if (again === null) return null;
@@ -1538,8 +1544,14 @@ export class Workspace {
   }
 
   /**
-   * Draw the figures wanted and not yet drawn. The interface runs the text of the last run
-   * with an `export` added for each (see `plots/figures.ts`) and reads the files written.
+   * Draw the figures wanted and not yet drawn. The engine lays each out from the plots its
+   * last run kept, at the size of its place, with nothing run: the engine's own layout and
+   * writer, so that the figure is the file `export` would write at that size (open decision
+   * #197; release 0.3, step 7b). Where the engine's last run was not the page's, the page's
+   * text is run again once and the engine asked again. Only where the page shows results of
+   * more than one run (after a statement run alone) is a figure drawn as it was until then:
+   * the interface runs the text with an `export` added for it (see `plots/figures.ts`) and
+   * reads the file written.
    */
   async #draw(): Promise<void> {
     const before = this.#busy;
@@ -1557,13 +1569,65 @@ export class Workspace {
       }
       for (const one of wanted) this.figures[keyOf(one)] = { svg: null, problem: "" };
       const started = performance.now();
+      let byRun: Wanted[] = wanted;
+      let ranAgain = false;
+      if (oneRun(run)) {
+        byRun = [];
+        const ask = async (one: Wanted): Promise<LaidOut | null> => {
+          const size = sizeIn(one);
+          try {
+            return await this.engine.plotSvg(
+              run.script,
+              run.text,
+              one.line,
+              size.width,
+              size.height,
+            );
+          } catch {
+            // The engine is not there to ask.
+            return null;
+          }
+        };
+        for (const one of wanted) {
+          let laid = await ask(one);
+          // A run begun meanwhile has taken the figures of this one off the page.
+          if (this.lastRun !== run) return;
+          if ((laid === null || !laid.ran) && !ranAgain) {
+            // The engine's last run was of another text (a line of the console after the
+            // script was edited, a plot saved as a file, a worker started afresh): the text
+            // of the page's run is run again, once, with nothing told, and the engine then
+            // holds its plots, each by its own statement.
+            ranAgain = true;
+            try {
+              await this.#saving;
+              await this.session.run(run.script, run.text, undefined, run.width);
+            } catch {
+              // Said under the figure, below.
+            }
+            if (this.lastRun !== run) return;
+            laid = await ask(one);
+            if (this.lastRun !== run) return;
+          }
+          if (laid === null || !laid.held) {
+            // The engine holds no plot of this statement's own (a list of plots, say): it is
+            // drawn by a run with an `export`, below, as it was until then.
+            byRun.push(one);
+          } else {
+            this.figures[keyOf(one)] =
+              laid.svg !== null
+                ? { svg: laid.svg, problem: "" }
+                : { svg: null, problem: laid.message || "The engine drew no figure." };
+          }
+        }
+      }
+      this.drawnBy = byRun.length === 0 && !ranAgain ? "engine" : "run";
       // The engine ends a run at its first error. A figure it refuses (a plot of twelve panels
       // on a page as small as a thumbnail's) would so take with it every figure asked for
       // after it in the same run, the one a reader is looking at among them. So where a
       // figure is refused, those after it are asked for again, without it: a refused figure
       // costs itself and one more run of the script, never its neighbours.
-      let asking = wanted;
-      for (let rounds = 0; asking.length > 0 && rounds <= wanted.length; rounds += 1) {
+      let asking = byRun;
+      for (let rounds = 0; asking.length > 0 && rounds <= byRun.length; rounds += 1) {
         const sent = withExports(run.text, plotsOf(run), asking);
         const told = consoleRun(run.script, sent.text);
         const again: Wanted[] = [];
@@ -1659,7 +1723,7 @@ export class Workspace {
   /** The plot the viewer shows: the one chosen, or the first of the strip. */
   get shownPlot(): PlotStatement | null {
     const strip = this.strip;
-    return strip.find((plot) => plot.source === this.views.plots.shown) ?? strip[0] ?? null;
+    return strip.find((plot) => plot.id === this.views.plots.shown) ?? strip[0] ?? null;
   }
 
   /** The plots pinned side by side; none where fewer than two are pinned. */
@@ -1668,14 +1732,14 @@ export class Workspace {
   }
 
   showPlot(plot: PlotStatement): void {
-    this.views.plots.shown = plot.source;
+    this.views.plots.shown = plot.id;
     this.#keep();
   }
 
   /** Move the plot at `from` in the strip to stand at `to`. */
   movePlot(from: number, to: number): void {
     this.views.plots.order = moved(
-      this.strip.map((plot) => plot.source),
+      this.strip.map((plot) => plot.id),
       from,
       to,
     );
@@ -1683,7 +1747,7 @@ export class Workspace {
   }
 
   pinPlot(plot: PlotStatement): void {
-    this.views.plots.pinned = toggled(this.views.plots.pinned, plot.source);
+    this.views.plots.pinned = toggled(this.views.plots.pinned, plot.id);
     this.#keep();
   }
 

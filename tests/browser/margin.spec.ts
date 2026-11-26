@@ -17,6 +17,7 @@ import {
   write,
   useExample,
   EXAMPLE,
+  countRuns,
 } from "./support";
 
 // The editor draws the part of a script that is near the window, as editors do, and the rest
@@ -704,18 +705,8 @@ test("a print is made again at another width by the engine, and the script is no
 }) => {
   // Release 0.3, step 6b (open decision #175, C6): the engine keeps what each statement
   // printed and makes it again at any width. Every run asked of the engine is counted here,
-  // by its message to the engine's worker; a script with no plot, since a figure is still
-  // redrawn by a run (until step 7).
-  await page.addInitScript(() => {
-    const counted = window as unknown as { zempRuns: number };
-    counted.zempRuns = 0;
-    const post = Worker.prototype.postMessage;
-    Worker.prototype.postMessage = function (this: Worker, ...given: unknown[]) {
-      if ((given[0] as { type?: string } | null)?.type === "run") counted.zempRuns += 1;
-      return (post as (...all: unknown[]) => void).apply(this, given);
-    } as typeof Worker.prototype.postMessage;
-  });
-  const runs = () => page.evaluate(() => (window as unknown as { zempRuns: number }).zempRuns);
+  // by its message to the engine's worker.
+  const runs = await countRuns(page);
   if (browserName === "chromium") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   }

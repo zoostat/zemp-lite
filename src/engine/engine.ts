@@ -13,6 +13,7 @@ import type {
   CodeFamily,
   FromWorker,
   HelpIndex,
+  LaidOut,
   Needs,
   Outcome,
   Ranged,
@@ -282,6 +283,26 @@ export class Engine {
   async printedAt(script: string, text: string, width: number): Promise<Reprinted[] | null> {
     return expect(await this.#ask({ type: "printedAt", script, text, width }), "printed")
       .statements;
+  }
+
+  /**
+   * The plot the statement on `line` of the last run made, as an SVG on a page `width` by
+   * `height` millimetres, laid out by the engine from what the run kept, with nothing run: at
+   * a size, the file `export` writes for it, byte for byte. Not `held` where the engine's last
+   * run was not of this text, or the statement gave no plot of its own.
+   */
+  async plotSvg(
+    script: string,
+    text: string,
+    line: number,
+    width: number,
+    height: number,
+  ): Promise<LaidOut> {
+    const plot = expect(
+      await this.#ask({ type: "plotSvg", script, text, line, width, height }),
+      "plot",
+    );
+    return { ran: plot.ran, held: plot.held, svg: plot.svg, message: plot.message };
   }
 
   /** The engine's check of a text of the project, as `zeff check` makes it. */

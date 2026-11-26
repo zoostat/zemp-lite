@@ -508,29 +508,31 @@ impl Host {
     /// `message`, the engine's words where it will not draw the plot at that size (`of_size`
     /// says whether the size is at fault, as a pane too small for the labels, or the plot);
     /// or with `held` false, where the engine does not hold a plot for that statement of this
-    /// text (see [`Host::holds`]; or the statement gave no plot of its own, as `print(p)`),
-    /// and the interface draws it as it did before this was there, by a run with an `export`.
+    /// text. `ran` says which of the two it is: false where the engine's last run was not of
+    /// this text (see [`Host::holds`]), so that a run of it would bring the plot; true where
+    /// it was and the statement gave no plot of its own (as a list of plots), which the
+    /// interface draws as it did before this was there, by a run with an `export`.
     pub fn plot_svg(&self, script: &str, text: &str, line: u32, width: f64, height: f64) -> String {
-        let none = || {
+        let none = |ran: bool| {
             format!(
-                "{{\"type\": \"plot\", \"line\": {line}, \"held\": false, \"svg\": null, \"message\": \"\", \"of_size\": false}}"
+                "{{\"type\": \"plot\", \"line\": {line}, \"ran\": {ran}, \"held\": false, \"svg\": null, \"message\": \"\", \"of_size\": false}}"
             )
         };
         if !self.holds(script, text) {
-            return none();
+            return none(false);
         }
         let plots = self.plots.borrow();
         let Some(made) = plots.iter().find(|made| made.line == line) else {
-            return none();
+            return none(true);
         };
         let points = |millimetres: f64| millimetres * 72.0 / 25.4;
         match zeff_plot::figure::svg_at(&made.plot, points(width), points(height), None) {
             Ok(svg) => format!(
-                "{{\"type\": \"plot\", \"line\": {line}, \"held\": true, \"svg\": {}, \"message\": \"\", \"of_size\": false}}",
+                "{{\"type\": \"plot\", \"line\": {line}, \"ran\": true, \"held\": true, \"svg\": {}, \"message\": \"\", \"of_size\": false}}",
                 json_string(&svg)
             ),
             Err(problem) => format!(
-                "{{\"type\": \"plot\", \"line\": {line}, \"held\": true, \"svg\": null, \"message\": {}, \"of_size\": {}}}",
+                "{{\"type\": \"plot\", \"line\": {line}, \"ran\": true, \"held\": true, \"svg\": null, \"message\": {}, \"of_size\": {}}}",
                 json_string(&problem.message),
                 problem.of_size
             ),
