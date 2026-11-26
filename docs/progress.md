@@ -62,7 +62,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Built, step 4 `[engine]`, awaiting its trial at the host.** The host's function answers for every built file (`/assets/*`) and never passes on what is not the file: where the host gives its page in a file's place the answer is "not yet", not to be kept. The page says in a line of its own when a script of it did not arrive, with **Load again**. The check after a deployment now asks for three addresses under `assets/` that hold no file; against the address as it stands today it fails on all three, which is the risk shown. Green here: the whole routine in both browsers (420 unit tests, 661 browser tests, 3 skipped by design; the function's 14 tests under Node). The step is ticked when the checks have passed at the trial address and at both addresses.
 
-**Next.** The reading of the deployment of steps 3 and 3b (the measure by phase), then the push and trial of step 4; then step 5 `[function]`: the release's methods in the app.
+**Steps 3 and 3b at the address (commit 5bdb4d5).** GitHub's check green; all 16 checks at the trial address and at the address. The measure by phase: the 3 s wait before a one-statement run was seen again once (Chromium, the trial address), and of it the engine's check and what the statement needs took 34 ms; pressed again, 40 ms in all; at the address the same build took 32 ms. So it is not the engine or the worker, it is paid once, and it is not always there; the page itself was busy on that machine. The measure now reports the browser's own long tasks, for the next time it shows. First start on these deployments: 0.59 to 0.81 s in Chromium and 1.20 to 1.57 s in WebKit, half of step 3's figures for the same engine: the machine's variation.
+
+**Next.** The push and trial of step 4; then step 5 `[function]`: the release's methods in the app.
 
 **For the owner to read, when he wishes.** The new section _A project that names another Zeff_, at the foot of **Projects, scripts and files** in Help's **Using Zemp Lite** (seven sentences).
 

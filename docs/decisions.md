@@ -2859,3 +2859,17 @@ A paper is held between settings, so a second setting reuses what the first work
 **The trial.** Every deployment sends the build to the trial address first and makes every check there; only then is it sent to the address. So the function over every built file is tried at the host before a visitor meets it, and a fault in it leaves the address as it was.
 
 **Reason.** Risk R13; the promise of 0.2.5 that the remedy for the app's other built files would be chosen at the next release.
+
+## 27 November 2026: The measure of a one-statement run, read by phase
+
+**What the next deployment said** (commit 5bdb4d5, which carries steps 3 and 3b; all 16 checks passed at the trial address and at the address). In Chromium at the trial address the first ⌘↵ on a statement again took 2.97 s from the key to done, 2.94 s of it before the run began. Of that, by the app's own notes: waiting for the engine 0 ms, the engine's check 23 ms, what the statement needs 11 ms. The key pressed a second time: 40 ms in all. At the address, the same build, minutes later, in the same browser: 32 ms for the first press. In WebKit: 28 and 39 ms.
+
+**What that settles.** The engine and the worker are not slow: their part of the wait is 34 ms on that machine. The wait is paid once, not at every statement. And it is not always there on that machine: twice of twice at step 3, once of twice here. The time passes between the key and the moment the app's own code is run for it, which means the page itself was busy with something else on GitHub's machine, in Chromium, shortly after the first run of a script that draws figures.
+
+**What is not known.** What the page was busy with. The measure now also reports the stretches for which the browser says the page could answer no key (Chromium's long tasks), so a later deployment that shows the wait will say whether it was one such stretch and how long. No reader's machine has shown it: at the address from this Mac, 18 to 32 ms, in both browsers, with the browser at full speed and held to low priority (about 200 ms).
+
+**What is done.** Nothing in the app. It stays an open matter of this release, read at each deployment, and is said in the notes if it is still unexplained at the release.
+
+**The first start, on the same deployments.** 0.59 s and 1.20 s at the trial address, 0.81 s and 1.57 s at the address (Chromium, WebKit), against 1.70 s and 1.97 s at the deployment before for the same engine. So the first start moves by a factor of two from one run of GitHub's machine to the next, and the figures of step 3 were a slow run, not a slower engine.
+
+**Reason.** A measure is read until it is understood or shown to be the machine's; here it is shown to be neither the engine's nor the worker's, and the rest is still to be seen.

@@ -213,10 +213,22 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
   // of that, how long before the status first changed (the run had not begun until then).
   const timed = page.evaluate(
     () =>
-      new Promise<{ whole: number; before: number }>((resolve) => {
+      new Promise<{ whole: number; before: number; busy: number[] }>((resolve) => {
         const status = document.querySelector('[role="status"]')!;
         let from = 0;
         let left = 0;
+        // The stretches for which the page itself was busy and could answer no key (the
+        // browser's long tasks, where it reports them: Chromium does, WebKit does not).
+        const long: { start: number; end: number }[] = [];
+        try {
+          new PerformanceObserver((list) => {
+            for (const one of list.getEntries()) {
+              long.push({ start: one.startTime, end: one.startTime + one.duration });
+            }
+          }).observe({ type: "longtask", buffered: true });
+        } catch {
+          // No long tasks are reported here.
+        }
         document.addEventListener("keydown", () => (from = performance.now()), {
           capture: true,
           once: true,
@@ -227,7 +239,14 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
           if (now !== "done") {
             if (left === 0) left = at;
           } else if (left !== 0) {
-            resolve({ whole: Math.round(at - from), before: Math.round(left - from) });
+            resolve({
+              whole: Math.round(at - from),
+              before: Math.round(left - from),
+              // Those that ran between the key and the start of the run.
+              busy: long
+                .filter((one) => one.end > from && one.start < left)
+                .map((one) => Math.round(one.end - one.start)),
+            });
           }
         }).observe(status, { childList: true, characterData: true, subtree: true });
       }),
@@ -282,7 +301,10 @@ test("a statement run alone and a plot drawn afresh are timed at the address", a
       "one statement",
       `${statement.whole} ms for ⌘↵ on the last statement, from the key to done, ${statement.before} ms of it before the run began (${ran})`,
     ],
-    ["one statement, by phase", `${first}; pressed again, ${second} ms in all (${secondPhases})`],
+    [
+      "one statement, by phase",
+      `${first}; the page itself busy meanwhile for ${statement.busy.length === 0 ? "no stretch it reports" : `${statement.busy.join(" and ")} ms`}; pressed again, ${second} ms in all (${secondPhases})`,
+    ],
     ["redraw", redraw],
   ] as const) {
     test.info().annotations.push({ type, description });
