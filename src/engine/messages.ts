@@ -277,9 +277,50 @@ export type RunEvent =
   /** A piece of what the run prints (`stdout`) and says (`stderr`: warnings, notes, errors). */
   | { type: "output"; stdout: string; stderr: string };
 
+/** A plot a statement of a run made, as the engine lists it: the line, the name that binds it, its marks. */
+export interface PlotInfo {
+  line: number;
+  name: string | null;
+  kind: string;
+  theme: string;
+}
+
+/**
+ * How an example of Help ended (release 0.3, step 8): run in a session of its own in the
+ * worker, which sees the datasets the engine ships and the small files its pages read, and
+ * nothing of the reader's project.
+ */
+export interface ExampleOutcome {
+  exitCode: number;
+  /** Everything it printed, and everything it said. */
+  stdout: string;
+  stderr: string;
+  /** Each statement of its text, with what it printed, said and made. */
+  statements: StatementInfo[];
+  /** The plots its statements made, each asked for by its line. */
+  plots: PlotInfo[];
+  /**
+   * `slow` where it ran beyond its time and was stopped before its next step; `asked` where
+   * the interface stopped it; `null` where it ran to its end.
+   */
+  stopped: "slow" | "asked" | null;
+}
+
 /** A message the interface sends. Each carries an `id`, which its answer carries back. */
 export type Request =
   | { type: "open"; name: string; cancel: SharedArrayBuffer | null }
+  /**
+   * An example of Help, run in a session of its own; needs no project. `limit`: the
+   * milliseconds after which it is stopped; `cancel`: a flag of its own.
+   */
+  | {
+      type: "example";
+      text: string;
+      width: number;
+      limit: number;
+      cancel: SharedArrayBuffer | null;
+    }
+  | { type: "examplePlot"; line: number; width: number; height: number }
   | { type: "file"; path: string; bytes: Uint8Array }
   | { type: "remove"; path: string }
   /**
@@ -328,6 +369,15 @@ export type Reply =
       frames: FrameInfo[];
       written: string[];
     }
+  | {
+      type: "exampleDone";
+      exit_code: number;
+      stdout: string;
+      stderr: string;
+      statements: StatementInfo[];
+      plots: PlotInfo[];
+      stopped: "slow" | "asked" | null;
+    }
   | { type: "statements"; statements: Ranged[]; sections: Sectioned[] }
   | {
       type: "checked";
@@ -363,7 +413,11 @@ export type Reply =
   | { type: "error"; message: string };
 
 /** Everything the worker may say. */
-export type FromWorker = { type: "ready"; version: string } | RunEvent | (Reply & { id?: number });
+export type FromWorker =
+  | { type: "ready"; version: string }
+  /** An event of a run; `example` marks one of an example's run, not the reader's. */
+  | (RunEvent & { example?: boolean })
+  | (Reply & { id?: number });
 
 /** How a run ended. */
 export interface Outcome {

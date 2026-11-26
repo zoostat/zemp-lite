@@ -85,6 +85,12 @@ impl Recording {
         self.back(path.as_ref());
     }
 
+    /// Fix the clock `today()` and `now()` read, as microseconds since 1970-01-01 00:00:00:
+    /// the store of the examples of Help has the clock of the engine's own examples.
+    pub fn set_clock(&self, micros: i64) {
+        self.inner.set_clock(micros);
+    }
+
     /// A run begins: nothing is written yet.
     pub fn begin(&self) {
         if let Ok(mut written) = self.written.lock() {

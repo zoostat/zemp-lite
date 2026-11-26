@@ -266,6 +266,10 @@ type Filtered = (String, String, zeff_core::value::Frame);
 /// values in it with their places.
 type Printed = (u32, String, Vec<zeff_core::runtime::Shown>);
 
+/// The script an example of Help is run as: the name the engine runs the examples of its own
+/// pages under, which is the name a diagnostic of an example shows.
+pub const EXAMPLES_SCRIPT: &str = "examples.zeff";
+
 /// The narrowest page a print is made for, as `--width` has it.
 const NARROWEST: usize = 40;
 
@@ -339,6 +343,24 @@ impl Host {
             kept: RefCell::default(),
             bars: RefCell::default(),
         }
+    }
+
+    /// The session of an example of Help (Zemp Lite 0.3, step 8; open decision #211): a
+    /// project of its own in memory, which is the engine's own project for the examples of
+    /// its pages, made as `zeff_engine::examples::fixture_project` makes it: called
+    /// `examples`, with the small files the pages read under `data/` and the clock of the
+    /// examples (1 November 2026, 09:30), so that an example prints here what its page says.
+    /// It sees the datasets the engine ships and nothing of a reader's project: no frame, no
+    /// name, no file. What an example writes is written into this session's own memory, and
+    /// is gone with it. An example is run as [`EXAMPLES_SCRIPT`], the name the engine's pages
+    /// were made under.
+    pub fn examples() -> Host {
+        let host = Host::new("examples");
+        host.fs.set_clock(zeff_engine::examples::EXAMPLES_CLOCK);
+        for (name, bytes) in zeff_engine::examples::FIXTURE_FILES {
+            host.fs.add_file(format!("{ROOT}/data/{name}"), bytes);
+        }
+        host
     }
 
     /// Put a file into the project, by its path from the project's folder; a file of that

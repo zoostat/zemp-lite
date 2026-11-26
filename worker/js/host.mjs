@@ -38,6 +38,15 @@
 //   { type: "read", path }              a file of the project: one put in, or one a run wrote
 //   { type: "remove", path }            forget a file of the project, or a folder with all it
 //                                       holds: the reader renamed, moved or deleted it
+//   { type: "example", text, width, limit, cancel }   run the text of an example of Help in a
+//                                       session of its own (needs no project, and touches
+//                                       none): it sees the datasets the engine ships and the
+//                                       small files the engine's pages read, and nothing of
+//                                       the reader's project. `limit` is the milliseconds
+//                                       after which it is stopped before its next step;
+//                                       `cancel` a flag of its own, as `open` has one
+//   { type: "examplePlot", line, width, height }   the plot a statement of the last example
+//                                       made, on a page of a size in millimetres
 // Messages out:
 //   { type: "ready", version }          once, when the engine is loaded: the engine's version
 //   { type: "opened", name }
@@ -75,22 +84,40 @@
 //                                       buffer is passed to the interface and not copied
 //   { type: "read", path, bytes }       the file, passed in the same way; `bytes` is null
 //                                       where the project has no file of that path
+//   { type: ..., example: true }        each event of an example's run, marked as an
+//                                       example's: "ranges", "started", "finished", "pass",
+//                                       "output"
+//   { type: "exampleDone", exit_code, stdout, stderr, statements, plots, stopped }   its
+//                                       outcome, as `done` has it; `stopped` is "slow" where
+//                                       it ran beyond its limit, "asked" where the interface
+//                                       stopped it, and null where it ran to its end
+//   { type: "plot", ... }               the answer to `examplePlot`, as to `plotSvg`
 //   { type: "error", message }          a message the worker could not act on
 //
 // A run is cancelled by the interface writing 1 into the flag: a worker that is computing
 // reads no message, so the engine reads the flag before each step. The flag is the
 // interface's: it clears it before it asks for a run, and the worker never writes it.
 
+// The script an example of Help is run as: the name the engine's own pages were made under.
+const EXAMPLES_SCRIPT = "examples.zeff";
+
 export function serve(engine, port, deviceBytes) {
   let project = null;
   let flag = null;
+  // The session of the last example of Help, and the example that is running: its own flag,
+  // the time it must end by, and why it was stopped, where it was.
+  let example = null;
+  let going = null;
   // What the engine calls while it runs.
   globalThis.zeffHost = {
     event(json) {
-      port.postMessage(JSON.parse(json));
+      port.postMessage(going === null ? JSON.parse(json) : { ...JSON.parse(json), example: true });
     },
     cancelled() {
-      return flag !== null && Atomics.load(flag, 0) === 1;
+      if (going === null) return flag !== null && Atomics.load(flag, 0) === 1;
+      if (going.flag !== null && Atomics.load(going.flag, 0) === 1) going.stopped ??= "asked";
+      else if (performance.now() > going.until) going.stopped ??= "slow";
+      return going.stopped !== null;
     },
   };
   port.onmessage = (message) => {
@@ -120,6 +147,44 @@ export function serve(engine, port, deviceBytes) {
     }
     if (said.type === "statements") {
       answer(JSON.parse(engine.statements(String(said.script), String(said.text))));
+      return;
+    }
+    if (said.type === "example") {
+      // A session of its own for each: nothing is left from one example to the next.
+      if (example !== null) example.free();
+      example = new engine.Example();
+      const text = String(said.text);
+      const limit = Number.isFinite(said.limit) && said.limit > 0 ? said.limit : Infinity;
+      going = {
+        flag: said.cancel ? new Int32Array(said.cancel) : null,
+        until: performance.now() + limit,
+        stopped: null,
+      };
+      try {
+        const ranges = JSON.parse(engine.statements(EXAMPLES_SCRIPT, text));
+        port.postMessage({ type: "ranges", statements: ranges.statements, example: true });
+        const width = Number.isInteger(said.width) && said.width > 0 ? said.width : 0;
+        const done = JSON.parse(example.run(text, deviceBytes ?? 0, width));
+        answer({
+          type: "exampleDone",
+          exit_code: done.exit_code,
+          stdout: done.stdout,
+          stderr: done.stderr,
+          statements: done.statements,
+          plots: done.plots,
+          stopped: going.stopped,
+        });
+      } finally {
+        going = null;
+      }
+      return;
+    }
+    if (said.type === "examplePlot") {
+      if (example === null) {
+        refuse("a plot of an example was asked for before an example was run");
+        return;
+      }
+      answer(JSON.parse(example.plot_svg(said.line, said.width, said.height)));
       return;
     }
     if (

@@ -1924,3 +1924,104 @@ fn a_plot_is_held_where_its_name_is_bound_again_and_where_a_later_statement_fail
     assert_eq!(after["held"], false);
     assert_eq!(after["ran"], true);
 }
+
+/// A run of an example of Help in its session, with what it told and its outcome.
+fn example(session: &Host, text: &str) -> (Vec<String>, Value) {
+    let told: RefCell<Vec<String>> = RefCell::default();
+    let done = session.run(
+        zemp_worker::EXAMPLES_SCRIPT,
+        text,
+        &Asked::default(),
+        never,
+        &|json| {
+            told.borrow_mut().push(json.to_string());
+        },
+    );
+    (told.into_inner(), serde_json::from_str(&done).unwrap())
+}
+
+#[test]
+fn an_example_runs_in_a_session_of_its_own_which_holds_nothing_of_a_reader_s_project() {
+    // A reader's project whose file, names and frame would clash with an example's.
+    let reader = Host::new("demo");
+    assert!(reader.add_file("data/wages.csv", b"id,wage,hours\n9,1000,1\n"));
+    let script = "let pay = import(\"data/wages.csv\")\nlet own = 7\nprint(pay.mean(wage))\n\
+                  let p = dataset(wages).where(year == 2010).scatter(educ, log(wage))\n";
+    let (_, done) = run(&reader, script);
+    assert!(done.contains(r#""stdout": "1000\n""#), "{done}");
+    let prints = reader.printed_at("scripts/main.zeff", script, 60);
+    let plot = reader.plot_svg("scripts/main.zeff", script, 4, 120.0, 80.0);
+    let frame = reader.frame("pay").unwrap();
+    assert!(plot.contains(r#""held": true"#));
+
+    // The session of the examples: the small file the engine's pages read stands at that
+    // path, not the reader's; the datasets the engine ships are there; the clock is the
+    // examples' own.
+    let session = Host::examples();
+    let (told, done) = example(
+        &session,
+        "let pay = import(\"data/wages.csv\")\nprint(pay.n_rows())\nprint(pay.mean(wage))\n\
+         print(dataset(wages).n_rows() > 1000)\nprint(today())\n",
+    );
+    assert_eq!(done["exit_code"], 0, "{done}");
+    assert_eq!(done["stdout"], "3\n24.5333\ntrue\n2026-11-01\n");
+    // It tells its steps as a run does.
+    assert!(told.iter().any(|one| one.contains(r#""type": "started""#)));
+    assert!(told.iter().any(|one| one.contains(r#""type": "output""#)));
+    assert!(told.iter().any(|one| one.contains(r#""type": "finished""#)));
+
+    // A name of the reader's script is no name here, and the engine says so of the script
+    // the examples are run as.
+    let (_, done) = example(&session, "print(own)\n");
+    assert_ne!(done["exit_code"], 0);
+    let said = done["stderr"].as_str().unwrap();
+    assert!(said.contains("own"), "{said}");
+    assert!(said.contains(" --> examples.zeff:1:"), "{said}");
+    // Nor is a frame of the reader's run.
+    assert!(session.frame("pay").is_none());
+
+    // What an example writes is written in its own session, and not into the reader's project.
+    let (_, done) = example(
+        &session,
+        "let pay = import(\"data/wages.csv\")\npay.save(\"data/made.csv\")\n\
+         let p = pay.scatter(hours, wage)\n",
+    );
+    assert_eq!(done["exit_code"], 0, "{done}");
+    assert!(session.file("data/made.csv").is_some());
+    assert!(reader.file("data/made.csv").is_none());
+    // Its plot is laid out as a run's is.
+    let drawn: Value = serde_json::from_str(&session.plot_svg(
+        zemp_worker::EXAMPLES_SCRIPT,
+        "let pay = import(\"data/wages.csv\")\npay.save(\"data/made.csv\")\n\
+         let p = pay.scatter(hours, wage)\n",
+        3,
+        120.0,
+        80.0,
+    ))
+    .unwrap();
+    assert_eq!(drawn["held"], true);
+    assert!(drawn["svg"].as_str().unwrap().contains("<svg"));
+
+    // The reader's session is as it was: its file, its prints, its plot and its frame.
+    assert_eq!(
+        reader.file("data/wages.csv").unwrap(),
+        b"id,wage,hours\n9,1000,1\n"
+    );
+    assert_eq!(reader.printed_at("scripts/main.zeff", script, 60), prints);
+    assert_eq!(
+        reader.plot_svg("scripts/main.zeff", script, 4, 120.0, 80.0),
+        plot
+    );
+    assert_eq!(reader.frame("pay").unwrap(), frame);
+}
+
+#[test]
+fn a_seeded_example_prints_the_same_twice_each_in_a_session_made_afresh() {
+    let text = "dist.normal(mean: 100, sd: 15).draw(5, seed: 42)\n";
+    let (_, first) = example(&Host::examples(), text);
+    let (_, second) = example(&Host::examples(), text);
+    assert_eq!(first["exit_code"], 0, "{first}");
+    assert!(!first["stdout"].as_str().unwrap().is_empty());
+    assert_eq!(first["stdout"], second["stdout"]);
+    assert_eq!(first["statements"], second["statements"]);
+}

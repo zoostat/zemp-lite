@@ -11,6 +11,7 @@ import type {
   Checked,
   ExplainedPage,
   CodeFamily,
+  ExampleOutcome,
   FromWorker,
   HelpIndex,
   LaidOut,
@@ -50,6 +51,12 @@ interface Running {
   stop: (outcome: Outcome) => void;
 }
 
+/**
+ * The time an example of Help may run, in milliseconds: beyond it the example is stopped
+ * before its next step and said to be too slow.
+ */
+export const EXAMPLE_LIMIT = 10_000;
+
 export class Engine {
   readonly #spawn: () => WorkerLike;
   #worker: WorkerLike | null = null;
@@ -63,6 +70,10 @@ export class Engine {
   #flag: Int32Array | null = null;
   #running: Running | null = null;
   #project: string | null = null;
+  /** Resolves when the run that is going ends; resolved where none is. */
+  #idle: Promise<void> = Promise.resolve();
+  /** The example of Help that is running: who hears it, and the flag that stops it. */
+  #example: { listener: ((event: RunEvent) => void) | null; flag: Int32Array | null } | null = null;
 
   /** `spawn` starts a worker; the browser's is in `browser.ts`. */
   constructor(spawn: () => WorkerLike) {
@@ -178,16 +189,25 @@ export class Engine {
     if (this.#flag !== null) {
       Atomics.store(this.#flag, 0, 0);
     }
+    // The reader's run goes before an example of Help: one that is running is stopped before
+    // its next step, and whoever asked for it runs it again afterwards (`examples.ts`).
+    this.stopExample();
+    let ended: () => void = () => {};
+    this.#idle = new Promise<void>((resolve) => (ended = resolve));
     return new Promise<Outcome>((resolve, reject) => {
       const running: Running = {
         listener: listener ?? null,
         stdout: "",
         stderr: "",
-        stop: resolve,
+        stop: (outcome) => {
+          ended();
+          resolve(outcome);
+        },
       };
       this.#running = running;
       // This run is over; a run started since is not touched.
       const over = () => {
+        ended();
         if (this.#running === running) {
           this.#running = null;
         }
@@ -218,6 +238,77 @@ export class Engine {
         },
       );
     });
+  }
+
+  /** Resolves once no run of the reader's is going: at once where none is. */
+  whenIdle(): Promise<void> {
+    return this.#idle;
+  }
+
+  /**
+   * Run the text of an example of Help in a session of its own in the worker (release 0.3,
+   * step 8): it sees the datasets the engine ships and the small files the engine's pages
+   * read, and nothing of the project open here; what it writes is gone with it; and the
+   * reader's run and everything kept of it stay as they were. `listener` hears its steps as a
+   * run's are heard. It needs no project. One goes at a time (`examples.ts` keeps the queue);
+   * it is stopped before its next step where it runs beyond `limit` milliseconds.
+   */
+  async example(
+    text: string,
+    listener?: (event: RunEvent) => void,
+    width = 0,
+    limit = EXAMPLE_LIMIT,
+  ): Promise<ExampleOutcome> {
+    await this.start();
+    if (this.#example !== null) {
+      throw new EngineError("an example is already running in this window");
+    }
+    const flag = sharedFlag();
+    const going = { listener: listener ?? null, flag };
+    this.#example = going;
+    try {
+      const done = expect(
+        await this.#ask({
+          type: "example",
+          text,
+          width,
+          limit,
+          cancel: flag === null ? null : (flag.buffer as SharedArrayBuffer),
+        }),
+        "exampleDone",
+      );
+      return {
+        exitCode: done.exit_code,
+        stdout: done.stdout,
+        stderr: done.stderr,
+        statements: done.statements,
+        plots: done.plots,
+        stopped: done.stopped,
+      };
+    } finally {
+      if (this.#example === going) this.#example = null;
+    }
+  }
+
+  /**
+   * Ask the example that is running to end before its next step. `false` where none is
+   * running, or there is no memory shared with the worker to ask through: it then runs to its
+   * end, or to its limit.
+   */
+  stopExample(): boolean {
+    const flag = this.#example?.flag ?? null;
+    if (flag === null) return false;
+    Atomics.store(flag, 0, 1);
+    return true;
+  }
+
+  /**
+   * The plot the statement on `line` of the last example made, as an SVG on a page `width` by
+   * `height` millimetres, as `plotSvg` gives a plot of the reader's run.
+   */
+  async examplePlot(line: number, width: number, height: number): Promise<LaidOut> {
+    const plot = expect(await this.#ask({ type: "examplePlot", line, width, height }), "plot");
+    return { ran: plot.ran, held: plot.held, svg: plot.svg, message: plot.message };
   }
 
   /**
@@ -477,6 +568,11 @@ export class Engine {
       said.type === "pass" ||
       said.type === "output"
     ) {
+      if (said.example === true) {
+        // An example's, not the reader's run's.
+        this.#example?.listener?.(said);
+        return;
+      }
       const running = this.#running;
       if (running !== null) {
         if (said.type === "output") {
@@ -503,6 +599,7 @@ export class Engine {
     this.#project = null;
     this.#flag = null;
     this.#running = null;
+    this.#example = null;
     const waiting = [...this.#waiting.values()];
     this.#waiting.clear();
     for (const one of waiting) {

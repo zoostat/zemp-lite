@@ -561,4 +561,129 @@ describe("rows of a frame", () => {
     expect(found.kept).toBe(2);
     expect(found.filter).toEqual({ ok: true, rows: 2, said: "" });
   });
+
+  it("runs an example of Help with no project open, and hears its steps apart from a run's", async () => {
+    const { engine: made, workers } = engine();
+    const heard: RunEvent[] = [];
+    const asked = made.example("print(1)\n", (event) => heard.push(event), 80, 500);
+    await settle();
+    const worker = workers[0]!;
+    worker.say({ type: "ready", version: "0.9.0" });
+    await settle();
+    expect(worker.last).toMatchObject({
+      type: "example",
+      text: "print(1)\n",
+      width: 80,
+      limit: 500,
+    });
+    expect(worker.last["cancel"]).toBeInstanceOf(SharedArrayBuffer);
+    // Its events are marked, and go to who asked for the example.
+    worker.say({ type: "ranges", statements: [], example: true });
+    worker.say({ type: "output", stdout: "1\n", stderr: "", example: true });
+    // An event that is not marked is no example's.
+    worker.say({ type: "output", stdout: "other\n", stderr: "" });
+    expect(heard.map((event) => event.type)).toEqual(["ranges", "output"]);
+    worker.answer({
+      type: "exampleDone",
+      exit_code: 0,
+      stdout: "1\n",
+      stderr: "",
+      statements: [one],
+      plots: [{ line: 1, name: null, kind: "points", theme: "light" }],
+      stopped: null,
+    });
+    expect(await asked).toEqual({
+      exitCode: 0,
+      stdout: "1\n",
+      stderr: "",
+      statements: [one],
+      plots: [{ line: 1, name: null, kind: "points", theme: "light" }],
+      stopped: null,
+    });
+    // Its plot, asked for by its line at a size.
+    const plot = made.examplePlot(1, 120, 80);
+    await settle();
+    expect(worker.last).toMatchObject({ type: "examplePlot", line: 1, width: 120, height: 80 });
+    worker.answer({
+      type: "plot",
+      line: 1,
+      ran: true,
+      held: true,
+      svg: "<svg/>",
+      message: "",
+      of_size: false,
+    });
+    expect(await plot).toEqual({ ran: true, held: true, svg: "<svg/>", message: "" });
+  });
+
+  it("stops an example through a flag of its own, and when the reader begins a run", async () => {
+    const { engine: made, worker } = await opened();
+    expect(made.stopExample()).toBe(false);
+    const first = made.example("slow\n");
+    await settle();
+    const sent = worker.last;
+    const flag = new Int32Array(sent["cancel"] as SharedArrayBuffer);
+    // One at a time.
+    await expect(made.example("another\n")).rejects.toThrow("an example is already running");
+    expect(Atomics.load(flag, 0)).toBe(0);
+    expect(made.stopExample()).toBe(true);
+    expect(Atomics.load(flag, 0)).toBe(1);
+    const stopped = {
+      type: "exampleDone",
+      exit_code: 1,
+      stdout: "",
+      stderr: "",
+      statements: [],
+      plots: [],
+      stopped: "asked",
+    };
+    worker.say({ ...stopped, id: sent["id"] });
+    expect((await first).stopped).toBe("asked");
+    expect(made.stopExample()).toBe(false);
+
+    // The reader's run goes before an example: the one running is asked to stop, by its own
+    // flag and not the run's, and the engine says when the run has ended.
+    const second = made.example("slow\n");
+    await settle();
+    const again = worker.last;
+    const own = new Int32Array(again["cancel"] as SharedArrayBuffer);
+    let idle = false;
+    const ran = made.run("scripts/main.zeff", "print(1)\n");
+    void made.whenIdle().then(() => (idle = true));
+    await settle();
+    expect(Atomics.load(own, 0)).toBe(1);
+    const run = worker.last;
+    expect(run).toMatchObject({ type: "run" });
+    worker.say({ ...stopped, id: again["id"] });
+    expect((await second).stopped).toBe("asked");
+    await settle();
+    expect(idle).toBe(false);
+    worker.say({
+      type: "done",
+      exit_code: 0,
+      stdout: "1\n",
+      stderr: "",
+      statements: [one],
+      frames: [],
+      written: [],
+      id: run["id"],
+    });
+    await ran;
+    await settle();
+    expect(idle).toBe(true);
+  });
+
+  it("ends an example with the worker, and is idle again", async () => {
+    const { engine: made, worker } = await opened();
+    const asked = made.example("slow\n");
+    await settle();
+    const ran = made.run("scripts/main.zeff", "print(1)\n");
+    await settle();
+    made.stop();
+    expect(worker.ended).toBe(true);
+    await expect(asked).rejects.toThrow("the engine's worker was ended");
+    expect((await ran).stopped).toBe(true);
+    await made.whenIdle();
+    expect(made.stopExample()).toBe(false);
+  });
 });

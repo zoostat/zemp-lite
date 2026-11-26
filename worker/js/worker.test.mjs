@@ -702,3 +702,162 @@ test("a message the worker cannot act on is answered, not passed over", async (t
   ]);
   assert.deepEqual(said, []);
 });
+
+test("an example of Help runs in a session of its own, with no project open, and tells its steps marked as an example's", async (t) => {
+  const { worker, said, next } = started(t, 0);
+  await next("ready");
+  worker.postMessage({
+    type: "example",
+    id: 1,
+    text: 'let pay = import("data/wages.csv")\nprint(pay.mean(wage))\nprint(today())\n',
+    limit: 10_000,
+  });
+  const done = await next("exampleDone");
+  assert.equal(done.id, 1);
+  assert.equal(done.exit_code, 0);
+  assert.equal(done.stdout, "24.5333\n2026-11-01\n");
+  assert.equal(done.stopped, null);
+  assert.deepEqual(
+    done.statements.map((one) => [one.line, one.stdout]),
+    [
+      [1, ""],
+      [2, "24.5333\n"],
+      [3, "2026-11-01\n"],
+    ],
+  );
+  // Its events, each marked as an example's: the statements first, then each step.
+  const events = said.filter((message) => message.type !== "exampleDone");
+  assert.ok(events.length > 0);
+  assert.ok(events.every((message) => message.example === true));
+  assert.equal(events[0].type, "ranges");
+  assert.deepEqual(
+    events
+      .filter((message) => message.type === "output" && message.stdout !== "")
+      .map((message) => message.stdout),
+    ["24.5333\n", "2026-11-01\n"],
+  );
+  assert.ok(events.some((message) => message.type === "started"));
+  assert.ok(events.some((message) => message.type === "finished"));
+});
+
+test("an example sees nothing of the reader's project and leaves the reader's run as it was", async (t) => {
+  const { worker, said, next } = await opened(t, 0);
+  // The reader's project: a file, a name, a frame and a plot that an example's would clash with.
+  worker.postMessage({
+    type: "file",
+    path: "data/wages.csv",
+    bytes: bytes("id,wage,hours\n9,1000,1\n"),
+  });
+  await next("filed");
+  const script =
+    'let pay = import("data/wages.csv")\nlet own = 7\nprint(pay.mean(wage))\n' +
+    "let p = dataset(wages).where(year == 2010).scatter(educ, log(wage))\n";
+  worker.postMessage({ type: "run", script: "scripts/main.zeff", text: script });
+  const ran = await next("done");
+  assert.equal(ran.stdout, "1000\n");
+  const ask = (id, message) => worker.postMessage({ id, ...message });
+  const kept = async () => {
+    ask(50, { type: "printedAt", script: "scripts/main.zeff", text: script, width: 60 });
+    const printed = await next("printed");
+    ask(51, {
+      type: "plotSvg",
+      script: "scripts/main.zeff",
+      text: script,
+      line: 4,
+      width: 120,
+      height: 80,
+    });
+    const plot = await next("plot");
+    ask(52, { type: "frame", name: "pay" });
+    const frame = await next("frame");
+    ask(53, { type: "read", path: "data/wages.csv" });
+    const file = await next("read");
+    return {
+      printed: printed.statements,
+      plot: plot.svg,
+      frame: [...frame.bytes],
+      file: [...file.bytes],
+    };
+  };
+  const before = await kept();
+  assert.ok(before.plot.includes("<svg"));
+  said.length = 0;
+
+  // The example: the page's own small file at the reader's path, a name of the reader's that
+  // is none here, a file written, and a plot.
+  ask(60, {
+    type: "example",
+    text: 'let pay = import("data/wages.csv")\nprint(pay.mean(wage))\npay.save("data/made.csv")\npay.scatter(hours, wage)\n',
+    limit: 10_000,
+  });
+  const done = await next("exampleDone");
+  assert.equal(done.exit_code, 0);
+  assert.match(done.stdout, /^24\.5333\n/);
+  assert.deepEqual(
+    done.plots.map((one) => one.line),
+    [4],
+  );
+  // Nothing of it reached the reader's run: every event was the example's.
+  assert.ok(said.every((message) => message.example === true));
+  said.length = 0;
+  ask(61, { type: "examplePlot", line: 4, width: 120, height: 80 });
+  const drawn = await next("plot");
+  assert.equal(drawn.held, true);
+  assert.ok(drawn.svg.includes("<svg"));
+  assert.notEqual(drawn.svg, before.plot);
+  ask(62, { type: "example", text: "print(own)\n", limit: 10_000 });
+  const unknown = await next("exampleDone");
+  assert.notEqual(unknown.exit_code, 0);
+  assert.match(unknown.stderr, /own/);
+  assert.match(unknown.stderr, / --> examples\.zeff:1:/);
+  said.length = 0;
+
+  // The reader's project has no file of the example's, and its run is as it was: its
+  // prints, its plot, its frame and its file.
+  ask(63, { type: "read", path: "data/made.csv" });
+  assert.equal((await next("read")).bytes, null);
+  assert.deepEqual(await kept(), before);
+});
+
+test("an example that runs beyond its time is stopped before its next step, and the worker goes on", async (t) => {
+  const { worker, next, flag } = await opened(t, 0);
+  const slow =
+    'print("started")\nfor i in 1..200000 {\n    let rows = dataset(wages).where(year == 2015).n_rows()\n}\nprint("never")\n';
+  worker.postMessage({ type: "example", id: 1, text: slow, limit: 300 });
+  const done = await next("exampleDone");
+  assert.equal(done.stopped, "slow");
+  assert.equal(done.exit_code, 1);
+  assert.equal(done.stdout, "started\n");
+  assert.match(
+    done.stderr,
+    /^error\[Z0705\]: the run was cancelled before pass \d+ of this loop\n/,
+  );
+  // Stopped by the interface, through a flag of its own: the reader's flag is not touched.
+  const cancel = new SharedArrayBuffer(4);
+  worker.postMessage({ type: "example", id: 2, text: slow, limit: 60_000, cancel });
+  await next("pass");
+  Atomics.store(new Int32Array(cancel), 0, 1);
+  const asked = await next("exampleDone");
+  assert.equal(asked.stopped, "asked");
+  assert.equal(Atomics.load(flag, 0), 0);
+  // The worker is usable: the next example runs to its end, and so does a run of the reader's.
+  worker.postMessage({ type: "example", id: 3, text: "print(1 + 1)\n", limit: 10_000 });
+  const again = await next("exampleDone");
+  assert.equal(again.stopped, null);
+  assert.equal(again.stdout, "2\n");
+  worker.postMessage({ type: "run", script: "scripts/main.zeff", text: "print(2 + 2)\n" });
+  const run = await next("done");
+  assert.equal(run.exit_code, 0);
+  assert.equal(run.stdout, "4\n");
+});
+
+test("a plot of an example is not asked for before an example is run", async (t) => {
+  const { worker, next } = started(t, 0);
+  await next("ready");
+  worker.postMessage({ type: "examplePlot", id: 4, line: 1, width: 100, height: 80 });
+  assert.deepEqual(await next("error"), {
+    type: "error",
+    id: 4,
+    message: "a plot of an example was asked for before an example was run",
+  });
+});

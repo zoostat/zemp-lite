@@ -166,6 +166,57 @@ impl Project {
 }
 
 /// The statements of a text as the engine reads them, as a line of JSON.
+/// The session of an example of Help: a project of its own in the worker's memory, which
+/// sees the datasets the engine ships and nothing of the reader's project (see
+/// [`crate::Host::examples`]). One is made for each example run, so that nothing is left
+/// from one to the next.
+#[wasm_bindgen]
+pub struct Example {
+    host: crate::Host,
+    /// The text last run here, whose plots are asked for.
+    text: String,
+}
+
+impl Default for Example {
+    fn default() -> Self {
+        Example {
+            host: crate::Host::examples(),
+            text: String::new(),
+        }
+    }
+}
+
+#[wasm_bindgen]
+impl Example {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Example {
+        Example::default()
+    }
+
+    /// Run the text of an example, as a run of a script goes: the events to
+    /// `zeffHost.event`, the outcome as a line of JSON. `device_bytes` and `width` are as
+    /// [`Project::run`] has them.
+    pub fn run(&mut self, text: &str, device_bytes: f64, width: u32) -> String {
+        self.text = text.to_string();
+        let asked = crate::Asked {
+            device_bytes: (device_bytes > 0.0).then_some(device_bytes as u64),
+            width: width as usize,
+            only: None,
+        };
+        self.host
+            .run(crate::EXAMPLES_SCRIPT, text, &asked, cancelled, &|json| {
+                host_event(json)
+            })
+    }
+
+    /// The plot a statement of the example made, as an SVG on a page of a size in
+    /// millimetres, as a line of JSON.
+    pub fn plot_svg(&self, line: u32, width: f64, height: f64) -> String {
+        self.host
+            .plot_svg(crate::EXAMPLES_SCRIPT, &self.text, line, width, height)
+    }
+}
+
 #[wasm_bindgen]
 pub fn statements(script: &str, text: &str) -> String {
     crate::statements_json(script, text)
