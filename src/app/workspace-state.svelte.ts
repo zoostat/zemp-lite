@@ -32,7 +32,7 @@ import { cardOf } from "../help/hover";
 import { once } from "../help/once";
 import { homesOf } from "../help/trail";
 import { usingText } from "../using/pages";
-import { ProjectError, type Project, type TreeNode } from "../project/projects";
+import { engineIn, movedTo, ProjectError, type Project, type TreeNode } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
 import { begin, blocks, clockOf, end, hear, refused, said, type Run } from "../output/run";
@@ -48,6 +48,7 @@ import {
 import { compared, moved, ordered, toggled } from "../plots/viewer";
 import { Session } from "../project/session";
 import { CONSOLE_HELP, History, composed, consoleRun, outcomeOf, type Entry } from "./console";
+import { ENGINE } from "./version";
 import { parts } from "../project/folder";
 import {
   DATA,
@@ -85,6 +86,8 @@ function openable(run: Run): number[] {
 }
 
 const VIEWS = ".zemp/views.json";
+/** The project's manifest, which names the engine it runs on. */
+const MANIFEST = "zeff.toml";
 const MAIN = "scripts/main.zeff";
 
 /** A file open in the editor. */
@@ -247,6 +250,74 @@ export class Workspace {
   keeping = $state<Keeping>("may-clear");
   /** When the project was last exported, as the status bar's reminder counts it. */
   exportedAt = $state<number | null>(null);
+
+  /**
+   * The engine the project's `zeff.toml` names, as the manifest now stands, or `null` where
+   * it names none that can be read. A project runs on the engine it names and on no other
+   * (Engine Specification, section 2); Zemp Lite in a browser carries one.
+   */
+  engineNamed = $state<string | null>(null);
+  /** The engine the project named before the reader moved it to this one, while that is said. */
+  movedFrom = $state<string | null>(null);
+
+  /** The engine this app carries: the worker's own word once it has started. */
+  get carried(): string {
+    return this.engineVersion ?? ENGINE;
+  }
+
+  /**
+   * The other engine the project names, or `null` where it names this one (or none that can
+   * be read, which the engine itself says of at a run). While it names another, the engine
+   * refuses to run it (Z0710), and a line under the bar offers to move it (release 0.3, step 3b).
+   */
+  get otherEngine(): string | null {
+    return this.engineNamed !== null && this.engineNamed !== this.carried ? this.engineNamed : null;
+  }
+
+  /**
+   * What the engine said when it refused the last run because the project names another
+   * engine (Z0710): its own first line, as the command line writes it. `null` before such a
+   * run, and once the project names this engine.
+   */
+  get engineRefusal(): string | null {
+    if (this.otherEngine === null) return null;
+    // A refused run stands beside the results kept on the page, or is itself the last run
+    // where there were none.
+    for (const run of [this.refusal, this.lastRun]) {
+      const refused =
+        run === null ? undefined : said(run.beforeRaw).find((one) => one.code === "Z0710");
+      if (refused !== undefined) return `${refused.kind}[Z0710]: ${refused.sentence}`;
+    }
+    return null;
+  }
+
+  /**
+   * Move the project to the engine this app carries: the version in the one line of its
+   * `zeff.toml` rewritten, its comment kept, and nothing else. An open tab of the manifest
+   * shows the line as it now is; the engine is given the manifest before the next run.
+   */
+  async moveEngine(): Promise<void> {
+    const from = this.otherEngine;
+    if (from === null) return;
+    const open = this.buffers[MANIFEST];
+    const toml = open?.loaded ? open.text : await this.project.readText(MANIFEST);
+    if (toml === null) return;
+    const text = movedTo(toml, this.carried);
+    if (open?.loaded) {
+      this.edit(MANIFEST, text);
+    } else {
+      this.#saving = this.#saving
+        .then(() => this.project.writeText(MANIFEST, text))
+        .then(() => {
+          this.session.changed(MANIFEST);
+          this.language?.changed(MANIFEST);
+          void this.refresh();
+        });
+    }
+    this.engineNamed = engineIn(text);
+    this.movedFrom = from;
+    await this.#saving;
+  }
 
   /**
    * The line of the status bar that reminds the reader to export (Zemp Specification, section
@@ -435,6 +506,8 @@ export class Workspace {
       },
       (error: Error) => (this.status = error.message),
     );
+    // The engine the project names, for the line that says so where it is not this one.
+    this.engineNamed = engineIn((await this.project.readText(MANIFEST)) ?? "");
     // The view state as the page was last left, where that was noted (`left.ts`), is newer than
     // what the project holds: it is taken up, and written to the project.
     const left = this.#record === null ? null : takeLeft(this.#record, this.project.info.folder);
@@ -770,6 +843,8 @@ export class Workspace {
       return;
     }
     buffer.text = text;
+    // The manifest edited by hand names the engine it now names.
+    if (path === MANIFEST) this.engineNamed = engineIn(text);
     // The language server is told the script as it now stands, a moment after the last key.
     if (this.#telling !== null) clearTimeout(this.#telling);
     this.#telling = setTimeout(() => {

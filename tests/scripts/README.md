@@ -52,3 +52,9 @@ of the help the worker gives is held to them. `text`, `plot` and `datasets` have
 kind of part a function's page has (a list, sub-headings, a table of R and Stata, an example in the
 prose, another function of the name to come). The browser tests hold the words of the formatted Help
 page to it, and a unit test holds it to what the worker gives.
+
+`pin/zeff.toml` is the manifest the released `zeff new demo` of 0.8.0 wrote, and
+`pin/another-engine.stderr` what the released `zeff run` of 0.9.0 says of a project that holds it, and
+`zeff check` of 0.9.0 in the same words (both end with exit code 4): a project runs on the engine it
+names and on no other (Z0710). The worker makes the same refusal, held to this file (release 0.3,
+step 3b).

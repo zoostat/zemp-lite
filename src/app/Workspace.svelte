@@ -16,6 +16,7 @@
   import ConsoleLine from "./ConsoleLine.svelte";
   import MarginPane from "./MarginPane.svelte";
   import RunPanel from "../margin/RunPanel.svelte";
+  import EngineLine from "./EngineLine.svelte";
   import NarrowLine from "./NarrowLine.svelte";
   import Palette from "./Palette.svelte";
   import { paneCommand } from "./panes";
@@ -293,6 +294,15 @@
     { name: "Code text: smaller", hint: `now ${codeSize.px}`, run: codeSmaller },
     { name: "Code text: default size", hint: "14", run: codeUsual },
     { name: "Console: type a statement", hint: "⌃`", run: () => console_?.focus() },
+    ...(workspace.otherEngine !== null
+      ? [
+          {
+            name: `Project: move to Zeff ${workspace.carried}`,
+            hint: `it names ${workspace.otherEngine}`,
+            run: () => void workspace.moveEngine(),
+          },
+        ]
+      : []),
     { name: "Output: clear", run: () => workspace.clear() },
     { name: "Open the plot viewer", run: () => workspace.openPlots() },
     ...files(workspace.tree).map((path) => ({
@@ -325,6 +335,8 @@
 <TopBar {workspace} onclose={() => void close()} onpalette={() => (palette = true)} />
 
 <NarrowLine />
+
+<EngineLine {workspace} />
 
 <MarginPane {workspace} />
 

@@ -1445,3 +1445,55 @@ fn a_function_s_r_and_stata_names_come_from_its_page_and_from_the_catalogue() {
     assert_eq!(indexed_function("data", "summary")["name"], "summary");
     assert_eq!(indexed_function("results", "summary")["name"], "summary");
 }
+
+#[test]
+fn a_project_that_names_another_engine_is_refused_in_the_command_lines_words() {
+    // tests/scripts/pin/: the manifest `zeff new demo` of 0.8.0 wrote, and what the released
+    // `zeff run` and `zeff check` of 0.9.0 say of a project that holds it, with exit code 4.
+    let said = read("tests/scripts/pin/another-engine.stderr");
+    let host = Host::new("demo");
+    assert!(host.add_file("zeff.toml", read("tests/scripts/pin/zeff.toml").as_bytes()));
+    // A run: nothing runs, and the refusal is the whole of what is told and said. It is told
+    // as the engine tells what it says before a first statement.
+    let (told, done) = run(&host, "print(1 + 1)\n");
+    assert_eq!(told.len(), 1, "{told:?}");
+    let event: Value = serde_json::from_str(&told[0]).unwrap();
+    assert_eq!(event["type"], "output");
+    assert_eq!(event["stdout"], "");
+    assert_eq!(event["stderr"], said);
+    let done: Value = serde_json::from_str(&done).unwrap();
+    assert_eq!(done["exit_code"], 4);
+    assert_eq!(done["stdout"], "");
+    assert_eq!(done["stderr"], said);
+    assert_eq!(done["statements"].as_array().unwrap().len(), 0);
+    assert_eq!(done["frames"].as_array().unwrap().len(), 0);
+    // A check, in the same words.
+    let checked: Value =
+        serde_json::from_str(&host.check("scripts/main.zeff", "print(1 + 1)\n")).unwrap();
+    assert_eq!(checked["exit_code"], 4);
+    assert_eq!(checked["said"], said);
+    assert_eq!(checked["found"], said);
+    // The bindings and a report are not made either: each would run the script.
+    let listed: Value =
+        serde_json::from_str(&host.vars("scripts/main.zeff", "let a = 1\n")).unwrap();
+    assert_eq!(listed["printed"], "");
+    assert_eq!(listed["said"], said);
+    let report: Value = serde_json::from_str(&host.report(
+        "scripts/main.zeff",
+        "error(\"stop\")\n",
+        "aarch64 macos",
+    ))
+    .unwrap();
+    assert_eq!(report["ok"], false);
+    assert_eq!(
+        report["message"],
+        "error[Z0710]: this project needs Zeff 0.8.0, but this is Zeff 0.9.0"
+    );
+    // The same project moved to this engine, by the one line of its manifest, runs.
+    let moved = read("tests/scripts/pin/zeff.toml").replace("0.8.0", engine_version());
+    assert!(host.add_file("zeff.toml", moved.as_bytes()));
+    let (_, done) = run(&host, "print(1 + 1)\n");
+    let done: Value = serde_json::from_str(&done).unwrap();
+    assert_eq!(done["exit_code"], 0);
+    assert_eq!(done["stdout"], "2\n");
+}

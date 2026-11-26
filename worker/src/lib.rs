@@ -261,6 +261,26 @@ pub struct Host {
     bars: RefCell<Option<(String, Vec<String>)>>,
 }
 
+/// What the engine says of a project whose `zeff.toml` names another engine than this one
+/// (Z0710), as the command line words it, or `None` where the project names this engine. From
+/// Zeff 0.9.0 the command line makes this check and the engine's library runs what it is
+/// given; so the worker makes it wherever it would run the project's code (release 0.3,
+/// step 3b): a project is run on the engine it names, and on no other.
+fn another_engine(project: &Project) -> Option<String> {
+    let diagnostic = project.check_pin().err()?;
+    let mut sources = Sources::new();
+    sources.add(Source::new(
+        zeff_engine::project::MANIFEST,
+        project.manifest_text.clone(),
+    ));
+    Some(diagnostic.render(&sources))
+}
+
+/// The first line of what the engine said: the message itself, without its place and help.
+fn first_line(said: &str) -> &str {
+    said.lines().next().unwrap_or(said)
+}
+
 impl Host {
     /// A project called `name`, pinned to this engine, with nothing in it yet.
     pub fn new(name: &str) -> Host {
@@ -371,6 +391,16 @@ impl Host {
                 );
             }
         };
+        if let Some(said) = another_engine(&project) {
+            self.frames.borrow_mut().clear();
+            // Told as the engine tells what its check says before the first statement, so
+            // that the interface has it as a run the engine refused.
+            tell(&format!(
+                "{{\"type\": \"output\", \"stdout\": \"\", \"stderr\": {}}}",
+                json_string(&said)
+            ));
+            return self.done(4, "", &said, "[]");
+        }
         let defaults = RunOptions::default();
         let options = RunOptions {
             // The project's own `memory` comes first; without one the browser has a default.
@@ -553,6 +583,9 @@ impl Host {
         let Ok(project) = Project::open(&self.fs, Path::new(ROOT)) else {
             return answer(false, 0, "the project's `zeff.toml` could not be read");
         };
+        if let Some(said) = another_engine(&project) {
+            return answer(false, 0, first_line(&said));
+        }
         let needs = self.needed(&project, &script, &composed, line);
         let text = only(&script, &composed, &needs);
         let options = RunOptions {
@@ -627,6 +660,9 @@ impl Host {
         let Ok(project) = Project::open(&self.fs, Path::new(ROOT)) else {
             return none("the project's `zeff.toml` could not be read");
         };
+        if let Some(said) = another_engine(&project) {
+            return none(first_line(&said));
+        }
         let options = RunOptions {
             memory: match project.manifest.memory {
                 Some(_) => None,
@@ -681,6 +717,9 @@ impl Host {
         let Ok(project) = Project::open(&self.fs, Path::new(ROOT)) else {
             return answer("", "error: the project's `zeff.toml` could not be read\n");
         };
+        if let Some(said) = another_engine(&project) {
+            return answer("", &said);
+        }
         let Ok(registry) = zeff_engine::registry::registry() else {
             return answer("", none);
         };
@@ -785,6 +824,12 @@ impl Host {
                 );
             }
         };
+        if let Some(said) = another_engine(&project) {
+            return format!(
+                "{{\"type\": \"checked\", \"exit_code\": 4, \"said\": {0}, \"found\": {0}, \"summary\": \"\", \"findings\": [], \"ranges\": []}}",
+                json_string(&said)
+            );
+        }
         let registry = match zeff_engine::registry::registry() {
             Ok(registry) => registry,
             Err(_) => {

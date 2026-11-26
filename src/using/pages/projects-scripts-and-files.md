@@ -28,3 +28,7 @@ If you rename, move or delete a file that a script names, the app says which scr
 ## Taking a project out
 
 **Export project…** writes the whole project as one zip: its scripts, its data and what its runs wrote. **Open project…**, on the screen of projects, opens such a zip again, here or in another browser.
+
+## A project that names another Zeff
+
+A project names the Zeff engine it runs on, in its `zeff.toml`, and runs on that engine and no other, so that its results cannot change under it. This app carries one engine. Where a project names another, as one made here before the app's engine changed, a line under the top bar says so and offers to move the project to this app's engine: that rewrites the one line of `zeff.toml` and nothing else. Until it is moved, the engine refuses to run it, and says why. After the move, run its scripts again; where a result differs from before, the notes of that Zeff release say what changed. The Scratch project is moved for you.

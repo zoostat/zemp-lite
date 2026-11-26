@@ -1,0 +1,7 @@
+error[Z0710]: this project needs Zeff 0.8.0, but this is Zeff 0.9.0
+ --> zeff.toml:3:8
+  |
+3 | zeff = "0.8.0"            # the engine this project runs on, exactly
+  |        ^^^^^^^ the engine the project pins
+  |
+  = help: run it with Zeff 0.8.0, which `zeff engine install 0.8.0` installs, or move the project to this engine with `zeff engine use 0.9.0`

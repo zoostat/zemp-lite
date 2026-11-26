@@ -125,6 +125,34 @@ export function renamed(toml: string, name: string): string {
   return toml.replace(whole, `${before}${written}${space}${comment}`);
 }
 
+/**
+ * The engine a `zeff.toml` names (`zeff = "0.9.0"`), or `null` where it names none that can be
+ * read: the engine the project runs on, exactly (Engine Specification, section 2).
+ */
+export function engineIn(toml: string): string | null {
+  const found = /^[ \t]*zeff[ \t]*=[ \t]*"([^"\\]*)"[ \t]*(?:#.*)?$/m.exec(toml);
+  return found?.[1] ?? null;
+}
+
+/**
+ * A `zeff.toml` moved to another engine (release 0.3, step 3b): the version in its line of
+ * `zeff` rewritten, the line's comment kept at its column where the new version leaves room,
+ * and every other character as it was. A manifest with no such line that can be read is given
+ * back as it is: there is nothing in it to move.
+ */
+export function movedTo(toml: string, engine: string): string {
+  const line = /^([ \t]*zeff[ \t]*=[ \t]*)("[^"\\]*")([ \t]*)(#.*)?$/m;
+  const found = line.exec(toml);
+  if (found === null) return toml;
+  const [whole, before = "", old = "", gap = "", comment = ""] = found;
+  const written = `"${engine}"`;
+  const space =
+    comment === ""
+      ? gap
+      : " ".repeat(Math.max(1, [...old].length + gap.length - [...written].length));
+  return toml.replace(whole, `${before}${written}${space}${comment}`);
+}
+
 /** A name not among those taken, whatever their capitals: `Wages`, then `Wages 2`, `Wages 3`. */
 export function freeName(wanted: string, taken: string[]): string {
   const lower = new Set(taken.map((name) => name.toLowerCase()));
@@ -239,12 +267,16 @@ export class Projects {
    * showcase of plots, from one line to a finished figure (his answer of 21 November 2026).
    * A Scratch project made before an example came is given it, once: the examples given are
    * remembered, so one the user deletes or renames is not given again, and a file of that
-   * name already there is never written over.
+   * name already there is never written over. A Scratch project of an earlier engine is moved
+   * to this one.
    */
   async scratch(): Promise<ProjectInfo> {
-    const made = (await this.#root.read(`${ROOT}/${SCRATCH}/zeff.toml`)) === null;
+    const toml = await this.#root.read(`${ROOT}/${SCRATCH}/zeff.toml`);
+    const made = toml === null;
     if (made) {
       await this.#fill(SCRATCH, "Scratch", example);
+    } else {
+      await this.#scratchMoved(decoder.decode(toml));
     }
     const given = made ? [] : this.#given();
     for (const [name, text] of EXAMPLES) {
@@ -261,6 +293,20 @@ export class Projects {
       exported: this.#times(EXPORTED)[SCRATCH] ?? null,
       made: this.#made(SCRATCH),
     };
+  }
+
+  /**
+   * The Scratch project's manifest, moved to this engine where it names another: a Scratch
+   * project of an earlier visit names the engine of that visit. It is the app's own example,
+   * so it is moved without the asking, as the engine moves its own scratch project (release
+   * 0.3, step 3b); a project of the reader's is asked about. The manifest as it now stands.
+   */
+  async #scratchMoved(toml: string): Promise<string> {
+    const names = engineIn(toml);
+    if (names === null || names === ENGINE) return toml;
+    const now = movedTo(toml, ENGINE);
+    await this.#root.write(`${ROOT}/${SCRATCH}/zeff.toml`, encoder.encode(now));
+    return now;
   }
 
   /** The examples given before; none remembered where the browser kept no record of them. */
@@ -284,10 +330,13 @@ export class Projects {
 
   /** Open a project by its folder, and note the time; `null` where there is none. */
   async open(folder: string): Promise<Project | null> {
-    const toml = await this.#root.read(`${ROOT}/${folder}/zeff.toml`);
+    let toml = await this.#root.read(`${ROOT}/${folder}/zeff.toml`);
     if (toml === null) {
       return null;
     }
+    // The Scratch project of an earlier visit, however it is come back to: by its row, or by
+    // its address.
+    if (folder === SCRATCH) toml = encoder.encode(await this.#scratchMoved(decoder.decode(toml)));
     const opened = this.#opened();
     opened[folder] = this.#now();
     try {

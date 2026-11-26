@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import type { Kept } from "../theme/theme";
 import { BadPath, Inside, MemoryFolder, parts } from "./folder";
-import { ProjectError, Projects, SCRATCH, folderOf, manifest, nameIn, when } from "./projects";
+import {
+  ProjectError,
+  Projects,
+  SCRATCH,
+  engineIn,
+  folderOf,
+  manifest,
+  movedTo,
+  nameIn,
+  when,
+} from "./projects";
 
 const bytes = (text: string) => new TextEncoder().encode(text);
 
@@ -96,6 +106,76 @@ describe("the projects of a browser", () => {
     expect(nameIn(manifest('A "quoted" name'))).toBe('A "quoted" name');
     expect(nameIn('[project]\n  name = "x"  # the name\n')).toBe("x");
     expect(nameIn('[project]\nzeff = "0.9.0"\n')).toBeNull();
+  });
+
+  it("reads the engine a manifest names, and moves a manifest to another by that line alone", () => {
+    // Release 0.3, step 3b. The manifest `zeff new demo` of the released 0.8.0 wrote, which is
+    // kept as `tests/scripts/pin/zeff.toml` and opened through the app by the browser tests.
+    const of080 =
+      "[project]\n" +
+      'name = "demo"             # the project\'s name\n' +
+      'zeff = "0.8.0"            # the engine this project runs on, exactly\n' +
+      'edition = "preview"       # "2027" from Zeff 1.0.0\n';
+    expect(engineIn(of080)).toBe("0.8.0");
+    expect(engineIn(manifest("demo"))).toBe("0.9.0");
+    // Moved, it is the manifest this engine's `zeff new demo` writes, to the character: the
+    // version alone is rewritten, and the comment stays at its column.
+    expect(movedTo(of080, "0.9.0")).toBe(manifest("demo"));
+    // A longer version takes its room from the gap before the comment, and never all of it.
+    expect(movedTo(of080, "0.10.0")).toBe(
+      of080.replace('zeff = "0.8.0"            #', 'zeff = "0.10.0"           #'),
+    );
+    expect(movedTo('zeff = "0.8.0" # exactly\n', "0.10.0-rc.1")).toBe(
+      'zeff = "0.10.0-rc.1" # exactly\n',
+    );
+    // However the line is written: indented, without spaces, without a comment.
+    expect(movedTo('[project]\n  zeff="0.8.0"\nname = "x"\n', "0.9.0")).toBe(
+      '[project]\n  zeff="0.9.0"\nname = "x"\n',
+    );
+    expect(engineIn('[project]\n  zeff="0.8.0"\n')).toBe("0.8.0");
+    // Another setting that holds a version is not the engine's line.
+    const other = '[project]\nname = "zeff"\nnote = "zeff = 0.8.0"\n';
+    expect(engineIn(other)).toBeNull();
+    expect(movedTo(other, "0.9.0")).toBe(other);
+    // A manifest that names no engine that can be read is left as it is.
+    for (const unreadable of [
+      "",
+      '[project]\nname = "x"\n',
+      "zeff = 0.8\n",
+      '# zeff = "0.8.0"\n',
+    ]) {
+      expect(engineIn(unreadable), unreadable).toBeNull();
+      expect(movedTo(unreadable, "0.9.0"), unreadable).toBe(unreadable);
+    }
+  });
+
+  it("moves a Scratch project of an earlier engine to this one, and no project of the reader's", async () => {
+    // Release 0.3, step 3b: the Scratch project is the app's own example, moved without the
+    // asking, as the engine moves its own; a project the reader made is asked about.
+    const { projects } = empty();
+    await projects.scratch();
+    const mine = await projects.create("Wages");
+    const earlier = (toml: string) => toml.replace('"0.9.0"', '"0.8.0"');
+    for (const folder of [SCRATCH, mine.folder]) {
+      const project = await projects.open(folder);
+      const toml = (await project!.readText("zeff.toml"))!;
+      await project!.writeText("zeff.toml", earlier(toml));
+      await project!.writeText("scripts/main.zeff", 'print("kept")\n');
+    }
+    // Come back to by its row or its address, which opens it and makes nothing.
+    const scratch = await projects.open(SCRATCH);
+    expect(await scratch!.readText("zeff.toml")).toBe(manifest("Scratch"));
+    // And by the Scratch card, which makes it where there is none.
+    await scratch!.writeText("zeff.toml", earlier(manifest("Scratch")));
+    await projects.scratch();
+    expect(await scratch!.readText("zeff.toml")).toBe(manifest("Scratch"));
+    // What the reader left in it is as it was.
+    expect(await scratch!.readText("scripts/main.zeff")).toBe('print("kept")\n');
+    const wages = await projects.open(mine.folder);
+    expect(await wages!.readText("zeff.toml")).toBe(earlier(manifest("Wages")));
+    // A Scratch project that already names this engine is not written again.
+    await projects.scratch();
+    expect(await scratch!.readText("zeff.toml")).toBe(manifest("Scratch"));
   });
 
   it("creates a project with its manifest, a script and a data folder, and lists it", async () => {

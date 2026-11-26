@@ -1,0 +1,4 @@
+[project]
+name = "demo"             # the project's name
+zeff = "0.8.0"            # the engine this project runs on, exactly
+edition = "preview"       # "2027" from Zeff 1.0.0
