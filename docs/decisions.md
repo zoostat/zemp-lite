@@ -3093,3 +3093,41 @@ The wait is there at the trial address every time and at the address once in fou
 **Tests.** Node: every example of every page, and the list of the codes. Unit: the page's holding of its examples with a stand-in for the app (run as it opens, an example with those above it, illustrations, dropped, the engine not there, copy and its words). Browser, both engines: Copy to script at the cursor on an empty line, undone, a changed example after a line that holds a statement; from a page opened by its address, at the end of the script.
 
 **Reason.** Open decision #211, item 11; the owner's standing rule of 24 November 2026 that the pages agree with the engine the release carries.
+
+## 27 November 2026: The Typst module as a crate of its own (release 0.3, step 11a; #172, option A)
+
+**Step 11 is split in three** (the checklist says why): 11a, the module as a crate with its own tests; 11b, built for the browser, sent by the host and fetched on first use; 11c, the fonts of mathematics and code and the final measure, which wait on the owner for a licence to rule on (DejaVu Sans Mono) and for leave to fetch a file (Libertinus Math).
+
+**The crate.** `paper/`, package `zemp-paper`, apart from the engine's worker: its own manifest, lock file, toolchain file (the worker's compiler, 1.99.1) and build folder. It is Typst 0.15.1 and nothing else sets a page: the crate is the room Typst works in (the files and fonts the page gives, the day) and the questions the page asks: put a file in or forget it; set the paper; a page as Typst's own SVG; the PDF; what Typst says of a source, each thing with its file, line and column; and the place in the source of a point on a page.
+
+**Dependencies, each pinned exactly, all at the versions of the released Typst's own lock file** (the reason is step 2's: only so is a PDF the desktop Typst's, byte for byte):
+
+| Crate | Version | Licence | For |
+| --- | --- | --- | --- |
+| `typst` | 0.15.1 | Apache-2.0 | the language and its library |
+| `typst-layout` | 0.15.1 | Apache-2.0 | a paper laid out in pages |
+| `typst-pdf` | 0.15.1 | Apache-2.0 | the PDF |
+| `typst-svg` | 0.15.1 | Apache-2.0 | a page as SVG |
+| `typst-ide` | 0.15.1 | Apache-2.0 | from a point of a page to the source |
+| `comemo` | 0.5.1 | MIT or Apache-2.0 | Typst's memory between settings, to drop what is no longer used |
+| `serde_json` | 1.0.138 | MIT or Apache-2.0 | what is told of a setting, as JSON; Typst links it already |
+| `wasm-bindgen` | 0.2.129 | MIT or Apache-2.0 | the binding for the browser, as the worker's |
+| `hypher` | 0.1.8, the copy in `paper/hypher/` | MIT or Apache-2.0 | hyphenation, 33 languages (below) |
+
+**Everything linked, 279 crates for the browser, is listed with its licence in `paper/DEPENDENCIES.md`**, not here: a list of that length is kept where a tool writes it and the routine holds it. `npm run check:paper` reads the tree for the browser's target, refuses any crate that cannot be met on permissive terms (MIT, Apache-2.0, BSD, ISC, Zlib, Unicode, or more permissive: 0BSD, CC0, the Unlicense, the Boost licence), and fails where the tree is not the list kept; so a crate cannot arrive, or change its licence, unread. Today every one is permitted. The lock file is the trial's, less the nine crates only the trial used; no version in it changed.
+
+**The hyphenation copy** is the trial's: `hypher` 0.1.8 with the fifteen languages whose patterns are not under a permissive licence taken out, put in place of the published crate by a `[patch]`. What is changed is said in `paper/hypher/CHANGES.md`, as its licences ask.
+
+**No font is compiled into the module; the page gives the fonts as files.** This settles the question step 2 left to step 11. It lets a font file of a reader's project be given to Typst with the module's own; it lets each font be kept by the browser on its own; and it costs nothing in size (a font packs the same inside the module or beside it).
+
+**The text face is Typst's own copy of Libertinus Serif**, the four files taken unchanged from the crate `typst-assets` 0.15.1 as cargo fetched it (the files the desktop Typst embeds), with the copyright notice and the licence that crate's own notice gives (`paper/fonts/`, `SOURCE.md`, held to their SHA-256 by a test). So a paper is set here in the very files the desktop Typst sets it in.
+
+**Compiled for size** (`opt-level = "s"`), as step 2's measures favoured: the module travels once, and a paper sets as fast either way after its first setting. Measured now: the module 25.2 MB, **5.76 MB packed** at brotli's highest setting, without fonts; the four text files 0.77 MB packed. So 6.53 MB of the 8.5 MB allowed, before the faces of mathematics and code.
+
+**The day in a paper** (`datetime.today()`) is the day the page gives, the reader's, not a day the module knows. **The PDF's time** is given by the page too, and its creator and identifier are left as Typst writes them (step 2).
+
+**In the routine and on GitHub:** the module's `cargo fmt`, `cargo clippy` with warnings denied and `cargo test` beside the worker's, and the check of its licences.
+
+**Tests** (12 of the module's own, natively): a paper of two pages of A4 set, each page an SVG, the PDF the same bytes twice and others at another time; set again after a change, and the same page as a paper made afresh from the same text; a source Typst refuses said with its file, line and column, the last pages that set staying; the other files of a project read (a table as text, a figure as bytes), one that is not there said by its path, an error inside a file said of that file, a path that would leave the project refused; a warning said and the paper still set; German and English broken at the ends of lines; Dutch, one of the fifteen left out, set the same whether breaking is asked for or forbidden, with nothing said; a click on a heading and on a paragraph leading to their lines, an empty corner nowhere; the day; a file that is no font; the font files held to their source. Three more hold the fonts' folder, and two the reading of a licence.
+
+**Reason.** Open decision #172, option A; step 2's findings.

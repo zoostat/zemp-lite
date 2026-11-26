@@ -110,11 +110,22 @@ jobs:
         if: steps.tool.outputs.cache-hit != 'true'
         run: cargo install wasm-bindgen-cli --version '=0.2.129' --locked
 
-      - name: The worker's Rust, formatted and linted with warnings denied
+      # The Paper module: Typst, built from the released program's own lock file. Its build is
+      # kept apart from the engine's, since each changes without the other.
+      - name: Keep the Paper module's build between runs
+        uses: actions/cache@v6
+        with:
+          path: paper/target
+          key: paper-${{ runner.os }}-${{ hashFiles('paper/Cargo.lock', 'paper/rust-toolchain.toml', 'paper/.cargo/config.toml') }}
+
+      - name: The Rust of the worker and of the Paper module, formatted and linted with warnings denied
         run: npm run check:rust
 
-      - name: The worker's tests, natively
+      - name: The tests of the worker and of the Paper module, natively
         run: npm run test:rust
+
+      - name: Everything the Paper module links is under a permissive licence, as kept
+        run: npm run check:paper
 
       - name: Build the worker to WebAssembly
         run: npm run build:worker

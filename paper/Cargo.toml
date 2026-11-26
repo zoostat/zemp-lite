@@ -1,0 +1,56 @@
+[package]
+name = "zemp-paper"
+description = "Typst as Zemp's module for a paper in the browser: a paper's files in memory, set to pages, with its PDF and the place in the source of a point on a page."
+version = "0.3.0-dev"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+# A package of its own, apart from the engine's worker and not a member of a workspace.
+[workspace]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+
+# Typst 0.15.1, and nothing chosen afresh: `Cargo.lock` is the lock file of the released
+# program (the crate `typst-cli` 0.15.1) with this package's few crates added, because only
+# from the released program's pinned parts is a PDF set here the desktop Typst's, byte for
+# byte (docs/decisions.md, 27 November 2026). Typst's own fonts are behind a feature that is
+# left off: the fonts are files the page gives (`fonts/`).
+[dependencies]
+typst = "=0.15.1"
+typst-layout = "=0.15.1"
+typst-pdf = "=0.15.1"
+typst-svg = "=0.15.1"
+# From a point of a page to its place in the source.
+typst-ide = "=0.15.1"
+# Typst's own memory of what it has worked out, to drop what no setting has used for a while.
+comemo = "=0.5.1"
+# What is told of a setting, as JSON; Typst links it already, at this version.
+serde_json = "=1.0.138"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "=0.2.129"
+
+# The hyphenation patterns: a copy of the crate `hypher` 0.1.8 that holds only the languages
+# under permissive licences (`hypher/CHANGES.md`), in place of the published crate.
+[patch.crates-io]
+hypher = { path = "hypher" }
+
+# Compiled for size: the module travels to a reader once, and a paper is set as fast either
+# way after its first setting (docs/decisions.md, the spike of 27 November 2026).
+[profile.release]
+opt-level = "s"
+codegen-units = 1
+lto = "fat"
+strip = true
+panic = "abort"
+
+[profile.dev]
+debug = false

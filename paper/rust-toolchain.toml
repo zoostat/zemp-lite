@@ -1,0 +1,7 @@
+# The compiler the engine's worker is built with (worker/rust-toolchain.toml), so that this
+# repository has one, and the module's bytes do not change with a compiler chosen afresh.
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]

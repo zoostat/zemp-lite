@@ -10,3 +10,5 @@ test-results/
 playwright-report/
 package-lock.json
 worker/pkg/
+# A copy of a published crate, as published but for what its CHANGES.md says.
+paper/hypher/

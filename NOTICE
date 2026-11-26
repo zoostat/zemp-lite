@@ -1,2 +1,15 @@
 Zemp Lite
 Copyright 2026 Sabyasachi Patra
+
+This product includes software developed by others. The Paper module (the folder paper/) is built
+on Typst 0.15.1 (https://github.com/typst/typst), by The Typst Project Developers, licensed
+under the Apache License, Version 2.0. Every crate the module links, with its licence,
+is listed in paper/DEPENDENCIES.md.
+
+paper/hypher/ is a changed copy of the crate hypher 0.1.8 (https://github.com/typst/hypher),
+licensed under MIT or Apache-2.0; what is changed is said in paper/hypher/CHANGES.md, and both
+licences are beside it.
+
+paper/fonts/ holds Libertinus Serif, Copyright 2012-2024 The Libertinus Project Authors, with
+Reserved Font Name "Linux Libertine", "Biolinum", "STIX Fonts", licensed under the SIL Open Font
+License, Version 1.1 (paper/fonts/LibertinusSerif-OFL.txt).
