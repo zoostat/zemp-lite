@@ -203,4 +203,32 @@ describe("the examples of Help waiting to run", () => {
     stand.end(outcome("C\n"));
     expect((await after)?.stdout).toBe("C\n");
   });
+
+  it("ask an example's session for its plots before the next example takes its place", async () => {
+    const stand = new Stand();
+    const queue = new Examples(stand);
+    const order: string[] = [];
+    let laid: () => void = () => {};
+    const first = queue.ask({
+      owner: "scatter",
+      text: "a",
+      after: (given) => {
+        order.push(`plots of ${given.stdout.trim()}`);
+        return new Promise<void>((resolve) => (laid = resolve));
+      },
+    });
+    const second = queue.ask({ owner: "scatter", text: "b" });
+    await settle();
+    stand.end(outcome("A\n"));
+    await settle();
+    // The plots are being laid out: the next example is not in the worker yet.
+    expect(order).toEqual(["plots of A"]);
+    expect(stand.ran).toEqual(["a"]);
+    laid();
+    expect((await first)?.stdout).toBe("A\n");
+    await settle();
+    expect(stand.ran).toEqual(["a", "b"]);
+    stand.end(outcome("B\n"));
+    expect((await second)?.stdout).toBe("B\n");
+  });
 });

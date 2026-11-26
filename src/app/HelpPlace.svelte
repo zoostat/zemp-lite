@@ -311,6 +311,8 @@
               {doc}
               {of}
               {under}
+              runs={workspace.exampleRuns}
+              illustrated={shown?.kind === "code"}
               onname={(name) => void workspace.showHelp(name)}
               oncode={(code) => void workspace.showCode(code)}
             />

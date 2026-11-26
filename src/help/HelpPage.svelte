@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Snippet } from "svelte";
+  import { untrack, type Snippet } from "svelte";
   // A help page set in type (release 0.2.1, step 10b; the owner's choice of 22 November 2026,
   // the mockup's look C). The engine prints a page for a terminal; `read.ts` reads the print
   // into its parts, and this sets them: the name as the title, what it does under it, its
@@ -9,16 +9,31 @@
   // block, never broken. Every word is the engine's: nothing here writes one. A function named
   // in the prose, a related name and a code each open their own page.
   import Code from "../editor/Code.svelte";
+  import Example from "./Example.svelte";
   import { pieces, suggested, type Block, type ExampleLine, type HelpDoc } from "./read";
+  import { PageRuns, type ExampleRuns } from "./runs.svelte";
 
   let {
     doc,
     of,
     under,
+    runs,
+    illustrated = false,
     onname,
     oncode,
   }: {
     doc: HelpDoc;
+    /**
+     * What runs the page's examples in the page (release 0.3, step 9): with it every example
+     * has **Run** under it and is run as the page opens; without it the examples are shown
+     * as the engine printed them.
+     */
+    runs?: ExampleRuns;
+    /**
+     * Whether the page's examples are illustrations (an explained code's), which the engine
+     * does not hold to itself: they are not run as the page opens.
+     */
+    illustrated?: boolean;
     /** What stands under the page's title: the list of its sections, in a narrow window. */
     under?: Snippet;
     /** Which function of its name the page is of, where the name has two: "of a frame" (#215). */
@@ -33,6 +48,37 @@
   const PROMPT = "> ";
   /** The break between two lines of code, kept as the print has it. */
   const BREAK = "\n";
+
+  // The page's examples, held while this page is shown: run as it opens, dropped as it is left.
+  const held = $derived(runs === undefined ? null : new PageRuns(doc, runs, illustrated));
+  let article = $state<HTMLElement | null>(null);
+  /**
+   * The width a figure of an example is laid out at: the page's, less the example's own edges
+   * and the figure's frame, and no wider than a plot reads well.
+   */
+  const figureWidth = (wide: number) => Math.max(240, Math.min(Math.floor(wide) - 32, 620));
+  $effect(() => {
+    const page = held;
+    if (page === null || article === null) return;
+    page.width = figureWidth(article.clientWidth);
+    // What the examples show changes as they run, and is nothing this effect waits on.
+    untrack(() => void page.open());
+    // Where the page is made wider or narrower, its figures are laid out again once the
+    // change has stopped: never stretched.
+    let wait: ReturnType<typeof setTimeout> | undefined;
+    const watch = new ResizeObserver((entries) => {
+      const wide = entries[0]?.contentRect.width;
+      if (wide === undefined) return;
+      clearTimeout(wait);
+      wait = setTimeout(() => void page.relayout(figureWidth(wide)), 300);
+    });
+    watch.observe(article);
+    return () => {
+      clearTimeout(wait);
+      watch.disconnect();
+      page.leave();
+    };
+  });
 </script>
 
 <!-- A line of prose: code, the functions and codes it names as links, a reference's titles. -->
@@ -139,7 +185,13 @@
     {:else if block.kind === "names"}
       {@render names(block.names)}
     {:else if block.kind === "example"}
-      {@render example(block.lines)}
+      {#if held !== null}
+        {#each held.of(block) as item, index (index)}
+          <Example {item} page={held} {oncode} />
+        {/each}
+      {:else}
+        {@render example(block.lines)}
+      {/if}
     {:else if block.kind === "paragraph"}
       <p>{@render prose(block.text)}</p>
     {:else if block.kind === "subheading"}
@@ -176,7 +228,7 @@
   {/each}
 {/snippet}
 
-<article class="formatted" data-testid="help-page">
+<article class="formatted" data-testid="help-page" bind:this={article}>
   {#each doc.notes as note (note.line)}
     <!-- What the engine says outside any function: a name it suggests is a link to its page. -->
     <p class="said" data-line={note.line}>

@@ -50,17 +50,24 @@ const printed = (text: string) => ({
  * The words the Help place shows, as a reader sees them, and how many descriptions it marks
  * as shared: the mark stands by the argument's name, where the print has it at the line's end.
  */
-const shown = async (page: Page) =>
-  page.getByTestId("help-page").evaluate((node) => {
+const shown = async (page: Page) => {
+  // The examples of the page are run as it opens (release 0.3, step 9): the words read are
+  // those that stand once each shows what this engine gave, which are the print's own.
+  await expect(
+    page.getByTestId("example-status").filter({ hasText: /^(waiting to run|running…)$/ }),
+  ).toHaveCount(0);
+  return page.getByTestId("help-page").evaluate((node) => {
     const marks = [...node.querySelectorAll<HTMLElement>(".shared")];
     // What a title says of which function of its name the page is of ("· of a frame", #215)
-    // is the app's, made from the engine's type: it is not among the print's words.
-    const which = [...node.querySelectorAll<HTMLElement>("h3 .of")];
-    for (const mark of [...marks, ...which]) mark.hidden = true;
+    // is the app's, made from the engine's type: it is not among the print's words. Nor are
+    // the buttons under an example and the line beside them (`.own`).
+    const which = [...node.querySelectorAll<HTMLElement>("h3 .of, .own")];
+    for (const mark of [...marks, ...which]) mark.style.display = "none";
     const text = (node as HTMLElement).innerText;
-    for (const mark of [...marks, ...which]) mark.hidden = false;
+    for (const mark of [...marks, ...which]) mark.style.display = "";
     return { text, shared: marks.length };
   });
+};
 
 /** Hold the page shown to a page as the engine prints it: the same words, in the same order. */
 async function holdsPrint(page: Page, print: string) {
@@ -338,14 +345,20 @@ test("a page of every kind of part is set in type, and every word of it is the e
   await expect(formatted.locator("ul.list").first().getByRole("listitem")).toHaveCount(3);
   // The usage and what an example typed are code in the editor's colours; what an example
   // printed is as printed, in a block that scrolls and is reached by the Tab key, by its name.
+  // An example is a group of its own, with its statements, its buttons and what it printed
+  // (release 0.3, step 9).
   await expect(formatted.locator("pre.usage").getByTestId("code").locator(".function")).toHaveText(
     "add",
   );
-  const last = formatted.getByRole("group", { name: "Example" }).last();
-  await expect(last.locator(".prompt").first()).toHaveText("> ");
-  await expect(last.getByTestId("code").first()).toHaveText("let wages = dataset(wages)");
-  expect(await last.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("pre");
-  await expect(last).toHaveAttribute("tabindex", "0");
+  const one = formatted
+    .getByRole("group", { name: "Example", exact: true })
+    .filter({ hasText: "let wages = dataset(wages)" })
+    .first();
+  await expect(one.locator(".prompt").first()).toHaveText("> ");
+  await expect(one.getByTestId("code").first()).toHaveText("let wages = dataset(wages)");
+  const printedBlock = one.getByRole("group", { name: "What the example printed" }).first();
+  expect(await printedBlock.evaluate((node) => getComputedStyle(node).whiteSpace)).toBe("pre");
+  await expect(printedBlock).toHaveAttribute("tabindex", "0");
   // Every link of the page has a name.
   const unnamed = await formatted
     .getByRole("button")
@@ -443,7 +456,10 @@ test("a help page stays inside its place and never under 12.5 pixels, at every c
   expect(one.sideways).toBe(0);
   expect(one.least).toBeGreaterThanOrEqual(12.5);
   // `plot` has an example 500 characters wide: its block scrolls, the page does not.
-  const wide = page.getByTestId("help-page").getByRole("group", { name: "Example" }).last();
+  const wide = page
+    .getByTestId("help-page")
+    .getByRole("group", { name: "What the example printed" })
+    .last();
   expect(await wide.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeGreaterThan(0);
   // At the smallest code size and at the largest.
   const smaller = page.getByRole("button", { name: "Smaller code text" });

@@ -1,7 +1,9 @@
 // The state of one window with a project open in it: the project and its engine, what the
 // panes show, the scripts being edited, and the last run. Every screen of
 // the workspace reads this one object and changes it through its methods.
-import type { Engine } from "../engine/engine";
+import { EXAMPLE_LIMIT, type Engine } from "../engine/engine";
+import { Examples } from "../engine/examples";
+import type { Drawn, ExampleRuns } from "../help/runs.svelte";
 import { Language, type Diagnostic, type Range } from "../engine/language";
 import type {
   Checked,
@@ -40,6 +42,7 @@ import { merged } from "../margin/stale";
 import { begin, blocks, clockOf, end, hear, refused, said, type Run, oneRun } from "../output/run";
 import {
   keyOf,
+  millimetres,
   plotsOf,
   withExport,
   withExports,
@@ -143,6 +146,55 @@ export function applied(text: string, edits: { range: Range; newText: string }[]
 export class Workspace {
   readonly project: Project;
   readonly engine: Engine;
+  /** The examples of Help waiting to run in the engine, one at a time (`engine/examples.ts`). */
+  readonly #examples: Examples;
+  /**
+   * What runs the examples of a help page (release 0.3, steps 8 and 9): each in a session of
+   * its own in the engine's worker, which holds nothing of this project, and with its plots
+   * laid out by the engine at the width of the page before the next example takes the
+   * session's place.
+   */
+  readonly exampleRuns: ExampleRuns = {
+    seconds: EXAMPLE_LIMIT / 1000,
+    run: async (owner, text, width, began) => {
+      const height = Math.round(width * 0.62);
+      const figures: Record<number, Drawn> = {};
+      const asked = performance.now();
+      let from: number | null = null;
+      let ms = 0;
+      const outcome = await this.#examples.ask({
+        owner,
+        text,
+        listener: () => {
+          if (from !== null) return;
+          from = performance.now();
+          began?.();
+        },
+        after: async (ran) => {
+          ms = performance.now() - (from ?? asked);
+          for (const plot of ran.plots) {
+            try {
+              const laid = await this.engine.examplePlot(
+                plot.line,
+                millimetres(width),
+                millimetres(height),
+              );
+              figures[plot.line] = {
+                svg: laid.svg,
+                problem: laid.svg === null ? laid.message || "The engine drew no figure." : "",
+                width,
+                height,
+              };
+            } catch (error) {
+              figures[plot.line] = { svg: null, problem: (error as Error).message, width, height };
+            }
+          }
+        },
+      });
+      return outcome === null ? null : { outcome, figures, ms };
+    },
+    drop: (owner) => this.#examples.drop(owner),
+  };
   readonly session: Session;
 
   /** Whether the project's view state and files have been read. */
@@ -353,6 +405,7 @@ export class Workspace {
     this.project = project;
     this.exportedAt = project.info.exported;
     this.engine = engine;
+    this.#examples = new Examples(engine);
     this.session = new Session(project, engine);
     this.language = language === null ? null : new Language(project, language);
     if (this.language !== null) {

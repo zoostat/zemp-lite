@@ -39,6 +39,11 @@ export interface Asked {
   width?: number;
   /** The milliseconds it may run; the engine's own limit where none is given. */
   limit?: number;
+  /**
+   * What is asked of its session once it has run and before the next example takes the
+   * session's place: its plots, laid out. The next waits for it.
+   */
+  after?: (outcome: ExampleOutcome) => Promise<void>;
 }
 
 interface Entry extends Asked {
@@ -129,8 +134,13 @@ export class Examples {
           // run again once that run has ended.
           continue;
         } else {
+          try {
+            await entry.after?.(outcome);
+          } catch {
+            // What it asked of its session did not come: the outcome stands without it.
+          }
           this.#waiting.shift();
-          entry.resolve(outcome);
+          entry.resolve(entry.dropped ? null : outcome);
         }
       }
     } finally {

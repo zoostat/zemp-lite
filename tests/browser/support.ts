@@ -179,16 +179,31 @@ export { expect };
  * is loaded; gives what reads the count.
  */
 export async function countRuns(page: Page): Promise<() => Promise<number>> {
+  const asked = await countAsked(page);
+  return () => asked("run");
+}
+
+/**
+ * Count the messages sent to the engine's worker from here on, by their type (`run`, a run of
+ * the reader's; `example`, an example of Help). To be called before the page is loaded; gives
+ * what reads the count of a type.
+ */
+export async function countAsked(page: Page): Promise<(type: string) => Promise<number>> {
   await page.addInitScript(() => {
-    const counted = window as unknown as { zempRuns: number };
-    counted.zempRuns = 0;
+    const counted = window as unknown as { zempAsked: Record<string, number> };
+    counted.zempAsked = {};
     const post = Worker.prototype.postMessage;
     Worker.prototype.postMessage = function (this: Worker, ...given: unknown[]) {
-      if ((given[0] as { type?: string } | null)?.type === "run") counted.zempRuns += 1;
+      const type = (given[0] as { type?: string } | null)?.type;
+      if (type !== undefined) counted.zempAsked[type] = (counted.zempAsked[type] ?? 0) + 1;
       return (post as (...all: unknown[]) => void).apply(this, given);
     } as typeof Worker.prototype.postMessage;
   });
-  return () => page.evaluate(() => (window as unknown as { zempRuns: number }).zempRuns);
+  return (type) =>
+    page.evaluate(
+      (of) => (window as unknown as { zempAsked: Record<string, number> }).zempAsked[of] ?? 0,
+      type,
+    );
 }
 
 /** The editor of the script shown. */
