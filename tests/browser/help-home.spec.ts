@@ -94,8 +94,8 @@ test("Home is a landing page: Zeff and Zemp Lite with their versions, and a pane
   await expect(panel(page, "Errors and warnings 148")).toContainText(
     "Every message Zeff gives has a code, such as Z0103. Its page gives the meaning, the usual causes, an example and the fix.",
   );
-  await expect(opener(page, "Using Zemp Lite 13")).toHaveText(/^Using Zemp Lite\s*13\s*$/);
-  await expect(panel(page, "Using Zemp Lite 13")).toContainText(
+  await expect(opener(page, "Using Zemp Lite 14")).toHaveText(/^Using Zemp Lite\s*14\s*$/);
+  await expect(panel(page, "Using Zemp Lite 14")).toContainText(
     "How to work in this app: projects and scripts, running a script and reading its notes, the Data and Plots places, shortcuts, and where the work is kept.",
   );
   // The packages' names as small links inside their panel, in the engine's order.
@@ -123,7 +123,7 @@ test("Home is a landing page: Zeff and Zemp Lite with their versions, and a pane
   await expect(parts).toHaveText(PANELS);
   await page.setViewportSize({ width: 1280, height: 420 });
   await press(parts.nth(4));
-  await expect(opener(page, "Using Zemp Lite 13")).toBeInViewport();
+  await expect(opener(page, "Using Zemp Lite 14")).toBeInViewport();
   // The last panel cannot reach the top of the page: it is marked all the same, as the one
   // gone to, until the page is moved.
   await expect(parts.nth(4)).toHaveAttribute("aria-current", "location");
@@ -161,9 +161,9 @@ test("each topic's panel opens its page, and a package's link its package", asyn
   await expect(home(page).getByRole("heading", { level: 4 })).toHaveCount(12);
   await press(back(page));
   // Using Zemp Lite: the list of the app's own pages.
-  await press(opener(page, "Using Zemp Lite 13"));
+  await press(opener(page, "Using Zemp Lite 14"));
   await expect(title(page)).toHaveText("Using Zemp Lite");
-  await expect(home(page).getByRole("row")).toHaveCount(13);
+  await expect(home(page).getByRole("row")).toHaveCount(14);
   await press(back(page));
   // A package's own link, inside the panel, opens that package and not the list.
   await press(panel(page, "Packages 11").getByRole("button", { name: "regress", exact: true }));
@@ -316,7 +316,7 @@ for (const theme of ["light", "dark"] as const) {
     await fits();
     await page.setViewportSize({ width: 1200, height: 800 });
     // The pointer on a panel: its edge is the accent's, and its words are as readable.
-    await panel(page, "Using Zemp Lite 13").hover();
+    await panel(page, "Using Zemp Lite 14").hover();
     expect(await faintText(home(page))).toEqual([]);
     // From the keyboard alone: a panel's button, then the links inside it, then the next panel.
     const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
@@ -386,6 +386,6 @@ test("Home is in the look of 0.2.4's screens: each part a white card with its ic
   // The name is drawn in Zemp Lite's card and in the topic that names it.
   await expect(home(page).locator(".zl")).toHaveCount(2);
   // A card is still opened by its button, whose name is the topic and its count alone.
-  await press(opener(page, "Using Zemp Lite 13"));
+  await press(opener(page, "Using Zemp Lite 14"));
   await expect(title(page)).toHaveText("Using Zemp Lite");
 });

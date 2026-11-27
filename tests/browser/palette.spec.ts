@@ -500,7 +500,7 @@ test("what release 0.2.3 added is reached from the keyboard: every control of th
     "Search Help",
     "Packages 11",
     "Errors and warnings 148",
-    "Using Zemp Lite 13",
+    "Using Zemp Lite 14",
     "regress",
     "Close Topics",
     "Zemp Lite",

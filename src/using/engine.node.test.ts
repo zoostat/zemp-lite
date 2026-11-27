@@ -61,7 +61,7 @@ describe("the pages of Using Zemp Lite, held to the engine the app carries", () 
   it("is the engine of this release", () => {
     expect(built.engineVersion()).toBe(index.engine);
     expect(functions.size).toBeGreaterThan(200);
-    expect(pages()).toHaveLength(13);
+    expect(pages()).toHaveLength(14);
   });
 
   it("has, under the name the page gives it, every function, package and code a page links to", () => {
@@ -164,7 +164,7 @@ describe("Home of Help, held to the engine the app carries", () => {
 
   it("counts what this engine has, and what the app has pages for", () => {
     expect(countsOf(index, families)).toBe("266 functions · 11 packages · 148 codes");
-    expect(topicPanels(index, families).map((panel) => panel.count)).toEqual([11, 148, 13]);
+    expect(topicPanels(index, families).map((panel) => panel.count)).toEqual([11, 148, 14]);
     // "A package's page lists its functions, each with one line": every function has its line.
     for (const one of index.packages) {
       for (const each of one.functions) expect(each.summary, each.name).not.toBe("");

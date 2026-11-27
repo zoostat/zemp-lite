@@ -512,6 +512,9 @@ export async function faintText(within: Locator): Promise<string[]> {
       for (let at: Element | null = element; at !== null; at = at.parentElement) {
         ink = { ...ink, a: ink.a * parseFloat(getComputedStyle(at).opacity) };
       }
+      // What is wholly clear is not drawn at all (a control shown only when its row is pointed
+      // at or it holds the focus): there is nothing there to be faint.
+      if (ink.a === 0) continue;
       const [inked, bare] = [light(over(ink, ground)), light(ground)];
       const ratio = (Math.max(inked, bare) + 0.05) / (Math.min(inked, bare) + 0.05);
       if (ratio < 4.5) faint.push(`${words.slice(0, 40)}: ${ratio.toFixed(2)}`);

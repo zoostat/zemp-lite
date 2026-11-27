@@ -54,6 +54,7 @@ const PAGES = [
   "Sections and the outline",
   "The Data place",
   "The Plots place",
+  "Papers and PDFs",
   "Finding help",
   "Commands with ⌘K",
   "Keyboard shortcuts",

@@ -519,9 +519,10 @@
   button.row:hover {
     background: var(--line);
   }
-  /* On the ground of a row pointed at, a file's size is set a shade darker: at its usual
-     grey it stood at 4.47 to 1 there in the light theme. */
-  button.row:hover em {
+  /* On the ground of a row pointed at, a file's size and a folder's mark are set a shade
+     darker: at their usual grey they stood at 4.47 to 1 there in the light theme. */
+  button.row:hover em,
+  button.row:hover .chevron {
     color: var(--ink-2);
   }
   .row.on {

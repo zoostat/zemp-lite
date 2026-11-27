@@ -183,7 +183,7 @@ describe("Home, the landing page", () => {
       { kind: "using", page: null },
     ]);
     // The pages of the app there are, counted.
-    expect(panels[2]?.count).toBe(13);
+    expect(panels[2]?.count).toBe(14);
   });
 
   it("lists its panels for the pane at the right, and gives a code as its example", () => {

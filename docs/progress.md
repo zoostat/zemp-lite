@@ -126,7 +126,11 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Not built, because the engine has none (step 21).** An opaque column (a list, a record, a file): Zeff 0.9.0 holds no such column, by its own message. And an ordered category's cumulative share and median level, which the engine does not print.
 
-**Next.** Step 22 `[function]`: the whole, the words, the measures and the notes.
+**Done, step 22 `[function]`.** The whole of what this release drew is held to one floor by a test (text of 12.5 pixels at the least, 4.5 to 1, both themes, a desk's width and a phone's, the keyboard in Paper); it found a stop of the keyboard without a name and a mark a shade too faint, both mended. **Using Zemp Lite** has a fourteenth page, **Papers and PDFs**, with its picture, and a paragraph more in **Projects, scripts and files**; all fourteen pictures are made afresh. The checks after each deployment now measure Paper: at the address today Typst and its nine fonts travel as 7.5 MB, once; the first paper is on the page 1.3 s after **Paper** is pressed; a key reaches its page in a quarter of a second. `docs/releases/0.3-notes.md` is drafted.
+
+**For the owner to read, when he wishes (added at step 22).** The new page **Papers and PDFs** in Help's **Using Zemp Lite** (`src/using/pages/papers-and-pdfs.md`, five short sections); the paragraph on files opened to be read, in **Projects, scripts and files**; and the draft of the release notes (`docs/releases/0.3-notes.md`).
+
+**Next.** Step 23 `[function]`: the pre-release routine.
 
 **For the coordinating session (added at step 21).** Of #209's table at Zemp 0.3: the opaque column's row waits for the engine's opaque types (after 1.0), and the ordered category's cumulative share and median level for an engine release that prints them. The reading taken where the table is silent: a text of many values whose values all differ is called an identifier only where they are all of one length.
 

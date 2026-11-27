@@ -19,6 +19,8 @@ The **+** at the head of the list, beside the project's name, adds to the projec
 - **New script** and **New folder**: type the name in the row where it will stand.
 - **Add files…**: data files from this computer, which a script can then read.
 
+A script, a paper and a plain note open to be written. Any other file that is text, such as a table a script exported or a data file of comma-separated values, opens to be read: its tab says that it is read only, and nothing typed changes it. A file that is not text does not open; **Save a copy…**, in its menu, saves it to this computer.
+
 Each file and folder has a menu at the right of its row: **Rename…**, **Move to…**, **Duplicate**, **Delete…** and **Save a copy…**, which saves the file to this computer. The files Zeff opens by name, the main script and `zeff.toml` among them, keep their names and places: their menus have no rename, move or delete.
 
 ## When a script names a file

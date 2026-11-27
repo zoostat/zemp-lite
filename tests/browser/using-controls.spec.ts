@@ -171,6 +171,20 @@ const SCREENS: Record<
     ).toBeVisible();
     await see();
   },
+  "papers-and-pdfs": async (page, press, see) => {
+    await scratch(page, press);
+    // Paper, with the line that asks a new paper's name, and then with a paper open and set.
+    await press(places(page).getByRole("button", { name: "Paper" }));
+    await press(bar(page, "Paper").getByRole("button", { name: "New paper…" }));
+    await see();
+    await page.getByRole("textbox", { name: "The new paper's name" }).press("Enter");
+    await expect(page.getByTestId("paper-pages")).toHaveText("1 page", { timeout: 60_000 });
+    await see();
+    // Script, with what is offered for a script that has not been run.
+    await press(places(page).getByRole("button", { name: "Script" }));
+    await press(bar(page, "Script").getByRole("button", { name: "Export script with output" }));
+    await see();
+  },
   "finding-help": async (page, press, see) => {
     await scratch(page, press);
     await run(page, press);

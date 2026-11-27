@@ -7,6 +7,8 @@ import { expect, test } from "@playwright/test";
 import { readZip } from "../../src/project/zip";
 
 const READY = "engine Zeff 0.9.0 ready";
+/** The line of the sample paper that holds its title. */
+const TITLE = "= Returns to schooling";
 
 test("the page is isolated, and the engine starts and runs the example", async ({ page }) => {
   const said: string[] = [];
@@ -350,6 +352,111 @@ test("the first drawing of a run's figures is timed at the address", async ({ pa
   const description = `the run's figures first drawn ${await timed} ms after done`;
   test.info().annotations.push({ type: "first drawing", description });
   console.log(`first drawing: ${description}`);
+});
+
+test("Paper is opened for the first time at the address: Typst as it travels, the first paper, and a keystroke to its page", async ({
+  page,
+}) => {
+  // Release 0.3, step 22. A visitor who has never opened Paper: the place fetches Typst and its
+  // nine fonts, gives the Scratch project its sample paper and sets it. Measured here: the
+  // bytes that travelled, against the limit the module is built under (8,500 kB packed); the
+  // time from the place being pressed to the first page drawn; and, the paper once set, the
+  // time from a key to the page drawn anew (of which 200 ms is the pause the page waits for
+  // the typing to rest, and the rest Typst's setting and the drawing).
+  test.slow();
+  const travelled: Record<string, number> = {};
+  // Each file's bytes as the host sent them: the length its answer gives, or, where it gives
+  // none, the body the browser counted. (The module is asked for a second time when it is
+  // started, and that answer comes from the browser's own store: the larger figure is kept.)
+  page.on("requestfinished", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (!/zemp_paper_bg|\.otf$|\.ttf$/.test(path)) return;
+    void (async () => {
+      const length = Number((await (await request.response())?.allHeaders())?.["content-length"]);
+      const sent = Number.isFinite(length) ? length : (await request.sizes()).responseBodySize;
+      travelled[path] = Math.max(travelled[path] ?? 0, sent);
+    })().catch(() => {});
+  });
+  await page.goto("/");
+  const open = page.getByRole("button", { name: "Start", exact: true });
+  await expect(open).toBeEnabled({ timeout: 30_000 });
+  await open.click();
+  await page.getByRole("button", { name: /^Scratch project/ }).click();
+  await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });
+  // Nothing of Typst has been asked for until the place is opened.
+  expect(Object.keys(travelled)).toEqual([]);
+  const from = Date.now();
+  await page
+    .getByRole("navigation", { name: "Places" })
+    .getByRole("button", { name: "Paper", exact: true })
+    .click();
+  const foot = page.getByTestId("paper-typst");
+  await expect(foot).toHaveText(/^Typst 0\.15\.1 · set in [\d,]+ ms$/, { timeout: 120_000 });
+  await expect(page.getByTestId("paper-page").first().locator("img")).toBeVisible();
+  const first = Date.now() - from;
+  const firstSet = ((await foot.textContent()) ?? "").replace(/^.* · /, "");
+  await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
+  // Set without a word from Typst: no error, no warning, and no file it lacks.
+  await expect(page.getByRole("list", { name: "What Typst says of the paper" })).toHaveCount(0);
+  await expect(page.getByTestId("paper-lacking")).toHaveCount(0);
+  // The module and the nine fonts, and each sent packed: under the limit, all told.
+  await expect.poll(() => Object.keys(travelled).length, { timeout: 30_000 }).toBe(10);
+  const bytes = Object.values(travelled).reduce((sum, one) => sum + one, 0);
+  expect(bytes).toBeGreaterThan(5_000_000);
+  expect(bytes).toBeLessThan(8_500_000);
+  // A keystroke: a letter at the end of the paper's title, which is on its first page, timed
+  // in the page from the key to that page drawn anew.
+  const source = page.getByRole("textbox", { name: "The paper's source" });
+  await source.focus();
+  await page.keyboard.press("ControlOrMeta+Home");
+  const title = page.locator(".cm-activeLine");
+  for (let line = 1; line < 40 && (await title.textContent()) !== TITLE; line += 1) {
+    await page.keyboard.press("ArrowDown");
+  }
+  await expect(title).toHaveText(TITLE);
+  await page.keyboard.press("End");
+  // From the letter typed to another picture of the first page drawn by the browser.
+  const keyed = (): Promise<number> =>
+    page.evaluate(
+      () =>
+        new Promise<number>((resolve) => {
+          const first = () =>
+            document.querySelector<HTMLImageElement>('[data-testid="paper-page"] img');
+          const was = first()?.src ?? "";
+          const began = performance.now();
+          const look = () => {
+            const now = first();
+            if (now !== null && now.src !== was && now.complete && now.naturalWidth > 0) {
+              resolve(Math.round(performance.now() - began));
+            } else {
+              requestAnimationFrame(look);
+            }
+          };
+          document.execCommand("insertText", false, "x");
+          look();
+        }),
+    );
+  const key = await keyed();
+  await expect(foot).toHaveText(/set in [\d,]+ ms$/);
+  const keySet = ((await foot.textContent()) ?? "").replace(/^.* · /, "");
+  const again = await keyed();
+  for (const [type, description] of [
+    [
+      "Typst as it travels",
+      `${bytes} bytes from this address for the module and its nine fonts (the limit: 8,500,000)`,
+    ],
+    [
+      "first paper",
+      `${first} ms from Paper being pressed to the sample paper's first page drawn, Typst fetched on the way (${firstSet})`,
+    ],
+    [
+      "a keystroke to its page",
+      `${key} ms from the key to the page drawn anew, 200 ms of it the pause for the typing to rest (${keySet}); a second key, ${again} ms`,
+    ],
+  ] as const) {
+    test.info().annotations.push({ type, description });
+    console.log(`${type}: ${description}`);
+  }
 });
 
 test("a project is exported at the address as a zip, and the zip opened there again", async ({

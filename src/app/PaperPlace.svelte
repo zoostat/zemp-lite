@@ -423,7 +423,17 @@
               >
             </div>
           {/if}
-          <div class="pages" bind:this={scroller} data-testid="paper-pages-view">
+          <!-- The view scrolls, so the keyboard stops at it (the arrow keys move the pages);
+               it is named for those who hear the screen read. -->
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+          <div
+            class="pages"
+            role="group"
+            aria-label="The pages of the paper"
+            tabindex="0"
+            bind:this={scroller}
+            data-testid="paper-pages-view"
+          >
             {#if live === null}
               {#if fetching.state === "fetching"}
                 <progress

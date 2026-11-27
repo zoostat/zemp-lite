@@ -76,6 +76,12 @@ export const HELD: Record<string, Record<string, Held>> = {
     "edited · not run": screen("an edit after a run"),
     stale: screen("an edit after a run"),
   },
+  "papers-and-pdfs": {
+    paper: {
+      by: "word",
+      why: "the folder of a project its papers are made in, which New paper… names",
+    },
+  },
   "projects-scripts-and-files": {
     "zeff.toml": screen("the Project pane"),
   },

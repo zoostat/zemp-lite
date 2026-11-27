@@ -53,6 +53,11 @@ export const USING: UsingPage[] = [
     line: "See every plot of the last run, compare them side by side, and save one at the size a journal or a slide asks for.",
   },
   {
+    slug: "papers-and-pdfs",
+    title: "Papers and PDFs",
+    line: "Write a paper beside its page as Typst sets it, with the tables and figures your scripts export, and save a paper, or a script with its output, as a PDF.",
+  },
+  {
     slug: "finding-help",
     title: "Finding help",
     line: "Search by a name you know, browse the functions by package, or press F1 on a name in the script.",

@@ -69,7 +69,7 @@ test("a visitor who opens Paper in the Scratch project meets a page, with its ta
   await press(bar(page).getByRole("button", { name: "Outline", exact: true }));
   await expect(
     left(page).getByRole("region", { name: "Outline" }).getByTestId("paper-outline"),
-  ).toHaveText("Returns to schooling 9");
+  ).toHaveText("Returns to schooling 10");
   await press(bar(page).getByRole("button", { name: "Project", exact: true }));
   const project = left(page).getByRole("region", { name: "Project" });
   for (const name of ["paper.typ", "paper.zeff", "returns.typ", "schooling.svg"]) {

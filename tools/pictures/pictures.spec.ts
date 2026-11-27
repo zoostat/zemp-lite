@@ -138,6 +138,20 @@ const SCENES: Record<string, (page: Page, press: Press) => Promise<void>> = {
       page.getByRole("dialog", { name: "Report a problem" }).getByTestId("report-text"),
     ).toBeVisible();
   },
+  // Papers and PDFs: the sample paper of the Scratch project, as a first visitor meets it in
+  // Paper, its page set by Typst from the table and the figure its script exports.
+  "the-paper-place": async (page, press) => {
+    await scratch(page, press);
+    // As a visitor who has not been given the sample before.
+    await page.evaluate(() => localStorage.removeItem("zemp-scratch-paper"));
+    await press(places(page).getByRole("button", { name: "Paper" }));
+    await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
+    await expect(page.getByTestId("paper-pages")).toHaveText("1 page", { timeout: 60_000 });
+    const picture = page.getByTestId("paper-page").first().locator("img");
+    await expect
+      .poll(() => picture.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0))
+      .toBe(true);
+  },
   // Finding help: a name of R typed in the search field of Help.
   "search-in-help": async (page, press) => {
     await scratch(page, press);
