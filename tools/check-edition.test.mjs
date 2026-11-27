@@ -38,6 +38,26 @@ test("a build of the shared interface alone passes", (t) => {
   assert.match(said, /The edition check holds: 3 modules reached/);
 });
 
+test("an import of what a build makes passes before that build; of any other missing file, fails", (t) => {
+  // As on a fresh copy of the repository, where neither WebAssembly module is built yet.
+  const made = checked(t, {
+    "src/main.ts": main('import "./engine";\nimport "./paper";\n'),
+    "src/engine.ts": 'import init from "../worker/pkg/web/zemp_worker.js";\n',
+    "src/paper.ts":
+      'import module from "../paper/pkg/web/zemp_paper_bg.wasm?url";\n' +
+      'import worker from "../paper/js/worker.js?worker&url";\n',
+    "paper/js/worker.js": 'import init from "../pkg/web/zemp_paper.js";\n',
+  });
+  assert.equal(made.status, 0, made.said);
+
+  const missing = checked(t, {
+    "src/main.ts": main('import "./paper";\n'),
+    "src/paper.ts": 'import worker from "../paper/js/absent.js?worker&url";\n',
+  });
+  assert.equal(missing.status, 1, missing.said);
+  assert.match(missing.said, /an import names no file/);
+});
+
 test("a dialog, a guide or a builder module in the build fails it", (t) => {
   for (const [file, kind] of [
     ["src/app/MethodDialog.svelte", "dialog"],

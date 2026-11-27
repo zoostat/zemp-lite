@@ -28,8 +28,11 @@ const POINT_AND_CLICK = /(dialog|guide|builder)s?([^a-z]|$)/i;
 /** Where the imports of a module are written: `import … from "x"`, `export … from "x"`, `import "x"`, `import("x")`. */
 const IMPORTS = /(?:\bfrom\s*|\bimport\s*\(?\s*)["']([^"']+)["']/g;
 const SOURCES = [".ts", ".js", ".mjs", ".svelte"];
-/** Files a build makes, which the check does not need to read: the worker's WebAssembly build. */
-const GENERATED = [path.join("worker", "pkg")];
+/**
+ * Files a build makes, which the check does not need to read and which are not there before
+ * that build: the WebAssembly builds of the worker and of the Paper module.
+ */
+const GENERATED = [path.join("worker", "pkg"), path.join("paper", "pkg")];
 
 const breaches = [];
 const seen = new Set();
