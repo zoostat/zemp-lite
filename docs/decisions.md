@@ -3465,3 +3465,30 @@ The wait is there at the trial address every time and at the address once in fou
 
 **Reason.** The standing instructions' closing of a release.
 
+
+## 28 November 2026: release 0.3.1 opened and planned
+
+**The owner's words.** "Start release 0.3.1", and while the plan was being read, "continue to next step once a step is finished". His three answers to the plan were given the same day to the coordinating session ("Yes, all three") and are recorded in the Zeff register (#243, #245): Plots keeps every layout of today; the watermark stays, faint, behind the front page and the projects screen; a tablet held sideways is a small laptop (option A). The reading here raised no further question for him, so his second word is taken as the "go" the rule for starting a release waits for.
+
+**The plan.** `docs/releases/0.3.1.md`, 15 steps: the draft of the coordinating session (`~/dev/handbook/zemp-lite-0.3.1-plan.md`, 14 steps), adopted after the reading the rule asks (the row of 0.3.1 in section 15 of the Zemp Specification; #33 as amended, #243, #244 and #245 in full; the risks R4, R10 and R13; the testing handbook; the mockup at 1,280 × 800 and at 1,024 × 768) and checked against the code as it stands.
+
+**The specification.** `docs/spec/` is the copy at the Zeff repository's commit 3357e40, each file compared byte for byte with that commit (eight files changed since the copy at f0c83be). It was taken from the commit itself, not from that repository's working folder, where another session has changes not yet committed.
+
+**What the reading corrected in the draft** (finding 10 of the plan). The tag is `v0.3.0`; there are 14 pages of **Using Zemp Lite** and 58 files of browser tests. And what the draft drew as new but the app has: the search of Help by an R or a Stata name, a function's card under the pointer (its usage), **Explain**, "On this page" and "See also".
+
+**Engineering choices of the plan, each mine to take under #245 ("the order of building is engineering") and #243 ("the notice's wording, the width at which it appears, and the size of touch targets are engineering").**
+
+1. **"Computers only" is built at step 3, before the frame and the places,** not after them. Reason: a screen redrawn while the tests of a phone's layout still stand would have to be made to pass them, and that work is thrown away two steps later.
+2. **"Every screen is tested at 1,024 × 768" is a whole-screen suite,** in both themes and both engines: every place and every state of it, with nothing hidden, cut or overlapping and no sideways scroll. The 825 browser tests are not each run at two sizes. Reason: #243 asks it of every screen, not of every test; the routine here already takes a quarter of an hour in the browsers and GitHub's half an hour.
+3. **Touch targets of 32 pixels where the pointer is a finger** (`pointer: coarse`, the browser's own word for it); with a mouse the sizes #245 draws hold (a line of 26 pixels, rows of 25). Reason: #243 says "touch gets targets of at least 32 pixels", and #245 draws controls smaller than that for a computer.
+4. **The notice below 1,000 pixels has a way on, Go on anyway,** kept for the visit. Reason: #243, "may go on at their own risk; their projects and the engine work as on a computer". A popped-out plot's window is not the app and never shows the notice.
+5. **⌘1 to ⌘5 are taken by the app while it has the keyboard.** They are also a browser's own keys for its tabs. Each place is reached as well by its icon and by ⌘K, so nothing depends on them; whether each browser gives them up is seen only in the browser itself, by hand, and is told to the owner if one does not.
+6. **The frame is redrawn in two steps (4 and 5), and each place's own bar stays until that place's step.** Reason: a step small enough to finish green; what stands under the top bar today is the engine's line and each place's bar of pane links, and the second is the row #245 draws for each place.
+7. **The view state goes to version 6** where a pane becomes a menu or a strip, and a file of an earlier version opens with nothing lost, as at every earlier change of it.
+8. **Each step changes, in its own commit, the words of the pages of Using Zemp Lite it touches and the checks at the address,** since both are held to the screen by tests; step 14 is the pass over all 14 pages and the pictures.
+9. **Each green push goes to the address,** as in every release: between step 2 and step 13 the address shows an app redrawn in part, marked `0.3.1-dev` and alpha. Reason: holding the deployments back would leave the checks at the address unrun for the whole release, which is where three faults of 0.3 were found.
+10. **The release itself waits for the owner's word** ("Release 0.3.1"), as the standing instructions close a release; step 15 is the pre-release routine and the notes.
+
+**For the coordinating session.** Section 5 of the Zemp Specification and the design guide are amended there; what was built is listed for it at steps 14 and 15. The editors' colour files (`editors/`, #244) are the Zeff repository's.
+
+**Done, step 1.** Version `0.3.1-dev` in the seven places that carry it; nothing of the app changes.
