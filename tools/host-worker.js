@@ -18,6 +18,14 @@
 // style, a font or the engine, and the app would not start in it until its data was cleared.
 // So what is not the file is answered "not yet", not to be kept.
 //
+// What the build packs beforehand is kept by the browser alone (release 0.3, step 11c). In
+// front of this function, at an address of the owner's own domain, stands the host's cache,
+// which keeps an answer by the ending of its address (a font's, not the engine's) and by one
+// key whatever packing was asked for: once it held a font whole, it packed that copy itself,
+// at a low setting, for every browser after, and this function was not asked again. So the
+// engine, the Paper module and the fonts are marked `private`: a browser keeps each for a
+// year as before, and the host's cache keeps none, so every asking reaches this function.
+//
 // The build writes this file out as `_worker.js` with the headers of `public/_headers` put in
 // (`vite.config.ts`): the host does not add them to what a function answers.
 
@@ -30,6 +38,27 @@ const HEADERS = __HOST_HEADERS__;
  * 0.3, step 11b). Any other built file is the host's to pack as it sends it.
  */
 const TYPES = { wasm: "application/wasm", otf: "font/otf", ttf: "font/ttf" };
+
+/**
+ * How long a file packed beforehand is kept, and by whom: as a built file is (`HEADERS`), but
+ * by the browser alone.
+ */
+const ALONE = (new Headers(HEADERS).get("cache-control") || "max-age=31536000, immutable")
+  .replace(/\bpublic\b\s*,?\s*/i, "")
+  .replace(/^/, "private, ");
+
+/**
+ * An answer of the host's for a file packed beforehand, sent whole (to a browser that does not
+ * take brotli, or where no packed file stands beside it): marked for the browser alone, as the
+ * packed answer is. What is not to be kept ("not yet") stays so.
+ */
+function alone(answer) {
+  const said = answer.headers.get("cache-control") || "";
+  if (answer.status >= 400 || /no-store/i.test(said)) return answer;
+  const mine = new Response(answer.body, answer);
+  mine.headers.set("cache-control", ALONE);
+  return mine;
+}
 
 /** Whether the browser that asks takes brotli. Inside the host the header is rewritten, and
  * what the browser itself said is kept beside the request. */
@@ -83,22 +112,24 @@ export default {
     // Only a built file asked for is this function's: anything else is the host's as it was.
     if (!asks || !url.pathname.startsWith("/assets/")) return env.ASSETS.fetch(request);
     const type = TYPES[url.pathname.slice(url.pathname.lastIndexOf(".") + 1)];
-    if (type === undefined || !takesBrotli(request)) return asBuilt(request, env);
+    if (type === undefined) return asBuilt(request, env);
+    if (!takesBrotli(request)) return alone(await asBuilt(request, env));
     const beside = new URL(url);
     beside.pathname = `${url.pathname}.br`;
     let packed;
     try {
       packed = await env.ASSETS.fetch(new Request(beside, request));
     } catch {
-      return asBuilt(request, env);
+      return alone(await asBuilt(request, env));
     }
     // No packed file beside the engine: the host answers such an address with a page, or with
     // "not found". The engine is then sent as it always was.
     const sent = packed.headers.get("content-type") || "";
     if ((packed.status !== 200 && packed.status !== 304) || sent.startsWith("text/html")) {
-      return asBuilt(request, env);
+      return alone(await asBuilt(request, env));
     }
     const headers = new Headers(HEADERS);
+    headers.set("cache-control", ALONE);
     headers.set("content-type", type);
     headers.set("vary", "Accept-Encoding");
     for (const name of ["etag", "last-modified"]) {

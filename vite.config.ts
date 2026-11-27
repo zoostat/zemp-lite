@@ -53,7 +53,7 @@ const takesBrotli = (said: string | string[] | undefined): boolean =>
  * headers for built files; the engine, the Paper module and its fonts are sent packed tight
  * to a browser that takes brotli (release 0.2.5, step 4; open decision #224), as the host's
  * function sends them (`tools/host-worker.js`): the packed file the build put beside each,
- * marked as brotli;
+ * marked as brotli, and each marked for the browser alone to keep, packed or whole;
  * and an address under `/assets/` that holds no file is answered "not yet", not to be kept, as
  * that function answers it, and never with the app's page (release 0.3, step 4; risk R13).
  */
@@ -82,6 +82,11 @@ const asAtTheHost: Plugin = {
       }
       const packed = path.join(out, `${asked}.br`);
       const kind = /^\/assets\/[^/]+\.(wasm|otf|ttf)$/.exec(asked)?.[1];
+      // What the build packs beforehand is kept by the browser alone, packed or whole.
+      if (kind !== undefined) {
+        const own = String(response.getHeader("Cache-Control") ?? "max-age=31536000, immutable");
+        response.setHeader("Cache-Control", `private, ${own.replace(/\bpublic\b\s*,?\s*/i, "")}`);
+      }
       if (
         asks &&
         kind !== undefined &&
@@ -239,6 +244,15 @@ export default defineConfig(({ command }) => {
         input: {
           app: fileURLToPath(new URL("./index.html", import.meta.url)),
           moved: fileURLToPath(new URL("./app/index.html", import.meta.url)),
+        },
+        output: {
+          // The fonts a paper is set in are named apart from every other built file (release
+          // 0.3, step 11c): under their first names the host's cache had kept copies of four
+          // of them, which it packed itself; under these it has kept none, and keeps none.
+          assetFileNames: (asset) =>
+            asset.originalFileNames.some((name) => name.startsWith("paper/fonts/"))
+              ? "assets/paper-[name]-[hash][extname]"
+              : "assets/[name]-[hash][extname]",
         },
       },
     },

@@ -19,6 +19,10 @@ const HEADERS = {
   "Cache-Control": "public, max-age=31536000, immutable",
 };
 globalThis.__HOST_HEADERS__ = HEADERS;
+/** How a file the build packs beforehand is kept: as a built file is, by the browser alone. */
+const ALONE = "private, max-age=31536000, immutable";
+/** The headers of an answer for such a file. */
+const OWN = { ...HEADERS, "Cache-Control": ALONE };
 const { default: worker } = await import("./host-worker.js");
 
 const engine = Buffer.from("the engine, as the build made it ".repeat(4000));
@@ -43,7 +47,12 @@ function host(files) {
           });
         }
         const tag = `"${createHash("sha256").update(file.bytes).digest("hex").slice(0, 16)}"`;
-        const headers = { "content-type": file.type, etag: tag };
+        // The host puts the headers of a built file on what it answers itself.
+        const headers = {
+          "content-type": file.type,
+          etag: tag,
+          "cache-control": HEADERS["Cache-Control"],
+        };
         if (request.headers.get("if-none-match") === tag) {
           return new Response(null, { status: 304, headers });
         }
@@ -123,7 +132,7 @@ test("a browser that takes brotli is sent the packed engine, untouched, marked a
   assert.equal(answer.headers.get("content-type"), "application/wasm");
   assert.equal(answer.headers.get("vary"), "Accept-Encoding");
   assert.equal(answer.headers.get("content-length"), String(packed.length));
-  for (const [name, value] of Object.entries(HEADERS)) {
+  for (const [name, value] of Object.entries(OWN)) {
     assert.equal(answer.headers.get(name), value, name);
   }
   assert.notEqual(answer.headers.get("etag"), null);
@@ -156,7 +165,7 @@ test("the Paper module and a font of a paper are sent packed in the same way, ea
     assert.equal(answer.status, 200, address);
     assert.equal(answer.headers.get("content-encoding"), "br", address);
     assert.equal(answer.headers.get("content-type"), type, address);
-    for (const [name, value] of Object.entries(HEADERS)) {
+    for (const [name, value] of Object.entries(OWN)) {
       assert.equal(answer.headers.get(name), value, `${address} ${name}`);
     }
     assert.equal(unpacksTo(Buffer.from(await answer.arrayBuffer()), whole), true, address);
@@ -184,7 +193,7 @@ test("a browser that has the packed engine and asks whether it changed is told i
   assert.equal(again.status, 304);
   assert.equal(again.headers.get("etag"), tag);
   assert.equal(again.headers.get("content-encoding"), null);
-  for (const [name, value] of Object.entries(HEADERS)) {
+  for (const [name, value] of Object.entries(OWN)) {
     assert.equal(again.headers.get(name), value, name);
   }
 });
@@ -268,6 +277,37 @@ test("where the host has not been given the engine yet and answers with its page
   assert.equal((await worker.fetch(asking(ENGINE), half)).headers.get("content-encoding"), "br");
 });
 
+test("what the build packs beforehand is kept by the browser alone, packed or whole, so the host's cache never packs it again", async () => {
+  const font = Buffer.from("a font of a paper ".repeat(3000));
+  const env = host({
+    [ENGINE]: { bytes: engine, type: "application/wasm" },
+    [packedName(ENGINE)]: { bytes: packed, type: "application/octet-stream" },
+    "/assets/Face-1.otf": { bytes: font, type: "font/otf" },
+    "/assets/Face-1.otf.br": { bytes: pack(font), type: "application/octet-stream" },
+    // A file with no packed file beside it.
+    "/assets/Other-1.ttf": { bytes: font, type: "font/ttf" },
+  });
+  for (const name of [ENGINE, "/assets/Face-1.otf", "/assets/Other-1.ttf"]) {
+    for (const takes of ["gzip, deflate, br", "identity", ""]) {
+      const answer = await worker.fetch(asking(name, { takes }), env);
+      assert.equal(answer.status, 200, `${name} ${takes}`);
+      assert.equal(answer.headers.get("cache-control"), ALONE, `${name} ${takes}`);
+      // And where the browser asks whether it has changed.
+      const again = await worker.fetch(
+        asking(name, { takes, headers: { "if-none-match": answer.headers.get("etag") } }),
+        env,
+      );
+      assert.equal(again.status, 304, `${name} ${takes}`);
+      assert.equal(again.headers.get("cache-control"), ALONE, `${name} ${takes}`);
+    }
+  }
+  // Sent whole, it is the file, with what else the host said of it.
+  const whole = await worker.fetch(asking("/assets/Face-1.otf", { takes: "identity" }), env);
+  assert.equal(whole.headers.get("content-type"), "font/otf");
+  assert.equal(whole.headers.get("content-encoding"), null);
+  assert.equal(Buffer.from(await whole.arrayBuffer()).equals(font), true);
+});
+
 test("a built file that is there is passed on as the host gave it, asked for once", async () => {
   const files = {
     "/assets/app-1.js": { bytes: Buffer.from("app"), type: "text/javascript" },
@@ -280,6 +320,8 @@ test("a built file that is there is passed on as the host gave it, asked for onc
     assert.equal(answer.status, 200, name);
     assert.equal(answer.headers.get("content-type"), file.type, name);
     assert.equal(answer.headers.get("content-encoding"), null, name);
+    // The host's own cache may keep it: the host packs it as it sends it, in any case.
+    assert.equal(answer.headers.get("cache-control"), HEADERS["Cache-Control"], name);
     assert.equal(Buffer.from(await answer.arrayBuffer()).equals(file.bytes), true, name);
     // A browser that has it and asks whether it has changed is told it has not, by the host.
     const again = await worker.fetch(

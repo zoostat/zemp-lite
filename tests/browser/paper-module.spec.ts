@@ -36,8 +36,11 @@ test("the build carries the module and its fonts, each with its packed file besi
   // Under the host's limit for one file (25 MiB), with room.
   expect(statSync(new URL(module, assets)).size).toBeLessThan(25 * 1024 * 1024);
   const fonts = built().filter((name) => /\.(otf|ttf)$/.test(name));
-  // Each by its own name, the build's mark taken off it, in the order of those names.
-  expect(fonts.map((name) => name.replace(/-[\w-]{8}\.(otf|ttf)$/, ".$1")).sort()).toEqual([
+  // Each is named apart, as a font of a paper, with the build's mark of what it holds.
+  for (const font of fonts) expect(font).toMatch(/^paper-.+-[\w-]{8}\.(otf|ttf)$/);
+  // Each by its own name, in the order of those names.
+  const own = (name: string) => name.replace(/^paper-/, "").replace(/-[\w-]{8}\.(otf|ttf)$/, ".$1");
+  expect(fonts.map(own).sort()).toEqual([
     "DejaVuSansMono-Bold.ttf",
     "DejaVuSansMono-BoldOblique.ttf",
     "DejaVuSansMono-Oblique.ttf",

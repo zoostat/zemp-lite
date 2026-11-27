@@ -262,6 +262,19 @@ async function look() {
       if (!(answer.headers["cache-control"] ?? "").includes("immutable")) {
         problems.push(`${file}, ${how}: is not kept as never changing`);
       }
+      // What the build packs beforehand is for the browser alone to keep (release 0.3, step
+      // 11c): the host's own cache, which keeps one copy whatever packing was asked for, would
+      // pack a copy it held whole itself, at a low setting, and send that in place of the build's.
+      if (!/\bprivate\b/.test(answer.headers["cache-control"] ?? "")) {
+        problems.push(
+          `${file}, ${how}: may be kept by the host's own cache (\`cache-control\` is \`${answer.headers["cache-control"] ?? ""}\`, without \`private\`), which then packs it itself`,
+        );
+      }
+      if (/^hit$/i.test(answer.headers["cf-cache-status"] ?? "")) {
+        problems.push(
+          `${file}, ${how}: was answered from the host's own cache, not by the host's function`,
+        );
+      }
       if (!(answer.headers["content-type"] ?? "").startsWith(type)) {
         problems.push(
           ending === "wasm"

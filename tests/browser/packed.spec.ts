@@ -68,8 +68,11 @@ test("the function the build writes for the host carries the headers of the head
   const headers = readFileSync(path.resolve("public/_headers"), "utf8");
   const named = [...headers.matchAll(/^\s+([A-Za-z-]+):\s*(.+)$/gm)];
   expect(named.length).toBeGreaterThan(5);
+  // Kept as a built file is, by the browser alone.
   for (const [, name, value] of named) {
-    expect(answer.headers.get(name as string), name).toBe((value as string).trim());
+    expect(answer.headers.get(name as string), name).toBe(
+      (value as string).trim().replace(/^public\b/, "private"),
+    );
   }
   expect(Buffer.from(await answer.arrayBuffer()).equals(packed)).toBe(true);
 });
@@ -83,7 +86,7 @@ test("asked for with brotli the engine comes packed, and without it whole; eithe
   expect(tight.headers()["content-length"]).toBe(String(packed.length));
   expect(tight.headers()["content-type"]).toBe("application/wasm");
   expect(tight.headers()["cross-origin-embedder-policy"]).toBe("require-corp");
-  expect(tight.headers()["cache-control"]).toContain("immutable");
+  expect(tight.headers()["cache-control"]).toBe("private, max-age=31536000, immutable");
   expect(sha(await tight.body())).toBe(sha(engine));
 
   const whole = await request.get(ENGINE, { headers: { "accept-encoding": "identity" } });
@@ -91,6 +94,7 @@ test("asked for with brotli the engine comes packed, and without it whole; eithe
   expect(whole.headers()["content-encoding"]).toBeUndefined();
   expect(whole.headers()["content-type"]).toBe("application/wasm");
   expect(whole.headers()["cross-origin-embedder-policy"]).toBe("require-corp");
+  expect(whole.headers()["cache-control"]).toBe("private, max-age=31536000, immutable");
   expect(sha(await whole.body())).toBe(sha(engine));
 });
 

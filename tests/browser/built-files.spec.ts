@@ -46,7 +46,11 @@ test("every built file that is there is still sent whole and kept as never chang
       headers: { "accept-encoding": "identity" },
     });
     expect(answer.status(), name).toBe(200);
-    expect(answer.headers()["cache-control"], name).toBe("public, max-age=31536000, immutable");
+    // What the build packs beforehand (the engine, the Paper module, a paper's fonts) is for
+    // the browser alone to keep, so that the host's own cache never packs a copy itself.
+    expect(answer.headers()["cache-control"], name).toBe(
+      `${/\.(wasm|otf|ttf)$/.test(name) ? "private" : "public"}, max-age=31536000, immutable`,
+    );
     expect(answer.headers()["content-type"] ?? "", name).not.toMatch(/^text\/html/);
     const bytes = readFileSync(path.join(dist, "assets", name));
     expect((await answer.body()).equals(bytes), name).toBe(true);
