@@ -107,6 +107,105 @@ test("the frames of the run are a menu of the row, each by the statement that ma
   expect([grid.x, grid.x + grid.width]).toEqual([52, page.viewportSize()!.width]);
 });
 
+test("a press on a column's head selects the column: it is tinted, and the line under the table says the engine's figures of it and leads to all its properties", async ({
+  page,
+  press,
+}) => {
+  // Release 0.3.1, step 8b (open decision #245). Until then a column's name opened the
+  // Variables pane at that variable.
+  await ran(page, press);
+  const grid = page.getByRole("grid");
+  const line = page.getByTestId("column-summary");
+  const head = (name: string) => grid.getByRole("columnheader", { name, exact: true });
+  const pick = (name: string) => head(name).getByRole("button").first();
+  // Nothing selected: the line says how to select, and no column is tinted.
+  await expect(line).toHaveText("Press a column's head to select it and see its summary here.");
+  await expect(grid.locator(".cell.of-chosen")).toHaveCount(0);
+  // The line is the place's last, under the table, 26 pixels high, across its whole width.
+  const [table, under] = [(await grid.boundingBox())!, (await line.boundingBox())!];
+  expect(under.y).toBeGreaterThanOrEqual(table.y + table.height - 1);
+  expect([under.x, under.x + under.width, under.height]).toEqual([
+    52,
+    page.viewportSize()!.width,
+    26,
+  ]);
+  // A number: selected by a press on its head, which says so to a screen reader.
+  await press(pick("wage"));
+  await expect(pick("wage")).toHaveAttribute("aria-pressed", "true");
+  await expect(grid).toBeVisible();
+  await expect(variablesPane(page)).toHaveCount(0);
+  await expect(line.getByTestId("column-asking")).toHaveCount(0);
+  await expect(line).toContainText("Selected wage");
+  await expect(line).toContainText("Float");
+  const figures = async () =>
+    (await line.getByTestId("column-figure").allInnerTexts()).map((one) =>
+      one.replace(/\s+/g, " ").trim(),
+    );
+  const said = await figures();
+  expect(said.map((one) => one.split(" ")[0])).toEqual(["mean", "sd", "min", "median", "max"]);
+  // Its cells are tinted, every row of the column and no other column's.
+  const tinted = await grid.locator('[data-testid="data-row"] .cell.of-chosen').count();
+  expect(tinted).toBe(await grid.getByTestId("data-row").count());
+  expect(tinted).toBeGreaterThan(10);
+  // The missing values, as the head counts them.
+  await expect(line).toContainText(/\d+ NA/);
+  // All its properties: the Variables view at that variable, whose statistics are the
+  // engine's, cell for cell the figures the line said.
+  await press(line.getByRole("button", { name: "All its properties" }));
+  const pane = variablesPane(page);
+  await expect(pane.getByRole("heading", { name: "wage", exact: true })).toBeVisible();
+  const statistics = pane.getByTestId("variable-statistics");
+  await expect(statistics).toContainText("mean");
+  const cells = (await statistics.innerText()).replace(/\s+/g, " ");
+  for (const one of said) expect(cells, one).toContain(one);
+  // Back in Data the column is still the one selected; pressed again, it is let go.
+  await press(dataLink(page));
+  await expect(pick("wage")).toHaveAttribute("aria-pressed", "true");
+  await expect(line).toContainText("Selected wage");
+  await press(pick("wage"));
+  await expect(pick("wage")).toHaveAttribute("aria-pressed", "false");
+  await expect(line).toHaveText("Press a column's head to select it and see its summary here.");
+  // By the keyboard: Enter on a head; a column with no missing value says so; one that is no
+  // number says what the engine counts of it.
+  await pick("educ").focus();
+  await page.keyboard.press("Enter");
+  await expect(line).toContainText("Selected educ");
+  await expect(line).toContainText("no NA");
+  await expect(line.getByTestId("column-asking")).toHaveCount(0);
+  await pick("industry").focus();
+  await page.keyboard.press("Enter");
+  await expect(line).toContainText("Selected industry");
+  await expect(pick("educ")).toHaveAttribute("aria-pressed", "false");
+  await expect(line.getByTestId("column-asking")).toHaveCount(0);
+  await expect(line).toContainText(/distinct values \d+/);
+  // The arrows of a head still sort, and its × still hides, with the column selected.
+  await press(head("industry").getByRole("button", { name: "Sort by industry" }));
+  await expect(head("industry").getByRole("button", { name: "Sort by industry" })).toHaveText("↑");
+  await expect(line).toContainText("Selected industry");
+});
+
+test("the rows of the table are 25 pixels high, under a head that holds each column's name, type, missing count and histogram", async ({
+  page,
+  press,
+}) => {
+  await ran(page, press);
+  const grid = page.getByRole("grid");
+  await expect(grid.getByTestId("data-row").first()).toBeVisible();
+  const heights = await grid
+    .getByTestId("data-row")
+    .evaluateAll((rows) => [...new Set(rows.map((row) => row.getBoundingClientRect().height))]);
+  expect(heights).toEqual([25]);
+  const tops = await grid
+    .getByTestId("data-row")
+    .evaluateAll((rows) => rows.slice(0, 4).map((row) => row.getBoundingClientRect().top));
+  expect(tops.slice(1).map((top, at) => top - tops[at]!)).toEqual([25, 25, 25]);
+  const wage = grid.getByRole("columnheader", { name: "wage", exact: true });
+  await expect(wage).toContainText("wage");
+  await expect(wage).toContainText("Float");
+  await expect(wage).toContainText(/\d+ NA/);
+  await expect(wage.getByTestId("spark")).toBeVisible();
+});
+
 test("the grid draws only the rows near its window, and every row is reached by scrolling", async ({
   page,
   press,

@@ -157,6 +157,16 @@ for (const theme of ["light", "dark"] as const) {
         if (place === "Data") {
           // Data's row (step 8a): the frames' menu open, and Variables in the grid's place,
           // as the list and as one variable.
+          // The grid (step 8b): a column selected, its summary in the line under the table.
+          await press(
+            page
+              .getByRole("grid")
+              .getByRole("columnheader", { name: "wage", exact: true })
+              .getByRole("button")
+              .first(),
+          );
+          await expect(page.getByTestId("column-figure").first()).toBeVisible();
+          await whole(page, "Data, a column selected");
           await press(bar(page, "Data").getByRole("button", { name: /▾$/ }));
           await expect(page.getByRole("menu", { name: "Frames of the run" })).toBeVisible();
           await whole(page, "Data, the frames' menu open");

@@ -37,7 +37,7 @@
 
   /** Rows fetched at a time, the height of a row and of the header, in pixels. */
   const PAGE = 200;
-  const ROW = 26;
+  const ROW = 25;
   const HEAD = 58;
 
   const frames = $derived(workspace.frames);
@@ -278,6 +278,17 @@
     }
     if (one("distinct") !== "") rows.push(["distinct values", one("distinct")]);
     return rows.filter(([, cell]) => cell !== "");
+  });
+  /**
+   * The few figures the line under the table says of the column selected: for a number its
+   * mean, sd, min, median and max; for anything else what the pane's statistics have, but the
+   * count of rows, which the row over the table says.
+   */
+  const brief = $derived.by((): [string, string][] => {
+    const number = ["mean", "sd", "min", "median", "max"];
+    return kind?.number
+      ? number.flatMap((name) => statistics.filter(([said]) => said === name))
+      : statistics.filter(([name]) => name !== "N");
   });
   /** What the engine said where a print is not the table or the values asked for. */
   const unread = $derived(
@@ -795,7 +806,11 @@
                   role="columnheader"
                   aria-label={variable.name}
                 >
-                  <button class="pick" onclick={() => workspace.chooseVariable(variable.name)}
+                  <button
+                    class="pick"
+                    aria-pressed={variable.name === inspected?.name}
+                    title="Select {variable.name}: its summary is said under the table"
+                    onclick={() => workspace.selectVariable(variable.name)}
                     ><span class="vname" title={variable.name}>{variable.name}</span><span
                       class="vfacts"
                       >{variable.type}{#if variable.missing > 0}<span class="miss">
@@ -863,6 +878,7 @@
                       class:right={variable.right}
                       class:na={cell === "NA"}
                       class:match={matches(cell)}
+                      class:of-chosen={variable.name === inspected?.name}
                       class:selected={inRange(row, index)}
                       style:width="{widths[at]}px"
                       style:left={index === 0 ? `${numberWidth}px` : undefined}
@@ -878,6 +894,34 @@
             {/each}
           </div>
         </div>
+        <!-- The line under the table (open decision #245): the column selected, with the
+             engine's own figures of it, and the way to all its properties. -->
+        <p class="selected-line" data-testid="column-summary" aria-live="polite">
+          {#if inspected === null}
+            <span class="quiet-words"
+              >Press a column's head to select it and see its summary here.</span
+            >
+          {:else}
+            <span>Selected <b class="mono">{inspected.name}</b></span>
+            <span>{inspected.type}</span>
+            {#if answers === null}
+              <span class="quiet-words" data-testid="column-asking">asking the engine…</span>
+            {:else}
+              {#each brief as [name, cell] (name)}
+                <span data-testid="column-figure">{name} <b class="mono">{cell}</b></span>
+              {/each}
+            {/if}
+            {#if inspected.missing > 0}
+              <span class="missing">{counted(inspected.missing)} NA</span>
+            {:else}
+              <span class="quiet-words">no NA</span>
+            {/if}
+            <span class="gap"></span>
+            <button class="word" onclick={() => workspace.chooseVariable(inspected.name)}
+              >All its properties</button
+            >
+          {/if}
+        </p>
       {:else if chosen === null}
         <p class="quiet">Run the script: the frames it makes are shown here.</p>
       {/if}
@@ -1038,7 +1082,7 @@
   }
   .row {
     display: flex;
-    height: 26px;
+    height: 25px;
     left: 0;
     position: absolute;
   }
@@ -1054,7 +1098,7 @@
     border-bottom: 1px solid var(--line);
     box-sizing: border-box;
     flex: none;
-    line-height: 25px;
+    line-height: 24px;
     overflow: hidden;
     padding: 0 8px;
     text-overflow: ellipsis;
@@ -1413,8 +1457,46 @@
   .cell.match {
     background: var(--tint);
   }
+  /* The column selected: a tint down its cells, under the cells chosen to copy. */
+  .cell.of-chosen {
+    background: color-mix(in srgb, var(--accent) 7%, var(--window));
+  }
   .cell.selected {
     background: var(--accent-soft);
+  }
+  /* The line under the table: the column selected and the engine's figures of it. */
+  .selected-line {
+    align-items: center;
+    background: var(--softer);
+    border-top: 1px solid var(--line);
+    box-sizing: border-box;
+    color: var(--ink-3);
+    display: flex;
+    flex: none;
+    font-size: 12.5px;
+    gap: 14px;
+    margin: 0;
+    min-height: 26px;
+    overflow: hidden;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  .selected-line b {
+    color: var(--ink);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .selected-line .missing {
+    color: var(--warning);
+  }
+  .selected-line .gap {
+    flex: 1;
+  }
+  .selected-line .word {
+    color: var(--accent);
+    flex: none;
+    font-size: 12.5px;
+    font-weight: 600;
   }
   .grid {
     user-select: none;

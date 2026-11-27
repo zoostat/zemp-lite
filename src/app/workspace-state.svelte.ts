@@ -2232,6 +2232,16 @@ export class Workspace {
   }
 
   /**
+   * Select a column of the table (release 0.3.1, step 8b; open decision #245): the variable is
+   * the one looked at, its summary is said under the table, and the table stays shown. The
+   * column selected again is let go.
+   */
+  selectVariable(variable: string): void {
+    this.views.data.variable = this.views.data.variable === variable ? null : variable;
+    this.#keep();
+  }
+
+  /**
    * What the engine prints for each of some statements, run after the script as the console
    * line runs one, so that every number shown of a variable is the engine's (`frame.summary`,
    * `quantile`, `tabulate` and the rest; `src/data/properties.ts`). The script is not changed.

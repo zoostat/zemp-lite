@@ -10,6 +10,8 @@ Run the script, then open Data, the second of the icons down the left. The row o
 
 Each column is headed by the variable's name, its type, how many of its values are missing, and a small picture of how its values are spread. A missing value is written `NA`, never left blank.
 
+Press a column's head to select it. The column is tinted, and the line under the table says the engine's figures of it: for a number its mean, standard deviation, least, median and greatest value. **All its properties**, at the end of that line, opens the variable in **Variables**. Press the head again to let the column go.
+
 ## Sorting, keeping and searching
 
 - Press the arrows in a column's head to sort the rows by it, and again to turn the order.

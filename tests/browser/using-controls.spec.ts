@@ -120,8 +120,23 @@ const SCREENS: Record<
     await see();
     await press(places(page).getByRole("button", { name: "Data" }));
     await expect(page.getByRole("grid")).toBeVisible();
+    // A column selected, for the line under the table.
+    await press(
+      page
+        .getByRole("grid")
+        .getByRole("columnheader", { name: "wage", exact: true })
+        .getByRole("button")
+        .first(),
+    );
+    await expect(page.getByTestId("column-figure").first()).toBeVisible();
+    await see();
     await press(bar(page, "Data").getByRole("button", { name: "Variables", exact: true }));
-    await expect(page.getByRole("region", { name: "Variables" })).toBeVisible();
+    const variables = page.getByRole("region", { name: "Variables" });
+    await expect(variables).toBeVisible();
+    await see();
+    // The list of the variables, in the place of the one selected.
+    await press(variables.getByRole("button", { name: "‹ All variables" }));
+    await expect(variables.getByRole("button", { name: "Hide all" })).toBeVisible();
     await see();
   },
   "the-plots-place": async (page, press, see) => {
