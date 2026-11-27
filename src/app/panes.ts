@@ -21,7 +21,6 @@ export const WORDS: { [P in PlaceName]: { [N in PaneName<P>]: Words } } = {
     notes: { label: "Notes", holds: "the notes beside the code" },
   },
   data: {
-    frames: { label: "Frames of the run", holds: "the frames of the run" },
     variables: { label: "Variables", holds: "the variables of the frame" },
   },
   plots: {

@@ -13,8 +13,8 @@
   import type { Workspace } from "../app/workspace-state.svelte";
   import type { Bars, Rows } from "../engine/messages";
   import { counted } from "../margin/notes";
-  import { paneOf } from "../app/panes";
   import Place from "../app/Place.svelte";
+  import RowMenu, { type RowAction } from "../app/RowMenu.svelte";
   import {
     FEW_TEXT,
     LENGTHS,
@@ -47,6 +47,33 @@
   const chosen = $derived(
     frames.find((one) => one.name === workspace.views.data.frame)?.name ?? frames[0]?.name ?? null,
   );
+  // The frames of the run as a menu of the place's row (release 0.3.1, step 8a; open decision
+  // #245, which revises the Frames pane of #203): each by its name, its size and the line of
+  // the statement that made it.
+  const framesMenu = $derived<RowAction[]>(
+    frames.map((frame) => {
+      const line = lineOf(frame.name);
+      return {
+        name: `${frame.name} · ${counted(frame.rows)} × ${counted(frame.variables)}${
+          line === null ? "" : ` · line ${line}`
+        }`,
+        run: () => workspace.showFrame(frame.name),
+      };
+    }),
+  );
+  // What the place shows: the grid, or the variables of the frame in its place.
+  const variablesShown = $derived(workspace.views.panes.data.variables);
+  /**
+   * The header of the frame as the engine writes it, in two parts: its name with the dot
+   * after it, which the menu's button already says and the row does not draw again, and the
+   * rest, its size and what it is a panel of.
+   */
+  const facts = $derived.by(() => {
+    const header = first?.header ?? chosen ?? "";
+    return chosen !== null && header.startsWith(`${chosen} · `)
+      ? { name: `${chosen} · `, rest: header.slice(chosen.length + 3) }
+      : { name: "", rest: header };
+  });
 
   // The pages fetched of the frame shown, by their number; the frame's header and variables.
   let pages = $state<Record<number, string[][]>>({});
@@ -415,31 +442,6 @@
 
 <svelte:window onmouseup={() => (dragging = false)} />
 
-{#snippet framesOfTheRun()}
-  {#if frames.length === 0}
-    <p class="quiet">The last run made no frame.</p>
-  {/if}
-  <ul class="frames">
-    {#each frames as frame (frame.name)}
-      {@const line = lineOf(frame.name)}
-      <li>
-        <button
-          class="frame"
-          aria-current={frame.name === chosen}
-          onclick={() => workspace.showFrame(frame.name)}
-        >
-          <span class="mono name">{frame.name}</span>
-          <span class="about"
-            >{counted(frame.rows)} × {counted(frame.variables)}{line === null
-              ? ""
-              : ` · line ${line}`}</span
-          >
-        </button>
-      </li>
-    {/each}
-  </ul>
-{/snippet}
-
 {#snippet variables()}
   {#if first === null}
     <p class="quiet">No frame is shown.</p>
@@ -654,8 +656,20 @@
   {/if}
 {/snippet}
 
-{#snippet facts()}
-  <h2 class="mono" data-testid="frame-header">{first?.header ?? chosen ?? "No frame"}</h2>
+{#snippet row()}
+  <!-- The row of Data (open decision #245): the frame, chosen from a menu, with its size and
+       the line that made it; what the place shows; the two fields; and Copy as Zeff. -->
+  {#if chosen === null}
+    <h2 class="mono" data-testid="frame-header">No frame</h2>
+  {:else}
+    <RowMenu label="Frames of the run" words="{chosen} ▾" actions={framesMenu} />
+    <h2 class="facts" data-testid="frame-header" title={first?.header ?? chosen}>
+      <span class="said-apart">{facts.name}</span>{facts.rest}
+    </h2>
+    {#if lineOf(chosen) !== null}
+      <span class="about line" data-testid="frame-line">· line {lineOf(chosen)}</span>
+    {/if}
+  {/if}
   {#if first !== null && (view.where !== "" || view.search !== "" || first.kept !== first.total)}
     <span class="count" data-testid="kept-count"
       >{counted(first.kept)} of {counted(first.total)} rows</span
@@ -669,61 +683,67 @@
       ></span
     >
   {/if}
+  <span class="shows" role="group" aria-label="What the place shows">
+    <button
+      aria-pressed={!variablesShown}
+      title="The rows of the frame"
+      onclick={() => workspace.setPane("data", "variables", false)}>Data</button
+    >
+    <button
+      aria-pressed={variablesShown}
+      title="Show or hide the variables of the frame"
+      onclick={() => workspace.setPane("data", "variables", !variablesShown)}>Variables</button
+    >
+  </span>
+  {#if chosen !== null}
+    <label class="where">
+      <span>Keep rows where</span>
+      <input
+        class="mono"
+        type="text"
+        spellcheck="false"
+        placeholder="year >= 2010"
+        aria-label="Keep rows where"
+        bind:value={condition}
+        onkeydown={(event) => {
+          if (event.key === "Enter") keep();
+          else if (event.key === "Escape") {
+            condition = "";
+            keep();
+          }
+        }}
+      />
+    </label>
+    <button class="word edged" onclick={keep}>Keep</button>
+    <input
+      class="find search"
+      type="search"
+      placeholder="Search the cells"
+      aria-label="Search the cells"
+      value={searching}
+      oninput={(event) => search(event.currentTarget.value)}
+    />
+    {#if span !== null}
+      <button class="word edged" onclick={() => void copyCells()}
+        >Copy {counted(span.bottom - span.top + 1)} × {counted(span.right - span.left + 1)} cells</button
+      >
+    {/if}
+    <button
+      class="word edged"
+      disabled={statement === null}
+      title="The statement that gives what the view shows, put on the clipboard"
+      onclick={copyView}>Copy as Zeff</button
+    >
+    {#if view.where !== "" || view.sort !== null || view.search !== ""}
+      <button class="word" onclick={clearView}>Clear</button>
+    {/if}
+  {/if}
 {/snippet}
 
 <div class="data" data-testid="data">
-  <Place
-    {workspace}
-    name="Data"
-    left={[paneOf(workspace, "data", "frames", framesOfTheRun)]}
-    right={[paneOf(workspace, "data", "variables", variables)]}
-    bar={facts}
-  >
+  <Place {workspace} name="Data" bar={row}>
     <div class="main">
       {#if chosen !== null}
-        <div class="tools">
-          <label class="where">
-            <span>Keep rows where</span>
-            <input
-              class="mono"
-              type="text"
-              spellcheck="false"
-              placeholder="year >= 2010"
-              aria-label="Keep rows where"
-              bind:value={condition}
-              onkeydown={(event) => {
-                if (event.key === "Enter") keep();
-                else if (event.key === "Escape") {
-                  condition = "";
-                  keep();
-                }
-              }}
-            />
-          </label>
-          <button class="word" onclick={keep}>Keep</button>
-          <input
-            class="find search"
-            type="search"
-            placeholder="Search the cells"
-            aria-label="Search the cells"
-            value={searching}
-            oninput={(event) => search(event.currentTarget.value)}
-          />
-          {#if span !== null}
-            <button class="word" onclick={() => void copyCells()}
-              >Copy {counted(span.bottom - span.top + 1)} × {counted(span.right - span.left + 1)} cells</button
-            >
-          {/if}
-          <button
-            class="word"
-            disabled={statement === null}
-            title="The statement that gives what the view shows, put on the clipboard"
-            onclick={copyView}>Copy as Zeff</button
-          >
-          {#if view.where !== "" || view.sort !== null || view.search !== ""}
-            <button class="word" onclick={clearView}>Clear</button>
-          {/if}
-        </div>
         {#if first?.filter && first.filter.said !== ""}
           <p
             class="said mono"
@@ -737,7 +757,13 @@
         {#if copied}<p class="said" data-testid="data-copied">{copied}</p>{/if}
       {/if}
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
-      {#if first !== null}
+      {#if variablesShown}
+        <!-- The variables of the frame, in place of the grid: each shown in the grid or hidden,
+             and one looked at with its properties (open decision #209). -->
+        <section class="variables" aria-label="Variables" data-pane="variables">
+          {@render variables()}
+        </section>
+      {:else if first !== null}
         <div
           class="grid mono"
           role="grid"
@@ -883,32 +909,6 @@
     align-self: flex-start;
     margin: 0 8px;
   }
-  .frames {
-    list-style: none;
-    margin: 0;
-    overflow-y: auto;
-    padding: 2px 8px 12px;
-  }
-  .frame {
-    background: none;
-    border: 0;
-    border-radius: 7px;
-    color: var(--ink);
-    cursor: pointer;
-    display: block;
-    padding: 5px 8px;
-    text-align: left;
-    width: 100%;
-  }
-  .frame:hover {
-    background: var(--soft);
-  }
-  .frame[aria-current="true"] {
-    background: var(--accent-soft);
-  }
-  .name {
-    display: block;
-  }
   .about {
     color: var(--ink-3);
     display: block;
@@ -925,6 +925,89 @@
     font-size: 13.5px;
     font-weight: 500;
     margin: 0;
+  }
+  /* The frame's size and what it is a panel of, beside the menu that names it. The name is
+     in the heading for a screen reader, and is not drawn a second time. */
+  h2.facts {
+    color: var(--ink-3);
+    flex: 0 1000 auto;
+    font-size: 12.5px;
+    font-weight: 400;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .said-apart {
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+  .about.line {
+    display: inline;
+    flex: none;
+    margin-left: -8px;
+    white-space: nowrap;
+  }
+  /* What the place shows: Data, the rows of the frame, or Variables. Two words in one box,
+     the one shown on the window's ground. */
+  .shows {
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    display: inline-flex;
+    flex: none;
+    padding: 1px;
+  }
+  .shows button {
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    color: var(--ink-2);
+    font: inherit;
+    font-weight: 600;
+    height: 25px;
+    padding: 0 10px;
+  }
+  .shows button[aria-pressed="true"] {
+    background: var(--window);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+    color: var(--ink);
+  }
+  .shows button:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+  .word.edged {
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
+    color: var(--ink);
+    flex: none;
+    font-size: 13px;
+    font-weight: 600;
+    height: 27px;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  .word.edged:hover:not(:disabled) {
+    background: var(--window);
+    border-color: var(--accent);
+  }
+  /* The variables of the frame, in place of the grid: a column of their own at the left. */
+  .variables {
+    flex: 1;
+    max-width: 520px;
+    min-height: 0;
+    overflow: auto;
+    padding-top: 6px;
+  }
+  @media (pointer: coarse) {
+    .shows button,
+    .word.edged {
+      height: 32px;
+    }
   }
   .word {
     background: none;
@@ -1233,35 +1316,55 @@
     color: var(--ink-2);
     font-size: 13px;
   }
-  .tools {
-    align-items: center;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 6px 14px;
-  }
+  /* The two fields of the row: each a box with its words inside it, the first with its label
+     before what is typed. They share what room the row has, and never give up the room a
+     condition or a value needs: the frame's facts give way before them. */
   .where {
     align-items: center;
-    color: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    box-sizing: border-box;
+    color: var(--ink-3);
     display: flex;
-    flex: 1 1 320px;
+    flex: 1.3 1 200px;
     font-size: 13px;
-    gap: 8px;
+    gap: 6px;
+    height: 27px;
+    min-width: 200px;
+    padding: 0 4px 0 9px;
+    white-space: nowrap;
+  }
+  .where:focus-within,
+  .search:focus {
+    border-color: var(--accent);
   }
   .where input {
-    background: var(--soft);
+    background: transparent;
     border: 0;
-    border-radius: 6px;
     color: var(--ink);
     flex: 1;
     font-size: 12.5px;
-    min-width: 120px;
-    padding: 4px 8px;
+    min-width: 60px;
+    outline: none;
+    padding: 0;
   }
   .search {
-    flex: 0 1 220px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    box-sizing: border-box;
+    flex: 1 1 130px;
+    height: 27px;
+    min-width: 120px;
+    outline: none;
+    padding: 0 9px;
     width: auto;
+  }
+  @media (pointer: coarse) {
+    .where,
+    .search {
+      height: 32px;
+    }
   }
   .word:disabled {
     color: var(--ink-3);

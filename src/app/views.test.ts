@@ -23,7 +23,7 @@ describe("the view state of a project", () => {
     state.script = { unfolded: { "scripts/main.zeff": [8, 13] } };
     state.panes = {
       script: { project: true, outline: true, notes: false },
-      data: { frames: false, variables: true },
+      data: { variables: true },
       plots: { list: false, about: false },
       paper: { project: true, outline: true, page: false },
       help: { topics: false },
@@ -103,7 +103,7 @@ describe("the view state of a project", () => {
   it("opens each place with the panes of open decision #203", () => {
     expect(usual().panes).toEqual({
       script: { project: false, outline: false, notes: true },
-      data: { frames: true, variables: false },
+      data: { variables: false },
       plots: { list: true, about: true },
       paper: { project: false, outline: false, page: true },
       help: { topics: true },
@@ -126,7 +126,7 @@ describe("the view state of a project", () => {
     );
     expect(read.panes).toEqual({
       script: { project: true, outline: false, notes: true },
-      data: { frames: true, variables: false },
+      data: { variables: false },
       plots: { list: true, about: false },
       paper: { project: false, outline: false, page: true },
       help: { topics: true },
@@ -144,7 +144,9 @@ describe("the view state of a project", () => {
       }),
     );
     expect(read.panes.script).toEqual({ project: false, outline: false, notes: false });
-    expect(read.panes.data).toEqual({ frames: false, variables: false });
+    // (Until 0.3.1 the list of frames was a pane, and a file of version 2 said whether it was
+    // open; the frames are a menu now, open decision #245, and that word is passed over.)
+    expect(read.panes.data).toEqual({ variables: false });
     expect(read.panes.plots).toEqual({ list: false, about: true });
     // A file of version 3 says them under `panes` alone.
     const later = readViews(
@@ -219,11 +221,35 @@ describe("the view state of a project", () => {
   });
 
   it("writes its version, and keeps what a later build wrote that this one does not know", () => {
-    const read = readViews(JSON.stringify({ version: 6, report: { file: "p.zmd" } }));
+    const read = readViews(JSON.stringify({ version: 7, report: { file: "p.zmd" } }));
     const written = JSON.parse(writeViews(read)) as Record<string, unknown>;
-    expect(written["version"]).toBe(5);
+    expect(written["version"]).toBe(6);
     expect(written["report"]).toEqual({ file: "p.zmd" });
     expect(Object.keys(written)).not.toContain("others");
+  });
+
+  it("opens a file of version 5, which had the frames of a run as a pane, with nothing lost", () => {
+    // Release 0.3.1 (open decision #245): the frames are a menu of the Data place's row. What
+    // a file of version 5 says of that pane is passed over; everything else it says is read.
+    const read = readViews(
+      JSON.stringify({
+        version: 5,
+        panes: { data: { frames: false, variables: true }, script: { project: true } },
+        data: { frame: "w2010", variable: "wage", hidden: { w2010: ["firm"] } },
+      }),
+    );
+    expect(read.panes.data).toEqual({ variables: true });
+    expect(read.panes.script.project).toBe(true);
+    expect(read.data.frame).toBe("w2010");
+    expect(read.data.variable).toBe("wage");
+    expect(read.data.hidden).toEqual({ w2010: ["firm"] });
+    expect(JSON.parse(writeViews(read))).toMatchObject({
+      version: 6,
+      panes: { data: { variables: true } },
+    });
+    expect(
+      (JSON.parse(writeViews(read)) as { panes: { data: object } }).panes.data,
+    ).not.toHaveProperty("frames");
   });
 
   it("reads the paper the Paper place has open and the page's share, within its limits", () => {
@@ -335,7 +361,7 @@ describe("the views a start begins from", () => {
     tabs,
     active,
     help: { topics: { packages: true, using: true, "codes:Z01xx": true } },
-    panes: { ...usual().panes, help: { topics: false }, data: { frames: false, variables: true } },
+    panes: { ...usual().panes, help: { topics: false }, data: { variables: true } },
   });
 
   it("are on the Script place, with the file it last showed, whatever place was left", () => {

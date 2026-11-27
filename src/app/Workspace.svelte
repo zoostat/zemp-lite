@@ -273,7 +273,6 @@
     paneCommand(workspace, "script", "project"),
     paneCommand(workspace, "script", "outline"),
     paneCommand(workspace, "script", "notes"),
-    paneCommand(workspace, "data", "frames"),
     paneCommand(workspace, "data", "variables"),
     paneCommand(workspace, "plots", "list"),
     paneCommand(workspace, "plots", "about"),

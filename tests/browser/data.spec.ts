@@ -3,7 +3,7 @@
 // as the engine prints it.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { EXAMPLE, expect, scriptText, test, useExample, write } from "./support";
+import { EXAMPLE, chooseVariable, expect, scriptText, test, useExample, write } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 
@@ -29,42 +29,82 @@ async function ran(page: Page, press: (target: ReturnType<Page["locator"]>) => P
 // The panes of the Data place (release 0.2.1, step 7a; open decision #203): the frames of the
 // run at the left, open at first, and the variables at the right, closed at first.
 const bar = (page: Page) => page.getByRole("toolbar", { name: "Data: its panes and its controls" });
-const framesPane = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Data: the left pane" })
-    .getByRole("region", { name: "Frames of the run" });
-const variablesPane = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Data: the right pane" })
-    .getByRole("region", { name: "Variables" });
+/** The menu of the frames of the run, in the place's row (release 0.3.1; open decision #245). */
+const framesButton = (page: Page) => bar(page).getByRole("button", { name: /▾$/ });
+const framesMenu = (page: Page) => page.getByRole("menu", { name: "Frames of the run" });
+async function chooseFrame(
+  page: Page,
+  press: (target: ReturnType<Page["locator"]>) => Promise<void>,
+  frame: string,
+): Promise<void> {
+  await press(framesButton(page));
+  await press(framesMenu(page).getByRole("menuitem", { name: new RegExp(`^${frame} · `) }));
+}
+const variablesPane = (page: Page) => page.getByRole("region", { name: "Variables" });
 const variablesLink = (page: Page) =>
   bar(page).getByRole("button", { name: "Variables", exact: true });
+const dataLink = (page: Page) => bar(page).getByRole("button", { name: "Data", exact: true });
 
-test("the frames of the run are listed by the statement that made them, in the left pane", async ({
+test("the frames of the run are a menu of the row, each by the statement that made it; the row says the frame's size and its line", async ({
   page,
   press,
 }) => {
+  // Release 0.3.1, step 8a (open decision #245, which revises #203): until then the frames
+  // were a pane at the left, with a link of its own in the bar.
   await ran(page, press);
-  const list = framesPane(page);
-  const link = bar(page).getByRole("button", { name: "Frames of the run", exact: true });
-  await expect(link).toHaveAttribute("aria-pressed", "true");
-  // The variables are the right pane, closed until asked for or until a variable is chosen.
-  await expect(variablesLink(page)).toHaveAttribute("aria-pressed", "false");
-  await expect(variablesPane(page)).toHaveCount(0);
-  await press(link);
-  await expect(list).toHaveCount(0);
-  await press(link);
-  await expect(list.locator("ul.frames").getByRole("button")).toHaveText([
-    /wages\s*18,412 × 11 · line 4/,
-    /w2010/,
-  ]);
+  await expect(page.getByRole("complementary")).toHaveCount(0);
+  await expect(bar(page).getByRole("button", { name: "Frames of the run" })).toHaveCount(0);
+  // The row: the frame shown, named on the menu's button, with its size and the line that
+  // made it beside it. The heading holds the engine's own header, whole, for a screen reader.
+  await expect(framesButton(page)).toHaveText("wages ▾");
+  await expect(framesButton(page)).toHaveAttribute("aria-haspopup", "menu");
   await expect(page.getByTestId("frame-header")).toHaveText(
     "wages · 18,412 rows × 11 variables · panel worker × year",
   );
-  await press(list.getByRole("button", { name: /^w2010/ }));
+  await expect(page.getByTestId("frame-line")).toHaveText("· line 4");
+  // What the place shows: the grid, and not the variables until they are asked for.
+  const shows = bar(page).getByRole("group", { name: "What the place shows" });
+  await expect(shows.getByRole("button")).toHaveText(["Data", "Variables"]);
+  await expect(shows.getByRole("button", { name: "Data" })).toHaveAttribute("aria-pressed", "true");
+  await expect(variablesLink(page)).toHaveAttribute("aria-pressed", "false");
+  await expect(variablesPane(page)).toHaveCount(0);
+  // The menu: every frame of the run, with its size and its line.
+  await press(framesButton(page));
+  await expect(framesMenu(page).getByRole("menuitem")).toHaveText([
+    "wages · 18,412 × 11 · line 4",
+    /^w2010 · [\d,]+ × 11 · line 5$/,
+  ]);
+  // By the keyboard: the arrows move, Enter chooses, and the row says the frame chosen.
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(framesMenu(page)).toHaveCount(0);
+  await expect(framesButton(page)).toHaveText("w2010 ▾");
   await expect(page.getByTestId("frame-header")).toHaveText(
     /^w2010 · [\d,]+ rows × 11 variables( · panel worker × year)?$/,
   );
+  await expect(page.getByTestId("frame-line")).toHaveText("· line 5");
+  await expect(page.getByRole("grid", { name: "The rows of w2010" })).toBeVisible();
+  // And by a press.
+  await chooseFrame(page, press, "wages");
+  await expect(framesButton(page)).toHaveText("wages ▾");
+  // The row, in the order of the ruling: the frame and its facts, what the place shows, the
+  // rows to keep, the search of the cells, and Copy as Zeff; all on one line of 36 pixels.
+  const parts = [
+    framesButton(page),
+    page.getByTestId("frame-header"),
+    shows,
+    bar(page).getByRole("textbox", { name: "Keep rows where" }),
+    bar(page).getByRole("button", { name: "Keep", exact: true }),
+    bar(page).getByRole("searchbox", { name: "Search the cells" }),
+    bar(page).getByRole("button", { name: "Copy as Zeff" }),
+  ];
+  const lefts: number[] = [];
+  for (const part of parts) lefts.push((await part.boundingBox())!.x);
+  expect([...lefts].sort((a, b) => a - b)).toEqual(lefts);
+  expect((await bar(page).boundingBox())!.height).toBe(36);
+  // The grid takes the place's whole width, from the side menu to the window's edge.
+  const grid = (await page.getByRole("grid").boundingBox())!;
+  expect([grid.x, grid.x + grid.width]).toEqual([52, page.viewportSize()!.width]);
 });
 
 test("the grid draws only the rows near its window, and every row is reached by scrolling", async ({
@@ -109,24 +149,30 @@ test("a variable is hidden and shown by its box, by the keyboard, and from its h
   press,
 }) => {
   await ran(page, press);
-  await press(variablesLink(page));
   const grid = page.getByRole("grid");
   const educ = grid.getByRole("columnheader", { name: "educ", exact: true });
   await expect(educ).toBeVisible();
+  // In Variables, which takes the grid's place (release 0.3.1), by its box.
+  await press(variablesLink(page));
   const box = variablesPane(page).getByRole("checkbox", { name: "Show educ in the grid" });
   await box.uncheck();
-  await expect(educ).toHaveCount(0);
   await expect(page.getByTestId("shown-count")).toHaveText("10 of 11 shown");
   await expect(page.getByText("1 hidden ·")).toBeVisible();
+  await press(dataLink(page));
+  await expect(grid.getByRole("columnheader", { name: "wage", exact: true })).toBeVisible();
+  await expect(educ).toHaveCount(0);
   // By the keyboard, the focus staying on the box.
+  await press(variablesLink(page));
   await box.focus();
   await page.keyboard.press("Space");
-  await expect(educ).toBeVisible();
+  await expect(box).toBeChecked();
   await expect(box).toBeFocused();
-  // From the column's header.
+  await press(dataLink(page));
+  await expect(educ).toBeVisible();
+  // From the column's header, and back by the row's own words.
   await press(grid.getByRole("button", { name: "Hide educ" }));
   await expect(educ).toHaveCount(0);
-  await press(page.getByRole("button", { name: "Show all", exact: true }));
+  await press(bar(page).getByRole("button", { name: "show all", exact: true }));
   await expect(educ).toBeVisible();
 });
 
@@ -138,31 +184,39 @@ test("Hide all and Show all act on every variable, and hiding is kept for each f
   await press(variablesLink(page));
   await press(variablesPane(page).getByRole("button", { name: "Hide all" }));
   await expect(page.getByTestId("shown-count")).toHaveText("0 of 11 shown");
+  await press(dataLink(page));
   await expect(page.getByRole("grid").getByRole("columnheader")).toHaveCount(1);
+  await press(variablesLink(page));
   // Another frame keeps its own: every variable of w2010 is shown.
-  const frames = framesPane(page);
-  await press(frames.getByRole("button", { name: /^w2010/ }));
+  await chooseFrame(page, press, "w2010");
   await expect(page.getByTestId("shown-count")).toHaveText("11 of 11 shown");
-  await press(frames.getByRole("button", { name: /^wages/ }));
+  await chooseFrame(page, press, "wages");
   await expect(page.getByTestId("shown-count")).toHaveText("0 of 11 shown");
-  await press(page.getByRole("button", { name: "Show all", exact: true }));
+  await press(variablesPane(page).getByRole("button", { name: "Show all", exact: true }));
   await expect(page.getByTestId("shown-count")).toHaveText("11 of 11 shown");
 });
 
-test("the Variables pane shows the list, or one variable in its place once a variable is chosen", async ({
+test("Variables takes the grid's place: the list, or one variable in its place once a variable is chosen", async ({
   page,
   press,
 }) => {
+  // Release 0.3.1, step 8a (open decision #245): until then the variables were a pane at the
+  // grid's right, with a × of its own.
   await ran(page, press);
   const grid = page.getByRole("grid");
   const pane = variablesPane(page);
   const find = pane.getByRole("searchbox", { name: "Find a variable" });
-  // A column's header opens the pane, closed until now, at that variable: no list.
   await expect(pane).toHaveCount(0);
-  await press(
-    grid.getByRole("columnheader", { name: "wage", exact: true }).getByRole("button").first(),
-  );
+  await expect(grid).toBeVisible();
+  // Variables: the list of the frame's variables, in the grid's place and at the place's left.
+  await press(variablesLink(page));
   await expect(variablesLink(page)).toHaveAttribute("aria-pressed", "true");
+  await expect(dataLink(page)).toHaveAttribute("aria-pressed", "false");
+  await expect(grid).toHaveCount(0);
+  await expect(pane.getByRole("checkbox", { name: /^Show .* in the grid$/ })).toHaveCount(11);
+  expect((await pane.boundingBox())!.x).toBe(52);
+  // A name in it opens that variable in the list's place: no list.
+  await press(pane.getByRole("button", { name: /^wage/ }));
   const inspector = pane.getByTestId("inspector");
   await expect(inspector.getByRole("heading", { name: "wage", exact: true })).toBeVisible();
   await expect(find).toHaveCount(0);
@@ -172,9 +226,15 @@ test("the Variables pane shows the list, or one variable in its place once a var
   await expect(inspector.getByTestId("variable-statistics")).toContainText("mean");
   // Hidden from here, the variable leaves the grid and stays the one shown.
   await press(inspector.getByRole("button", { name: "Hide from the grid" }));
+  await press(dataLink(page));
+  await expect(grid.getByRole("columnheader", { name: "educ", exact: true })).toBeVisible();
   await expect(grid.getByRole("columnheader", { name: "wage", exact: true })).toHaveCount(0);
+  await press(variablesLink(page));
+  await expect(inspector.getByRole("heading", { name: "wage", exact: true })).toBeVisible();
   await press(inspector.getByRole("button", { name: "Show in the grid" }));
+  await press(dataLink(page));
   await expect(grid.getByRole("columnheader", { name: "wage", exact: true })).toBeVisible();
+  await press(variablesLink(page));
   // Back to the list, which Find narrows; a name in it opens that variable in the list's place.
   await press(pane.getByRole("button", { name: "‹ All variables" }));
   await expect(inspector).toHaveCount(0);
@@ -185,12 +245,16 @@ test("the Variables pane shows the list, or one variable in its place once a var
   await press(pane.getByRole("button", { name: /^exper/ }));
   await expect(inspector.getByRole("heading", { name: "exper", exact: true })).toBeVisible();
   await expect(find).toHaveCount(0);
-  // The pane's own × closes it; its link opens it again on the variable it showed.
-  await press(pane.getByRole("button", { name: "Close Variables" }));
+  // Data shows the grid again; Variables comes back on the variable it showed. Pressed while
+  // it is shown, Variables goes back to the grid too.
+  await press(dataLink(page));
   await expect(pane).toHaveCount(0);
   await expect(variablesLink(page)).toHaveAttribute("aria-pressed", "false");
+  await expect(grid).toBeVisible();
   await press(variablesLink(page));
   await expect(inspector.getByRole("heading", { name: "exper", exact: true })).toBeVisible();
+  await press(variablesLink(page));
+  await expect(grid).toBeVisible();
 });
 
 // Step 14b: the view kept to a condition, sorted and searched by the engine; the headers'
@@ -344,17 +408,7 @@ async function chosen(
   press: (target: ReturnType<Page["locator"]>) => Promise<void>,
   name: string,
 ) {
-  await press(
-    page
-      .getByRole("grid")
-      .getByRole("columnheader", { name, exact: true })
-      .getByRole("button")
-      .first(),
-  );
-  const pane = variablesPane(page);
-  await expect(pane.getByRole("heading", { name, exact: true })).toBeVisible();
-  await expect(pane.getByTestId("variable-asking")).toHaveCount(0);
-  return pane;
+  return chooseVariable(page, press, name);
 }
 /** The rows of a table of the pane, each as its cells. */
 const rowsOf = (table: ReturnType<Page["locator"]>) =>
@@ -556,22 +610,18 @@ test("the Variables pane is for looking: nothing in it changes a variable or off
   press,
 }) => {
   await ran(page, press);
-  const grid = page.getByRole("grid");
   const pane = variablesPane(page);
   // A category, a whole number and a variable with labelled codes: in 0.2 each offered a
   // change (of contrast, of type, of labels) to copy as a statement. None does now (#203).
   for (const name of ["industry", "educ", "union"]) {
-    await press(grid.getByRole("columnheader", { name, exact: true }).getByRole("button").first());
+    await chooseVariable(page, press, name);
     await expect(pane.getByRole("heading", { name, exact: true })).toBeVisible();
     await expect(pane.getByRole("combobox")).toHaveCount(0);
     await expect(pane.getByRole("textbox")).toHaveCount(0);
     await expect(pane.getByRole("button", { name: /copy/i })).toHaveCount(0);
-    // What it does offer: the way back to the list, the grid's column, and its own ×.
-    await expect(pane.getByRole("button")).toHaveText([
-      "×",
-      "‹ All variables",
-      "Hide from the grid",
-    ]);
+    // What it does offer: the way back to the list, and the grid's column. (Until release
+    // 0.3.1 the pane had a × of its own too; Data, in the row, shows the grid again.)
+    await expect(pane.getByRole("button")).toHaveText(["‹ All variables", "Hide from the grid"]);
   }
   // The script is as it was: the place wrote nothing into it.
   await press(

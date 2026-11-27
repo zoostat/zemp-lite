@@ -253,7 +253,10 @@ test("the reader's script and its results are untouched by the examples, and the
   expect(await asked("run")).toBe(2);
   // The Data place lists the frames of the reader's run, and none of an example's.
   await press(places(page).getByRole("button", { name: "Data" }));
-  await expect(page.getByTestId("data")).toContainText("w2010");
+  await press(page.getByTestId("data").getByRole("button", { name: /▾$/ }));
+  await expect(
+    page.getByRole("menu", { name: "Frames of the run" }).getByRole("menuitem"),
+  ).toHaveText([/^wages · /, /^w2010 · /]);
 });
 
 test("the example of an explained code is the page's illustration: not run as the page opens, and run as it stands when Run is pressed", async ({

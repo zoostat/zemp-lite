@@ -593,3 +593,33 @@ export async function notWhole(page: Page): Promise<string[]> {
     return [...new Set(faults)];
   });
 }
+
+/**
+ * Choose a variable of the frame the Data place shows, as a reader does from release 0.3.1
+ * (open decision #245): **Variables**, which takes the grid's place, then the variable's name
+ * in the list. Gives the Variables view, once the engine has answered for the variable.
+ */
+export async function chooseVariable(
+  page: Page,
+  press: (target: Locator) => Promise<void>,
+  name: string,
+): Promise<Locator> {
+  const view = page.getByRole("region", { name: "Variables" });
+  const link = page
+    .getByRole("toolbar", { name: "Data: its panes and its controls" })
+    .getByRole("button", { name: "Variables", exact: true });
+  await expect(link).toBeVisible();
+  if ((await link.getAttribute("aria-pressed")) !== "true") await press(link);
+  await expect(view).toBeVisible();
+  // One variable may be shown in the list's place: back to the list first.
+  const back = view.getByRole("button", { name: "‹ All variables" });
+  const listed = view.locator("button.vpick").filter({
+    has: page.locator("span.mono").getByText(name, { exact: true }),
+  });
+  await expect(back.or(listed).first()).toBeVisible();
+  if ((await back.count()) > 0) await press(back);
+  await press(listed);
+  await expect(view.getByRole("heading", { name, exact: true })).toBeVisible();
+  await expect(view.getByTestId("variable-asking")).toHaveCount(0);
+  return view;
+}

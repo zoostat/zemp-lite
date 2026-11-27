@@ -11,23 +11,27 @@
 // **Topics** (open decision #211; it was **Outline**), and the file says which of its sections
 // the reader folded or unfolded; its right pane is **On this page** (#211, item 13; it was
 // **Related functions**). From 0.3 there is a fifth place, **Paper**: the file says which of
-// its panes are open, the paper it has open, and the page's share of its width.
+// its panes are open, the paper it has open, and the page's share of its width. From 0.3.1
+// (version 6; open decision #245) the frames of a run are a menu of the Data place's row, not
+// a pane, so the file no longer says whether that pane is open; and **Variables** is what the
+// Data place shows in place of the grid, said by the same word as the pane it was.
 
 import type { View } from "../engine/messages";
 
 /** The version of the view state this build writes; a file without one is of version 1. */
-export const VIEWS_VERSION = 5;
+export const VIEWS_VERSION = 6;
 
 /**
  * The panes of each place, and whether each is open in a project opened for the first time
- * (#203): beside the script, Project and Outline closed and Notes open; beside the data, the
- * frames open and the variables closed; beside a plot, both open; beside a page of Help,
+ * (#203): beside the script, Project and Outline closed and Notes open; in the Data place,
+ * the grid shown and not the variables (#245; the list of frames was a pane until 0.3.1);
+ * beside a plot, both open; beside a page of Help,
  * Topics open (the sections of the page open are a part of the page from 0.2.4, not a pane:
  * open decision #220, item 7); beside a paper, Project and Outline closed and the page open.
  */
 export const PANES = {
   script: { project: false, outline: false, notes: true },
-  data: { frames: true, variables: false },
+  data: { variables: false },
   plots: { list: true, about: true },
   paper: { project: false, outline: false, page: true },
   help: { topics: true },
@@ -270,7 +274,6 @@ export function readViews(text: string | null): ViewState {
   const data = from["data"] as Record<string, unknown> | undefined;
   if (typeof data === "object" && data !== null) {
     if (typeof data["frame"] === "string") state.data.frame = data["frame"];
-    if (earlier && typeof data["list"] === "boolean") state.panes.data.frames = data["list"];
     if (typeof data["variable"] === "string") state.data.variable = data["variable"];
     const hidden = data["hidden"];
     if (typeof hidden === "object" && hidden !== null && !Array.isArray(hidden)) {

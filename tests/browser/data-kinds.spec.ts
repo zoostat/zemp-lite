@@ -5,7 +5,7 @@
 // `tests/scripts/properties-kinds.json`, which a test under Node holds to the engine.
 import { readFileSync } from "node:fs";
 import type { Locator, Page } from "@playwright/test";
-import { expect, faintText, smallestText, test, write } from "./support";
+import { chooseVariable, expect, faintText, smallestText, test, write } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const FEW_TEXT = "Text of few values: category() would make it a category.";
@@ -17,15 +17,19 @@ const kept = JSON.parse(
   readFileSync(new URL("../scripts/properties-kinds.json", import.meta.url), "utf8"),
 ) as { setup: string };
 
-const framesPane = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Data: the left pane" })
-    .getByRole("region", { name: "Frames of the run" });
-const variablesPane = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Data: the right pane" })
-    .getByRole("region", { name: "Variables" });
-
+/** Choose a frame of the run from the menu of the Data place's row (open decision #245). */
+async function chooseFrame(page: Page, press: Press, frame: string): Promise<void> {
+  await press(
+    page
+      .getByRole("toolbar", { name: "Data: its panes and its controls" })
+      .getByRole("button", { name: /▾$/ }),
+  );
+  await press(
+    page
+      .getByRole("menu", { name: "Frames of the run" })
+      .getByRole("menuitem", { name: new RegExp(`^${frame} · `) }),
+  );
+}
 /** The Scratch project with the kept frames run, in the Data place. */
 async function ran(page: Page, press: Press): Promise<void> {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -42,19 +46,9 @@ async function ran(page: Page, press: Press): Promise<void> {
 
 /** Choose a variable of a frame, and wait until the engine has answered. */
 async function chosen(page: Page, press: Press, frame: string, name: string): Promise<Locator> {
-  await press(framesPane(page).getByRole("button", { name: new RegExp(`^${frame}\\b`) }));
+  await chooseFrame(page, press, frame);
   await expect(page.getByTestId("frame-header")).toContainText(`${frame} ·`);
-  await press(
-    page
-      .getByRole("grid")
-      .getByRole("columnheader", { name, exact: true })
-      .getByRole("button")
-      .first(),
-  );
-  const pane = variablesPane(page);
-  await expect(pane.getByRole("heading", { name, exact: true })).toBeVisible();
-  await expect(pane.getByTestId("variable-asking")).toHaveCount(0);
-  return pane;
+  return chooseVariable(page, press, name);
 }
 
 const rowsOf = (table: Locator) =>

@@ -2274,11 +2274,6 @@ export class Workspace {
     return answer;
   }
 
-  /** Show or hide the data viewer's list of frames and variables. */
-  setDataList(shown: boolean): void {
-    this.setPane("data", "frames", shown);
-  }
-
   /** How the data viewer shows a frame: kept to the rows of a condition, sorted, searched. */
   viewOf(frame: string): View {
     return this.views.data.shown[frame] ?? { where: "", sort: null, search: "" };

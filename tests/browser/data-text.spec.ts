@@ -5,7 +5,7 @@
 // `tests/scripts/properties-text.json`, which a test under Node holds to the engine.
 import { readFileSync } from "node:fs";
 import type { Locator, Page } from "@playwright/test";
-import { expect, faintText, smallestText, test, write } from "./support";
+import { chooseVariable, expect, faintText, smallestText, test, write } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 
@@ -15,11 +15,6 @@ const kept = JSON.parse(
   readFileSync(new URL("../scripts/properties-text.json", import.meta.url), "utf8"),
 ) as { setup: string; cases: { key: string; printed: string }[] };
 const printed = (key: string) => kept.cases.find((one) => one.key === key)?.printed ?? "";
-
-const variablesPane = (page: Page) =>
-  page
-    .getByRole("complementary", { name: "Data: the right pane" })
-    .getByRole("region", { name: "Variables" });
 
 /** The Scratch project with the kept frame of reviews run, in the Data place. */
 async function ran(page: Page, press: Press): Promise<void> {
@@ -35,19 +30,9 @@ async function ran(page: Page, press: Press): Promise<void> {
   );
 }
 
-/** Choose a variable by its column's header, and wait until the engine has answered. */
+/** Choose a variable in the Variables view, and wait until the engine has answered. */
 async function chosen(page: Page, press: Press, name: string): Promise<Locator> {
-  await press(
-    page
-      .getByRole("grid")
-      .getByRole("columnheader", { name, exact: true })
-      .getByRole("button")
-      .first(),
-  );
-  const pane = variablesPane(page);
-  await expect(pane.getByRole("heading", { name, exact: true })).toBeVisible();
-  await expect(pane.getByTestId("variable-asking")).toHaveCount(0);
-  return pane;
+  return chooseVariable(page, press, name);
 }
 
 const rowsOf = (table: Locator) =>

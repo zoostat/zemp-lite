@@ -6,7 +6,7 @@
 // tests of its own for what it does; this one holds them all to one floor, state by state.
 import type { Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { expect, faintText, smallestText, test, write } from "./support";
+import { chooseVariable, expect, faintText, smallestText, test, write } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const SET = /^Typst 0\.15\.1 · set in \d+ ms$/;
@@ -225,16 +225,7 @@ for (const theme of ["light", "dark"] as const) {
       await press(page.getByRole("button", { name: "Run", exact: true }));
       await expect(page.getByRole("status")).toHaveText("done");
       await press(places(page).getByRole("button", { name: "Data" }));
-      await press(
-        page
-          .getByRole("grid")
-          .getByRole("columnheader", { name: "review", exact: true })
-          .getByRole("button")
-          .first(),
-      );
-      const pane = page
-        .getByRole("complementary", { name: "Data: the right pane" })
-        .getByRole("region", { name: "Variables" });
+      const pane = await chooseVariable(page, press, "review");
       await expect(pane.getByTestId("variable-repeats")).toBeVisible();
       await floor(page, "the Variables pane for a text of many values");
     });

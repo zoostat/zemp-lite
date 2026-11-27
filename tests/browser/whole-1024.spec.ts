@@ -5,7 +5,15 @@
 // screen has tests of its own for what it does; this one takes every place through its states
 // at that size, and each step of the release adds the screen it draws.
 import type { Locator, Page } from "@playwright/test";
-import { expect, faintText, notWhole, smallestText, test, useExample } from "./support";
+import {
+  chooseVariable,
+  expect,
+  faintText,
+  notWhole,
+  smallestText,
+  test,
+  useExample,
+} from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const TABLET = { width: 1024, height: 768 };
@@ -146,6 +154,19 @@ for (const theme of ["light", "dark"] as const) {
         await whole(page, `${place}, as it opens`);
         await openPanes(page, press, place);
         await whole(page, `${place}, every pane open`);
+        if (place === "Data") {
+          // Data's row (step 8a): the frames' menu open, and Variables in the grid's place,
+          // as the list and as one variable.
+          await press(bar(page, "Data").getByRole("button", { name: /▾$/ }));
+          await expect(page.getByRole("menu", { name: "Frames of the run" })).toBeVisible();
+          await whole(page, "Data, the frames' menu open");
+          await page.keyboard.press("Escape");
+          const variables = await chooseVariable(page, press, "wage");
+          await expect(variables.getByTestId("variable-statistics")).toBeVisible();
+          await whole(page, "Data, a variable in the grid's place");
+          await press(variables.getByRole("button", { name: "‹ All variables" }));
+          await whole(page, "Data, the variables in the grid's place");
+        }
       });
     }
 
