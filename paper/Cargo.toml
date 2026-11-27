@@ -1,7 +1,7 @@
 [package]
 name = "zemp-paper"
 description = "Typst as Zemp's module for a paper in the browser: a paper's files in memory, set to pages, with its PDF and the place in the source of a point on a page."
-version = "0.3.0-dev"
+version = "0.3.0"
 edition = "2024"
 license = "Apache-2.0"
 publish = false

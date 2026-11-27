@@ -306,7 +306,7 @@ is this package.
 | yaml-rust | 0.4.5 | MIT/Apache-2.0 |
 | yoke | 0.8.2 | Unicode-3.0 |
 | yoke-derive | 0.8.2 | Unicode-3.0 |
-| zemp-paper | 0.3.0-dev | Apache-2.0 |
+| zemp-paper | 0.3.0 | Apache-2.0 |
 | zerocopy | 0.7.35 | BSD-2-Clause OR Apache-2.0 OR MIT |
 | zerocopy-derive | 0.7.35 | BSD-2-Clause OR Apache-2.0 OR MIT |
 | zerofrom | 0.1.8 | Unicode-3.0 |

@@ -134,9 +134,15 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **One deployment did not happen, and nothing is wrong with the build.** Step 22's commit passed GitHub's check, but the machine that deploys could not install its test browsers (a package server refused it). The next commit was deployed in the ordinary way.
 
-**Next.** The release itself, on the owner's word: "Release 0.3" sets the version, makes the pictures that show it, tags `v0.3.0` and publishes the notes. Nothing else is owed before it.
+## 27 November 2026: release 0.3 closed
 
-**For the owner to decide.** When to release. Before it, if he wishes to read them: the page **Papers and PDFs**, the sample paper, the two sample PDFs of a script with its output (`docs/releases/0.3-samples/`), and the notes.
+**Done.** On the owner's word ("Release 0.3"): version 0.3.0; the pictures that show the version made again; the notes dated (`docs/releases/0.3-notes.md`); the whole routine green here on the release's tree in both browsers (550 unit tests, 825 browser tests, 3 skipped by design); the commit "Release 0.3" tagged `v0.3.0`, pushed, and published as a GitHub pre-release carrying the notes.
+
+**Next.** Nothing is planned in this repository until the owner opens a release. Placed after this one by the registers: the pages of Help reordered (#223), a release of its own; Paper's second stage and the index of methods at Zemp 0.4, on Zeff 0.10.0.
+
+**For the owner to decide.** Nothing is owed. His to read when he wishes, and to change in a later release: the page **Papers and PDFs**, the sample paper, the layout of a script exported with its output (`docs/releases/0.3-samples/`), and the words listed below under "For the owner to read".
+
+**For the coordinating session.** The review of the registers at this release is the entry of step 23 in `docs/decisions.md`.
 
 **For the coordinating session (added at step 21).** Of #209's table at Zemp 0.3: the opaque column's row waits for the engine's opaque types (after 1.0), and the ordered category's cumulative share and median level for an engine release that prints them. The reading taken where the table is silent: a text of many values whose values all differ is called an identifier only where they are all of one length.
 

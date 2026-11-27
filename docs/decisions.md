@@ -3449,3 +3449,19 @@ The wait is there at the trial address every time and at the address once in fou
 
 **Reason.** The checklist's step 23; the testing handbook, section 2.4, the items that exist here (1, 2 on the two browsers this project has, 3, and 6 as far as the notes; 4 moved by #230; 5 is the engine's).
 
+## 27 November 2026: release 0.3 closed
+
+**The owner's word:** "Release 0.3", after the report of step 23.
+
+**What was done.** Version 0.3.0 in the app's manifest, the worker's and the Paper module's, with their lock files and the module's list of dependencies (its own row). The worker and the module built again. The fourteen pictures made again: nine differ, in the version a screen shows and in a time of day or a run's duration. The notes dated, with the figures of the release's own tree.
+
+**The routine at the close.** Here, on the release's own tree, which differs from the checked and deployed commit `78a2bb5` in the version, the pictures and the documents alone: format, lint, types, the edition check, the Rust checks and tests of the worker and the module, the messages of both, the two measures (3,088.6 kB of 5,000; 7,535.3 kB of 8,500), the ten samples identical, the tests of the build's facts and of the host's function, 550 unit tests, and 825 browser tests in both browsers (3 skipped by design). Green, WebKit's mouse tests among them this time. GitHub's check of the release's commit and its deployment are read after the tag is pushed, and what they show is told to the owner.
+
+**The tag and the release.** `v0.3.0` on the commit "Release 0.3"; a GitHub release marked as a pre-release, as every release of the alpha has been, titled as the notes are and carrying them.
+
+**The functions' catalogue** has no row of a Zemp release; its status column is the Zeff repository's.
+
+**The registers.** They are the Zeff repository's, and `docs/spec/` here is a copy. The review is the entry of step 23, for the coordinating session, which holds what says "released" for this word: #209 built as option A but two rows; #228 built; #172's stage 1 built; #211's item 11 built; R4's and R13's figures.
+
+**Reason.** The standing instructions' closing of a release.
+
