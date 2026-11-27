@@ -16,11 +16,17 @@
     label,
     actions,
     symbol = "⋯",
+    words,
   }: {
     label: string;
     actions: RowAction[];
     /** What the button shows: three dots for "more", a plus for "add". */
     symbol?: string;
+    /**
+     * Words in place of a symbol (release 0.3.1, step 4: **Projects ▾** of the top bar): the
+     * button is then a word of its bar, named by what it says, and `label` names its list.
+     */
+    words?: string;
   } = $props();
 
   let open = $state(false);
@@ -98,9 +104,9 @@
 
 {#if actions.length > 0}
   <button
-    class="more"
+    class={words === undefined ? "more" : "worded"}
     bind:this={button}
-    aria-label={label}
+    aria-label={words === undefined ? label : undefined}
     title={label}
     aria-haspopup="menu"
     aria-expanded={open}
@@ -110,7 +116,7 @@
       else show();
     }}
   >
-    <span aria-hidden="true">{symbol}</span>
+    {#if words === undefined}<span aria-hidden="true">{symbol}</span>{:else}{words}{/if}
   </button>
   {#if open}
     <!-- svelte-ignore a11y_interactive_supports_focus -->
@@ -150,7 +156,26 @@
     background: var(--line);
     color: var(--ink);
   }
+  /* A word of a bar: quiet until it is pointed at or its list is open. */
+  .worded {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    color: var(--ink-2);
+    display: inline-flex;
+    flex: none;
+    font-weight: 600;
+    height: 28px;
+    padding: 0 9px;
+  }
+  .worded:hover,
+  .worded[aria-expanded="true"] {
+    background: var(--soft);
+    color: var(--ink);
+  }
   .more:focus-visible,
+  .worded:focus-visible,
   .list button:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: -2px;

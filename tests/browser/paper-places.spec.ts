@@ -291,14 +291,18 @@ test("the Outline lists the headings by level with their lines, marks the one th
   await expect(source(page)).toBeFocused();
   await expect(rows.nth(3)).toHaveAttribute("aria-current", "location");
   await expect(rows.nth(0)).not.toHaveAttribute("aria-current", "location");
-  // The page's pane has come to the second page, its heading a little under the pane's top.
+  // The page's pane has come to the second page, its heading a little under the pane's top,
+  // or as far as the pane scrolls where the pages end before that.
   await expect
     .poll(async () => {
       const second = (await sheets(page).nth(1).boundingBox())!;
       const pane = (await view.boundingBox())!;
-      return second.y - pane.y;
+      const atEnd = await view.evaluate(
+        (node) => node.scrollTop + node.clientHeight >= node.scrollHeight - 1,
+      );
+      return second.y - pane.y < 60 || (atEnd && second.y - pane.y < pane.height / 2);
     })
-    .toBeLessThan(60);
+    .toBe(true);
   // The mark follows the cursor through the source: under a heading's own words, it is that one.
   await cursorTo(page, 1);
   await expect(rows.nth(0)).not.toHaveAttribute("aria-current", "location");

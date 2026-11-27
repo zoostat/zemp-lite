@@ -14,6 +14,14 @@ const text = (path: string) => readFileSync(at(path), "utf8");
 /** Each key of the page, and the test of the browser that presses it: its file and its title. */
 const HELD: Record<string, [string, string]> = {
   "⌘K": ["palette", "⌘K opens the palette, typing narrows it, the arrows choose, Escape closes"],
+  "⌘1": [
+    "frame",
+    "⌘1 to ⌘5 open the places, from the script, from a field and from another place; and so does ⌘K",
+  ],
+  "⌘5": [
+    "frame",
+    "⌘1 to ⌘5 open the places, from the script, from a field and from another place; and so does ⌘K",
+  ],
   "⌘↵": [
     "margin",
     "⌘↵ runs the statement at the cursor with what it needs, and leaves the rest as it was",

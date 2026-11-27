@@ -138,7 +138,7 @@ test("a project that names another engine says so, is refused a run in the engin
   await expect(line(page)).toHaveCount(0);
   await expect(page.getByText("saving")).toHaveCount(0);
   // Left, and opened again from its row of the start screen.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(page.getByRole("button", { name: /^demo in this browser/ }));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("demo");
   await expect(page.getByRole("status")).toHaveText(READY);
@@ -189,7 +189,7 @@ test("the Scratch project of an earlier visit is moved to this engine without th
   await expect(line(page)).toContainText("This project names Zeff 0.8.0");
   await expect(page.getByText("saving")).toHaveCount(0);
   // Left, and opened again from the start screen: it names this engine, and runs.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(page.getByRole("button", { name: /^Scratch in this browser/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await expect(line(page)).toHaveCount(0);

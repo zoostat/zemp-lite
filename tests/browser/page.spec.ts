@@ -74,7 +74,7 @@ test("the light and dark button switches the theme, and the choice is remembered
   expect(await ground()).toBe("rgb(255, 255, 255)");
   await press(page.getByRole("button", { name: "Switch to the dark theme" }));
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  expect(await ground()).toBe("rgb(17, 18, 22)");
+  expect(await ground()).toBe("rgb(13, 14, 18)");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.getByRole("button", { name: "Switch to the light theme" })).toBeVisible();

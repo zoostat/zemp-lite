@@ -121,7 +121,7 @@ for (const theme of ["light", "dark"] as const) {
         await page.getByLabel("The name of the new project").fill(name);
         await press(page.getByRole("button", { name: "Create" }));
         await expect(page.getByRole("heading", { level: 1 })).toHaveText(name);
-        await press(page.getByRole("button", { name: "Projects" }));
+        await press(page.getByRole("button", { name: "All projects" }));
         await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
       };
       await page.setViewportSize({ width: 1440, height: 900 });

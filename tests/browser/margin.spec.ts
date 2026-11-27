@@ -41,7 +41,7 @@ async function scratch(page: Page, press: Press, reopened = false) {
   await expect(page.getByRole("status")).toHaveText(READY);
   await useExample(page);
   if (reopened) {
-    await press(page.getByRole("button", { name: "Projects" }));
+    await press(page.getByRole("button", { name: "All projects" }));
     await press(page.getByRole("button", { name: /^Scratch project/ }));
     await expect(page.getByRole("status")).toHaveText(READY);
     await expect.poll(() => scriptText(page)).toBe(EXAMPLE);
@@ -103,9 +103,9 @@ test("a project opens in the margin editor: 920 pixels of code and 300 of notes,
   const column = (await page.locator(".cm-editor").boundingBox())!;
   expect(column.width).toBeLessThanOrEqual(1220);
   expect(column.width).toBeGreaterThan(1160);
-  // The column is centred in the window.
+  // The column is centred in the place, which is the window but for the side menu's 52 pixels.
   const window = page.viewportSize()!.width;
-  expect(Math.abs(column.x + column.width / 2 - window / 2)).toBeLessThan(2);
+  expect(Math.abs(column.x + column.width / 2 - (window + 52) / 2)).toBeLessThan(2);
   await expect.poll(() => scriptText(page)).toBe(file("tests/scripts/example/scripts/main.zeff"));
 });
 

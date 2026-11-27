@@ -97,12 +97,12 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
   );
   await expect(shown(page).getByRole("heading", { level: 4 })).toHaveText([
     "Run the example",
-    "The four places",
+    "The places",
     "Change something",
     "Where to go next",
   ]);
   await expect(shown(page).locator("ol > li")).toHaveCount(3);
-  await expect(shown(page).locator("ul > li")).toHaveCount(4);
+  await expect(shown(page).locator("ul > li")).toHaveCount(5);
   // A control is named as the screen names it, a key is a key, and code is code.
   await expect(shown(page).locator("b.control")).toHaveText([
     "Scratch project",
@@ -110,9 +110,11 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
     "Script",
     "Data",
     "Plots",
+    "Paper",
     "Help",
+    "All projects",
   ]);
-  await expect(shown(page).locator("kbd")).toHaveText(["⌘⇧↵", "Ctrl ⇧ ↵"]);
+  await expect(shown(page).locator("kbd")).toHaveText(["⌘⇧↵", "Ctrl ⇧ ↵", "⌘1", "⌘5"]);
   await expect(shown(page).locator("code")).toHaveText(["edited · not run", "stale"]);
   // Every letter of the page is its file's, in its order, and nothing more (the spaces apart,
   // which the marks of the file and the type of the page set differently).
@@ -121,7 +123,7 @@ test("a page of Using Zemp Lite opens from Topics, set in type, every word its f
   // The page's sections stand in Topics, each going to its place; beside it, all the pages.
   await expect(
     page.getByRole("navigation", { name: "On this page" }).getByRole("list").getByRole("button"),
-  ).toHaveText(["Run the example", "The four places", "Change something", "Where to go next"]);
+  ).toHaveText(["Run the example", "The places", "Change something", "Where to go next"]);
   const beside = topics(page).getByRole("list", { name: "The pages of Using Zemp Lite" });
   await expect(beside.getByRole("button")).toHaveText(PAGES);
   await expect(beside.locator('[aria-current="page"]')).toHaveText("Getting started");

@@ -5,6 +5,7 @@ The keys the app answers to, place by place. On Windows and Linux, Ctrl takes th
 ## Anywhere in a project
 
 - <kbd>⌘K</kbd>: the list of commands.
+- <kbd>⌘1</kbd> to <kbd>⌘5</kbd>: the places, in the order of the icons down the left: Script, Data, Plots, Paper, Help. A browser has the same keys for its own tabs, and may keep them; each place is in the list of commands too.
 - <kbd>⌘↵</kbd>: run. Outside the script it runs the whole script; with the cursor in the script, the statement at the cursor.
 - <kbd>Ctrl `</kbd>: put the cursor in the console line, at the foot of the window.
 

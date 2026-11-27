@@ -40,7 +40,7 @@ test("a project is made, and is still there with its script after the page is re
 
   // Back on the welcome screen it is listed, opened today; and its name is taken, however the
   // capitals are typed: the refusal names the project as it is written in the list.
-  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await expect(page).toHaveURL(/\/#?$/);
   const listed = page.getByRole("button", { name: /^Returns to schooling in this browser/ });
   await expect(listed).toContainText("in this browser · today,");
@@ -62,7 +62,7 @@ test("the Scratch project keeps what the user wrote in it", async ({ page, press
     .toMatch(/^\/\/ Returns to schooling, in the wages panel/);
   await write(page, "print(1)\n");
   await expect(page.getByText("saving")).toHaveCount(0);
-  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect.poll(() => scriptText(page)).toBe("print(1)\n");
 });
@@ -125,7 +125,7 @@ test("which panes are open is each project's own: a new project opens with Proje
   // The view state is written a moment after the last change.
   await page.waitForTimeout(1500);
   // The choice is this project's: another project opens as a project does.
-  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("Another");
   await press(page.getByRole("button", { name: "Create" }));
@@ -135,7 +135,7 @@ test("which panes are open is each project's own: a new project opens with Proje
   await expect(notes).toHaveAttribute("aria-pressed", "true");
   await expect(left).toHaveCount(0);
   // And the Scratch project is as it was left.
-  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await expect(project).toHaveAttribute("aria-pressed", "true");
@@ -548,7 +548,7 @@ test("a start opens on the Script place, and Help then on Home with Topics close
 
   // The project as Zemp Lite 0.2.2 left it, on Help, the left pane of Help called Outline and
   // closed: it opens on Script, and Help has its left pane closed, as the reader had it.
-  await press(page.getByTitle("Back to the projects of this browser"));
+  await press(page.getByRole("button", { name: "All projects" }));
   await expect(page).toHaveURL(/\/#?$/);
   await page.waitForTimeout(1000);
   await page.evaluate(async () => {

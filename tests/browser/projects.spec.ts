@@ -42,7 +42,7 @@ test("a project is renamed and duplicated from its row of the start screen, and 
   await made(page, press, "Wages");
   const script = 'print("the wages project")\n';
   await write(page, script);
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(more(page, "Wages"));
   await expect(
     page.getByRole("menu", { name: "Actions for Wages" }).getByRole("menuitem"),
@@ -90,7 +90,7 @@ test("a project is renamed and duplicated from its row of the start screen, and 
       'edition = "preview"       # "2027" from Zeff 1.0.0\n',
   );
   // Duplicated: a second project, of a name of its own, with all the first holds.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(more(page, "Returns to schooling"));
   await press(item(page, "Returns to schooling", "Duplicate…"));
   const copy = recent(page).getByRole("textbox", {
@@ -116,7 +116,7 @@ test("a project is renamed and duplicated from its row of the start screen, and 
   await wholeScript(page);
   expect(await printed(page)).toBe("the wages project\n");
   // Escape leaves a question unanswered.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(more(page, "Wages"));
   await press(item(page, "Wages", "Rename…"));
   await recent(page).getByRole("textbox", { name: "The new name of Wages" }).press("Escape");
@@ -129,9 +129,9 @@ test("a project is deleted after one question in its row, which offers to export
 }) => {
   await page.goto("/");
   await made(page, press, "Wages");
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await made(page, press, "Pay");
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(more(page, "Wages"));
   await press(item(page, "Wages", "Delete…"));
   const asked = recent(page).getByRole("group", { name: "Delete Wages?" });
@@ -167,7 +167,7 @@ test("a project is deleted after one question in its row, which offers to export
   await made(page, press, "Wages");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Wages");
   // What was exported comes back as a project.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await page.getByLabel("A project's zip to open").setInputFiles(await download.path());
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Wages 2");
 });
@@ -181,7 +181,7 @@ test("the Scratch project is not renamed or deleted: it is duplicated into a pro
   await expect(page.getByRole("status")).toHaveText(READY);
   const mine = 'print("my own work in the scratch project")\n';
   await write(page, mine);
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(more(page, "Scratch"));
   await expect(
     page.getByRole("menu", { name: "Actions for Scratch" }).getByRole("menuitem"),
@@ -196,7 +196,7 @@ test("the Scratch project is not renamed or deleted: it is duplicated into a pro
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("My returns");
   await expect.poll(() => scriptText(page)).toBe(mine);
   // Reset… puts the Scratch project back as a first visit has it, after one question.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(more(page, "Scratch"));
   await press(item(page, "Scratch", "Reset…"));
   const asked = recent(page).getByRole("group", { name: "Reset the Scratch project?" });
@@ -213,7 +213,7 @@ test("the Scratch project is not renamed or deleted: it is duplicated into a pro
     .poll(() => scriptText(page))
     .toMatch(/^\/\/ Returns to schooling, in the wages panel that ships with Zeff\./);
   // The reader's copy is untouched by it.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(row(page, "My returns"));
   await expect.poll(() => scriptText(page)).toBe(mine);
 });

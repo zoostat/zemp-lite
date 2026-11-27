@@ -900,19 +900,28 @@ export class Workspace {
     await this.#load(script);
     const text = run?.text ?? this.buffers[script]?.text ?? "";
     this.report = { building: true };
+    const asked = ++this.#reportsAsked;
+    // A window closed while its report was being built stays closed: what the engine then
+    // gives is not shown (release 0.3.1, step 4; until then the window came back with it).
+    const wanted = () => this.report !== null && asked === this.#reportsAsked;
     const before = this.#busy;
     const work = (async () => {
       await before;
       await this.#saving;
       try {
-        this.report = { building: false, script, ...(await this.engine.report(script, text)) };
+        const built = await this.engine.report(script, text);
+        if (wanted()) this.report = { building: false, script, ...built };
       } catch (error) {
-        this.report = { building: false, script, ok: false, message: (error as Error).message };
+        if (wanted()) {
+          this.report = { building: false, script, ok: false, message: (error as Error).message };
+        }
       }
     })();
     this.#busy = work;
     await work;
   }
+
+  #reportsAsked = 0;
 
   /** A statement for the script's editor to put in at the cursor, until it is put in. */
   inserting = $state<{ path: string; text: string; count: number } | null>(null);

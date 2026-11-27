@@ -1,23 +1,35 @@
 <script lang="ts">
-  // The top bar of a project (the design guide, section 9; open decision #146), in the quiet
-  // look of the margin editor (#174; its design, sections 5 and 14): the logo and Projects, the
-  // project and its file, a search field for ⌘K, the size of code text, the Dark switch,
-  // Check and Run. Every control is a word with a soft ground when pointed at;
-  // Run is the one filled control, and reads Stop while the engine runs.
+  // The top bar of a project (release 0.3.1, step 4; open decision #245): one bar of 38 pixels
+  // with the mark, **Projects ▾** (all projects, export, rename, report a problem), the project
+  // and its file with whether it is saved, the field of ⌘K, the size of code text, Dark, Check
+  // and Run. The places are no longer here: they are the side menu (`SideMenu.svelte`). Every
+  // control is a word; Run is the one filled control, and reads Stop while the engine runs.
   import { codeLarger, codeSize, codeSmaller } from "../theme/codesize.svelte";
   import { CODE_SIZES } from "../theme/codesize";
   import Logo from "../theme/Logo.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
-  import { DATA, HELP, PAPER, PLOTS, fileTab } from "./views";
+  import RowMenu, { type RowAction } from "./RowMenu.svelte";
+  import { PAPER } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
   let {
     workspace,
     onclose,
     onpalette,
-  }: { workspace: Workspace; onclose: () => void; onpalette: () => void } = $props();
+    onexport,
+    onrename,
+    onreport,
+  }: {
+    workspace: Workspace;
+    onclose: () => void;
+    onpalette: () => void;
+    onexport: () => void;
+    /** Rename the project, or `null` where it has no name of its own to change (Scratch). */
+    onrename: (() => void) | null;
+    onreport: () => void;
+  } = $props();
 
-  // The key of the command palette as this computer writes it.
+  // The keys as this computer writes them.
   const mac = /Mac|iPhone|iPad/.test(navigator.platform);
 
   // The file the place shows: a script's in Script, the open paper's in Paper.
@@ -29,66 +41,33 @@
       : workspace.activePath,
   );
   const buffer = $derived(path === null ? undefined : workspace.buffers[path]);
-  // The places (the margin editor's design, section 6): the script, its data and its plots.
-  const place = $derived(
-    workspace.views.active === PLOTS
-      ? "plots"
-      : workspace.views.active === DATA
-        ? "data"
-        : workspace.views.active === HELP
-          ? "help"
-          : workspace.views.active === PAPER
-            ? "paper"
-            : "script",
+  const state = $derived(
+    buffer?.readOnly ? "read only" : buffer === undefined || buffer.saved ? "saved" : "saving",
   );
   const smallest = CODE_SIZES[0];
   const largest = CODE_SIZES[CODE_SIZES.length - 1];
+
+  /** What **Projects ▾** lists: the projects, and what is done with this one as a whole. */
+  const projects = $derived<RowAction[]>([
+    { name: "All projects", run: () => onclose() },
+    { name: "Export project…", run: () => onexport() },
+    ...(onrename === null ? [] : [{ name: "Rename project…", run: onrename }]),
+    { name: "Report a problem…", run: () => onreport() },
+  ]);
 </script>
 
 <header class="top">
-  <Logo size={18} />
-  <button class="word strong" onclick={onclose} title="Back to the projects of this browser"
-    >Projects ▾</button
-  >
+  <Logo size={20} />
+  <RowMenu label="Projects" words="Projects ▾" actions={projects} />
   <span class="where">
     <h1>{workspace.project.info.name}</h1>
     {#if path !== null}
       <span class="file"
-        >/ {path.split("/").at(-1)} · {buffer?.readOnly
-          ? "read only"
-          : buffer === undefined || buffer.saved
-            ? "saved"
-            : "saving"}</span
+        >/ {path.split("/").at(-1)} ·
+        <span class="state" class:saved={state === "saved"}>{state}</span></span
       >
     {/if}
   </span>
-  <nav class="places" aria-label="Places">
-    <button
-      class:on={place === "script"}
-      aria-current={place === "script" ? "page" : undefined}
-      onclick={() => workspace.show(fileTab(workspace.scriptPath))}>Script</button
-    >
-    <button
-      class:on={place === "data"}
-      aria-current={place === "data" ? "page" : undefined}
-      onclick={() => workspace.openData()}>Data</button
-    >
-    <button
-      class:on={place === "plots"}
-      aria-current={place === "plots" ? "page" : undefined}
-      onclick={() => workspace.openPlots()}>Plots</button
-    >
-    <button
-      class:on={place === "paper"}
-      aria-current={place === "paper" ? "page" : undefined}
-      onclick={() => workspace.openPaper()}>Paper</button
-    >
-    <button
-      class:on={place === "help"}
-      aria-current={place === "help" ? "page" : undefined}
-      onclick={() => workspace.openHelp()}>Help</button
-    >
-  </nav>
   <span class="gap"></span>
   <button
     class="search"
@@ -106,11 +85,15 @@
       >A+</button
     >
   </span>
-  <button class="switch" role="switch" aria-checked={theme.name === "dark"} onclick={switchTheme}>
-    <i></i>Dark
-  </button>
   <button
-    class="word control"
+    class="word"
+    role="switch"
+    aria-checked={theme.name === "dark"}
+    title="The dark theme, for this browser"
+    onclick={switchTheme}>Dark</button
+  >
+  <button
+    class="outlined"
     onclick={() => void workspace.check()}
     title="Check the script as Zeff does before it runs it; nothing is run"
     disabled={workspace.running || !workspace.ready}>Check</button
@@ -118,17 +101,19 @@
   {#if workspace.running && workspace.status !== "checking"}
     <!-- While the engine runs, Run reads Stop: what has finished is kept (the design, 7.8). -->
     <button
-      class="filled"
+      class="outlined filled"
       onclick={() => workspace.cancel()}
       title="Stop the run; what has finished is kept">Stop</button
     >
   {:else}
     <button
-      class="filled"
+      class="outlined filled"
       onclick={() => void workspace.run()}
+      aria-label="Run"
       title="Run the script · ⌘↵ or ⌘⇧↵ (Ctrl in place of ⌘ on Windows and Linux)"
       aria-keyshortcuts="Meta+Enter Control+Enter"
-      disabled={workspace.running || !workspace.ready}>Run</button
+      disabled={workspace.running || !workspace.ready}
+      >Run <kbd class="mono" aria-hidden="true">{mac ? "⌘↵" : "Ctrl ↵"}</kbd></button
     >
   {/if}
 </header>
@@ -136,57 +121,69 @@
 <style>
   .top {
     align-items: center;
+    background: var(--window);
     border-bottom: 1px solid var(--line);
+    box-sizing: border-box;
     color: var(--ink-2);
     display: flex;
     flex: none;
-    gap: 16px;
-    height: 48px;
+    gap: 2px;
+    height: 38px;
     min-width: 0;
-    overflow: hidden;
-    padding: 0 18px;
+    padding: 0 8px;
+    position: relative;
+    white-space: nowrap;
+    z-index: 9;
   }
   .top > :global(*) {
     flex: none;
   }
-  .word {
-    background: none;
-    border: 0;
-    padding: 0;
+  .top > :global(svg) {
+    margin: 0 4px 0 2px;
   }
-  .strong {
-    color: var(--ink);
-  }
+  /* The project and its file give way first where the bar has no room: their end is cut. */
   .where {
     flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
+    padding: 0 8px;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
   h1 {
     color: var(--ink);
     display: inline;
     font-size: inherit;
-    font-weight: 400;
+    font-weight: 700;
     margin: 0;
   }
   .file {
     color: var(--ink-3);
   }
+  .state.saved {
+    color: var(--ok);
+  }
   .gap {
     flex: 1;
   }
-  /* The search field of ⌘K: a soft field, the key at its end. */
+  /* The field of ⌘K: an outlined field, the key at its end. */
   .search {
     align-items: center;
-    background: var(--soft);
-    border: 0;
-    border-radius: 8px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 7px;
     color: var(--ink-3);
     display: inline-flex;
-    gap: 18px;
-    padding: 4px 8px 4px 11px;
+    gap: 8px;
+    height: 28px;
+    margin-right: 4px;
+    padding: 0 9px;
+    width: 232px;
+  }
+  .search span {
+    flex: 1;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
   }
   .search kbd {
     color: var(--ink-3);
@@ -194,27 +191,30 @@
   }
   .search:hover,
   .search:focus-visible {
+    border-color: var(--line-strong);
     color: var(--ink-2);
-  }
-  .sizes {
-    display: inline-flex;
-    gap: 2px;
   }
   .sizes {
     align-items: center;
+    display: inline-flex;
   }
-  .sizes button {
+  .sizes button,
+  .word {
     background: transparent;
     border: 0;
-    border-radius: 6px;
+    border-radius: 7px;
     color: var(--ink-2);
-    padding: 3px 8px;
+    font-weight: 600;
+    height: 28px;
+    padding: 0 7px;
   }
-  .sizes button:hover:not(:disabled) {
+  .word {
+    padding: 0 9px;
+  }
+  .sizes button:hover:not(:disabled),
+  .word:hover {
     background: var(--soft);
-  }
-  .sizes button {
-    min-width: 30px;
+    color: var(--ink);
   }
   .sizes button:disabled {
     opacity: 0.45;
@@ -223,88 +223,62 @@
     color: var(--ink-3);
     font-size: 12.5px;
     font-variant-numeric: tabular-nums;
-    min-width: 22px;
-    padding: 3px 4px;
+    min-width: 20px;
     text-align: center;
   }
-  .places {
-    display: inline-flex;
-    gap: 4px;
-  }
-  .places button {
-    background: none;
-    border: 0;
-    border-radius: 6px;
-    color: var(--ink-2);
-    padding: 3px 8px;
-  }
-  .places button:hover {
-    background: var(--soft);
-  }
-  .places button.on {
+  /* Dark, when it is on. */
+  .word[aria-checked="true"] {
+    background: var(--accent-soft);
     color: var(--accent);
-    text-decoration: underline 2px var(--accent);
-    text-underline-offset: 6px;
   }
-  .switch {
+  /* Check and Run: outlined, and Run the one filled control of the window. */
+  .outlined {
     align-items: center;
-    background: none;
-    border: 0;
-    color: inherit;
-    display: inline-flex;
-    gap: 7px;
-    padding: 0;
-  }
-  .switch i {
-    background: var(--line-strong);
-    border-radius: 999px;
-    display: block;
-    height: 15px;
-    position: relative;
-    transition: background 0.2s;
-    width: 26px;
-  }
-  .switch i::after {
     background: var(--window);
-    border-radius: 50%;
-    content: "";
-    height: 11px;
-    left: 2px;
-    position: absolute;
-    top: 2px;
-    transition: left 0.2s;
-    width: 11px;
-  }
-  .switch[aria-checked="true"] i {
-    background: var(--accent);
-  }
-  .switch[aria-checked="true"] i::after {
-    left: 13px;
-  }
-  .control {
-    border-radius: 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
     color: var(--ink);
-    padding: 3px 8px;
+    display: inline-flex;
+    font-weight: 700;
+    gap: 7px;
+    height: 28px;
+    margin-left: 4px;
+    padding: 0 12px;
   }
-  .control:hover:not(:disabled) {
-    background: var(--soft);
+  .outlined:hover:not(:disabled) {
+    border-color: var(--accent);
   }
-  .control:disabled {
+  .outlined:disabled {
     color: var(--ink-3);
   }
-  /* The one filled control of the window. */
   .filled {
     background: var(--button);
-    border: 1px solid var(--button);
-    border-radius: 8px;
+    border-color: var(--button);
     color: var(--button-ink);
-    padding: 3px 14px;
+  }
+  .filled kbd {
+    font-size: 12.5px;
+    font-weight: 400;
+    opacity: 0.85;
   }
   .filled:hover:not(:disabled) {
     background: var(--accent-hover);
     border-color: var(--accent-hover);
   }
   .filled:disabled {
+    color: var(--button-ink);
     opacity: 0.55;
+  }
+  /* Where the pointer is a finger the bar's controls are taller than the bar is drawn for. */
+  @media (pointer: coarse) {
+    .top {
+      height: 44px;
+    }
+    .search,
+    .sizes button,
+    .word,
+    .outlined {
+      height: 32px;
+    }
   }
 </style>

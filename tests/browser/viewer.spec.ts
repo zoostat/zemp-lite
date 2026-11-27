@@ -229,7 +229,7 @@ test("a plot pops out into a window of its own, which redraws it to fit when res
   );
   // It closes with the project.
   const closed = popup.waitForEvent("close");
-  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await closed;
 });
 

@@ -20,7 +20,7 @@ async function made(page: Page, press: Press, name: string): Promise<void> {
   await page.getByLabel("The name of the new project").fill(name);
   await press(page.getByRole("button", { name: "Create" }));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(name);
-  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
   // The list of projects is drawn once it has been read from the browser's storage, a moment
   // after the cards (release 0.2.4, the first-visit card); a test that goes on at once, on a
@@ -98,7 +98,7 @@ test("a first visit's list says there is no project yet, and its button opens th
   await expect(page.getByTestId("recent-count")).toHaveCount(0);
   await press(recent(page).getByRole("button", { name: "Open the Scratch project" }));
   await expect(page.getByRole("status")).toHaveText(READY);
-  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await expect(rows(page)).toHaveCount(1);
   await expect(page.getByTestId("recent-count")).toHaveText("1 project");
   await expect(recent(page).getByText("No project yet", { exact: true })).toHaveCount(0);
@@ -121,7 +121,7 @@ test("a visitor with a project is never shown the card of a first visit, not for
       if (document.body.textContent.includes("No project yet")) seen.firstVisitCard = true;
     }).observe(document, { subtree: true, childList: true, characterData: true });
   });
-  await press(page.getByRole("button", { name: "Projects" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await expect(rows(page)).toHaveCount(1);
   expect(
     await page.evaluate(() => (window as unknown as { firstVisitCard: boolean }).firstVisitCard),

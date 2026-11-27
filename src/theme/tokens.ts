@@ -9,20 +9,21 @@ export type ThemeName = "light" | "dark";
 
 /** The names of the colours. A component names a colour by its token, never by its value. */
 export const TOKENS = {
-  // Grounds.
+  // Grounds, and with them the hairlines and the inks: the cool greys of the revamp (open
+  // decision #245, as its mockup draws them), in place of the warmer ones of #146.
   page: { light: "#eceae6", dark: "#0d0e12" },
-  window: { light: "#ffffff", dark: "#111216" },
+  window: { light: "#ffffff", dark: "#0d0e12" },
   // A control pointed at, the search and console fields; an unfolded output; an edited line.
-  soft: { light: "#f6f6f4", dark: "#191a1f" },
-  softer: { light: "#fafaf9", dark: "#15161a" },
+  soft: { light: "#f5f6f8", dark: "#15171d" },
+  softer: { light: "#fafbfc", dark: "#111217" },
   tint: { light: "#f5f7fd", dark: "#111526" },
   // Hairlines.
-  line: { light: "#ececea", dark: "#22242a" },
-  "line-strong": { light: "#dededa", dark: "#2e3037" },
+  line: { light: "#e6e8ec", dark: "#24272f" },
+  "line-strong": { light: "#d7dae0", dark: "#30343e" },
   // Text: main, secondary, small print; `ink-4` is decoration only, never text.
-  ink: { light: "#17171a", dark: "#ececef" },
-  "ink-2": { light: "#55555c", dark: "#a7a8b0" },
-  "ink-3": { light: "#6b6b73", dark: "#8f919c" },
+  ink: { light: "#0c0d11", dark: "#f1f2f5" },
+  "ink-2": { light: "#4b5160", dark: "#b4b9c6" },
+  "ink-3": { light: "#646978", dark: "#9095a3" },
   "ink-4": { light: "#b9b9bf", dark: "#4d4f57" },
   // The logo's cobalt (#244): focus, the selected row, links, the current place; the accent as
   // it is under the pointer; and the one filled button.
@@ -58,7 +59,7 @@ export const TOKENS = {
   "code-operator": { light: "#5d6b82", dark: "#a3adbf" },
   "code-text": { light: "#2b7a4b", dark: "#8fdcab" },
   "code-number": { light: "#a8520c", dark: "#f4b77e" },
-  "code-comment": { light: "#6b6b73", dark: "#8f919c" },
+  "code-comment": { light: "#646978", dark: "#9095a3" },
   "code-variable": { light: "#3a3a42", dark: "#d4d5da" },
 } as const satisfies Record<string, Record<ThemeName, string>>;
 

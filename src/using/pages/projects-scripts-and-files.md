@@ -4,7 +4,7 @@ A project is a folder of scripts and data kept in this browser: make one, fill i
 
 ## Projects
 
-The screen of projects lists the projects this browser keeps. **New project…** makes one, with a first script. **Scratch project** is always there, with its examples, for trying things. From inside a project, **Projects**, at the top left, goes back to the list.
+The screen of projects lists the projects this browser keeps. **New project…** makes one, with a first script. **Scratch project** is always there, with its examples, for trying things. From inside a project, **All projects**, at the foot of the icons down the left, goes back to the list. **Projects**, at the top left, opens a short list for the project as a whole: back to all projects, export it, rename it, report a problem.
 
 Each project in the list has a menu at the right of its row: **Rename…**, **Duplicate…**, **Export project…** and **Delete…**. The Scratch project cannot be renamed or deleted; it can be duplicated into a project of your own, and reset to its examples.
 

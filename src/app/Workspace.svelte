@@ -18,6 +18,8 @@
   import RunPanel from "../margin/RunPanel.svelte";
   import EngineLine from "./EngineLine.svelte";
   import Palette from "./Palette.svelte";
+  import SideMenu from "./SideMenu.svelte";
+  import { keyOf, placeOfKey } from "./sidemenu";
   import { paneCommand } from "./panes";
   import ReportWindow from "./ReportWindow.svelte";
   import TopBar from "./TopBar.svelte";
@@ -78,6 +80,18 @@
     if (files.length > 0) await workspace.addFiles(files, "data");
   }
   let console_ = $state<ReturnType<typeof ConsoleLine> | null>(null);
+  let side = $state<ReturnType<typeof SideMenu> | null>(null);
+  // The keys as this computer writes them.
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+
+  /**
+   * A question about the project as a whole (to rename, duplicate, delete or reset it): it is
+   * asked on the start screen, in the project's own row, once what is typed is written.
+   */
+  function asking(kind: "rename" | "duplicate" | "delete" | "reset"): void {
+    closePopOuts();
+    void workspace.settle().then(() => onask(kind));
+  }
 
   async function close(): Promise<void> {
     closePopOuts();
@@ -130,10 +144,7 @@
     ).map(([kind, name, hint]) => ({
       name,
       hint,
-      run: () => {
-        closePopOuts();
-        void workspace.settle().then(() => onask(kind));
-      },
+      run: () => asking(kind),
     })),
     // What the Project pane's + makes, in the pane, which is opened for it.
     ...(["script", "folder"] as const).map((kind) => ({
@@ -215,14 +226,22 @@
     },
     {
       name: "Place: Script",
-      hint: "the script with its notes",
+      hint: `the script with its notes · ${keyOf("script", mac)}`,
       run: () => workspace.show(fileTab(workspace.scriptPath)),
     },
-    { name: "Place: Data", hint: "the frames of the run", run: () => workspace.openData() },
-    { name: "Place: Plots", hint: "the plots of the run", run: () => workspace.openPlots() },
+    {
+      name: "Place: Data",
+      hint: `the frames of the run · ${keyOf("data", mac)}`,
+      run: () => workspace.openData(),
+    },
+    {
+      name: "Place: Plots",
+      hint: `the plots of the run · ${keyOf("plots", mac)}`,
+      run: () => workspace.openPlots(),
+    },
     {
       name: "Place: Paper",
-      hint: "a paper of the project, its source beside its page",
+      hint: `a paper of the project, its source beside its page · ${keyOf("paper", mac)}`,
       run: () => workspace.openPaper(),
     },
     {
@@ -264,7 +283,7 @@
     paneCommand(workspace, "help", "topics"),
     {
       name: "Place: Help",
-      hint: "F1 in the script opens the page of the name at the cursor",
+      hint: `F1 in the script opens the page of the name at the cursor · ${keyOf("help", mac)}`,
       run: () => workspace.openHelp(),
     },
     {
@@ -365,9 +384,16 @@
 
   function keys(event: KeyboardEvent): void {
     const command = event.metaKey || event.ctrlKey;
+    const place = placeOfKey(event);
     if (command && event.key.toLowerCase() === "k") {
       event.preventDefault();
       palette = !palette;
+    } else if (place !== null) {
+      // ⌘1 to ⌘5: the places of the side menu. A browser has the same keys for its tabs; the
+      // app takes them while it has the keyboard.
+      event.preventDefault();
+      palette = false;
+      side?.open(place);
     } else if (event.ctrlKey && event.key === "`") {
       event.preventDefault();
       console_?.focus();
@@ -382,11 +408,24 @@
 <!-- A page that is being left writes what waits to be written, as far as the browser lets it. -->
 <svelte:window onkeydown={keys} onpagehide={() => workspace.leave()} />
 
-<TopBar {workspace} onclose={() => void close()} onpalette={() => (palette = true)} />
+<TopBar
+  {workspace}
+  onclose={() => void close()}
+  onpalette={() => (palette = true)}
+  onexport={() => void workspace.exportProject()}
+  onrename={project.info.folder === SCRATCH ? null : () => asking("rename")}
+  onreport={() => void workspace.reportProblem()}
+/>
 
 <EngineLine {workspace} />
 
-<MarginPane {workspace} />
+<!-- The side menu at the left of every place (open decision #245), and the place beside it. -->
+<div class="work">
+  <SideMenu {workspace} onclose={() => void close()} bind:this={side} />
+  <div class="held">
+    <MarginPane {workspace} />
+  </div>
+</div>
 
 <ConsoleLine {workspace} bind:this={console_} />
 {#if workspace.panel !== null}
@@ -407,3 +446,18 @@
 {#if palette}
   <Palette {commands} onclose={() => (palette = false)} />
 {/if}
+
+<style>
+  .work {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+  .held {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+  }
+</style>

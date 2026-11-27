@@ -70,7 +70,7 @@ test("the logo, the badge, the filled button, the place shown, a link and a sele
   await scratch(page, press);
   const top = page.getByRole("banner");
   const run = top.getByRole("button", { name: "Run", exact: true });
-  const shown = top.getByRole("navigation", { name: "Places" }).locator("button.on");
+  const shown = page.getByRole("navigation", { name: "Places" }).locator("button.on");
   const strokes = top.locator("svg g[stroke]").first();
   const centre = top.locator("svg polygon[fill]").first();
   for (const [theme, colours, logo] of [
@@ -82,7 +82,7 @@ test("the logo, the badge, the filled button, the place shown, a link and a sele
     expect(await drawn(run, "backgroundColor"), theme).toBe(colours.accent);
     expect(await drawn(run, "color"), theme).toBe(colours.ink);
     // The place shown.
-    await expect(shown).toHaveText("Script");
+    await expect(shown).toHaveAccessibleName("Script");
     expect(await drawn(shown, "color"), theme).toBe(colours.accent);
     // The mark: its strokes are the accent itself.
     expect(await drawn(strokes, "stroke"), theme).toBe(colours.accent);
@@ -95,7 +95,9 @@ test("the logo, the badge, the filled button, the place shown, a link and a sele
   await expect(marked).toBeVisible();
   expect(await drawn(marked, "backgroundColor")).toBe(LIGHT.soft);
   await page.keyboard.press("Escape");
-  await press(top.getByRole("button", { name: "Help", exact: true }));
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Help" }),
+  );
   const link = page.getByRole("button", { name: "regress", exact: true }).last();
   await expect(link).toBeVisible();
   expect(await drawn(link, "color")).toBe(LIGHT.accent);

@@ -31,7 +31,7 @@ test("the code is coloured in the categories of the design guide, the same words
     page,
     '// a note\nlet fit = wages.reg(log(wage) ~ educ, cluster: worker)\nexport(fit, "output/t.docx", level: 0.95)\n',
   );
-  expect(await drawn(page, "// a note")).toBe("rgb(107, 107, 115) italic");
+  expect(await drawn(page, "// a note")).toBe("rgb(100, 105, 120) italic");
   expect(await drawn(page, "let")).toBe("rgb(123, 79, 214) normal");
   expect(await drawn(page, "reg")).toBe("rgb(15, 123, 138) normal");
   expect(await drawn(page, "cluster")).toBe("rgb(163, 54, 124) normal");
@@ -44,7 +44,7 @@ test("the code is coloured in the categories of the design guide, the same words
   await press(page.getByRole("switch", { name: "Dark" }));
   expect(await drawn(page, "let")).toBe("rgb(196, 167, 255) normal");
   expect(await drawn(page, "reg")).toBe("rgb(111, 211, 220) normal");
-  expect(await drawn(page, "// a note")).toBe("rgb(143, 145, 156) italic");
+  expect(await drawn(page, "// a note")).toBe("rgb(144, 149, 163) italic");
 });
 
 test("the lines are numbered and the current line is marked", async ({ page, press }) => {

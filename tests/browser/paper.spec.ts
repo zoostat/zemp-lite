@@ -61,19 +61,19 @@ function askedOfTypst(page: Page): string[] {
   return asked;
 }
 
-test("Paper stands after Plots in the top bar; with no paper the place says what Paper is, and fetches nothing", async ({
+test("Paper stands after Plots in the side menu; with no paper the place says what Paper is, and fetches nothing", async ({
   page,
   press,
 }) => {
   const asked = askedOfTypst(page);
   await scratch(page, press);
-  await expect(places(page).getByRole("button")).toHaveText([
-    "Script",
-    "Data",
-    "Plots",
-    "Paper",
-    "Help",
-  ]);
+  // The side menu's entries are icons, each with its name for a screen reader (open decision
+  // #245; #33 amended for this menu alone).
+  expect(
+    await places(page)
+      .getByRole("button")
+      .evaluateAll((all) => all.map((one) => one.getAttribute("aria-label"))),
+  ).toEqual(["Script", "Data", "Plots", "Paper", "Help", "All projects"]);
   const word = places(page).getByRole("button", { name: "Paper" });
   await expect(word).not.toHaveAttribute("aria-current", "page");
   await press(word);

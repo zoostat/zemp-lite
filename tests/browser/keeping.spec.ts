@@ -64,7 +64,7 @@ test("where the browser may clear the projects the status bar says so, with Expo
   expect(download.suggestedFilename()).toBe("Scratch.zip");
   await expect(reminder(page)).toHaveText(`${line} · exported today`);
   // Made again, a project does not have the browser asked again.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   expect(await asked(page)).toBe(kept ? 1 : 0);
@@ -89,7 +89,7 @@ test("where the browser has agreed to keep the storage the status bar is silent,
   // Made today, kept for good: nothing to say.
   await expect(reminder(page)).toHaveCount(0);
   await expect(exportButton(page)).toHaveCount(0);
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await expect(page.getByTestId("kept")).toContainText(
     "the browser has agreed not to clear it on its own",
   );

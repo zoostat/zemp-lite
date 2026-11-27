@@ -27,7 +27,7 @@ async function project(page: Page, press: Press) {
   return tree;
 }
 
-test("the top bar carries its controls in order, Run the one filled, and Script the place shown", async ({
+test("the top bar carries its controls in order, Run the one filled, and the side menu marks Script as the place shown", async ({
   page,
   press,
 }) => {
@@ -43,23 +43,21 @@ test("the top bar carries its controls in order, Run the one filled, and Script 
         (button.getAttribute("aria-label") ?? button.textContent ?? "").trim(),
       ),
     );
+  // One bar of 38 pixels (open decision #245); the places are not in it: they are the side menu.
   expect(names).toEqual([
     "Projects ▾",
-    "Script",
-    "Data",
-    "Plots",
-    "Paper",
-    "Help",
     "Commands",
     "Smaller code text",
     "Larger code text",
     "Check",
     "Run",
   ]);
+  expect((await top.boundingBox())!.height).toBe(38);
   await expect(top.getByRole("switch", { name: "Dark" })).toBeVisible();
   await expect(top.getByRole("button", { name: "Check" })).toBeEnabled();
-  // Of the four places, the script's is the one shown, and the only one marked.
-  const places = top.getByRole("navigation", { name: "Places" });
+  // Of the five places, the script's is the one shown, and the only one marked.
+  const places = page.getByRole("navigation", { name: "Places" });
+  await expect(top.getByRole("navigation")).toHaveCount(0);
   await expect(places.getByRole("button", { name: "Script" })).toHaveClass(/\bon\b/);
   await expect(places.locator("button.on")).toHaveCount(1);
   // Run is filled with the logo's cobalt (open decision #244); the others are outlined words.
@@ -93,7 +91,8 @@ test("the Project pane lists the files with their sizes, and a folder folds away
   const script = (await page
     .getByRole("region", { name: "Script with its notes and output" })
     .boundingBox())!;
-  expect(pane.x).toBe(0);
+  // (At the pane's own left is the side menu, 52 pixels wide.)
+  expect(pane.x).toBe(52);
   expect(script.x).toBeGreaterThanOrEqual(pane.x + pane.width);
   expect(script.x + script.width).toBe(page.viewportSize()!.width);
 });
@@ -107,7 +106,8 @@ test("the left pane is resized by dragging its edge", async ({ page, press, mous
   const box = (await edge.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + 200);
   await page.mouse.down();
-  await page.mouse.move(400, box.y + 200, { steps: 4 });
+  // The pane begins beside the side menu, 52 pixels in.
+  await page.mouse.move(52 + 400, box.y + 200, { steps: 4 });
   await page.mouse.up();
   await expect(edge).toHaveAttribute("aria-valuenow", "400");
   expect(Math.round((await leftPane(page).boundingBox())!.width)).toBe(400);
@@ -165,7 +165,7 @@ test("the Dark switch of the top bar switches the theme", async ({ page, press }
   await expect(dark).toHaveAttribute("aria-checked", "true");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
-    "rgb(17, 18, 22)",
+    "rgb(13, 14, 18)",
   );
 });
 
@@ -264,12 +264,12 @@ for (const theme of ["light", "dark"] as const) {
       await expect(shown).toHaveCount(0);
     }
     // The start screen: a project's menu, its name being changed, and its deletion asked.
-    await press(page.getByRole("button", { name: "Projects ▾" }));
+    await press(page.getByRole("button", { name: "All projects" }));
     await press(page.getByRole("button", { name: "New project…" }));
     await page.getByLabel("The name of the new project").fill("Wages");
     await press(page.getByRole("button", { name: "Create" }));
     await expect(page.getByRole("status")).toHaveText(READY);
-    await press(page.getByRole("button", { name: "Projects ▾" }));
+    await press(page.getByRole("button", { name: "All projects" }));
     const recent = page.getByRole("region", { name: "Recent projects" });
     await sound(page.getByRole("region", { name: "Start" }));
     for (const [asks, shown] of [
@@ -299,7 +299,7 @@ test("a project is closed and another opened, each with an engine of its own", a
   await scratch(page, press);
   for (let round = 0; round < 3; round++) {
     // Closing a project ends its worker; the next project starts a new one.
-    await press(page.getByRole("button", { name: "Projects" }));
+    await press(page.getByRole("button", { name: "All projects" }));
     await expect(page.getByText("No project open")).toBeVisible();
     await press(page.getByRole("button", { name: /^Scratch project/ }));
     await expect(page.getByRole("status")).toHaveText(READY);

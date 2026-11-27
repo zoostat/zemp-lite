@@ -80,7 +80,7 @@ for (const theme of ["light", "dark"] as const) {
       await name.fill("Seven");
       await name.press("Enter");
       await expect(page.getByRole("status")).toHaveText(READY);
-      await press(page.getByRole("button", { name: "Projects ▾" }));
+      await press(page.getByRole("button", { name: "All projects" }));
       const recent = page.getByRole("region", { name: "Recent projects" });
       await press(recent.getByRole("button", { name: "Actions for Seven", exact: true }));
       await expect(page.getByRole("menu", { name: "Actions for Seven" })).toBeVisible();
@@ -98,6 +98,16 @@ for (const theme of ["light", "dark"] as const) {
       await whole(page, "Script, run");
       await openPanes(page, press, "Script");
       await whole(page, "Script, every pane open");
+      // The frame (step 4): what Projects ▾ lists, and an entry of the side menu saying its
+      // name, what it holds and its key, with the keyboard on it.
+      await press(page.getByRole("banner").getByRole("button", { name: "Projects ▾" }));
+      await expect(page.getByRole("menu", { name: "Projects" })).toBeVisible();
+      await whole(page, "Script, the list of Projects open");
+      await page.keyboard.press("Escape");
+      const entry = places(page).getByRole("button", { name: "Plots", exact: true });
+      await entry.focus();
+      await expect(entry.getByRole("tooltip")).toBeVisible();
+      await whole(page, "Script, an entry of the side menu saying its words");
       await page.keyboard.press("ControlOrMeta+k");
       await expect(page.getByRole("dialog", { name: "Commands" })).toBeVisible();
       await whole(page, "Script, the commands open");

@@ -491,7 +491,7 @@ test("a project is exported at the address as a zip, and the zip opened there ag
   ]);
   expect(zip.folders).toEqual(["Scratch/data"]);
   // Opened again from the start screen: a project of its own name, which runs.
-  await page.getByRole("button", { name: "Projects ▾" }).click();
+  await page.getByRole("button", { name: "All projects" }).click();
   await page.getByLabel("A project's zip to open").setInputFiles(path);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Scratch 2");
   await expect(page.getByRole("status")).toHaveText(READY, { timeout: 30_000 });

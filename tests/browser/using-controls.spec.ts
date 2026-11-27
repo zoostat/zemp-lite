@@ -95,7 +95,7 @@ const SCREENS: Record<
     await see();
     await page.keyboard.press("Escape");
     // Back on the screen of projects, the project's row and its menu.
-    await press(page.getByTitle("Back to the projects of this browser"));
+    await press(page.getByRole("button", { name: "All projects" }));
     await see();
     await press(page.getByRole("button", { name: "Actions for Named controls" }));
     await see();

@@ -12,14 +12,17 @@ Zemp Lite runs the Zeff engine inside this browser. Nothing is installed, there 
 
 ![The Script place after a run: the script with its line numbers, a note beside each statement saying what it made, and under the tenth line the table it printed, with a warning above it.](the-script-after-a-run)
 
-## The four places
+## The places
 
-The words at the top of the window are the places of the app:
+The icons down the left of the window are the places of the app. Point at one, or move to it with the Tab key, and it says its name, what it holds now and its key, from <kbd>⌘1</kbd> to <kbd>⌘5</kbd>:
 
 - **Script**: the script, with a note beside each statement.
 - **Data**: the frames the last run made, as tables.
 - **Plots**: the plots the last run drew.
+- **Paper**: a paper, its source beside its page.
 - **Help**: a page for every function, package and code of the engine, and these pages on the app itself.
+
+**All projects**, at the foot of the same column, goes back to the list of projects.
 
 ## Change something
 

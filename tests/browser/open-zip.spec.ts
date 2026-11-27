@@ -69,7 +69,7 @@ test("a project exported and opened again from its zip is the same project, unde
   const zip = await download.path();
   // Back on the start screen, the zip is opened: a new project, named for the one it holds
   // with a number after it, since that name is here already.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await expect(page.getByRole("button", { name: "Open project…" })).toBeVisible();
   await chooser(page).setInputFiles(zip);
   await expect(page).toHaveURL(/#\/p\/scratch-2$/);
@@ -100,7 +100,7 @@ test("a project exported and opened again from its zip is the same project, unde
       'edition = "preview"       # "2027" from Zeff 1.0.0\n',
   );
   // Both projects are listed, and the first is as it was.
-  await press(page.getByRole("button", { name: "Projects ▾" }));
+  await press(page.getByRole("button", { name: "All projects" }));
   await expect(
     recent(page).getByRole("button", { name: /^Scratch 2 in this browser/ }),
   ).toBeVisible();
