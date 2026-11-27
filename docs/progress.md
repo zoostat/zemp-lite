@@ -112,7 +112,11 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 16 `[function]`.** **Export PDF…**, in the Paper place's bar and in ⌘K, saves the paper as Typst sets it, under the paper's name. The file holds no time and nothing of the machine: the sample paper's PDF is one kept file, the same bytes natively, under Node, and saved in Chromium and in WebKit; and written with a time it is, byte for byte, the file the desktop Typst 0.15.1 writes from the same sources and fonts. Where Typst refuses the text no file is written. Green here: the whole routine (33 native tests of the module; 516 unit tests; 779 browser tests in both browsers, 3 skipped). GitHub's check of step 15c passed, and its build is at both addresses with every check passing: the sample paper is there for a first visitor at `lite.zeff-lang.dev`.
 
-**Next.** Step 17 `[engine]`: a script with its output as a Typst document, with a sample PDF for the owner.
+**Done, step 17 `[engine]`.** A script with its output is made into a Typst document and set by the module: the script as typed with its line numbers, and under each statement what the engine printed, its figure and what it said, with the script, the project and the engine's version at the head and the foot. Every character of a print is the engine's, held by test to what `zeff run` prints; a statement edited, stale or not run is said to be so and shows no old result. **Two sample PDFs are with the owner:** `docs/releases/0.3-samples/main.pdf` and `docs/releases/0.3-samples/instruments.pdf`. Green here: the whole routine (527 unit tests; 779 browser tests in both browsers, 3 skipped).
+
+**For the owner to decide, at step 18.** Whether the layout of the sample PDFs is the one **Export script with output** is to write: A4 upright, the code and the prints in a typewriter face at 8.5 points with grey line numbers, a print behind a thin rule and a warning behind a heavier one, figures at about three quarters of the width, black on white with no colour. Taken on his behalf, as he asked, and his to change: step 18 goes on with this layout.
+
+**Next.** Step 18 `[function]`: **Export script with output**, in the Script place's bar and in ⌘K.
 
 **For the owner to read, when he wishes (added at step 15c).** The sample paper a first visitor meets in Paper: its two sentences, its equation, and the captions of its table and its figure (`examples/scratch/paper/paper.typ`), and the comments of the script that writes them (`examples/scratch/scripts/paper.zeff`).
 
