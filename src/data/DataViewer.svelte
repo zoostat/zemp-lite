@@ -16,9 +16,11 @@
   import { paneOf } from "../app/panes";
   import Place from "../app/Place.svelte";
   import {
+    FEW_TEXT,
     LENGTHS,
     LENGTHS_FRAME,
     asked as statementsOf,
+    differingLine,
     emptyCells,
     firstValues,
     kindOf,
@@ -213,6 +215,23 @@
   const firstFive = $derived(answers?.first ? firstValues(answers.first) : null);
   const repeats = $derived(answers?.repeats ? repeated(answers.repeats) : null);
   const one = (key: Key) => (answers?.[key] ? (printedValues(answers[key])[0] ?? "") : "");
+  // A variable whose every value differs (step 21): the line the pane adds, and for a text of
+  // few values its first and its last value in the order of the rows.
+  const differing = $derived(
+    inspected === null || answers === null || absent === null
+      ? null
+      : differingLine(inspected, one("distinct"), absent.present, lengths),
+  );
+  const isText = $derived(inspected !== null && /^Str\b/.test(inspected.type));
+  /** A text of few values whose every value differs: an identifier, shown with no chart. */
+  const identifier = $derived(differing !== null && isText && kind?.few === true);
+  const ends = $derived(
+    identifier
+      ? [answers?.firstRow, answers?.lastRow].flatMap((printed) =>
+          printed ? (firstValues(printed) ?? []).slice(0, 1) : [],
+        )
+      : [],
+  );
   /** The statistics as rows of a name and the engine's cell, by the variable's kind. */
   const statistics = $derived.by((): [string, string][] => {
     if (answers === null || kind === null) return [];
@@ -479,7 +498,15 @@
       </p>
       <dl class="facts" data-testid="variable-facts">
         <dt>Type</dt>
-        <dd class="mono">{inspected.type}</dd>
+        <dd class="mono">{inspected.type}{inspected.ordered ? " · ordered" : ""}</dd>
+        {#if inspected.unit !== ""}
+          <dt>Unit</dt>
+          <dd>{inspected.unit}</dd>
+        {/if}
+        {#if inspected.measure !== ""}
+          <dt>Measure</dt>
+          <dd>{inspected.measure}</dd>
+        {/if}
         <dt>Rows</dt>
         <dd class="mono">{absent === null ? "…" : absent.rows}</dd>
         <dt>Missing</dt>
@@ -492,7 +519,7 @@
       <button class="word" onclick={() => hide(inspected.name, !hidden.includes(inspected.name))}
         >{hidden.includes(inspected.name) ? "Show in the grid" : "Hide from the grid"}</button
       >
-      {#if inspected.bars !== null}
+      {#if inspected.bars !== null && !identifier}
         {@const bars = inspected.bars}
         <h4>Distribution</h4>
         <svg
@@ -548,7 +575,18 @@
             </tbody>
           </table>
         {/if}
-        {#if values !== null}
+        {#if differing !== null}
+          <p class="saying" data-testid="variable-differing">{differing}</p>
+          {#if identifier && ends.length === 2}
+            <table class="stats" data-testid="variable-ends">
+              <tbody>
+                <tr><th scope="row">first value</th><td class="mono">{ends[0]}</td></tr>
+                <tr><th scope="row">last value</th><td class="mono">{ends[1]}</td></tr>
+              </tbody>
+            </table>
+          {/if}
+        {/if}
+        {#if values !== null && !identifier}
           <h4>Values</h4>
           <table class="stats" data-testid="variable-values">
             <thead>
@@ -572,6 +610,9 @@
               </tfoot>
             {/if}
           </table>
+        {/if}
+        {#if isText && kind?.few && !identifier}
+          <p class="saying" data-testid="variable-few-text">{FEW_TEXT}</p>
         {/if}
         {#if kind?.longText && firstFive !== null && firstFive.length > 0}
           <h4>The first {firstFive.length === 1 ? "value" : `${firstFive.length} values`}</h4>
@@ -1099,6 +1140,13 @@
     margin: 0 14px;
     opacity: 0.8;
     width: calc(100% - 28px);
+  }
+  /* A sentence the pane says of a variable, in words: what kind it looks like. */
+  .saying {
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 8px 0;
   }
   /* The first values of a text, each in full and wrapped; an empty one said to be so. */
   .texts {

@@ -1,0 +1,243 @@
+{
+  "setup": "let people = frame(\n    code = [\"P001\", \"P002\", \"P003\", \"P004\", \"P005\", \"P006\", \"P007\", \"P008\", \"P009\", \"P010\", \"P011\", \"P012\", \"P013\", \"P014\", \"P015\", \"P016\", \"P017\", \"P018\", \"P019\", \"P020\", \"P021\", \"P022\", \"P023\", \"P024\", \"P025\", \"P026\", \"P027\", \"P028\", \"P029\", \"P030\", \"P031\", \"P032\", \"P033\", \"P034\", \"P035\", \"P036\", \"P037\", \"P038\", \"P039\", \"P040\"],\n    serial = [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023, 1024, 1025, 1026, 1027, 1028, 1029, 1030, 1031, 1032, 1033, 1034, 1035, 1036, 1037, 1038, 1039, 1040],\n    country = [\"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\", \"IN\", \"BR\", \"FR\", \"DE\"],\n    agree = [\"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\", \"agree\", \"neutral\", \"disagree\"]\n).add(agree = category(agree, levels: [\"disagree\", \"neutral\", \"agree\"], ordered: true))\nlet few = frame(id = [\"a1\", \"a2\", \"a3\", \"a4\", \"a5\", \"a6\"], group = [\"x\", \"x\", \"y\", \"y\", \"y\", \"z\"])\nlet wages = dataset(wages)\n",
+  "cases": [
+    {
+      "base": "people",
+      "name": "code",
+      "key": "lengthsFrame",
+      "statement": "let zemp_lengths = people.add(zemp_n_chars = n_chars(code))",
+      "printed": ""
+    },
+    {
+      "base": "people",
+      "name": "code",
+      "key": "lengths",
+      "statement": "zemp_lengths.summary([zemp_n_chars])",
+      "printed": "summary · zemp_lengths\n\n  variable        N   missing    mean      sd     min     max\n  zemp_n_chars   40         0   4.000   0.000   4.000   4.000\n"
+    },
+    {
+      "base": "people",
+      "name": "code",
+      "key": "lengthRange",
+      "statement": "zemp_lengths.quantile(zemp_n_chars, p: [0, 0.5, 1])",
+      "printed": "4\n4\n4\n"
+    },
+    {
+      "base": "people",
+      "name": "code",
+      "key": "empty",
+      "statement": "people.add(zemp_empty = code == \"\").tabulate(zemp_empty)",
+      "printed": "tabulate · the frame · zemp_empty\n\n  zemp_empty    N       %\n  false        40   100.0\n  ───────────────────────\n  Total        40   100.0\n"
+    },
+    {
+      "base": "people",
+      "name": "code",
+      "key": "first",
+      "statement": "people.head(5).select([code])",
+      "printed": "frame · 5 rows × 1 variable\n\n      code\n  1   P001\n  2   P002\n  3   P003\n  4   P004\n  5   P005\n"
+    },
+    {
+      "base": "people",
+      "name": "code",
+      "key": "repeats",
+      "statement": "people.duplicates([code])",
+      "printed": "duplicates · code\n\n  code   copies\n"
+    },
+    {
+      "base": "people",
+      "name": "code",
+      "key": "distinct",
+      "statement": "n_distinct(people[\"code\"])",
+      "printed": "40\n"
+    },
+    {
+      "base": "people",
+      "name": "code",
+      "key": "missing",
+      "statement": "people.add(zemp_missing = is_missing(code)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing    N       %\n  false          40   100.0\n  ─────────────────────────\n  Total          40   100.0\n"
+    },
+    {
+      "base": "people",
+      "name": "serial",
+      "key": "summary",
+      "statement": "people.summary([serial])",
+      "printed": "summary · people\n\n  variable    N   missing       mean       sd        min        max\n  serial     40         0   1020.500   11.690   1001.000   1040.000\n"
+    },
+    {
+      "base": "people",
+      "name": "serial",
+      "key": "quartiles",
+      "statement": "people.quantile(serial, p: [0.25, 0.5, 0.75])",
+      "printed": "1010.75\n1020.5\n1030.25\n"
+    },
+    {
+      "base": "people",
+      "name": "serial",
+      "key": "distinct",
+      "statement": "n_distinct(people[\"serial\"])",
+      "printed": "40\n"
+    },
+    {
+      "base": "people",
+      "name": "serial",
+      "key": "missing",
+      "statement": "people.add(zemp_missing = is_missing(serial)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing    N       %\n  false          40   100.0\n  ─────────────────────────\n  Total          40   100.0\n"
+    },
+    {
+      "base": "people",
+      "name": "country",
+      "key": "values",
+      "statement": "people.tabulate(country)",
+      "printed": "tabulate · people · country\n\n  country    N       %\n  BR        10    25.0\n  DE        10    25.0\n  FR        10    25.0\n  IN        10    25.0\n  ────────────────────\n  Total     40   100.0\n"
+    },
+    {
+      "base": "people",
+      "name": "country",
+      "key": "firstRow",
+      "statement": "people.head(1).select([country])",
+      "printed": "frame · 1 row × 1 variable\n\n      country\n  1   IN\n"
+    },
+    {
+      "base": "people",
+      "name": "country",
+      "key": "lastRow",
+      "statement": "people.tail(1).select([country])",
+      "printed": "frame · 1 row × 1 variable\n\n      country\n  1   DE\n"
+    },
+    {
+      "base": "people",
+      "name": "country",
+      "key": "distinct",
+      "statement": "n_distinct(people[\"country\"])",
+      "printed": "4\n"
+    },
+    {
+      "base": "people",
+      "name": "country",
+      "key": "missing",
+      "statement": "people.add(zemp_missing = is_missing(country)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing    N       %\n  false          40   100.0\n  ─────────────────────────\n  Total          40   100.0\n"
+    },
+    {
+      "base": "people",
+      "name": "agree",
+      "key": "values",
+      "statement": "people.tabulate(agree)",
+      "printed": "tabulate · people · agree\n\n  agree       N       %\n  disagree   14    35.0\n  neutral    13    32.5\n  agree      13    32.5\n  ─────────────────────\n  Total      40   100.0\n"
+    },
+    {
+      "base": "people",
+      "name": "agree",
+      "key": "distinct",
+      "statement": "n_distinct(people[\"agree\"])",
+      "printed": "3\n"
+    },
+    {
+      "base": "people",
+      "name": "agree",
+      "key": "missing",
+      "statement": "people.add(zemp_missing = is_missing(agree)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing    N       %\n  false          40   100.0\n  ─────────────────────────\n  Total          40   100.0\n"
+    },
+    {
+      "base": "few",
+      "name": "id",
+      "key": "values",
+      "statement": "few.tabulate(id)",
+      "printed": "tabulate · few · id\n\n  id      N       %\n  a1      1    16.7\n  a2      1    16.7\n  a3      1    16.7\n  a4      1    16.7\n  a5      1    16.7\n  a6      1    16.7\n  ─────────────────\n  Total   6   100.0\n"
+    },
+    {
+      "base": "few",
+      "name": "id",
+      "key": "firstRow",
+      "statement": "few.head(1).select([id])",
+      "printed": "frame · 1 row × 1 variable\n\n      id\n  1   a1\n"
+    },
+    {
+      "base": "few",
+      "name": "id",
+      "key": "lastRow",
+      "statement": "few.tail(1).select([id])",
+      "printed": "frame · 1 row × 1 variable\n\n      id\n  1   a6\n"
+    },
+    {
+      "base": "few",
+      "name": "id",
+      "key": "distinct",
+      "statement": "n_distinct(few[\"id\"])",
+      "printed": "6\n"
+    },
+    {
+      "base": "few",
+      "name": "id",
+      "key": "missing",
+      "statement": "few.add(zemp_missing = is_missing(id)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing   N       %\n  false          6   100.0\n  ────────────────────────\n  Total          6   100.0\n"
+    },
+    {
+      "base": "few",
+      "name": "group",
+      "key": "values",
+      "statement": "few.tabulate(group)",
+      "printed": "tabulate · few · group\n\n  group   N       %\n  x       2    33.3\n  y       3    50.0\n  z       1    16.7\n  ─────────────────\n  Total   6   100.0\n"
+    },
+    {
+      "base": "few",
+      "name": "group",
+      "key": "firstRow",
+      "statement": "few.head(1).select([group])",
+      "printed": "frame · 1 row × 1 variable\n\n      group\n  1   x\n"
+    },
+    {
+      "base": "few",
+      "name": "group",
+      "key": "lastRow",
+      "statement": "few.tail(1).select([group])",
+      "printed": "frame · 1 row × 1 variable\n\n      group\n  1   z\n"
+    },
+    {
+      "base": "few",
+      "name": "group",
+      "key": "distinct",
+      "statement": "n_distinct(few[\"group\"])",
+      "printed": "3\n"
+    },
+    {
+      "base": "few",
+      "name": "group",
+      "key": "missing",
+      "statement": "few.add(zemp_missing = is_missing(group)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing   N       %\n  false          6   100.0\n  ────────────────────────\n  Total          6   100.0\n"
+    },
+    {
+      "base": "wages",
+      "name": "wage",
+      "key": "summary",
+      "statement": "wages.summary([wage])",
+      "printed": "summary · wages\n\n  variable        N   missing     mean       sd     min       max\n  wage       18,201       211   27.370   14.027   3.530   152.390\n"
+    },
+    {
+      "base": "wages",
+      "name": "wage",
+      "key": "quartiles",
+      "statement": "wages.quantile(wage, p: [0.25, 0.5, 0.75])",
+      "printed": "17.56\n24.35\n33.73\n"
+    },
+    {
+      "base": "wages",
+      "name": "wage",
+      "key": "distinct",
+      "statement": "n_distinct(wages[\"wage\"])",
+      "printed": "5022\n"
+    },
+    {
+      "base": "wages",
+      "name": "wage",
+      "key": "missing",
+      "statement": "wages.add(zemp_missing = is_missing(wage)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing        N       %\n  false          18,201    98.9\n  true              211     1.1\n  ─────────────────────────────\n  Total          18,412   100.0\n"
+    }
+  ]
+}

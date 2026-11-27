@@ -372,7 +372,7 @@ test("a number's properties are the engine's: its type, its rows and missing, it
   const pane = await chosen(page, press, "wage");
   await expect(pane.getByTestId("variable-label")).not.toBeEmpty();
   await expect(pane.getByTestId("variable-facts")).toHaveText(
-    /Type\s*Float\s*Rows\s*18,412\s*Missing\s*211 · 1\.1 %/,
+    /Type\s*Float\s*Unit\s*USD per hour\s*Rows\s*18,412\s*Missing\s*211 · 1\.1 %/,
   );
   const statistics = await rowsOf(pane.getByTestId("variable-statistics"));
   expect(statistics).toEqual([
@@ -475,7 +475,7 @@ test("a frame kept to a condition gives that condition's statistics, asked again
   await condition.press("Enter");
   await expect(page.getByTestId("kept-count")).toHaveText("2,179 of 18,412 rows");
   await expect(pane.getByTestId("variable-facts")).toHaveText(
-    /Type\s*Float\s*Rows\s*2,179\s*Missing\s*27 · 1\.2 %/,
+    /Type\s*Float\s*Unit\s*USD per hour\s*Rows\s*2,179\s*Missing\s*27 · 1\.2 %/,
   );
   const statistics = await rowsOf(pane.getByTestId("variable-statistics"));
   expect(statistics.slice(0, 1)).toEqual([["N", "2,152"]]);
@@ -519,7 +519,7 @@ test("a variable's properties are of the frame of the script that ran, not of an
   const pane = await chosen(page, press, "wage");
   // The showcase drops the rows without a wage: 18,201 rows, none missing.
   await expect(pane.getByTestId("variable-facts")).toHaveText(
-    /Type\s*Float\s*Rows\s*18,201\s*Missing\s*0$/,
+    /Type\s*Float\s*Unit\s*USD per hour\s*Rows\s*18,201\s*Missing\s*0$/,
   );
   expect((await rowsOf(pane.getByTestId("variable-statistics")))[0]).toEqual(["N", "18,201"]);
 });

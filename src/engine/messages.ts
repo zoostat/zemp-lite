@@ -207,6 +207,14 @@ export interface Variable {
   type: string;
   label: string;
   missing: number;
+  /**
+   * The unit and the measure the data carries for it (`unit`, as text; `measure`, one of
+   * `nominal`, `ordinal`, `scale`), each empty where it carries none; and whether it is a
+   * category whose levels are in an order (open decision #209; release 0.3, step 21).
+   */
+  unit: string;
+  measure: string;
+  ordered: boolean;
   /** Whether its cells line up on the right, as the engine prints them. */
   right: boolean;
   /** A category's contrast, as the engine names it; `null` for another type. */

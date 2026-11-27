@@ -122,7 +122,13 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 20 `[function]`.** A text of many values (a column of reviews) is shown in the Variables pane by a histogram of the lengths of its values, its rows with text, of empty text and missing, its shortest, median and longest length, its first five values in full, and the values that repeat. Every figure is a cell of what the engine prints, held by test on a kept frame of forty reviews. Green here: the whole routine but the 21 browser tests in WebKit that need a real mouse click (the screen is locked; 542 unit tests and 776 browser tests passed).
 
-**Next.** Step 21 `[function]`: the other kinds in the Variables pane (text of few values, every value different, an ordered category, a unit and a measure, an opaque column).
+**Done, step 21 `[function]`.** The Variables pane now says something of each kind of variable the engine has: a text of few values is said to be text, with the line naming `category()`; a variable whose every value differs is said to look like an identifier (a text with no chart and its first and last value; a whole number with its statistics kept); an ordered category is said to be ordered, in the order of its levels; a number shows the unit and the measure its data carries (`USD per hour`). The worker passes on three facts the engine's column already held. Green here: the whole routine but the 21 WebKit click tests behind the locked screen (550 unit tests; every other browser test).
+
+**Not built, because the engine has none (step 21).** An opaque column (a list, a record, a file): Zeff 0.9.0 holds no such column, by its own message. And an ordered category's cumulative share and median level, which the engine does not print.
+
+**Next.** Step 22 `[function]`: the whole, the words, the measures and the notes.
+
+**For the coordinating session (added at step 21).** Of #209's table at Zemp 0.3: the opaque column's row waits for the engine's opaque types (after 1.0), and the ordered category's cumulative share and median level for an engine release that prints them. The reading taken where the table is silent: a text of many values whose values all differ is called an identifier only where they are all of one length.
 
 **For the owner to read, when he wishes (added at step 15c).** The sample paper a first visitor meets in Paper: its two sentences, its equation, and the captions of its table and its figure (`examples/scratch/paper/paper.typ`), and the comments of the script that writes them (`examples/scratch/scripts/paper.zeff`).
 

@@ -672,10 +672,20 @@ impl Host {
                 zeff_core::value::Align::Right
             );
             variables.push(format!(
-                "{{\"name\": {}, \"type\": {}, \"label\": {}, \"missing\": {}, \"right\": {right}, \"contrast\": {}, \"bars\": {}, \"codes\": {}}}",
+                "{{\"name\": {}, \"type\": {}, \"label\": {}, \"unit\": {}, \"measure\": {}, \"ordered\": {}, \"missing\": {}, \"right\": {right}, \"contrast\": {}, \"bars\": {}, \"codes\": {}}}",
                 json_string(variable),
                 json_string(column.ty().name()),
                 json_string(column.metadata().get(zeff_columns::MetadataKey::Label).unwrap_or("")),
+                // The unit and the measure the data carries (Language Reference, section 4.3),
+                // empty where it carries none; and whether a category's levels are in an order.
+                json_string(column.metadata().get(zeff_columns::MetadataKey::Unit).unwrap_or("")),
+                json_string(
+                    column
+                        .metadata()
+                        .get(zeff_columns::MetadataKey::Measure)
+                        .unwrap_or("")
+                ),
+                column.is_ordered(),
                 column.n_missing(),
                 column
                     .contrast()

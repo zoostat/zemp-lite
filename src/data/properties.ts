@@ -26,7 +26,11 @@ export type Key =
   | "lengthRange"
   | "empty"
   | "first"
-  | "repeats";
+  | "repeats"
+  // A text of few values (step 21): its first and its last value in the order of the rows,
+  // shown where every value differs.
+  | "firstRow"
+  | "lastRow";
 
 /**
  * The frame the pane has the engine make for a text of many values, and its column of each
@@ -82,6 +86,10 @@ export function asked(base: string, variable: Pick<Variable, "name" | "type" | "
     all.push({ key: "greatest", statement: `${base}.max(${v})` });
   }
   if (kind.few) all.push({ key: "values", statement: `${base}.tabulate(${v})` });
+  if (kind.few && /^Str\b/.test(variable.type)) {
+    all.push({ key: "firstRow", statement: `${base}.head(1).select([${v}])` });
+    all.push({ key: "lastRow", statement: `${base}.tail(1).select([${v}])` });
+  }
   if (kind.longText) {
     // The lengths, counted by the engine's `n_chars` in a frame of the pane's own.
     all.push({
@@ -235,4 +243,45 @@ export function repeated(printed: string): { value: string; copies: string }[] |
     found.push({ value: row[1] ?? "", copies: row[2] ?? "" });
   }
   return found;
+}
+
+/** A count as the engine prints it, without the commas between its thousands. */
+const plain = (cell: string) => cell.replace(/,/g, "").trim();
+
+/**
+ * Whether every value of a variable differs: the engine's count of its distinct values is its
+ * count of the rows with a value, and there is more than one. Two cells of the engine's are
+ * held against each other; nothing is counted here.
+ */
+export function allDiffer(distinct: string, present: string): boolean {
+  const values = plain(distinct);
+  return /^\d+$/.test(values) && values === plain(present) && Number(values) > 1;
+}
+
+/** What the pane says of a text of few values (Language Reference, section 4: text never becomes a category silently). */
+export const FEW_TEXT = "Text of few values: category() would make it a category.";
+/** What it says of a variable whose every value differs, and that looks like an identifier. */
+export const IDENTIFIER = "Every value is different: this looks like an identifier.";
+/** What it says of a long text whose every value differs, where its values are not all of one length. */
+export const ALL_DIFFER = "Every value is different.";
+
+/**
+ * The line the pane adds for a variable whose every value differs, or `null` where it adds
+ * none. A text of few values, and a whole number, look like an identifier. A text of many
+ * values does where its values are all of one length (the engine's shortest and longest are
+ * the same cell); a column of reviews, each its own length, is only said to have no two alike.
+ */
+export function differingLine(
+  variable: Pick<Variable, "type" | "bars">,
+  distinct: string,
+  present: string,
+  lengths: readonly string[] = [],
+): string | null {
+  if (!allDiffer(distinct, present)) return null;
+  const kind = kindOf(variable);
+  if (kind.longText) {
+    return lengths.length === 3 && lengths[0] === lengths[2] ? IDENTIFIER : ALL_DIFFER;
+  }
+  if (/^Str\b/.test(variable.type) || /^Int\b/.test(variable.type)) return IDENTIFIER;
+  return null;
 }
