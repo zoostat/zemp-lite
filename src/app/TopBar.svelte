@@ -300,6 +300,10 @@
     color: var(--button-ink);
     padding: 3px 14px;
   }
+  .filled:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
   .filled:disabled {
     opacity: 0.55;
   }

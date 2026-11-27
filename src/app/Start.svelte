@@ -358,6 +358,9 @@
     padding: 18px 40px;
     text-transform: uppercase;
   }
+  .open:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
   .open:disabled {
     background: var(--soft);
     border-color: var(--line-strong);
@@ -373,7 +376,7 @@
     background: var(--window);
     border: 1px solid var(--line);
     border-radius: 14px;
-    box-shadow: 0 24px 48px -36px rgba(46, 26, 94, 0.5);
+    box-shadow: 0 24px 48px -36px rgba(20, 42, 102, 0.5);
     padding: 26px 28px 14px;
   }
   h2 {
@@ -389,7 +392,7 @@
     overflow: hidden;
   }
   .bar i {
-    background: linear-gradient(90deg, var(--violet-2), var(--violet-3));
+    background: linear-gradient(90deg, var(--mark-2), var(--mark-3));
     border-radius: 999px;
     display: block;
     height: 100%;

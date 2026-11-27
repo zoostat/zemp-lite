@@ -444,6 +444,8 @@
     color: var(--button-ink);
   }
   .word.filled:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
     color: var(--button-ink);
   }
   .word:disabled {

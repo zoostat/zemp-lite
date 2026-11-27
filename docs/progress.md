@@ -60,6 +60,8 @@ Opened on the owner's word once Zeff 0.9.0 was released, planned (`docs/releases
 
 **Green at step 1.** Here: every check and measure, the ten sample projects identical, 550 unit tests, every browser test in Chromium; in WebKit 19 browser tests failed, each at a mouse click behind the Mac's locked screen (the owner was away), as the record of 0.3 describes. Nothing of the app changed at this step; GitHub's check of the commit is read before step 2 is committed.
 
-**Next.** Step 2 `[engine]`: cobalt, and the code's colours (#244).
+**Done, step 2 `[engine]`.** The accent is cobalt in place of the violet (#244): the logo, the Lite badge, the filled button, links, the place shown and what is selected, in both themes, with a colour of its own for a filled button under the pointer; a function's name in code is teal and an operator slate grey; the page "What is counted" follows. The figures and the exported PDFs are untouched. A test holds that no built file keeps any of the 18 old values. Green here: every check and measure, 553 unit tests, every browser test in Chromium; in WebKit 21 failed, each at a mouse click behind the locked screen, none in what this step changed.
+
+**Next.** Step 3 `[engine]`: computers only (#243).
 
 **For the owner to decide.** Nothing.

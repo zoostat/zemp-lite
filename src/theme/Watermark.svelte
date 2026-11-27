@@ -10,8 +10,8 @@
   <svg viewBox="-75 -50 230 230">
     <defs>
       <linearGradient id="watermark-stroke" x1="1" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="var(--violet-2)" />
-        <stop offset="1" stop-color="var(--violet-3)" />
+        <stop offset="0" stop-color="var(--mark-2)" />
+        <stop offset="1" stop-color="var(--mark-3)" />
       </linearGradient>
     </defs>
     <g fill="none" stroke="url(#watermark-stroke)" stroke-linejoin="miter">
@@ -20,7 +20,7 @@
       {/each}
     </g>
     {#if centre}
-      <polygon points={centre.points} fill="var(--violet-2)" opacity="0.55" />
+      <polygon points={centre.points} fill="var(--mark-2)" opacity="0.55" />
     {/if}
   </svg>
 </div>

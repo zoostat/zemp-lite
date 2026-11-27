@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { TEXT_ON, TOKENS, contrast, tokensCss, type ThemeName, type Token } from "./tokens";
+import {
+  OLD_COLOURS,
+  TEXT_ON,
+  TOKENS,
+  contrast,
+  tokensCss,
+  type ThemeName,
+  type Token,
+} from "./tokens";
 
 describe("the colours", () => {
   it("measures contrast as WCAG does", () => {
@@ -20,6 +28,30 @@ describe("the colours", () => {
       expect(short).toEqual([]);
     });
   }
+
+  it("the accent is the cobalt of open decision #244, in both themes", () => {
+    expect(TOKENS.accent).toEqual({ light: "#2448a8", dark: "#9db2ff" });
+    expect(TOKENS["accent-hover"]).toEqual({ light: "#2f57c4", dark: "#bccaff" });
+    expect(TOKENS["accent-soft"]).toEqual({ light: "#e9eefb", dark: "#181e38" });
+    expect(TOKENS["logo-centre"]).toEqual({ light: "#142a66", dark: "#e3e9ff" });
+    expect(TOKENS["button-ink"]).toEqual({ light: "#ffffff", dark: "#0d1330" });
+    // The logo's strokes and the one filled button are the accent itself.
+    expect(TOKENS["logo-stroke"]).toEqual(TOKENS.accent);
+    expect(TOKENS.button).toEqual(TOKENS.accent);
+    // White on the light accent and the dark accent on the dark page, as #244 reckons them.
+    expect(contrast("#ffffff", TOKENS.accent.light)).toBeCloseTo(8.2, 1);
+    expect(contrast(TOKENS.accent.dark, TOKENS.page.dark)).toBeCloseTo(9.4, 1);
+  });
+
+  it("a function's name is teal and an operator slate grey, so no word of code looks like a control", () => {
+    expect(TOKENS["code-function"]).toEqual({ light: "#0f7b8a", dark: "#6fd3dc" });
+    expect(TOKENS["code-operator"]).toEqual({ light: "#5d6b82", dark: "#a3adbf" });
+  });
+
+  it("holds none of the violet's values, nor the blue that function names had", () => {
+    const now = Object.values(TOKENS).flatMap((value) => [value.light, value.dark]);
+    for (const old of OLD_COLOURS) expect(now, old).not.toContain(`#${old}`);
+  });
 
   it("every token is a colour of six hexadecimal digits in both themes", () => {
     for (const value of Object.values(TOKENS)) {

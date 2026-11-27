@@ -62,10 +62,10 @@ test("the top bar carries its controls in order, Run the one filled, and Script 
   const places = top.getByRole("navigation", { name: "Places" });
   await expect(places.getByRole("button", { name: "Script" })).toHaveClass(/\bon\b/);
   await expect(places.locator("button.on")).toHaveCount(1);
-  // Run is filled with the logo's violet; the others are outlined words.
+  // Run is filled with the logo's cobalt (open decision #244); the others are outlined words.
   const run = top.getByRole("button", { name: "Run", exact: true });
   expect(await run.evaluate((button) => getComputedStyle(button).backgroundColor)).toBe(
-    "rgb(91, 58, 158)",
+    "rgb(36, 72, 168)",
   );
 });
 

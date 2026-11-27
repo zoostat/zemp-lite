@@ -1,6 +1,7 @@
 // The colours of Zemp Lite: one set of names, with a value in the light theme and one in the
 // dark (the owner's design guide, sections 2 and 9; open decision #146), in the quiet look of
-// the margin editor (#174; its design, section 14.1): one surface, hairlines, the logo's violet. Every colour used
+// the margin editor (#174; its design, section 14.1): one surface, hairlines, the logo's cobalt (open
+// decision #244, which put it in place of the violet of #146). Every colour used
 // for text reaches 4.5 to 1 against the grounds it is written on, in both themes (WCAG AA),
 // which `tokens.test.ts` computes from this file.
 
@@ -14,7 +15,7 @@ export const TOKENS = {
   // A control pointed at, the search and console fields; an unfolded output; an edited line.
   soft: { light: "#f6f6f4", dark: "#191a1f" },
   softer: { light: "#fafaf9", dark: "#15161a" },
-  tint: { light: "#f8f6fd", dark: "#141120" },
+  tint: { light: "#f5f7fd", dark: "#111526" },
   // Hairlines.
   line: { light: "#ececea", dark: "#22242a" },
   "line-strong": { light: "#dededa", dark: "#2e3037" },
@@ -23,11 +24,13 @@ export const TOKENS = {
   "ink-2": { light: "#55555c", dark: "#a7a8b0" },
   "ink-3": { light: "#6b6b73", dark: "#8f919c" },
   "ink-4": { light: "#b9b9bf", dark: "#4d4f57" },
-  // The logo's violet: focus, the selected row, links; and the one filled button.
-  accent: { light: "#5b3a9e", dark: "#b9a4f0" },
-  "accent-soft": { light: "#f3effb", dark: "#201a33" },
-  button: { light: "#5b3a9e", dark: "#b9a4f0" },
-  "button-ink": { light: "#ffffff", dark: "#1a1330" },
+  // The logo's cobalt (#244): focus, the selected row, links, the current place; the accent as
+  // it is under the pointer; and the one filled button.
+  accent: { light: "#2448a8", dark: "#9db2ff" },
+  "accent-hover": { light: "#2f57c4", dark: "#bccaff" },
+  "accent-soft": { light: "#e9eefb", dark: "#181e38" },
+  button: { light: "#2448a8", dark: "#9db2ff" },
+  "button-ink": { light: "#ffffff", dark: "#0d1330" },
   // States.
   warning: { light: "#8a5d00", dark: "#e2b552" },
   "warning-soft": { light: "#fbf6e9", dark: "#272215" },
@@ -38,20 +41,21 @@ export const TOKENS = {
   error: { light: "#b3261e", dark: "#f2a39b" },
   "error-soft": { light: "#fcf0ef", dark: "#2a1715" },
   // The logo and its watermark.
-  "logo-stroke": { light: "#5b3a9e", dark: "#9b7fdb" },
-  "logo-centre": { light: "#2e1a5e", dark: "#e4dbfa" },
-  "violet-2": { light: "#5b3a9e", dark: "#b9a4f0" },
-  "violet-3": { light: "#9b7fdb", dark: "#7e62c4" },
-  // The deep violet band of the loading screen (the design guide, section 9; open decision
-  // #220), with the two inks written on it.
-  deep: { light: "#2e1a5e", dark: "#1b1530" },
-  "deep-ink": { light: "#f3effc", dark: "#f1ecfc" },
-  "deep-muted": { light: "#d6ccf2", dark: "#c3b6e8" },
-  // Code, the same wherever code is shown.
+  "logo-stroke": { light: "#2448a8", dark: "#9db2ff" },
+  "logo-centre": { light: "#142a66", dark: "#e3e9ff" },
+  "mark-2": { light: "#2448a8", dark: "#9db2ff" },
+  "mark-3": { light: "#7d95dc", dark: "#5068c6" },
+  // The deep band of the loading screen (the design guide, section 9; open decision #220),
+  // in the cobalt's family, with the two inks written on it.
+  deep: { light: "#142a66", dark: "#131a38" },
+  "deep-ink": { light: "#eef2fd", dark: "#edf1fd" },
+  "deep-muted": { light: "#ccd6f3", dark: "#b9c5ea" },
+  // Code, the same wherever code is shown. A function's name is teal and an operator slate
+  // grey (#244), so that no word of code is read as a control.
   "code-keyword": { light: "#7b4fd6", dark: "#c4a7ff" },
-  "code-function": { light: "#1f63c2", dark: "#8cbcff" },
+  "code-function": { light: "#0f7b8a", dark: "#6fd3dc" },
   "code-option": { light: "#a3367c", dark: "#f29ac4" },
-  "code-operator": { light: "#0f7b8a", dark: "#6fd3dc" },
+  "code-operator": { light: "#5d6b82", dark: "#a3adbf" },
   "code-text": { light: "#2b7a4b", dark: "#8fdcab" },
   "code-number": { light: "#a8520c", dark: "#f4b77e" },
   "code-comment": { light: "#6b6b73", dark: "#8f919c" },
@@ -60,13 +64,40 @@ export const TOKENS = {
 
 export type Token = keyof typeof TOKENS;
 
+/**
+ * The values the interface drew in until release 0.3.1, each as six hexadecimal digits: the
+ * violet of #146 in every use it had, and the blue that function names were. No built file
+ * may hold one (`tests/browser/built-files.spec.ts`), whether a token or a colour written out.
+ */
+export const OLD_COLOURS = [
+  "5b3a9e",
+  "b9a4f0",
+  "f3effb",
+  "201a33",
+  "1a1330",
+  "9b7fdb",
+  "2e1a5e",
+  "e4dbfa",
+  "7e62c4",
+  "1b1530",
+  "f3effc",
+  "f1ecfc",
+  "d6ccf2",
+  "c3b6e8",
+  "f8f6fd",
+  "141120",
+  "1f63c2",
+  "8cbcff",
+] as const;
+
 /** The text colours, each with the grounds it is written on. */
 export const TEXT_ON: Partial<Record<Token, Token[]>> = {
   ink: ["window", "soft", "softer", "tint", "page", "accent-soft", "warning-soft", "error-soft"],
   "ink-2": ["window", "soft", "softer", "tint", "page", "warning-soft", "error-soft"],
   "ink-3": ["window", "soft", "softer", "tint"],
   accent: ["window", "soft", "softer", "accent-soft"],
-  "button-ink": ["button"],
+  "accent-hover": ["window", "soft", "softer", "accent-soft"],
+  "button-ink": ["button", "accent-hover"],
   "deep-ink": ["deep"],
   "deep-muted": ["deep"],
   warning: ["window", "soft", "softer", "warning-soft"],

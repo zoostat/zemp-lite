@@ -537,7 +537,7 @@
   .act:hover:not(:disabled),
   .act:focus-visible {
     border-color: var(--accent);
-    box-shadow: 0 10px 24px -18px rgba(46, 26, 94, 0.6);
+    box-shadow: 0 10px 24px -18px rgba(20, 42, 102, 0.6);
   }
   .act :global(svg) {
     margin-bottom: 4px;
@@ -619,6 +619,10 @@
     border: 1px solid var(--button);
     color: var(--button-ink);
   }
+  .filled:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
   .plain {
     background: var(--window);
     border: 1px solid var(--line-strong);
@@ -667,7 +671,7 @@
     background: var(--window);
     border: 1px solid var(--line);
     border-radius: 14px;
-    box-shadow: 0 24px 48px -36px rgba(46, 26, 94, 0.5);
+    box-shadow: 0 24px 48px -36px rgba(20, 42, 102, 0.5);
     padding: 22px 10px 12px;
   }
   .rhead {

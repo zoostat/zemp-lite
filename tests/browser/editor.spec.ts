@@ -33,9 +33,9 @@ test("the code is coloured in the categories of the design guide, the same words
   );
   expect(await drawn(page, "// a note")).toBe("rgb(107, 107, 115) italic");
   expect(await drawn(page, "let")).toBe("rgb(123, 79, 214) normal");
-  expect(await drawn(page, "reg")).toBe("rgb(31, 99, 194) normal");
+  expect(await drawn(page, "reg")).toBe("rgb(15, 123, 138) normal");
   expect(await drawn(page, "cluster")).toBe("rgb(163, 54, 124) normal");
-  expect(await drawn(page, "~")).toBe("rgb(15, 123, 138) normal");
+  expect(await drawn(page, "~")).toBe("rgb(93, 107, 130) normal");
   expect(await drawn(page, '"output/t.docx"')).toBe("rgb(43, 122, 75) normal");
   expect(await drawn(page, "0.95")).toBe("rgb(168, 82, 12) normal");
   // A variable keeps the main ink of code: colour marks structure, never data.
@@ -43,7 +43,7 @@ test("the code is coloured in the categories of the design guide, the same words
 
   await press(page.getByRole("switch", { name: "Dark" }));
   expect(await drawn(page, "let")).toBe("rgb(196, 167, 255) normal");
-  expect(await drawn(page, "reg")).toBe("rgb(140, 188, 255) normal");
+  expect(await drawn(page, "reg")).toBe("rgb(111, 211, 220) normal");
   expect(await drawn(page, "// a note")).toBe("rgb(143, 145, 156) italic");
 });
 
@@ -62,7 +62,7 @@ test("the lines are numbered and the current line is marked", async ({ page, pre
   await page.keyboard.press("ArrowDown");
   const current = page.locator(".cm-lineNumbers .cm-activeLineGutter");
   await expect(current).toHaveText("4");
-  expect(await current.evaluate((node) => getComputedStyle(node).color)).toBe("rgb(91, 58, 158)");
+  expect(await current.evaluate((node) => getComputedStyle(node).color)).toBe("rgb(36, 72, 168)");
   await expect(page.locator(".cm-activeLine")).toHaveText("let wages = dataset(wages)");
 });
 
@@ -123,5 +123,5 @@ test("the sample script of the specification reads in the editor, coloured", asy
   );
   expect(await drawn(page, "se")).toBe("rgb(163, 54, 124) normal");
   expect(await drawn(page, "true")).toBe("rgb(168, 82, 12) normal");
-  expect(await drawn(page, "summary")).toBe("rgb(31, 99, 194) normal");
+  expect(await drawn(page, "summary")).toBe("rgb(15, 123, 138) normal");
 });

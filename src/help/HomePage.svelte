@@ -127,7 +127,7 @@
     background: var(--window);
     border: 1px solid var(--line);
     border-radius: 14px;
-    box-shadow: 0 24px 48px -36px rgba(46, 26, 94, 0.5);
+    box-shadow: 0 24px 48px -36px rgba(20, 42, 102, 0.5);
     display: flex;
     gap: 16px;
     margin-bottom: 12px;

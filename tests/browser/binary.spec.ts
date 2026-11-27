@@ -110,12 +110,12 @@ test("the new names are the engine's in the editor: coloured, completed, their u
   press,
 }) => {
   await scratch(page, press);
-  // Coloured as functions, as `reg` is (the design guide's blue), in both themes.
+  // Coloured as functions, as `reg` is (teal, open decision #244), in both themes.
   for (const name of ["glm", "margins", "confusion", "curve"]) {
-    expect(await drawn(page, name), name).toBe("rgb(31, 99, 194)");
+    expect(await drawn(page, name), name).toBe("rgb(15, 123, 138)");
   }
   await press(page.getByRole("switch", { name: "Dark" }));
-  expect(await drawn(page, "glm")).toBe("rgb(140, 188, 255)");
+  expect(await drawn(page, "glm")).toBe("rgb(111, 211, 220)");
   await press(page.getByRole("switch", { name: "Dark" }));
   // Completed after a dot, from the language server.
   await write(page, "let wages = dataset(wages)\nwages.gl");

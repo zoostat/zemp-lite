@@ -3492,3 +3492,18 @@ The wait is there at the trial address every time and at the address once in fou
 **For the coordinating session.** Section 5 of the Zemp Specification and the design guide are amended there; what was built is listed for it at steps 14 and 15. The editors' colour files (`editors/`, #244) are the Zeff repository's.
 
 **Done, step 1.** Version `0.3.1-dev` in the seven places that carry it; nothing of the app changes.
+
+## 28 November 2026: release 0.3.1, step 2: cobalt, and the code's colours
+
+**Built (#244).** The accent is cobalt wherever the interface named the violet: `#2448a8` in light and `#9db2ff` in dark for the accent, the logo's strokes and the one filled button; `#e9eefb` and `#181e38` for the soft accent; `#142a66` and `#e3e9ff` for the logo's centre; white and `#0d1330` on a filled button. A function's name in code is teal (`#0f7b8a`, `#6fd3dc`) and an operator slate grey (`#5d6b82`, `#a3adbf`), in a script, a paper's source and every example. The figures, a script exported with its output and a paper are untouched: none of them draws from the interface's colours.
+
+**Choices, mine to take.**
+
+1. **A token for the accent under the pointer** (`accent-hover`, `#2f57c4` and `#bccaff`, the fourth of #244's five values), used by every filled button when it is pointed at. Until now a filled button did not change under the pointer.
+2. **The colours #244 does not name move to the cobalt's family,** taken from the mockup's cobalt where it has one: the second colour of the mark's gradient and the watermark (`#7d95dc`, `#5068c6`); the deep band of the loading screen and its two inks (`#142a66` and `#131a38`; it goes with the front page at step 13); the tinted ground of a cell the search of the data found (`#f5f7fd`, `#111526`); the four shadows that were a violet at half strength. The two tokens named `violet-2` and `violet-3` are `mark-2` and `mark-3`.
+3. **A keyword of code stays the purple it was** (`#7b4fd6`, `#c4a7ff`): #244 moves function names and operators and says nothing of keywords, and the mockup's cobalt keeps it.
+4. **The greys of the interface are not changed at this step.** The mockup draws on a white page with cooler greys than today's; that is the frame's look and is taken with the frame (step 4), not with the accent.
+5. **No favicon is added.** The draft of the plan named one; the app has none and no ruling asks for one. For the coordinating session, if one is wanted.
+6. **`public/counted.html`,** the page "What is counted", writes the accent by hand, being a page of its own; it is changed with the tokens, and the test of the built files reads it too.
+
+**Tests.** Unit: the accent's values are #244's and its two contrasts are the 8.2 and 9.4 to 1 it reckons; every text colour at 4.5 to 1 against its grounds in both themes, the new hover colour among them; none of the old values among the tokens. Browser, both engines (`cobalt.spec.ts`): no built file holds any of the 18 old values, as six digits or as three numbers; the badge, the mark, the filled button and its ink, the place shown, a selection and a link are cobalt in both themes; the filled button under the pointer. Three tests that named the old colours name the new (`editor.spec.ts`, `binary.spec.ts`, `workspace.spec.ts`).
