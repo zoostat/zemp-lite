@@ -216,6 +216,10 @@ test("a plot pops out into a window of its own, which redraws it to fit when res
   await expect
     .poll(async () => (await sizes(image)).shown, { timeout: 10_000 })
     .toEqual([576, 436]);
+  // A plot's own window is not the app: however narrow, it is never told that Zemp Lite is
+  // made for a computer (open decision #243).
+  await expect(popup.getByTestId("computer-notice")).toHaveCount(0);
+  await expect(popup.getByRole("dialog")).toHaveCount(0);
   const second = await sizes(image);
   expect(Math.abs(second.own[0] - second.shown[0])).toBeLessThan(1);
   expect(second.svg).not.toBe(first.svg);

@@ -1,8 +1,8 @@
 // The project screen redrawn (release 0.2.4, step 7; open decision #220, item 4; the design
 // guide, section 9, "Project screen"): no heading of its own; four cards in two rows; the note
 // on where the work is kept in two columns; **Recent**, with its count, five rows in view and
-// the lower edge fading until the end of the list; a first visit's card; one column on a
-// phone. **Open a project's zip…** is **Open project…**.
+// the lower edge fading until the end of the list; a first visit's card; the desk's layout at
+// a tablet's width (a phone's, in one column, until release 0.3.1: open decision #243). **Open a project's zip…** is **Open project…**.
 import type { Page } from "@playwright/test";
 import { expect, faintText, smallestText, test } from "./support";
 
@@ -230,7 +230,7 @@ test("every card and every row is reached by the Tab key, in the order of the sc
 });
 
 for (const theme of ["light", "dark"] as const) {
-  test(`the screen holds 12.5 pixels and 4.5 to 1, at a desk's width and a phone's (${theme})`, async ({
+  test(`the screen holds 12.5 pixels and 4.5 to 1, at a desk's width and a tablet's (${theme})`, async ({
     page,
     press,
   }) => {
@@ -238,7 +238,7 @@ for (const theme of ["light", "dark"] as const) {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/");
     await made(page, press, "Wages");
-    for (const width of [1440, 1000, 375]) {
+    for (const width of [1440, 1024, 1000]) {
       await page.setViewportSize({ width, height: 900 });
       await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
       expect(await smallestText(page), `the smallest text at ${width}`).toBeGreaterThanOrEqual(
@@ -250,17 +250,16 @@ for (const theme of ["light", "dark"] as const) {
       );
       expect(over, `wider than the window at ${width}`).toBeLessThanOrEqual(0);
     }
-    // On a phone everything is one column, and the list of projects comes first.
-    const cards = start(page).locator(".actions > *");
-    const lefts = await cards.evaluateAll((all) =>
-      all.map((one) => Math.round(one.getBoundingClientRect().left)),
-    );
-    expect(new Set(lefts).size).toBe(1);
-    const tops = await page.evaluate(() => {
-      const top = (selector: string) =>
-        (document.querySelector(selector) as HTMLElement).getBoundingClientRect().top;
-      return { list: top('section[aria-label="Recent projects"]'), cards: top(".actions") };
+    // At the narrowest window Zemp Lite is laid out for, the screen is the desk's: the cards
+    // and the list of projects side by side. (Until release 0.3.1 a phone's width was held
+    // here, in one column with the list first: open decision #243 withdrew that layout.)
+    const sides = await page.evaluate(() => {
+      const box = (selector: string) =>
+        (document.querySelector(selector) as HTMLElement).getBoundingClientRect();
+      const [list, cards] = [box('section[aria-label="Recent projects"]'), box(".actions")];
+      return { list: list.left, cards: cards.right, over: list.right - window.innerWidth };
     });
-    expect(tops.list).toBeLessThan(tops.cards);
+    expect(sides.list).toBeGreaterThanOrEqual(sides.cards);
+    expect(sides.over).toBeLessThanOrEqual(0);
   });
 }

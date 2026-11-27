@@ -673,7 +673,7 @@ test("the engine prints at the width of the place, and again at a new width when
   page,
   press,
 }) => {
-  await page.setViewportSize({ width: 1000, height: 3200 });
+  await page.setViewportSize({ width: 1024, height: 3200 });
   await scratch(page, press);
   await runUnfolded(page, press);
   const width = async () => Number(await page.locator(".sheet").getAttribute("data-width"));
@@ -686,10 +686,11 @@ test("the engine prints at the width of the place, and again at a new width when
   await expect.poll(longest).toBeLessThanOrEqual(wide);
   const before = await printed(page);
   const longestBefore = await longest();
-  // A narrower window, too narrow for the widest table as it stands: the prints are laid out
-  // afresh, the run keeping its number. (The width passes through others as the window
-  // settles, so the test waits for one that the old print does not fit.)
-  await page.setViewportSize({ width: 760, height: 3200 });
+  // A narrower place, the Project pane opened beside the script at a tablet's width (open
+  // decision #243), too narrow for the widest table as it stands: the prints are laid out
+  // afresh, the run keeping its number. (The width passes through others as the pane
+  // opens, so the test waits for one that the old print does not fit.)
+  await press(page.getByRole("button", { name: "Project", exact: true }));
   await expect.poll(width).toBeLessThan(longestBefore);
   const narrow = await width();
   await expect.poll(longest).toBeLessThanOrEqual(narrow);
@@ -710,7 +711,7 @@ test("a print is made again at another width by the engine, and the script is no
   if (browserName === "chromium") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   }
-  await page.setViewportSize({ width: 1000, height: 3200 });
+  await page.setViewportSize({ width: 1024, height: 3200 });
   await page.goto("/");
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
@@ -727,8 +728,9 @@ test("a print is made again at another width by the engine, and the script is no
   await expect.poll(longest).toBeLessThanOrEqual(wide);
   const atWide = await printed(page);
   const longestWide = await longest();
-  // Narrower than the widest table as it stands: the tables wrap, and nothing is run.
-  await page.setViewportSize({ width: 760, height: 3200 });
+  // Narrower than the widest table as it stands, the Project pane opened beside the script:
+  // the tables wrap, and nothing is run.
+  await press(page.getByRole("button", { name: "Project", exact: true }));
   await expect.poll(width).toBeLessThan(longestWide);
   const narrow = await width();
   await expect.poll(longest).toBeLessThanOrEqual(narrow);
@@ -752,8 +754,8 @@ test("a print is made again at another width by the engine, and the script is no
     expect(atWide).toContain(copied);
     expect(copied.startsWith("wages · 18,412 rows × 11 variables")).toBe(true);
   }
-  // Wide again: the prints are what they were at that width, to the character.
-  await page.setViewportSize({ width: 1000, height: 3200 });
+  // Wide again, the pane closed: the prints are what they were at that width, to the character.
+  await press(page.getByRole("button", { name: "Project", exact: true }));
   await expect.poll(width).toBe(wide);
   await expect.poll(() => printed(page)).toBe(atWide);
   expect(await runs()).toBe(1);
@@ -764,7 +766,7 @@ test("a print is made again at another width by the engine, and the script is no
   await page.keyboard.press("ControlOrMeta+Enter");
   await expect(page.getByTestId("run-facts")).toHaveText(/^run 2 · /);
   const after = await runs();
-  await page.setViewportSize({ width: 760, height: 3200 });
+  await press(page.getByRole("button", { name: "Project", exact: true }));
   await expect.poll(width).toBe(narrow);
   await expect.poll(longest).toBeLessThanOrEqual(narrow);
   await expect.poll(runs).toBeGreaterThan(after);
@@ -776,7 +778,7 @@ test("Copy as text gives what `zeff run` prints, at the engine's own width", asy
   browserName,
   context,
 }) => {
-  await page.setViewportSize({ width: 1000, height: 3200 });
+  await page.setViewportSize({ width: 1024, height: 3200 });
   if (browserName === "chromium") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   }
@@ -788,7 +790,7 @@ test("Copy as text gives what `zeff run` prints, at the engine's own width", asy
   if (browserName === "chromium") {
     const copied = await page.evaluate(() => navigator.clipboard.readText());
     expect(copied.startsWith("reg · log(wage) ~ educ + exper + female + union")).toBe(true);
-    // The window is narrower than 118 characters, yet the copy is the print at 118.
+    // The place is narrower than 118 characters, yet the copy is the print at 118.
     expect(file("tests/scripts/example/expected/stdout.txt")).toContain(copied);
   }
 });

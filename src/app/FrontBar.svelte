@@ -92,11 +92,4 @@
     margin-right: 6px;
     padding: 0 9px;
   }
-  @media (max-width: 640px) {
-    .bar-top,
-    .alphabar {
-      padding-left: 16px;
-      padding-right: 16px;
-    }
-  }
 </style>

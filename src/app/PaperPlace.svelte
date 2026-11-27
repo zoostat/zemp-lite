@@ -833,21 +833,6 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* A window too narrow for the two side by side: the page stands under the source. */
-  @media (max-width: 760px) {
-    .sides {
-      flex-direction: column;
-    }
-    .sides > :global(.splitter) {
-      display: none;
-    }
-    .page {
-      border-left: 0;
-      border-top: 1px solid var(--line-strong);
-      flex: 0 0 40%;
-      width: auto !important;
-    }
-  }
   .gap {
     flex: 1;
   }

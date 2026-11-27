@@ -522,3 +522,73 @@ export async function faintText(within: Locator): Promise<string[]> {
     return faint;
   });
 }
+
+/**
+ * What of the screen is not whole, each fault in a sentence, and none where it is whole
+ * (release 0.3.1, step 3; open decision #243: every screen at 1,024 by 768 with nothing hidden,
+ * cut or overlapping). The page is no wider than the window; every control that is drawn is
+ * inside the window and inside whatever holds it, unless what holds it scrolls; and none lies
+ * under another, unless under a window, a menu or a list opened over the screen.
+ */
+export async function notWhole(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const faults: string[] = [];
+    const root = document.documentElement;
+    if (root.scrollWidth > root.clientWidth) {
+      faults.push(`the page is ${root.scrollWidth - root.clientWidth} px wider than the window`);
+    }
+    const named = (control: Element): string => {
+      const said = (control.getAttribute("aria-label") ?? control.textContent ?? "")
+        .replace(/\s+/g, " ")
+        .trim();
+      return `"${said.slice(0, 40) || control.tagName.toLowerCase()}"`;
+    };
+    const over =
+      'dialog, [role="dialog"], [role="menu"], [role="listbox"], [role="tooltip"], .cm-tooltip';
+    const controls = document.querySelectorAll(
+      'button, a[href], input, select, textarea, [role="button"], [role="switch"], [role="tab"]',
+    );
+    for (const control of controls) {
+      const box = control.getBoundingClientRect();
+      const style = getComputedStyle(control);
+      if (box.width === 0 || box.height === 0) continue;
+      if (style.visibility === "hidden" || style.opacity === "0") continue;
+      // A control whose ancestor is wholly clear (shown under the pointer alone) is not drawn.
+      let drawn = true;
+      // Whether what holds it scrolls, so that it may stand outside what is in view.
+      let scrolls = false;
+      for (let up = control.parentElement; up !== null && drawn; up = up.parentElement) {
+        const held = getComputedStyle(up);
+        if (held.opacity === "0" || held.visibility === "hidden") drawn = false;
+        if (/auto|scroll/.test(`${held.overflowX} ${held.overflowY}`)) scrolls = true;
+        if (scrolls) continue;
+        const holder = up.getBoundingClientRect();
+        if (/hidden|clip/.test(held.overflowX)) {
+          const past = Math.max(holder.left - box.left, box.right - holder.right);
+          if (past > 1) faults.push(`${named(control)} is cut by ${Math.round(past)} px at a side`);
+        }
+        if (/hidden|clip/.test(held.overflowY)) {
+          const past = Math.max(holder.top - box.top, box.bottom - holder.bottom);
+          if (past > 1) faults.push(`${named(control)} is cut by ${Math.round(past)} px in height`);
+        }
+      }
+      if (!drawn || scrolls) continue;
+      if (box.left < -1 || box.right > window.innerWidth + 1) {
+        faults.push(`${named(control)} reaches past the window`);
+        continue;
+      }
+      // What is drawn at its middle: itself, a part of it, what it is a part of, or something
+      // opened over the screen. Anything else lies over it.
+      const [x, y] = [box.left + box.width / 2, box.top + box.height / 2];
+      if (y < 0 || y > window.innerHeight) continue;
+      const top = document.elementFromPoint(x, y);
+      if (top === null || control.contains(top) || top.contains(control)) continue;
+      // (A window opened over the screen may stand on a veil, which is then what is drawn.)
+      const opened = top.closest(over) !== null || top.querySelector(over) !== null;
+      if (opened && control.closest(over) === null) continue;
+      const other = top.closest("button, a[href], input, select, textarea, [role]") ?? top;
+      faults.push(`${named(control)} lies under ${named(other)}`);
+    }
+    return [...new Set(faults)];
+  });
+}

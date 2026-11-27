@@ -10,6 +10,8 @@
   import { keepingOf, type Keeping } from "../project/keeping";
   import { Projects, SCRATCH, type Project } from "../project/projects";
   import { browserStorage } from "../theme/theme.svelte";
+  import ComputerNotice from "./ComputerNotice.svelte";
+  import { goOn, tabStorage, tooNarrow, wentOn } from "./narrow";
   import Start from "./Start.svelte";
   import { ENGINE_SHA256, VERSION } from "./version";
   import Welcome, { type Asking } from "./Welcome.svelte";
@@ -34,6 +36,14 @@
       // A browser that keeps no note is asked each time, which costs nothing.
     }
     keeping = await keepingOf(navigator.storage, lasting, ask);
+  }
+  // A window narrower than Zemp Lite is laid out for is told so, over the app, until the
+  // visitor goes on or the window is made wider (open decision #243).
+  let width = $state(window.innerWidth);
+  let went = $state(wentOn(tabStorage()));
+  function onwards(): void {
+    goOn(tabStorage());
+    went = true;
   }
   const engine = browserEngine();
   // The engine's language server runs in a worker of its own, so that typing never waits on a run.
@@ -132,6 +142,11 @@
   }
 </script>
 
+<svelte:window bind:innerWidth={width} />
+
+{#if tooNarrow(width) && !went}
+  <ComputerNotice {width} ongo={onwards} />
+{/if}
 {#if !started}
   <Start {engine} onopen={onstarted} />
 {:else if !ready || projects === null}

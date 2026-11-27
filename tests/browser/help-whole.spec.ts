@@ -31,12 +31,10 @@ for (const theme of ["light", "dark"] as const) {
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
     await press(places(page).getByRole("button", { name: "Help" }));
     await expect(page.getByTestId("help-counts")).toBeVisible();
-    const narrow = page.getByRole("note").filter({ hasText: "1,200 pixels wide" });
     /** The page shown is sound, here and in a narrower window. */
     const sound = async (what: string) => {
       for (const width of [1200, 1000]) {
         await page.setViewportSize({ width, height: 800 });
-        await (width < 1200 ? expect(narrow).toBeVisible() : expect(narrow).toHaveCount(0));
         expect(await smallestText(page), `${what} at ${width}`).toBeGreaterThanOrEqual(12.5);
         expect(await faintText(page.getByTestId("help")), `${what} at ${width}`).toEqual([]);
         const pane = page.getByTestId("help").locator(".page");
@@ -49,7 +47,6 @@ for (const theme of ["light", "dark"] as const) {
         expect(high, `${what} at ${width}`).toBeLessThan(48);
       }
       await page.setViewportSize({ width: 1200, height: 800 });
-      await expect(narrow).toHaveCount(0);
     };
     const ask = async (name: string) => {
       await field(page).fill(name);

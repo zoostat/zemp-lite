@@ -223,16 +223,8 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     );
   });
 
-  test("a window narrower than 1,200 pixels says so on the Start and welcome screens", async ({
-    page,
-    press,
-  }) => {
-    await page.setViewportSize({ width: 1000, height: 800 });
-    await page.goto("/");
-    const line = page.getByRole("note");
-    await expect(line).toContainText("at least 1,200 pixels wide; this one is 1000.");
-    await press(page.getByRole("button", { name: "Start", exact: true }));
-    await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
-    await expect(line).toContainText("No smaller layout exists yet.");
-  });
+  // Until release 0.3.1 a test here held the line a window narrower than 1,200 pixels was
+  // shown on the Start and welcome screens (open decision #33). From 1,000 pixels nothing is
+  // said now, and below it a page says that Zemp Lite is made for a computer, on a first visit
+  // too (#243): `computer.spec.ts`.
 });

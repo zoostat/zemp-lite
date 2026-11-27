@@ -17,7 +17,6 @@
   import MarginPane from "./MarginPane.svelte";
   import RunPanel from "../margin/RunPanel.svelte";
   import EngineLine from "./EngineLine.svelte";
-  import NarrowLine from "./NarrowLine.svelte";
   import Palette from "./Palette.svelte";
   import { paneCommand } from "./panes";
   import ReportWindow from "./ReportWindow.svelte";
@@ -384,8 +383,6 @@
 <svelte:window onkeydown={keys} onpagehide={() => workspace.leave()} />
 
 <TopBar {workspace} onclose={() => void close()} onpalette={() => (palette = true)} />
-
-<NarrowLine />
 
 <EngineLine {workspace} />
 

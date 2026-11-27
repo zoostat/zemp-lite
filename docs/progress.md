@@ -62,6 +62,8 @@ Opened on the owner's word once Zeff 0.9.0 was released, planned (`docs/releases
 
 **Done, step 2 `[engine]`.** The accent is cobalt in place of the violet (#244): the logo, the Lite badge, the filled button, links, the place shown and what is selected, in both themes, with a colour of its own for a filled button under the pointer; a function's name in code is teal and an operator slate grey; the page "What is counted" follows. The figures and the exported PDFs are untouched. A test holds that no built file keeps any of the 18 old values. Green here: every check and measure, 553 unit tests, every browser test in Chromium; in WebKit 21 failed, each at a mouse click behind the locked screen, none in what this step changed.
 
-**Next.** Step 3 `[engine]`: computers only (#243).
+**Done, step 3 `[engine]`.** Zemp Lite is made for a computer (#243): below 1,000 pixels a page says so, over the app, with **Go on anyway** kept for the visit; from 1,000 pixels nothing is said and the layout is the computer's; the line shown under 1,200 pixels and every arrangement for a phone are gone; under a finger nothing pressed is smaller than 32 pixels. A suite holds every screen whole at 1,024 by 768 in both themes, and each later step adds its screen to it. The tests of a phone's or a narrow window's layout were replaced, none simply deleted, each listed in `docs/decisions.md`. The suite found a list set at 11 pixels in Safari (**Save as**, in Plots), now mended. GitHub's check of step 2 was read before this step was committed. Green here: every check and measure, 556 unit tests, every browser test in Chromium; in WebKit the same 21 as at step 2 failed, each at a mouse click behind the locked screen.
 
-**For the owner to decide.** Nothing.
+**Next.** Step 4 `[engine]`: the frame's one top bar and the side menu (#245; #33 amended).
+
+**For the owner to decide.** Nothing. **His to read when he wishes:** the words of the page a narrow window is shown (the entry of step 3 in `docs/decisions.md`, choice 4).

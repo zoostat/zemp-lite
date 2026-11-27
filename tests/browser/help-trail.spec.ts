@@ -345,15 +345,12 @@ test("the bar of Help: Topics, Back, Forward, Home, the trail, and the search fi
   await order();
   await ask(page, "proportion_test");
   await order();
-  // A window this narrow says so in a line at its top, which moves the bar down: the bar is
-  // measured once that line stands, and again once it has gone.
-  const narrow = page.getByRole("note").filter({ hasText: "1,200 pixels wide" });
+  // (Until release 0.3.1 a window this narrow said so in a line at its top, which moved the
+  // bar down; the line is gone: open decision #243.)
   await page.setViewportSize({ width: 1000, height: 700 });
-  await expect(narrow).toBeVisible();
   await order();
   // With Topics closed the bar is in the same order.
   await page.setViewportSize({ width: 1200, height: 700 });
-  await expect(narrow).toHaveCount(0);
   await press(bar(page).getByRole("button", { name: "Topics", exact: true }));
   await order();
 });

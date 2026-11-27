@@ -1,6 +1,6 @@
 // The shell of the workspace (open decisions #146 and #203): the top bar, the files of the
 // project in the Project pane at the script's left, a file of the project shown in the Script
-// place, the size of code text, the theme, and the line a narrow window is given.
+// place, the size of code text, and the theme.
 import type { Page } from "@playwright/test";
 import { editor, expect, faintText, scriptText, smallestText, test, useExample } from "./support";
 
@@ -201,17 +201,9 @@ test("the code size control changes the code and its output together, and is rem
   await expect(page.getByRole("button", { name: "Smaller code text" })).toBeDisabled();
 });
 
-test("a window narrower than 1,200 pixels says that no smaller layout exists yet", async ({
-  page,
-  press,
-}) => {
-  await scratch(page, press);
-  await expect(page.getByRole("note")).toHaveCount(0);
-  await page.setViewportSize({ width: 1000, height: 700 });
-  await expect(page.getByRole("note")).toContainText(
-    "at least 1,200 pixels wide; this one is 1000. No smaller layout exists yet.",
-  );
-});
+// Until release 0.3.1 a test here held the line a window narrower than 1,200 pixels was shown
+// (open decision #33). From 1,024 pixels the layout is now the computer's with nothing said,
+// and below 1,000 a page says that Zemp Lite is made for a computer (#243): `computer.spec.ts`.
 
 test("app screens are set at 13.5 pixels and never below 12.5", async ({ page, press }) => {
   await scratch(page, press);

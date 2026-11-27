@@ -176,10 +176,14 @@ test("a plot of an example is drawn by the engine in the page, light in both the
     "rgb(255, 255, 255)",
   );
   expect((await sizes(figures.first())).svg).toBe(wide.svg);
-  // A narrower window: the figures are laid out again, by a run of the examples as they last
-  // ran, and are at their own size again.
+  // A narrower page, at a tablet's width with Topics drawn wide by the keyboard (until release
+  // 0.3.1, a window of 760 pixels: open decision #243): the figures are laid out again, by a
+  // run of the examples as they last ran, and are at their own size again.
   const before = await asked("example");
-  await page.setViewportSize({ width: 760, height: 900 });
+  await page.setViewportSize({ width: 1024, height: 900 });
+  const edge = page.getByRole("separator", { name: "The width of the left pane" });
+  await edge.focus();
+  for (let step = 0; step < 40; step += 1) await page.keyboard.press("ArrowRight");
   await expect
     .poll(
       async () => {

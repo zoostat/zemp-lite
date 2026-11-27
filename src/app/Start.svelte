@@ -18,7 +18,6 @@
   import Watermark from "../theme/Watermark.svelte";
   import { FACTS, megabytes } from "./facts";
   import FrontBar from "./FrontBar.svelte";
-  import NarrowLine from "./NarrowLine.svelte";
   import { came, glided, marked, reached, type Came, type State } from "./start";
   import { ENGINE, ENGINE_BYTES, ENGINE_SHA256 } from "./version";
 
@@ -176,7 +175,6 @@
   </i>
 {/snippet}
 
-<NarrowLine />
 <div class="screen">
   <Watermark />
   <FrontBar />
@@ -557,39 +555,5 @@
   }
   .counted {
     color: var(--ink-2);
-  }
-  /* A narrow window and a phone: one column, the name smaller, the promises two and then one
-     to a row. */
-  @media (max-width: 900px) {
-    .start-main {
-      gap: 32px;
-      grid-template-columns: minmax(0, 1fr);
-      padding: 36px 20px 32px;
-    }
-    h1 {
-      font-size: 60px;
-    }
-    .lede {
-      font-size: 18px;
-      margin-bottom: 24px;
-    }
-    .promises {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      padding: 24px 20px;
-    }
-    .bottom {
-      padding: 9px 16px;
-    }
-  }
-  @media (max-width: 520px) {
-    .promises {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .card {
-      padding: 20px 18px 10px;
-    }
-    .open {
-      padding: 16px 28px;
-    }
   }
 </style>

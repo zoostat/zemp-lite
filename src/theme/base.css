@@ -23,6 +23,7 @@ body {
 }
 button,
 input,
+select,
 textarea {
   color: inherit;
   font: inherit;
@@ -35,6 +36,26 @@ button:disabled {
 }
 .mono {
   font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+/* Where the pointer is a finger (a tablet held sideways: open decision #243), whatever is
+   pressed is at least 32 pixels high and wide. With a mouse the drawn sizes hold. */
+@media (pointer: coarse) {
+  button,
+  select,
+  summary,
+  input:not([type="text"], [type="search"], [type="number"]),
+  [role="button"],
+  [role="switch"],
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"] {
+    min-height: 32px;
+    min-width: 32px;
+  }
+  /* A list to choose from takes no least height in some browsers, so it is given its height. */
+  select {
+    height: 32px;
+  }
 }
 :focus-visible {
   outline: 2px solid var(--accent);

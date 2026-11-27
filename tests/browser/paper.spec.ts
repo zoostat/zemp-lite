@@ -388,22 +388,30 @@ for (const theme of ["light", "dark"] as const) {
   });
 }
 
-test("at a phone's width the page stands under the source, and nothing reaches past the window", async ({
+// Until release 0.3.1 a test here held the page under the source at a phone's width. Zemp
+// Lite is not laid out for a phone (open decision #243), and the narrowest window it is laid
+// out for is a tablet's held sideways: there the page stands beside the source, as on a desk.
+test("at a tablet's width the page stands beside the source, and nothing reaches past the window", async ({
   page,
   press,
 }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
   await scratch(page, press);
   await make(page, press);
   await expect(typst(page)).toHaveText(SET, { timeout: 60_000 });
-  await page.setViewportSize({ width: 390, height: 844 });
   const editor = (await page.getByRole("region", { name: "The paper's source" }).boundingBox())!;
   const pane = (await thePage(page).boundingBox())!;
-  expect(pane.y).toBeGreaterThanOrEqual(editor.y + editor.height - 1);
-  expect(editor.height).toBeGreaterThan(120);
-  expect(pane.height).toBeGreaterThan(120);
-  expect(Math.round(editor.width)).toBe(Math.round(pane.width));
-  expect(editor.x + editor.width).toBeLessThanOrEqual(390);
-  await expect(page.getByRole("separator", { name: "The width of the page" })).toBeHidden();
+  expect(pane.x).toBeGreaterThanOrEqual(editor.x + editor.width - 1);
+  expect(Math.abs(pane.y - editor.y)).toBeLessThan(2);
+  expect(editor.width).toBeGreaterThan(300);
+  expect(pane.width).toBeGreaterThan(300);
+  expect(pane.x + pane.width).toBeLessThanOrEqual(1024);
+  await expect(page.getByRole("separator", { name: "The width of the page" })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
 });
 
 // That a paper is found again after the page is loaded anew, with the place's panes, is held

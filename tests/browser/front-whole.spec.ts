@@ -1,7 +1,8 @@
 // The whole of what release 0.2.4 drew and 0.2.5 keeps (step 15 of 0.2.4; the landing page went
 // at 0.2.5, open decision #225): every screen of the front door, and Help as it now stands,
 // taken through the keyboard, 12.5 pixels, 4.5 to 1 and both themes, at a desk's width and a
-// phone's. Each screen has tests of its own for what it does (`start.spec`, `welcome.spec`,
+// tablet's held sideways (until release 0.3.1, a phone's: open decision #243 withdrew the phone's
+// layout, and each state then held at 375 pixels is held at 1,024). Each screen has tests of its own for what it does (`start.spec`, `welcome.spec`,
 // `help-home.spec`, `help-onpage.spec`); this one holds them all to the same floor, state by
 // state, so that a state none of those looks at is not left out.
 import type { Page } from "@playwright/test";
@@ -57,12 +58,12 @@ for (const theme of ["light", "dark"] as const) {
       await page.emulateMedia({ colorScheme: theme });
     });
 
-    test("the page of what is counted, at a desk's width and a phone's", async ({
+    test("the page of what is counted, at a desk's width and a tablet's", async ({
       page,
       browserName,
     }) => {
       const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
-      for (const width of [1440, 375]) {
+      for (const width of [1440, 1024]) {
         await page.setViewportSize({ width, height: 900 });
         await page.goto("/counted.html");
         await expect(page.getByRole("heading", { level: 1 })).toHaveText("What is counted");
@@ -80,7 +81,7 @@ for (const theme of ["light", "dark"] as const) {
         browserName,
       }) => {
         const tab = browserName === "webkit" ? "Alt+Tab" : "Tab";
-        for (const width of [1440, 375]) {
+        for (const width of [1440, 1024]) {
           await page.setViewportSize({ width, height: 900 });
           // While it comes: the engine's file held back.
           let release: () => void = () => {};
@@ -165,12 +166,12 @@ for (const theme of ["light", "dark"] as const) {
       await expect(recent.getByLabel("The new name of Six")).toBeVisible();
       await floor(page, "the project screen, a new name asked");
       await page.keyboard.press("Escape");
-      // On a phone: the same states of the list.
-      await page.setViewportSize({ width: 375, height: 900 });
-      await floor(page, "the project screen on a phone");
+      // At a tablet's width: the same states of the list.
+      await page.setViewportSize({ width: 1024, height: 768 });
+      await floor(page, "the project screen at a tablet's width");
       await press(recent.getByRole("button", { name: "Actions for Six", exact: true }));
       await expect(page.getByRole("menu", { name: "Actions for Six" })).toBeVisible();
-      await floor(page, "the project screen on a phone, a row's menu open");
+      await floor(page, "the project screen at a tablet's width, a row's menu open");
     });
 
     test("Help as it now stands: Home in its new look and a function's page, the list of the page beside the text and under its title", async ({

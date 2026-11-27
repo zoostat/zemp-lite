@@ -1,8 +1,8 @@
 // The whole of what release 0.3 drew (step 22): Help with its examples run, Paper in each of
 // its states, a script asked about its PDF, a file being read, and the Variables pane for a
-// text, each held to the same floor in both themes, at a desk's width and a phone's: nothing
-// under 12.5 pixels, nothing fainter than 4.5 to 1, nothing wider than the window at a desk's
-// width; and through the keyboard, every stop of the Tab key with a name. Each screen has
+// text, each held to the same floor in both themes, at a desk's width and a tablet's held
+// sideways (until release 0.3.1, a phone's: open decision #243): nothing under 12.5 pixels,
+// nothing fainter than 4.5 to 1, nothing wider than the window; and through the keyboard, every stop of the Tab key with a name. Each screen has
 // tests of its own for what it does; this one holds them all to one floor, state by state.
 import type { Locator, Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
@@ -11,7 +11,7 @@ import { expect, faintText, smallestText, test, write } from "./support";
 const READY = "engine Zeff 0.9.0 ready";
 const SET = /^Typst 0\.15\.1 · set in \d+ ms$/;
 const DESK = { width: 1280, height: 800 };
-const PHONE = { width: 390, height: 844 };
+const TABLET = { width: 1024, height: 768 };
 
 type Press = (target: Locator) => Promise<void>;
 
@@ -22,27 +22,24 @@ const reviews = (
 ).setup;
 
 /**
- * The floor every screen keeps to, at a desk's width and then at a phone's: sizes and
- * contrast at both; and at a desk's width nothing wider than the window. (At a phone's width
- * the workspace says, in a line of its own, that it is laid out for 1,200 pixels and has no
- * smaller layout yet: open decision #33.)
+ * The floor every screen keeps to, at a desk's width and then at a tablet's held sideways, the
+ * narrowest window Zemp Lite is laid out for (open decision #243): sizes and contrast at both,
+ * and nothing wider than the window at either.
  */
 async function floor(page: Page, what: string): Promise<void> {
   for (const [size, where] of [
     [DESK, "at a desk's width"],
-    [PHONE, "at a phone's width"],
+    [TABLET, "at a tablet's width"],
   ] as const) {
     await page.setViewportSize(size);
     expect(await smallestText(page), `${what}, ${where}: the smallest text`).toBeGreaterThanOrEqual(
       12.5,
     );
     expect(await faintText(page.locator("body")), `${what}, ${where}: faint text`).toEqual([]);
-    if (size === DESK) {
-      const over = await page.evaluate(
-        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      );
-      expect(over, `${what}: wider than the window`).toBeLessThanOrEqual(0);
-    }
+    const over = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(over, `${what}, ${where}: wider than the window`).toBeLessThanOrEqual(0);
   }
   await page.setViewportSize(DESK);
 }

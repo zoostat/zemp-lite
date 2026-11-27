@@ -29,7 +29,6 @@
   import Named from "../theme/Named.svelte";
   import Watermark from "../theme/Watermark.svelte";
   import FrontBar from "./FrontBar.svelte";
-  import NarrowLine from "./NarrowLine.svelte";
   import RowMenu from "./RowMenu.svelte";
   import { saveToComputer } from "./save";
   import { ENGINE } from "./version";
@@ -252,7 +251,6 @@
   });
 </script>
 
-<NarrowLine />
 <div class="screen">
   <Watermark />
   <FrontBar heading>
@@ -827,39 +825,5 @@
   .bottom .engine,
   .bottom .counted {
     color: var(--ink-2);
-  }
-  /* A narrow window: one column. A phone: the cards and the note one to a row, and the list
-     of projects first when there are any. */
-  @media (max-width: 900px) {
-    .welcome-main {
-      gap: 32px;
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .report {
-      display: none;
-    }
-  }
-  @media (max-width: 640px) {
-    .welcome-main {
-      padding: 24px 16px;
-    }
-    .actions,
-    .kept {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .kept {
-      gap: 14px;
-    }
-    .right.has {
-      order: -1;
-    }
-    .bottom {
-      flex-wrap: wrap;
-      gap: 4px 14px;
-      padding: 9px 16px;
-    }
-    .gap {
-      display: none;
-    }
   }
 </style>

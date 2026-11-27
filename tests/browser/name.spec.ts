@@ -86,13 +86,13 @@ for (const theme of ["light", "dark"] as const) {
     await page.setViewportSize({ width: 1100, height: 800 });
     await page.goto("/");
     await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
-    // Under 1,200 pixels the line at the top names the app.
     await drawnOn(page, "the welcome screen");
     expect(await faintText(page.locator("body"))).toEqual([]);
 
     await press(page.getByRole("button", { name: /^Scratch project/ }));
     await expect(page.getByRole("status")).toHaveText(READY);
-    await drawnOn(page, "a project, by its narrow line");
+    // (Until release 0.3.1 a project drew the name in the line a narrow window was shown; that
+    // line is gone, open decision #243, and a project shows the mark alone.)
 
     // Help: Home, with Zemp Lite's panel and the topic Using Zemp Lite; Topics; On this page.
     await press(
