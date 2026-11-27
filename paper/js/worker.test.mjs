@@ -16,9 +16,11 @@ assert.ok(
   "the Paper module is not built: run `npm run build:paper` first",
 );
 const font = (name) => new Uint8Array(fs.readFileSync(path.resolve(here, "..", "fonts", name)));
-const FACES = ["Regular", "Italic", "Bold", "BoldItalic"].map(
-  (face) => `LibertinusSerif-${face}.otf`,
-);
+// Every font of the folder, in the order of their names, as the page gives them.
+const FACES = fs
+  .readdirSync(path.resolve(here, "..", "fonts"))
+  .filter((name) => /\.(otf|ttf)$/.test(name))
+  .sort();
 const MAIN = "paper/paper.typ";
 
 // A worker, what it has said since it was last asked, and a way to wait for a message. The
@@ -63,7 +65,7 @@ test("the worker says it is ready, with Typst's version", async (t) => {
 test("a font is read before any paper is open, and a file that is no font is said to hold none", async (t) => {
   const { worker, next } = started(t);
   await next("ready");
-  worker.postMessage({ type: "font", id: 1, bytes: font(FACES[0]) });
+  worker.postMessage({ type: "font", id: 1, bytes: font("LibertinusSerif-Regular.otf") });
   assert.deepEqual(await next("fonted"), {
     type: "fonted",
     id: 1,

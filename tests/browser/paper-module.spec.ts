@@ -36,7 +36,13 @@ test("the build carries the module and its fonts, each with its packed file besi
   // Under the host's limit for one file (25 MiB), with room.
   expect(statSync(new URL(module, assets)).size).toBeLessThan(25 * 1024 * 1024);
   const fonts = built().filter((name) => /\.(otf|ttf)$/.test(name));
-  expect(fonts.map((name) => name.replace(/-[\w-]{8}\.otf$/, ".otf"))).toEqual([
+  // Each by its own name, the build's mark taken off it, in the order of those names.
+  expect(fonts.map((name) => name.replace(/-[\w-]{8}\.(otf|ttf)$/, ".$1")).sort()).toEqual([
+    "DejaVuSansMono-Bold.ttf",
+    "DejaVuSansMono-BoldOblique.ttf",
+    "DejaVuSansMono-Oblique.ttf",
+    "DejaVuSansMono.ttf",
+    "LibertinusMath-Regular.otf",
     "LibertinusSerif-Bold.otf",
     "LibertinusSerif-BoldItalic.otf",
     "LibertinusSerif-Italic.otf",
@@ -108,18 +114,20 @@ test("the module's worker starts in the browser, is given the fonts, and sets a 
         }
       };
       const ready = await next("ready");
-      let families: unknown = [];
+      // Each file's answer names the families read from it.
+      const read = new Set<string>();
       for (const font of fonts) {
         const bytes = new Uint8Array(await (await fetch(`/assets/${font}`)).arrayBuffer());
         started.postMessage({ type: "font", bytes }, [bytes.buffer]);
-        families = (await next("fonted"))["families"];
+        for (const family of (await next("fonted"))["families"] as string[]) read.add(family);
       }
+      const families = [...read].sort();
       started.postMessage({ type: "open", main: "paper/paper.typ" });
       await next("opened");
       started.postMessage({
         type: "text",
         path: "paper/paper.typ",
-        text: '#set page(paper: "a4")\n#set text(lang: "en")\n= Returns to schooling\n\nA paragraph, with *weight* and _stress_, and a formula: $x^2 + y^2$.\n',
+        text: '#show math.equation: set text(font: "Libertinus Math")\n#set page(paper: "a4")\n#set text(lang: "en")\n= Returns to schooling\n\nA paragraph, with *weight* and _stress_, a formula: $x^2 + y^2$, and code: `lm(y ~ x)`.\n',
       });
       await next("put");
       const before = performance.now();
@@ -152,14 +160,14 @@ test("the module's worker starts in the browser, is given the fonts, and sets a 
     { worker, fonts },
   );
   expect(got.typst).toBe("0.15.1");
-  expect(got.families).toEqual(["Libertinus Serif"]);
+  expect(got.families).toEqual(["DejaVu Sans Mono", "Libertinus Math", "Libertinus Serif"]);
   expect(got.ok).toBe(true);
   expect(got.pages).toHaveLength(1);
   expect(got.svg).toBe("<svg");
   expect(got.pdf).toBe("%PDF-");
   expect(got.place).toBe("paper/paper.typ");
-  // Until the face for mathematics is carried (step 11c), Typst says the text face is not one.
-  expect(got.said.every((message) => /math/.test(message))).toBe(true);
+  // Nothing is said: text, mathematics and code each find their face among the fonts given.
+  expect(got.said).toEqual([]);
   // The same bytes in every browser: held to the PDF Node's build of the module writes, which
   // the module's own tests hold in turn.
   test.info().annotations.push({ type: "pdf", description: got.digest });
