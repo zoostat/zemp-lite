@@ -130,7 +130,13 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **For the owner to read, when he wishes (added at step 22).** The new page **Papers and PDFs** in Help's **Using Zemp Lite** (`src/using/pages/papers-and-pdfs.md`, five short sections); the paragraph on files opened to be read, in **Projects, scripts and files**; and the draft of the release notes (`docs/releases/0.3-notes.md`).
 
-**Next.** Step 23 `[function]`: the pre-release routine.
+**Done, step 23 `[function]`: the pre-release routine. Every step of the checklist is ticked.** On commit `78a2bb5`, with the pictures made afresh: GitHub's check green in both browsers (550 unit tests, 825 browser tests, 3 skipped by design); sent to the trial address and then to the address, all 18 checks passing at each; the ten sample projects opened and read in the app; the walk at `https://lite.zeff-lang.dev` in both engines as a first visitor (a `glm` fit and its ROC curve, a page of Help with its examples run, Paper for the first time, a PDF saved) and as a returning one (a project of the earlier engine moved and run). Here the routine is green but five WebKit tests that timed out at a mouse click when the screen locked; they pass by themselves. The notes are complete but for the date (`docs/releases/0.3-notes.md`); the review of the registers is in `docs/decisions.md`.
+
+**One deployment did not happen, and nothing is wrong with the build.** Step 22's commit passed GitHub's check, but the machine that deploys could not install its test browsers (a package server refused it). The next commit was deployed in the ordinary way.
+
+**Next.** The release itself, on the owner's word: "Release 0.3" sets the version, makes the pictures that show it, tags `v0.3.0` and publishes the notes. Nothing else is owed before it.
+
+**For the owner to decide.** When to release. Before it, if he wishes to read them: the page **Papers and PDFs**, the sample paper, the two sample PDFs of a script with its output (`docs/releases/0.3-samples/`), and the notes.
 
 **For the coordinating session (added at step 21).** Of #209's table at Zemp 0.3: the opaque column's row waits for the engine's opaque types (after 1.0), and the ordered category's cumulative share and median level for an engine release that prints them. The reading taken where the table is silent: a text of many values whose values all differ is called an identifier only where they are all of one length.
 
