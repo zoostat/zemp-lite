@@ -116,7 +116,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **For the owner to decide, at step 18.** Whether the layout of the sample PDFs is the one **Export script with output** is to write: A4 upright, the code and the prints in a typewriter face at 8.5 points with grey line numbers, a print behind a thin rule and a warning behind a heavier one, figures at about three quarters of the width, black on white with no colour. Taken on his behalf, as he asked, and his to change: step 18 goes on with this layout.
 
-**Next.** Step 18 `[function]`: **Export script with output**, in the Script place's bar and in ⌘K.
+**Done, step 18 `[function]`.** **Export script with output**, in the Script place's bar and in ⌘K, saves the script with what each statement printed, said and drew as a PDF under the script's name, in the layout of the samples. A script not yet run is offered **Run, then export** or **Export the script alone**. Typst is fetched by the first use, the status line saying its size, and not again. The file is the same whatever the window's width and in both browsers, and the same the engine and Typst give under Node: one digest in the three. Green here: the whole routine (528 unit tests; 785 browser tests in both browsers, 3 skipped).
+
+**Next.** Step 19 `[function]`: a project's other text files opened to be read (#228, option A).
 
 **For the owner to read, when he wishes (added at step 15c).** The sample paper a first visitor meets in Paper: its two sentences, its equation, and the captions of its table and its figure (`examples/scratch/paper/paper.typ`), and the comments of the script that writes them (`examples/scratch/scripts/paper.zeff`).
 

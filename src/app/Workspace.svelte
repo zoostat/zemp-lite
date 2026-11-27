@@ -202,6 +202,14 @@
           },
         ]),
     {
+      name: "Export script with output",
+      hint: `${shownFile.endsWith(".zeff") ? shownFile : workspace.scriptPath} with what it printed, said and drew, as a PDF`,
+      run: () => {
+        workspace.show(fileTab(shownFile.endsWith(".zeff") ? shownFile : workspace.scriptPath));
+        void workspace.exportScript();
+      },
+    },
+    {
       name: "Report a problem",
       hint: "a bug report built here, nothing sent",
       run: () => void workspace.reportProblem(),

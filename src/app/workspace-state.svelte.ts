@@ -6,7 +6,11 @@ import { Examples } from "../engine/examples";
 import type { Drawn, ExampleRuns } from "../help/runs.svelte";
 import type { Papers } from "../paper/lazy";
 import { NOTHING_TO_RUN, writersOf, type Writer } from "../paper/exports";
+import { share } from "../paper/fetching";
+import { PAPER_TRAVELS } from "../paper/lazy";
 import { LivePage } from "../paper/live.svelte";
+import { megabytes } from "../paper/place";
+import { scriptDocument } from "../paper/script-document";
 import {
   WRITTEN,
   digestOf,
@@ -2313,6 +2317,135 @@ export class Workspace {
     } catch (error) {
       this.status = `the PDF could not be written: ${(error as Error).message}`;
     }
+  }
+
+  /**
+   * A script whose export waits on the reader's word, because it has not been run and so has
+   * no output to set (step 18): its path, or `null`. The Script place asks, in a line of its own.
+   */
+  exportAsking = $state<string | null>(null);
+
+  /**
+   * The run as the document sets it: each statement's print as `zeff run` prints it, at the
+   * engine's own width and not at the width of the reader's window, and each plot as the
+   * engine lays it out for a page. The engine makes both from what its last run kept; where
+   * it holds another text's run, the text of the page's run is run again, once, with nothing
+   * told, which by the determinism of the engine gives the same results.
+   */
+  async #forDocument(run: Run): Promise<{ run: Run; figures: Record<number, string> }> {
+    const copy = $state.snapshot(run) as Run;
+    let prints = await this.#reprinted(run, 0);
+    if (prints === null) {
+      try {
+        await this.#saving;
+        const outcome = await this.session.run(run.script, run.text, undefined, 0);
+        prints = outcome.statements.map(({ line, stdout }) => ({ line, stdout }));
+      } catch {
+        // The prints stay as the page has them.
+      }
+    }
+    for (const statement of copy.statements) {
+      const again = prints?.find((one) => one.line === statement.line);
+      if (again !== undefined && statement.mark === undefined) statement.printed = again.stdout;
+    }
+    copy.width = 0;
+    const figures: Record<number, string> = {};
+    for (const plot of plotsOf(copy)) {
+      try {
+        // A page of 150 by 100 millimetres, as a figure of a paper of one column.
+        const laid = await this.engine.plotSvg(run.script, run.text, plot.line, 150, 100);
+        if (laid.held && laid.svg !== null) figures[plot.line] = laid.svg;
+      } catch {
+        // The statement's print stands without its figure.
+      }
+    }
+    return { run: copy, figures };
+  }
+
+  /**
+   * Export script with output (release 0.3, step 18; the Zemp Specification, section 5): the
+   * script shown, with what the engine printed, said and drew under each statement, set by
+   * Typst and saved to the computer as a PDF under the script's name. A script that has not
+   * been run has no output: the reader is asked (`exportAsking`) whether to run it first
+   * (`how` is then `"run"`) or to export the script alone (`"alone"`). Typst is fetched the
+   * first time it is needed, the status line saying its size and how far it has come.
+   */
+  async exportScript(how: "ask" | "run" | "alone" = "ask"): Promise<void> {
+    if (this.running) return;
+    const shown = this.activePath;
+    const script = shown !== null && shown.endsWith(".zeff") ? shown : this.scriptPath;
+    await this.#load(script);
+    const ranOf = () => {
+      const last = this.lastRun;
+      return last !== null && last.script === script && !last.checkOnly ? last : null;
+    };
+    if (ranOf() === null && how === "ask") {
+      this.exportAsking = script;
+      return;
+    }
+    this.exportAsking = null;
+    if (this.papers === null) {
+      this.status = "this window cannot fetch Typst, so no PDF can be written";
+      return;
+    }
+    if (how === "run") await this.run(script);
+    const page = how === "alone" ? null : ranOf();
+    if (page !== null && page.state === "running") return;
+    const name = `${(script.split("/").pop() ?? "script").replace(/\.zeff$/i, "")}.pdf`;
+    this.running = true;
+    const before = this.#busy;
+    const work = (async () => {
+      await before;
+      try {
+        const size = PAPER_TRAVELS === null ? "" : `, ${megabytes(PAPER_TRAVELS)}`;
+        if (!this.papers?.ready) this.status = `fetching Typst${size}: 0%`;
+        const module = await (this.papers as Papers).module((progress) => {
+          this.status = `fetching Typst${size}: ${share(progress)}%`;
+        });
+        this.status = `setting ${script} with its output`;
+        await this.#saving;
+        const text = this.buffers[script]?.text ?? "";
+        const { ranges } = await this.engine.reading(script, text);
+        const made = page === null ? { run: null, figures: {} } : await this.#forDocument(page);
+        const document = scriptDocument({
+          project: this.project.info.name,
+          script,
+          engine: this.engineVersion ?? ENGINE,
+          text,
+          ranges,
+          run: made.run,
+          figures: made.figures,
+        });
+        // Typst holds one paper at a time: the live page of a paper is let go, and is made
+        // again when the Paper place is next shown with it.
+        await this.paperLive?.settled();
+        this.closeLive();
+        await module.open(document.main);
+        await module.putText(document.main, document.text);
+        for (const file of document.files) {
+          await module.putBytes(file.path, new TextEncoder().encode(file.text));
+        }
+        const set = await module.set();
+        if (!set.ok) {
+          const said =
+            set.said.find((one) => one.severity === "error")?.message ?? "no reason given";
+          this.status = `the script with its output could not be set: ${said}`;
+          return;
+        }
+        const bytes = await module.pdf(null);
+        saveToComputer(name, bytes, "application/pdf");
+        this.status = `saved as ${name}`;
+      } catch (error) {
+        this.status = `the PDF could not be written: ${(error as Error).message}`;
+      } finally {
+        this.running = false;
+        // A paper that is on the screen is set again by the module that was borrowed.
+        const open = this.paperShown;
+        if (this.views.active === PAPER && open.kind === "paper") this.showLive(open.path);
+      }
+    })();
+    this.#busy = work;
+    await work;
   }
 
   /** Let the live page go: no paper is shown. */

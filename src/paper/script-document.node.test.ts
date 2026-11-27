@@ -6,6 +6,7 @@
 // Typst sets it with the fonts the page carries: nothing refused, every print in it as the
 // engine printed it, every figure the engine's own. With `ZEMP_KEEP_SCRIPT_SAMPLES=1` the PDF
 // of each is written to `docs/releases/0.3-samples/`, for the owner to read.
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -59,15 +60,18 @@ function typst(): { Paper: new (main: string) => Paper } {
 
 const zeff = engine();
 
-/** A script of the Scratch project, run: the run as the app hears it, and its figures. */
-function ran(name: string): {
+/** A script run as one of the Scratch project's: the run as the app hears it, and its figures. */
+function ran(
+  name: string,
+  from = "examples/scratch",
+): {
   text: string;
   ranges: Ranged[];
   run: Run;
   figures: Record<number, string>;
 } {
   const script = `scripts/${name}`;
-  const text = read(`examples/scratch/${script}`).toString("utf8");
+  const text = read(`${from}/${script}`).toString("utf8");
   const project = new zeff.Project("scratch");
   project.add_file("zeff.toml", read("examples/scratch/zeff.toml"));
   project.add_file(script, new TextEncoder().encode(text));
@@ -182,4 +186,27 @@ describe("a script of the Scratch project with its output, set by Typst", () => 
       }
     });
   }
+});
+
+describe("the example the browser tests are written on, with its output", () => {
+  it("is, set by Typst, the file Export script with output saves in a browser: one digest", () => {
+    // The digest `tests/browser/script-pdf.spec.ts` holds the saved file to, in both engines.
+    const { text, ranges, run, figures } = ran("main.zeff", "tests/scripts/example");
+    const made = scriptDocument({
+      project: "Scratch",
+      script: "scripts/main.zeff",
+      engine: zeff.engineVersion(),
+      text,
+      ranges,
+      run,
+      figures,
+    });
+    const { told, pdf } = set(made);
+    expect(told.said).toEqual([]);
+    expect(
+      createHash("sha256")
+        .update(pdf as Uint8Array)
+        .digest("hex"),
+    ).toBe("eb52760f754b5e80187f1282448ab3239f9d662674af1964826f67f68d800fd2");
+  });
 });

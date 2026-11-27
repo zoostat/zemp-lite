@@ -3327,3 +3327,21 @@ The wait is there at the trial address every time and at the address once in fou
 **Tests.** Unit, eight: a text in quotes keeps every character and is read back as it was; the size of a print, at the page's width, for a wide table and at its least; the head and the foot, with nothing of the hour in them; the script as typed in pieces, each with its output under it and its figure beside the document; every character of the prints and of the script held; an edited statement, those below it and one added said to be so, with no old table, count or figure in the document; a script not run; what the check found before the script, and how a run ended. With the engine and Typst under Node, three: each script of the Scratch project is run, its document made from the run as the app hears it, and set with nothing refused, each figure read, and all of what `zeff run` prints there in order; set twice, the same file.
 
 **Reason.** The row of 0.3 in section 15 of the Zemp Specification ("**Export script with output** as PDF"), its section 5 ("writes the script with every output unfolded… with the engine version"; "exported tables and plots always use the light print theme"); open decision #172.
+
+## 27 November 2026: release 0.3, step 18: Export script with output
+
+**The layout is the one of the samples of step 17**, taken on the owner's behalf as he asked ("take all decisions on my behalf") and his to change: the two sample PDFs are with him, and a change of the layout is a change of one file (`src/paper/script-document.ts`) and of the kept digest.
+
+**The command** stands in the Script place's bar, before **Fold all**, under its name in the specification, **Export script with output**, and in ⌘K under the same name. It saves a PDF under the script's name (`main.pdf`), and the status line says "saved as main.pdf". It is idle while the engine runs.
+
+**A script that has not been run** has no output to set. The command then asks, in a line of the place and not in a window over it: "scripts/main.zeff has not been run, so it has no output to set." with **Run, then export** (the script is run, its results are on the page, and the PDF is the one a run and an export give), **Export the script alone** (the script as typed, with nothing run) and **Cancel**.
+
+**The prints are the engine's own, at its own width**, not the screen's: on the screen a table is printed at the width of the reader's window, and a document made from that would change with the window. The engine prints each statement again at its own width (118 characters, what `zeff run` prints) from what its last run kept, with nothing run; where it holds another text's run, the page's text is run once more, quietly, which by the determinism of the engine gives the same results. So the same script and run give the same file whatever the window, and a test saves it at two widths. Each plot is laid out by the engine for a page of 150 by 100 millimetres.
+
+**Typst is fetched the first time it is needed**, by this command as by a first paper: the status line says its size and how far it has come ("fetching Typst, 7.5 MB: 42%"), and a second export fetches nothing. Typst holds one paper at a time: a paper open in the Paper place gives way while the script is set, and is set again when Paper is next shown.
+
+**One file in three places.** The saved PDF of the example the browser tests are written on is held by its SHA-256 (`eb52760f…`) in Chromium, in WebKit, and under Node, where the engine runs the script and Typst sets the document with no browser at all: the file a reader saves is the one those two give.
+
+**Tests.** With the engine and Typst under Node: the example's document set to the kept digest. Browser, both engines, three: a script that has run saved with its output, its name, the kept digest, Typst and its nine fonts fetched by the first use and nothing by the second, the same bytes again, and again from ⌘K in a narrower window; a script not run asked about, cancelled with nothing done, exported alone with no run, and run then exported to the kept digest, and not asked a second time; a paper open in Paper set again after Typst was used for a script.
+
+**Reason.** The row of 0.3 in section 15 of the Zemp Specification; its section 5 ("A ⌘K command **Export script with output** writes the script with every output unfolded"); open decision #172.

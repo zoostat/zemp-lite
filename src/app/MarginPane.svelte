@@ -267,6 +267,15 @@
     >
     <span class="copied" aria-live="polite" data-testid="copied">{workspace.copied}</span>
     <span class="gap"></span>
+    {#if path.endsWith(".zeff")}
+      <button
+        class="word"
+        disabled={workspace.running}
+        onclick={() => void workspace.exportScript()}
+        title="The script with what each statement printed, said and drew, as a PDF saved to this computer"
+        >Export script with output</button
+      >
+    {/if}
     <button
       class="view"
       onclick={() => workspace.setUnfolded(path, [])}
@@ -289,6 +298,21 @@
     right={[paneOf(workspace, "script", "notes", null)]}
     bar={controls}
   >
+    {#if workspace.exportAsking === path}
+      <!-- A script that has not been run has no output to set: the reader says which is meant. -->
+      <div class="asking" role="group" aria-label="Export script with output">
+        <span>
+          <span class="mono">{path}</span> has not been run, so it has no output to set.
+        </span>
+        <button class="word strong" onclick={() => void workspace.exportScript("run")}
+          >Run, then export</button
+        >
+        <button class="word" onclick={() => void workspace.exportScript("alone")}
+          >Export the script alone</button
+        >
+        <button class="word" onclick={() => (workspace.exportAsking = null)}>Cancel</button>
+      </div>
+    {/if}
     <div class="place">
       <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
         <div
@@ -379,6 +403,46 @@
   }
   .gap {
     flex: 1;
+  }
+  /* A command of the bar that is a word, and the line that asks before a script not yet run
+     is exported. */
+  .word {
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    color: var(--ink-2);
+    cursor: pointer;
+    flex: none;
+    font: inherit;
+    font-size: 13.5px;
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+  .word:hover:not(:disabled) {
+    background: var(--soft);
+  }
+  .word:disabled {
+    color: var(--ink-3);
+    cursor: default;
+  }
+  .word:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+  .word.strong {
+    border: 1px solid var(--line-strong);
+    color: var(--ink);
+  }
+  .asking {
+    align-items: center;
+    background: var(--softer);
+    border-bottom: 1px solid var(--line-strong);
+    color: var(--ink-2);
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    font-size: 13.5px;
+    gap: 8px;
+    padding: 8px 14px;
   }
   .copied {
     color: var(--ok);
