@@ -133,6 +133,10 @@ class Stand implements Typesetter {
       ),
     );
   }
+  pdf(created: Date | null): Promise<Uint8Array> {
+    this.asked.push(`pdf ${created === null ? "with no time" : created.toISOString()}`);
+    return Promise.resolve(encode(`%PDF ${this.#pages.join("|")}`));
+  }
   /** A point of a page leads to the line at its height, and nowhere from the margin. */
   click(page: number, x: number, y: number): Promise<Place | null> {
     this.asked.push(`click ${page}`);
@@ -401,6 +405,22 @@ describe("a paper set as it is typed", () => {
     const back = await live.set(text);
     expect(live.files).toEqual(["output/fit.typ", "output/wages.svg"]);
     expect(await live.drawn(back.pages, 0)).toContain("<svg a third time/>");
+  });
+
+  it("writes the PDF of the paper as it last set, with no time in it, and never of an earlier setting", async () => {
+    const module = new Stand();
+    const live = new Live(module, project({}).read, MAIN, clock());
+    const pages = (await live.set("One.\n#pagebreak()\nTwo.\n")).pages;
+    const pdf = await live.pdf(pages);
+    expect(new TextDecoder().decode(pdf ?? new Uint8Array())).toBe("%PDF One.\n|Two.\n\n");
+    expect(module.asked.filter((one) => one.startsWith("pdf"))).toEqual(["pdf with no time"]);
+    // A paper that has never set has no PDF; nor has a setting the paper has left behind.
+    expect(await live.pdf([])).toBe(null);
+    const again = live.set("Another.\n");
+    const stale = live.pdf(pages);
+    await again;
+    expect(await stale).toBe(null);
+    expect(module.asked.filter((one) => one.startsWith("pdf"))).toHaveLength(1);
   });
 
   it("stops asking where a paper's files never end", async () => {

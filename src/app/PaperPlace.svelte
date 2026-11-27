@@ -283,6 +283,13 @@
     >
   {/if}
   <span class="gap"></span>
+  {#if path !== null}
+    <button
+      class="word"
+      onclick={() => void workspace.exportPdf()}
+      title="The paper as a PDF, set by Typst, saved to this computer">Export PDF…</button
+    >
+  {/if}
   <button
     class="word"
     onclick={begin}

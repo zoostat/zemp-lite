@@ -174,6 +174,17 @@ export class LivePage {
     return this.#live.place(outcome.pages, index, x, y).catch(() => null);
   }
 
+  /**
+   * The PDF of the paper as it stands, once it has been set from its present text: Typst's
+   * own file, with no time in it. `null` where Typst refuses the text, or the paper is left.
+   */
+  async pdf(): Promise<Uint8Array | null> {
+    await this.settled();
+    const outcome = this.outcome;
+    if (this.#closed || outcome === null || !outcome.ok || this.failed !== null) return null;
+    return this.#live.pdf(outcome.pages);
+  }
+
   /** Resolves once the paper has been set from its text as it stands, or is left. */
   settled(): Promise<void> {
     if (!this.busy || this.#closed) return Promise.resolve();

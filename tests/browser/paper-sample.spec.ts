@@ -3,6 +3,8 @@
 // script of the project exports; the sample is fetched only then; and **Run** makes its table
 // and its figure again, to the same page.
 import type { Locator, Page } from "@playwright/test";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { countRuns, expect, test, write } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
@@ -147,4 +149,66 @@ test("the sample is given once: taken out of Paper, it is not put back when Pape
   await expect(page.getByTestId("paper-path")).toHaveCount(0);
   // The note that it was given is kept by the browser.
   expect(await page.evaluate(() => localStorage.getItem("zemp-scratch-paper"))).toBe("given");
+});
+
+/** The sample paper's PDF with no time in it, by its SHA-256, as the module's own tests hold it. */
+const PDF = "2df5a0d6899096dd7b79ff34f48c3df9ee530b36e49af7f6951dc8985bd0affb";
+
+test("Export PDF… saves the sample paper as Typst sets it: the kept bytes, in every browser, and the same when saved again", async ({
+  page,
+  press,
+}) => {
+  test.slow();
+  await scratch(page, press);
+  await press(places(page).getByRole("button", { name: "Paper" }));
+  await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
+  const saved = async (ask: () => Promise<void>) => {
+    const [download] = await Promise.all([page.waitForEvent("download"), ask()]);
+    const file = await download.path();
+    return { name: download.suggestedFilename(), bytes: readFileSync(file) };
+  };
+  const digest = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+  // The paper set, the button in the place's bar saves it under the paper's name.
+  const button = bar(page).getByRole("button", { name: "Export PDF…" });
+  await expect(foot(page)).toHaveText(SET, { timeout: 60_000 });
+  const first = await saved(() => press(button));
+  expect(first.name).toBe("paper.pdf");
+  expect(first.bytes.subarray(0, 5).toString()).toBe("%PDF-");
+  expect(digest(first.bytes)).toBe(PDF);
+  await expect(page.getByRole("status")).toHaveText("saved as paper.pdf");
+  // No time and nothing of this machine is in it; Typst says it made it.
+  const text = first.bytes.toString("latin1");
+  expect(text).not.toContain("/CreationDate");
+  expect(text).not.toContain("/ModDate");
+  expect(text).toContain("Typst 0.15.1");
+  // From ⌘K, a moment later: the same bytes.
+  const again = await saved(async () => {
+    await page.keyboard.press("ControlOrMeta+k");
+    const box = page.getByRole("combobox", { name: "Type a command" });
+    await box.fill("export pdf");
+    await expect(
+      page.getByRole("dialog", { name: "Commands" }).getByRole("option").first(),
+    ).toContainText("Paper: export PDF… paper.typ");
+    await box.press("Enter");
+  });
+  expect(again.name).toBe("paper.pdf");
+  expect(digest(again.bytes)).toBe(PDF);
+  // A word typed: another paper, and so another file, saved as the text stands.
+  const source = page.getByRole("textbox", { name: "The paper's source" });
+  await source.focus();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.insertText("\nOne sentence more.\n");
+  const changed = await saved(() => press(button));
+  expect(digest(changed.bytes)).not.toBe(PDF);
+  expect(changed.bytes.length).toBeGreaterThan(100_000);
+  // Where Typst refuses the text no file is written, and the status line says why.
+  await page.keyboard.insertText("#nosuch()\n");
+  await expect(page.getByTestId("paper-standing")).toContainText("Typst refuses the text");
+  let downloads = 0;
+  page.on("download", () => (downloads += 1));
+  await press(button);
+  await expect(page.getByRole("status")).toHaveText(
+    "Typst refuses the paper as it stands: no PDF is written",
+  );
+  expect(downloads).toBe(0);
 });

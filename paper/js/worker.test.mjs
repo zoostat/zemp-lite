@@ -270,3 +270,40 @@ test("a message the worker cannot act on is answered, not passed over", async (t
   assert.deepEqual(await next("error"), { type: "error", id: 5, message: "no paper is set" });
   assert.deepEqual(said, []);
 });
+
+test("the sample paper's PDF with no time in it is the kept file, and with a time the desktop Typst's", async (t) => {
+  // The same two digests the module's own tests hold natively (`tests/pdf.rs`): here of the
+  // module as the browser loads it.
+  const { worker, next } = await opened(t);
+  const scratch = (file) => fs.readFileSync(path.resolve(here, "../../examples/scratch", file));
+  worker.postMessage({ type: "text", path: MAIN, text: scratch("paper/paper.typ").toString() });
+  await next("put");
+  worker.postMessage({
+    type: "text",
+    path: "output/returns.typ",
+    text: scratch("output/returns.typ").toString(),
+  });
+  await next("put");
+  worker.postMessage({
+    type: "bytes",
+    path: "output/schooling.svg",
+    bytes: new Uint8Array(scratch("output/schooling.svg")),
+  });
+  await next("put");
+  worker.postMessage({ type: "set" });
+  const set = await next("set");
+  assert.equal(set.ok, true);
+  assert.deepEqual(set.said, []);
+  assert.equal(set.pages.length, 1);
+  const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
+  worker.postMessage({ type: "pdf", created: null });
+  assert.equal(
+    digest((await next("pdf")).bytes),
+    "2df5a0d6899096dd7b79ff34f48c3df9ee530b36e49af7f6951dc8985bd0affb",
+  );
+  worker.postMessage({ type: "pdf", created: 1_796_126_400 });
+  assert.equal(
+    digest((await next("pdf")).bytes),
+    "bbee9dbe151604ed73ea07ae43cde6459b209b86eae40c7b2020ec0c6b3effba",
+  );
+});

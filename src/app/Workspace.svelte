@@ -228,6 +228,14 @@
       ? []
       : [
           {
+            name: `Paper: export PDF… ${workspace.paperShown.path.split("/").pop()}`,
+            hint: "the paper as a PDF, set by Typst, saved to this computer",
+            run: () => {
+              workspace.openPaper();
+              void workspace.exportPdf();
+            },
+          },
+          {
             name: `Paper: close ${workspace.paperShown.path.split("/").pop()}`,
             hint: "the file stays in the project",
             run: () => {

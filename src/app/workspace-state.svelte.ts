@@ -2283,6 +2283,38 @@ export class Workspace {
     return true;
   }
 
+  /**
+   * Export PDF… (release 0.3, step 16): the paper the place has open, set by Typst from its
+   * text as it stands, saved to the computer as a PDF under the paper's name. The file holds
+   * no time and nothing of this machine: the same paper gives the same bytes in every browser,
+   * on every day. Where Typst refuses the text no file is written, and the status line says so:
+   * the pages still shown are of an earlier text, and a PDF of them would not be the paper.
+   */
+  async exportPdf(): Promise<void> {
+    const open = this.paperShown;
+    if (open.kind === "none") {
+      this.status = "no paper is open: there is nothing to export";
+      return;
+    }
+    const live = this.paperLive;
+    if (live === null || live.main !== open.path) {
+      this.status = "the paper is not set yet: Typst is still being fetched";
+      return;
+    }
+    try {
+      const bytes = await live.pdf();
+      if (bytes === null) {
+        this.status = "Typst refuses the paper as it stands: no PDF is written";
+        return;
+      }
+      const name = `${(open.path.split("/").pop() ?? "paper").replace(/\.typ$/i, "")}.pdf`;
+      saveToComputer(name, bytes, "application/pdf");
+      this.status = `saved as ${name}`;
+    } catch (error) {
+      this.status = `the PDF could not be written: ${(error as Error).message}`;
+    }
+  }
+
   /** Let the live page go: no paper is shown. */
   closeLive(): void {
     this.paperLive?.close();

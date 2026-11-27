@@ -16,6 +16,7 @@ export interface Typesetter {
   page(index: number): Promise<string>;
   outline(): Promise<Heading[]>;
   click(page: number, x: number, y: number): Promise<Place | null>;
+  pdf(created: Date | null): Promise<Uint8Array>;
 }
 
 /** A file of the project, as its bytes; `null` where the project holds none at that path. */
@@ -246,6 +247,20 @@ export class Live {
     if (page === undefined) return Promise.resolve(null);
     return this.#inTurn(async () =>
       this.#current[index] === page.mark ? this.#module.click(index, x, y) : null,
+    );
+  }
+
+  /**
+   * The PDF of the paper as it last set, as Typst writes it, with no time in it: the same
+   * bytes whenever and wherever it is written. `pages` are those of the outcome it is asked
+   * of; `null` where the paper has been set again since, or has no page.
+   */
+  pdf(pages: readonly Page[]): Promise<Uint8Array | null> {
+    if (pages.length === 0) return Promise.resolve(null);
+    return this.#inTurn(async () =>
+      pages.map((page) => page.mark).join() === this.#current.join()
+        ? this.#module.pdf(null)
+        : null,
     );
   }
 
