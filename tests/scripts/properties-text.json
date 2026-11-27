@@ -1,0 +1,45 @@
+{
+  "setup": "let reviews = frame(\n    id = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],\n    stars = [1, 3, 5, 2, 4, 1, 3, 5, 2, 4, 1, 3, 5, 2, 4, 1, 3, 5, 2, 4, 1, 3, 5, 2, 4, 1, 3, 5, 2, 4, 1, 3, 5, 2, 4, 1, 3, 5, 2, 4],\n    review = [\n        \"Good value, arrived on time. (1)\",\n        \"Works as described; the manual is thin. (2)\",\n        \"Too small for me; returned it after a week of trying. (3)\",\n        \"\",\n        \"Fine. (5)\",\n        \"Exactly what the kitchen needed, and quiet. (6)\",\n        \"Stopped charging after a month. The shop replaced it without a word of trouble. (7)\",\n        NA,\n        \"Dear for what it is. (9)\",\n        \"This arrived two days late and the box was damaged, though the thing itself works as it should; I wrote to the seller, who answered the same evening and offered a part of the price back, which I took.\",\n        \"Good value, arrived on time. (11)\",\n        \"No comment.\",\n        \"No comment.\",\n        \"The colour is not the one in the picture, but I have kept it. (14)\",\n        \"Fine. (15)\",\n        \"Exactly what the kitchen needed, and quiet. (16)\",\n        \"Stopped charging after a month. The shop replaced it without a word of trouble. (17)\",\n        \"A gift for my father, who uses it every morning. (18)\",\n        \"Dear for what it is. (19)\",\n        \"Sturdy, plain, and it does the one thing well. (20)\",\n        \"As described.\",\n        \"As described.\",\n        \"As described.\",\n        \"The colour is not the one in the picture, but I have kept it. (24)\",\n        \"Fine. (25)\",\n        \"Exactly what the kitchen needed, and quiet. (26)\",\n        \"Stopped charging after a month. The shop replaced it without a word of trouble. (27)\",\n        \"A gift for my father, who uses it every morning. (28)\",\n        \"Dear for what it is. (29)\",\n        \"Sturdy, plain, and it does the one thing well. (30)\",\n        \"Good value, arrived on time. (31)\",\n        \"Works as described; the manual is thin. (32)\",\n        \"Too small for me; returned it after a week of trying. (33)\",\n        \"The colour is not the one in the picture, but I have kept it. (34)\",\n        \"Fine. (35)\",\n        \"Exactly what the kitchen needed, and quiet. (36)\",\n        \"Stopped charging after a month. The shop replaced it without a word of trouble. (37)\",\n        \"A gift for my father, who uses it every morning. (38)\",\n        \"Dear for what it is. (39)\",\n        \"Sturdy, plain, and it does the one thing well. (40)\"\n    ]\n)\n",
+  "cases": [
+    {
+      "key": "lengthsFrame",
+      "statement": "let zemp_lengths = reviews.add(zemp_n_chars = n_chars(review))",
+      "printed": ""
+    },
+    {
+      "key": "lengths",
+      "statement": "zemp_lengths.summary([zemp_n_chars])",
+      "printed": "summary · zemp_lengths\n\n  variable        N   missing     mean       sd     min       max\n  zemp_n_chars   39         1   44.487   34.971   0.000   200.000\n"
+    },
+    {
+      "key": "lengthRange",
+      "statement": "zemp_lengths.quantile(zemp_n_chars, p: [0, 0.5, 1])",
+      "printed": "0\n47\n200\n"
+    },
+    {
+      "key": "empty",
+      "statement": "reviews.add(zemp_empty = review == \"\").tabulate(zemp_empty)",
+      "printed": "tabulate · the frame · zemp_empty\n\n  zemp_empty    N       %\n  false        38    95.0\n  true          1     2.5\n  NA            1     2.5\n  ───────────────────────\n  Total        40   100.0\n"
+    },
+    {
+      "key": "first",
+      "statement": "reviews.head(5).select([review])",
+      "printed": "frame · 5 rows × 1 variable\n\n      review\n  1   Good value, arrived on time. (1)\n  2   Works as described; the manual is thin. (2)\n  3   Too small for me; returned it after a week of trying. (3)\n  4\n  5   Fine. (5)\n"
+    },
+    {
+      "key": "repeats",
+      "statement": "reviews.duplicates([review])",
+      "printed": "duplicates · review\n\n  review          copies\n  As described.        3\n  No comment.          2\n"
+    },
+    {
+      "key": "distinct",
+      "statement": "n_distinct(reviews[\"review\"])",
+      "printed": "37\n"
+    },
+    {
+      "key": "missing",
+      "statement": "reviews.add(zemp_missing = is_missing(review)).tabulate(zemp_missing)",
+      "printed": "tabulate · the frame · zemp_missing\n\n  zemp_missing    N       %\n  false          39    97.5\n  true            1     2.5\n  ─────────────────────────\n  Total          40   100.0\n"
+    }
+  ]
+}

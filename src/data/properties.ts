@@ -13,7 +13,28 @@ import type { Variable } from "../engine/messages";
 import { named } from "./zeff";
 
 export type Key =
-  "summary" | "quartiles" | "distinct" | "values" | "missing" | "least" | "greatest";
+  | "summary"
+  | "quartiles"
+  | "distinct"
+  | "values"
+  | "missing"
+  | "least"
+  | "greatest"
+  // A text of many values (open decision #209; release 0.3, step 20).
+  | "lengthsFrame"
+  | "lengths"
+  | "lengthRange"
+  | "empty"
+  | "first"
+  | "repeats";
+
+/**
+ * The frame the pane has the engine make for a text of many values, and its column of each
+ * value's length in characters (`n_chars`): the engine counts the lengths, and its own
+ * histogram of that column is the chart the pane draws.
+ */
+export const LENGTHS_FRAME = "zemp_lengths";
+export const LENGTHS = "zemp_n_chars";
 
 export interface Asked {
   key: Key;
@@ -28,10 +49,20 @@ export function kindOf(variable: Pick<Variable, "type" | "bars">): {
   few: boolean;
   /** A date or a time of many values: its least and its greatest. */
   moment: boolean;
+  /**
+   * A text of many values (a review, a comment, an open answer): the lengths of its values,
+   * its empty and missing rows, its first values in full and the values that repeat.
+   */
+  longText: boolean;
 } {
   const number = /^(Int|Float)\b/.test(variable.type);
   const few = variable.bars?.levels !== undefined;
-  return { number, few, moment: !number && !few && /Date|Time/.test(variable.type) };
+  return {
+    number,
+    few,
+    moment: !number && !few && /Date|Time/.test(variable.type),
+    longText: !few && /^Str\b/.test(variable.type),
+  };
 }
 
 /**
@@ -51,6 +82,25 @@ export function asked(base: string, variable: Pick<Variable, "name" | "type" | "
     all.push({ key: "greatest", statement: `${base}.max(${v})` });
   }
   if (kind.few) all.push({ key: "values", statement: `${base}.tabulate(${v})` });
+  if (kind.longText) {
+    // The lengths, counted by the engine's `n_chars` in a frame of the pane's own.
+    all.push({
+      key: "lengthsFrame",
+      statement: `let ${LENGTHS_FRAME} = ${base}.add(${LENGTHS} = n_chars(${v}))`,
+    });
+    all.push({ key: "lengths", statement: `${LENGTHS_FRAME}.summary([${LENGTHS}])` });
+    all.push({
+      key: "lengthRange",
+      statement: `${LENGTHS_FRAME}.quantile(${LENGTHS}, p: [0, 0.5, 1])`,
+    });
+    // An empty answer and a missing one are not the same: each is counted.
+    all.push({
+      key: "empty",
+      statement: `${base}.add(zemp_empty = ${v} == "").tabulate(zemp_empty)`,
+    });
+    all.push({ key: "first", statement: `${base}.head(5).select([${v}])` });
+    all.push({ key: "repeats", statement: `${base}.duplicates([${v}])` });
+  }
   all.push({
     key: "distinct",
     statement: `n_distinct(${base}[${JSON.stringify(variable.name)}])`,
@@ -138,4 +188,51 @@ export function missingCells(
     share: none?.share ?? null,
     rows: table.total.n,
   };
+}
+
+/**
+ * The rows of a text with something in it, of empty text and missing, from the engine's count
+ * of `v == ""`: `false` is a text, `true` an empty one, `NA` a missing one. `null` where the
+ * print is not such a table.
+ */
+export function emptyCells(
+  printed: string,
+): { text: string; empty: string; missing: string } | null {
+  const table = tabulated(printed);
+  if (table === null) return null;
+  const of = (value: string) => table.rows.find((row) => row.value === value)?.n ?? "0";
+  return { text: of("false"), empty: of("true"), missing: of("NA") };
+}
+
+/**
+ * The values of a frame of one column as the engine prints it (`head(5).select([v])`), each
+ * in full: what stands after the row's number, however many spaces the value itself holds.
+ * An empty text is an empty value. `null` where the print is not such a frame.
+ */
+export function firstValues(printed: string): string[] | null {
+  const lines = printed.split("\n");
+  if (!/^frame · /.test(lines[0] ?? "")) return null;
+  const found: string[] = [];
+  for (const line of lines.slice(1)) {
+    const row = /^\s*\d[\d,]*(?: {3}(.*))?$/.exec(line);
+    if (row !== null) found.push(row[1] ?? "");
+  }
+  return found;
+}
+
+/**
+ * The values that repeat, each with how many rows hold it, from the engine's `duplicates`:
+ * none where it prints its heads alone. `null` where the print is not such a table.
+ */
+export function repeated(printed: string): { value: string; copies: string }[] | null {
+  const lines = written(printed);
+  const head = lines.findIndex((line) => /\s{2,}copies$/.test(line));
+  if (head < 0) return null;
+  const found: { value: string; copies: string }[] = [];
+  for (const line of lines.slice(head + 1)) {
+    const row = /^ {2}(.*?) {2,}(\d[\d,]*)$/.exec(line);
+    if (row === null) return null;
+    found.push({ value: row[1] ?? "", copies: row[2] ?? "" });
+  }
+  return found;
 }

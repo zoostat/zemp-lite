@@ -120,7 +120,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 19 `[function]`.** A file of a project that is text, and that the app neither edits nor sets as a paper, opens in a tab to be read: a LaTeX table a script exported, a CSV. The tab says it is read only; nothing typed changes it; where a script is known to have written it the line names the script, and **Run** runs that script and the tab shows the new file. A file that is not text stays a row with no action. Green here: the whole routine but the 21 browser tests in WebKit that need a real mouse click, the Mac's screen being locked again (768 browser tests passed; none of the 21 is of this step); GitHub runs them. GitHub's checks of steps 16, 17 and 18 are read as they come: step 16's passed, and its build is at both addresses with every check passing.
 
-**Next.** Step 20 `[function]`: long text in the Variables pane (#209).
+**Done, step 20 `[function]`.** A text of many values (a column of reviews) is shown in the Variables pane by a histogram of the lengths of its values, its rows with text, of empty text and missing, its shortest, median and longest length, its first five values in full, and the values that repeat. Every figure is a cell of what the engine prints, held by test on a kept frame of forty reviews. Green here: the whole routine but the 21 browser tests in WebKit that need a real mouse click (the screen is locked; 542 unit tests and 776 browser tests passed).
+
+**Next.** Step 21 `[function]`: the other kinds in the Variables pane (text of few values, every value different, an ordered category, a unit and a measure, an opaque column).
 
 **For the owner to read, when he wishes (added at step 15c).** The sample paper a first visitor meets in Paper: its two sentences, its equation, and the captions of its table and its figure (`examples/scratch/paper/paper.typ`), and the comments of the script that writes them (`examples/scratch/scripts/paper.zeff`).
 

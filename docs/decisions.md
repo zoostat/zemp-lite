@@ -3363,3 +3363,23 @@ The wait is there at the trial address every time and at the address once in fou
 **Tests.** Unit: what is text (in any language, with tabs and line breaks, an SVG, an empty file, a terminal's colours; not Latin-1, a sequence cut short, a null, a PNG's first bytes; at the megabyte, and a byte over it); the words of the line. Browser, both engines, four: the LaTeX table of the Scratch project's second example opened and read, its text the engine's, the line naming its script, nothing typed into it, its menu, and the script come back to; a CSV opened, a file of bytes and a Latin-1 file left as rows with no action, and ⌘K opening the one and not offering the other; sizes and contrast in both themes, and the tab showing what a run wrote again while it was open.
 
 **Reason.** Open decision #228, option A, as the checklist of this release has it.
+
+## 27 November 2026: release 0.3, step 20: a text of many values in the Variables pane
+
+**What the pane shows for a column of reviews** (#209, option A, its first row; question 1 as the owner took it). A text the engine does not count value by value in its column's header (a `Str` of many values) had only its two lines, the distinct values and the missing rows. It now has:
+
+- _A chart, of the lengths of its values in characters_, under the heading "Lengths, in characters", with the shortest and the longest at its ends. A text has no chart of its values; the lengths have one, and it is the engine's own histogram.
+- _Its rows by what they hold:_ "rows with text", "rows of empty text", and the missing rows above them as for every variable. An empty answer and a missing one are not the same, and each is counted.
+- _The shortest, the median and the longest length._
+- _Its first five values, in full and wrapped_, an empty one said to be "an empty text".
+- _The values that repeat_, each with the rows that hold it (a default answer, a text pasted again), or "No value repeats."
+
+**Every figure is a cell of what the engine prints; the interface computes none**, as since 0.2.1. The statements asked, after the script as the console line runs one: the engine makes a frame of the pane's own with each value's length (`n_chars`, new in Zeff 0.9.0), and prints its `summary` and its `quantile` at 0, 0.5 and 1; it counts `v == ""` with `tabulate`, which gives the rows with text, of empty text and missing in one table; it prints `head(5)` of the column, and `duplicates` of it. The histogram is read from the header of the frame of lengths, where the engine puts the histogram of every number. The pane's frame and its column are named `zemp_lengths` and `zemp_n_chars`; they are made in the engine's session of the last run and are never listed among the frames of the run.
+
+**Which text is "of many values" is the engine's word**, not a threshold of the interface's: the engine either counts a column's values in its header or does not. A text column kept to a few rows by a condition is then a text of few values, and is shown as one, with each value counted.
+
+**Left out, as the register says:** counts of words and of frequent words, which are text analysis and belong to a later package.
+
+**Tests.** With the engine under Node, on a kept frame of forty reviews (one empty, one missing, one of 200 characters, one text three times and one twice; `tests/scripts/properties-text.json`): the column is a long text by the engine's word; each statement asked is run and its print held to the one kept; the rows with text, of empty text and missing; the shortest, median and longest length, agreeing with the engine's minimum and maximum; the first five values in full, the empty one among them; the values that repeat with their counts; the engine's histogram of the lengths, with every row that has a text in a bin; and the readers of the prints on a value with spaces in it, an empty frame, no repeats and another print. Browser, both engines, four: the pane for the kept frame, every figure held to the kept prints; kept to some rows by a condition, with no value repeating; a number beside it shown as before; sizes and contrast in both themes.
+
+**Reason.** Open decision #209, option A (the owner's "Go, as recommended" to question 1); the rule of 22 November 2026 that every figure of the pane is the engine's print.

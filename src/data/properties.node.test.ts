@@ -60,26 +60,38 @@ describe("what is asked of the engine for a variable", () => {
       number: true,
       few: false,
       moment: false,
+      longText: false,
     });
     // A whole number of few values is a number and is counted value by value too.
     expect(kindOf({ type: "Int", bars: { counts: [1], levels: ["8"] } })).toEqual({
       number: true,
       few: true,
       moment: false,
+      longText: false,
     });
     expect(kindOf({ type: "Category", bars: { counts: [1], levels: ["a"] } })).toEqual({
       number: false,
       few: true,
       moment: false,
+      longText: false,
     });
     expect(kindOf({ type: "Date", bars: { counts: [1], start: 0, width: 1 } }).moment).toBe(true);
-    // A text of many values: neither; it is asked its distinct values and its missing alone.
+    // A text of many values is a long text (step 20; `text-properties.node.test.ts`); a text
+    // of few values is counted value by value, as a category is.
     expect(kindOf({ type: "Str", bars: null })).toEqual({
       number: false,
       few: false,
       moment: false,
+      longText: true,
     });
+    expect(kindOf({ type: "Str", bars: { counts: [2], levels: ["IN"] } }).longText).toBe(false);
     expect(asked("t", { name: "note", type: "Str", bars: null }).map((one) => one.key)).toEqual([
+      "lengthsFrame",
+      "lengths",
+      "lengthRange",
+      "empty",
+      "first",
+      "repeats",
       "distinct",
       "missing",
     ]);

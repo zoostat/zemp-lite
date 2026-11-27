@@ -16,10 +16,15 @@
   import { paneOf } from "../app/panes";
   import Place from "../app/Place.svelte";
   import {
+    LENGTHS,
+    LENGTHS_FRAME,
     asked as statementsOf,
+    emptyCells,
+    firstValues,
     kindOf,
     missingCells,
     printedValues,
+    repeated,
     summaryCells,
     tabulated,
     type Key,
@@ -135,6 +140,9 @@
   // frame, the condition or the run changes; `null` while the engine is asked.
   let answers = $state<Partial<Record<Key, string>> | null>(null);
   let refused = $state("");
+  // For a text of many values (open decision #209): the engine's histogram of the lengths of
+  // its values, from the frame the pane had the engine make for them.
+  let lengthBars = $state<Bars | null>(null);
   const kept = $derived(first?.filter?.ok === false ? "" : view.where);
   const asking = $derived(
     chosen === null || inspected === null
@@ -152,6 +160,7 @@
     const now = asking;
     answers = null;
     refused = "";
+    lengthBars = null;
     if (now === null) return;
     const [frame, name, type, few, where] = JSON.parse(now) as [
       string,
@@ -175,6 +184,14 @@
           statements.map((one, at) => [one.key, answer.printed[at] ?? ""]),
         );
         refused = answer.said;
+        // The lengths' histogram is the engine's own, read from the header of their frame.
+        if (statements.some((one) => one.key === "lengthsFrame") && answer.said === "") {
+          return workspace.rows(LENGTHS_FRAME, 0, 1).then((page) => {
+            if (old) return;
+            lengthBars = page.variables.find((one) => one.name === LENGTHS)?.bars ?? null;
+          });
+        }
+        return undefined;
       })
       .catch((error: Error) => {
         if (old) return;
@@ -190,6 +207,11 @@
   const quartiles = $derived(answers?.quartiles ? printedValues(answers.quartiles) : []);
   const absent = $derived(answers?.missing ? missingCells(answers.missing) : null);
   const values = $derived(answers?.values ? tabulated(answers.values) : null);
+  // A text of many values: its rows by what they hold, its lengths, its first values, its repeats.
+  const held = $derived(answers?.empty ? emptyCells(answers.empty) : null);
+  const lengths = $derived(answers?.lengthRange ? printedValues(answers.lengthRange) : []);
+  const firstFive = $derived(answers?.first ? firstValues(answers.first) : null);
+  const repeats = $derived(answers?.repeats ? repeated(answers.repeats) : null);
   const one = (key: Key) => (answers?.[key] ? (printedValues(answers[key])[0] ?? "") : "");
   /** The statistics as rows of a name and the engine's cell, by the variable's kind. */
   const statistics = $derived.by((): [string, string][] => {
@@ -200,6 +222,10 @@
       rows.push(["sd", summary["sd"] ?? ""], ["min", summary["min"] ?? ""]);
       rows.push(["first quartile", quartiles[0] ?? ""], ["median", quartiles[1] ?? ""]);
       rows.push(["third quartile", quartiles[2] ?? ""], ["max", summary["max"] ?? ""]);
+    } else if (kind.longText && held !== null) {
+      rows.push(["rows with text", held.text], ["rows of empty text", held.empty]);
+      rows.push(["shortest", lengths[0] ?? ""], ["median length", lengths[1] ?? ""]);
+      rows.push(["longest", lengths[2] ?? ""]);
     } else if (absent !== null) {
       rows.push(["N", absent.present]);
       if (kind.moment) rows.push(["min", one("least")], ["max", one("greatest")]);
@@ -214,6 +240,9 @@
       : [
           kind?.number && summary === null ? (answers.summary ?? "") : "",
           kind?.few && values === null ? (answers.values ?? "") : "",
+          kind?.longText && held === null ? (answers.empty ?? "") : "",
+          kind?.longText && firstFive === null ? (answers.first ?? "") : "",
+          kind?.longText && repeats === null ? (answers.repeats ?? "") : "",
           absent === null ? (answers.missing ?? "") : "",
         ]
           .filter((text) => text !== "")
@@ -483,6 +512,28 @@
         {#if kind?.number && summary !== null && bars.levels === undefined}
           <p class="ends mono"><span>{summary["min"]}</span><span>{summary["max"]}</span></p>
         {/if}
+      {:else if kind?.longText && lengthBars !== null}
+        <!-- A text of many values has no chart of its values: the lengths of its values have. -->
+        {@const bars = lengthBars}
+        <h4>Lengths, in characters</h4>
+        <svg
+          class="shape"
+          viewBox="0 0 {bars.counts.length} 12"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label="The lengths of the values: {described(bars)}"
+          data-testid="variable-lengths"
+          ><title>The lengths of the values: {described(bars)}</title
+          >{#each bars.counts as count, bin (bin)}<rect
+              x={bin + 0.08}
+              width="0.84"
+              y={12 - (12 * count) / most(bars)}
+              height={(12 * count) / most(bars)}
+            />{/each}</svg
+        >
+        {#if lengths.length === 3}
+          <p class="ends mono"><span>{lengths[0]}</span><span>{lengths[2]}</span></p>
+        {/if}
       {/if}
       {#if answers === null}
         <p class="quiet" data-testid="variable-asking">…</p>
@@ -521,6 +572,31 @@
               </tfoot>
             {/if}
           </table>
+        {/if}
+        {#if kind?.longText && firstFive !== null && firstFive.length > 0}
+          <h4>The first {firstFive.length === 1 ? "value" : `${firstFive.length} values`}</h4>
+          <ol class="texts" data-testid="variable-first">
+            {#each firstFive as text, at (at)}
+              <li class:none={text === ""}>{text === "" ? "an empty text" : text}</li>
+            {/each}
+          </ol>
+        {/if}
+        {#if kind?.longText && repeats !== null}
+          <h4>Values that repeat</h4>
+          {#if repeats.length === 0}
+            <p class="quiet" data-testid="variable-repeats">No value repeats.</p>
+          {:else}
+            <table class="stats repeats" data-testid="variable-repeats">
+              <thead>
+                <tr><th scope="col">value</th><th scope="col">rows</th></tr>
+              </thead>
+              <tbody>
+                {#each repeats as row (row.value)}
+                  <tr><th scope="row">{row.value}</th><td class="mono">{row.copies}</td></tr>
+                {/each}
+              </tbody>
+            </table>
+          {/if}
         {/if}
         <!-- What the engine said where it gave no table: its own sentence, never a blank. -->
         {#if unread !== "" || refused !== ""}
@@ -1023,6 +1099,27 @@
     margin: 0 14px;
     opacity: 0.8;
     width: calc(100% - 28px);
+  }
+  /* The first values of a text, each in full and wrapped; an empty one said to be so. */
+  .texts {
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 0 0 10px;
+    padding: 0 0 0 22px;
+  }
+  .texts li {
+    overflow-wrap: anywhere;
+    padding: 2px 0;
+  }
+  .texts li.none {
+    color: var(--ink-3);
+    font-style: italic;
+  }
+  .repeats th[scope="row"] {
+    font-weight: 400;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
   .ends {
     color: var(--ink-3);
