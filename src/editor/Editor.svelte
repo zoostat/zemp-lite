@@ -11,11 +11,13 @@
     type CompletionContext,
   } from "@codemirror/autocomplete";
   import { setDiagnostics, type Diagnostic as Marked } from "@codemirror/lint";
-  import { EditorState } from "@codemirror/state";
+  import { EditorState, StateEffect, StateField } from "@codemirror/state";
   import {
     EditorView,
     drawSelection,
     hoverTooltip,
+    showTooltip,
+    type Tooltip,
     highlightActiveLine,
     highlightActiveLineGutter,
     keymap,
@@ -25,6 +27,7 @@
   import type { Place } from "../app/steady";
   import type { CompletionItem } from "../app/workspace-state.svelte";
   import type { Diagnostic } from "../engine/language";
+  import type { Shown } from "../help/hover";
   import { usageOfCalls, type Usage } from "./signature";
   import { functionAt, wordAt } from "./at";
   import { inlineOutput, showOutput, type InlineOutput } from "./inline";
@@ -95,7 +98,7 @@
     /** What the language server says of the text, as it says it: underlined where it says. */
     diagnostics?: Diagnostic[];
     /** What the language server knows of the word at a place (lines and columns from 0). */
-    onhover?: (line: number, character: number) => Promise<string | null>;
+    onhover?: (line: number, character: number) => Promise<Shown | null>;
     /** What the language server offers at a place (lines and columns from 0). */
     oncomplete?: (line: number, character: number) => Promise<CompletionItem[]>;
     /** The usage of the call at a place, from the language server. */
@@ -138,6 +141,63 @@
       },
     };
   }
+
+  /**
+   * The card of the word at a place of the script (release 0.3.1, step 7; open decision #245):
+   * for a function, its name and what it does, its usage, what it matches in R and Stata, and
+   * the way to its page; for anything else, what the language server says of it, as it says it.
+   */
+  function card(shown: Shown, line: number, character: number): HTMLElement {
+    const dom = document.createElement("div");
+    dom.className = "cm-zemp-hover";
+    dom.dataset["testid"] = "hover";
+    const add = (tag: string, name: string, text: string) => {
+      const part = document.createElement(tag);
+      part.className = name;
+      part.dataset["testid"] = name;
+      part.textContent = text;
+      dom.append(part);
+      return part;
+    };
+    if (shown.kind === "words") {
+      add("pre", "hover-words", shown.text);
+      return dom;
+    }
+    dom.classList.add("cm-zemp-card");
+    const head = add("p", "hover-head", "");
+    const name = document.createElement("b");
+    name.className = "hover-name";
+    name.dataset["testid"] = "hover-name";
+    name.textContent = shown.card.name;
+    const does = document.createElement("span");
+    does.dataset["testid"] = "hover-does";
+    does.textContent = shown.card.does;
+    head.append(name, " · ", does);
+    add("pre", "hover-usage", shown.card.usage);
+    if (shown.card.equivalents !== null) add("p", "hover-equivalents", shown.card.equivalents);
+    const more = add("p", "hover-more", "");
+    const page = document.createElement("button");
+    page.type = "button";
+    page.dataset["testid"] = "hover-page";
+    page.textContent = "Open its page →";
+    page.title = "The page of this function in Help · F1 with the cursor on its name";
+    page.addEventListener("click", () => onhelp?.(shown.card.name, line, character));
+    more.append(page);
+    if (onhelp === undefined) more.remove();
+    return dom;
+  }
+
+  /** Show a card at the cursor, or take the one shown away. */
+  const showAtCursor = StateEffect.define<Tooltip | null>();
+  const atCursor = StateField.define<Tooltip | null>({
+    create: () => null,
+    update(shown, transaction) {
+      for (const effect of transaction.effects) if (effect.is(showAtCursor)) return effect.value;
+      // The card is of where the cursor was: it goes when the cursor or the script moves on.
+      return transaction.docChanged || transaction.selection !== undefined ? null : shown;
+    },
+    provide: (field) => showTooltip.from(field),
+  });
 
   const look = EditorView.theme({
     "&": {
@@ -208,6 +268,44 @@
       padding: "8px 10px",
       whiteSpace: "pre-wrap",
     },
+    // The card of a function: its name and what it does, its usage on a soft ground, what it
+    // matches in R and Stata, and the way to its page.
+    ".cm-zemp-card": {
+      boxSizing: "border-box",
+      fontFamily: '"Atkinson Hyperlegible Next", system-ui, sans-serif',
+      fontSize: "13px",
+      lineHeight: "1.5",
+      maxWidth: "440px",
+      padding: "10px 12px",
+      whiteSpace: "normal",
+    },
+    ".cm-zemp-card p": { margin: "0" },
+    ".cm-zemp-card .hover-name": {
+      fontFamily: '"JetBrains Mono", ui-monospace, Menlo, monospace',
+      fontSize: "12.5px",
+    },
+    ".cm-zemp-card pre": {
+      background: "var(--soft)",
+      borderRadius: "7px",
+      fontWeight: "500",
+      lineHeight: "1.5",
+      margin: "6px 0",
+      maxWidth: "none",
+      padding: "6px 8px",
+    },
+    ".cm-zemp-card .hover-equivalents": { color: "var(--ink-3)" },
+    ".cm-zemp-card .hover-more": { marginTop: "8px" },
+    ".cm-zemp-card button": {
+      background: "none",
+      border: "0",
+      borderRadius: "4px",
+      color: "var(--accent)",
+      cursor: "pointer",
+      font: "inherit",
+      fontWeight: "600",
+      padding: "0",
+    },
+    ".cm-zemp-card button:hover": { textDecoration: "underline" },
     "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground":
       { backgroundColor: "color-mix(in srgb, var(--accent) 22%, transparent)" },
     "&.cm-focused .cm-matchingBracket": {
@@ -312,22 +410,17 @@
           hoverTooltip(async (target, pos) => {
             if (onhover === undefined) return null;
             const line = target.state.doc.lineAt(pos);
-            const text = await onhover(line.number - 1, pos - line.from);
-            if (text === null || text.trim() === "") return null;
+            const shown = await onhover(line.number - 1, pos - line.from);
+            if (shown === null) return null;
             return {
               pos,
               above: true,
-              create: () => {
-                const dom = document.createElement("div");
-                dom.className = "cm-zemp-hover";
-                dom.dataset["testid"] = "hover";
-                const page = document.createElement("pre");
-                page.textContent = text;
-                dom.append(page);
-                return { dom };
-              },
+              create: () => ({ dom: card(shown, line.number - 1, pos - line.from) }),
             };
           }),
+          // The same card for the keyboard: ⇧F1 shows it for the word the cursor is on, and it
+          // goes when the cursor moves, the script changes, or Escape is pressed.
+          atCursor,
           // In the margin editor a long line wraps, so that nothing reaches past it.
           inline === null
             ? wrap
@@ -342,6 +435,38 @@
               run: (target) => {
                 if (onstatement === undefined) return run();
                 onstatement(target.state.doc.lineAt(target.state.selection.main.head).number);
+                return true;
+              },
+            },
+            {
+              key: "Shift-F1",
+              run: (target) => {
+                if (onhover === undefined) return false;
+                const head = target.state.selection.main.head;
+                const line = target.state.doc.lineAt(head);
+                void onhover(line.number - 1, head - line.from).then((shown) => {
+                  // The cursor may have moved on while the engine was asked.
+                  if (target.state.selection.main.head !== head) return;
+                  target.dispatch({
+                    effects: showAtCursor.of(
+                      shown === null
+                        ? null
+                        : {
+                            pos: head,
+                            above: true,
+                            create: () => ({ dom: card(shown, line.number - 1, head - line.from) }),
+                          },
+                    ),
+                  });
+                });
+                return true;
+              },
+            },
+            {
+              key: "Escape",
+              run: (target) => {
+                if (target.state.field(atCursor) === null) return false;
+                target.dispatch({ effects: showAtCursor.of(null) });
                 return true;
               },
             },

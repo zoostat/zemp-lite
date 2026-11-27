@@ -15,6 +15,7 @@ The keys the app answers to, place by place. On Windows and Linux, Ctrl takes th
 - <kbd>⌘⇧↵</kbd>: run the whole script.
 - <kbd>⌥↵</kbd>: unfold, or fold, the output of the statement the cursor is in.
 - <kbd>F1</kbd>: open Help at the page of the function the cursor is on.
+- <kbd>⇧F1</kbd>: show the card of the function the cursor is on, as resting the pointer on its name does: what it does, its usage, and what it matches in R and Stata. <kbd>Esc</kbd> takes the card away.
 - <kbd>Tab</kbd> indents. To leave the script by the keyboard, press <kbd>Esc</kbd> and then <kbd>Tab</kbd>.
 
 ## In the console line

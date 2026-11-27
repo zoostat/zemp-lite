@@ -189,6 +189,24 @@ const SCREENS: Record<
     await scratch(page, press);
     await run(page, press);
     await see();
+    // The card of a function, shown by the keyboard with the cursor on its name.
+    await page.getByRole("textbox", { name: "The script", exact: true }).focus();
+    await page
+      .locator(".cm-line")
+      .getByText("dataset", { exact: true })
+      .first()
+      .evaluate((node) => {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        range.collapse(true);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      });
+    await page.keyboard.press("Shift+F1");
+    await expect(page.getByTestId("hover-page")).toBeVisible();
+    await see();
+    await page.keyboard.press("Escape");
     await press(places(page).getByRole("button", { name: "Help" }));
     await expect(page.getByTestId("help-counts")).toBeVisible();
     await see();

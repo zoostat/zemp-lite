@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type { HelpIndex } from "../engine/messages";
 import { formsOf, severalOf, shownOf } from "./forms";
-import { cardOf, usageIn } from "./hover";
+import { cardIn, equivalentsIn, equivalentsOf, shownFor, usageIn } from "./hover";
 import { readPage } from "./read";
 
 const at = (path: string) => fileURLToPath(new URL(`../../${path}`, import.meta.url));
@@ -43,8 +43,13 @@ describe("the usage a hover shows, on the whole index of Zeff 0.9.0", () => {
       const usage = usageIn(print(one.name));
       expect(usage, one.name).not.toBeNull();
       expect(flat(usage ?? ""), one.name).toBe(flat(one.usage));
-      // The card holds the usage and nothing else of the page.
-      expect(cardOf(print(one.name)), one.name).toBe(usage);
+      // The card: the function's name, what it does as the index gives it, and its usage
+      // (release 0.3.1, step 7; the usage alone until then).
+      const card = cardIn(print(one.name));
+      expect(card?.name, one.name).toBe(one.name);
+      expect(card?.does, one.name).toBe(one.summary);
+      expect(card?.usage, one.name).toBe(usage);
+      expect(shownFor(print(one.name)), one.name).toEqual({ kind: "function", card });
       held += 1;
     }
     expect(held).toBeGreaterThan(200);
@@ -66,7 +71,7 @@ describe("the usage a hover shows, on the whole index of Zeff 0.9.0", () => {
       }
       // The print of both at once is the page of neither: it is shown as it is.
       expect(usageIn(whole), name).toBeNull();
-      expect(cardOf(whole), name).toBe(whole);
+      expect(shownFor(whole), name).toEqual({ kind: "words", text: whole });
     }
   });
 
@@ -77,7 +82,65 @@ describe("the usage a hover shows, on the whole index of Zeff 0.9.0", () => {
       "",
     ]) {
       expect(usageIn(said), said).toBeNull();
-      expect(cardOf(said), said).toBe(said);
+      expect(cardIn(said), said).toBeNull();
+      expect(shownFor(said), said).toEqual({ kind: "words", text: said });
     }
+  });
+
+  it("names what a function matches in R and Stata, in its page's own words, where the page names any", () => {
+    // The three the mockup of the revamp draws, and what Zeff 0.9.0 says of them.
+    const names = (name: string) =>
+      index.packages.flatMap((each) => each.functions).find((one) => one.name === name)?.names ??
+      [];
+    expect(equivalentsIn(print("dataset"))).toBe("Equivalents: R data(); Stata sysuse, webuse.");
+    expect(equivalentsIn(print("mean"))).toBe("Equivalents: R mean().");
+    // Its page's sentence comes before what the index gives: the page says it at more length.
+    expect(cardIn(print("dataset"), names("dataset"))?.equivalents).toBe(
+      "Equivalents: R data(); Stata sysuse, webuse.",
+    );
+    // (`summary` is the name of two functions: the print of both is the page of neither, and
+    // the language server answers with the one the call would run.)
+    expect(several.has("summary")).toBe(true);
+    expect(equivalentsIn(print("summary"))).toBeNull();
+    // The page of `reg` has no such section in Zeff 0.9.0: the card writes the same sentence
+    // from the names the engine's catalogue gives it, and leaves out what a page only mentions.
+    expect(equivalentsIn(print("reg"))).toBeNull();
+    expect(cardIn(print("reg"), names("reg"))?.equivalents).toBe(
+      "Equivalents: R lm(), fixest::feols(); Stata regress, reghdfe.",
+    );
+    expect(cardIn(print("reg"))?.equivalents).toBeNull();
+    // What a page only mentions in its examples is not what the function matches.
+    expect(equivalentsOf(names("mean"))).toBeNull();
+    expect(
+      equivalentsOf([
+        { of: "Stata", name: "regress", shown: "regress", from: "catalogue" },
+        { of: "R", name: "lm", shown: "lm()", from: "catalogue" },
+        { of: "R", name: "lm", shown: "lm()", from: "catalogue" },
+        { of: "R", name: "by", shown: "by()", from: "page" },
+      ]),
+    ).toBe("Equivalents: R lm(); Stata regress.");
+    expect(equivalentsOf([])).toBeNull();
+    // Every function: the sentence is the one its page's section begins with, or there is none.
+    let named = 0;
+    for (const one of index.packages.flatMap((each) => each.functions)) {
+      if (several.has(one.name)) continue;
+      const page = print(one.name);
+      const said = equivalentsIn(page);
+      const section = readPage(page).entries[0]?.sections.find(
+        (each) => each.heading === "COMING FROM R OR STATA",
+      );
+      const [first] = section?.blocks ?? [];
+      if (said === null) {
+        expect(first?.kind === "paragraph" && first.text.startsWith("Equivalents:"), one.name).toBe(
+          false,
+        );
+      } else {
+        expect(first, one.name).toEqual({ kind: "paragraph", text: said });
+        expect(page.replace(/\s+/g, " "), one.name).toContain(said);
+        named += 1;
+      }
+    }
+    // The pages in the fuller form of 0.9.0 name them; the others have none to name.
+    expect(named).toBeGreaterThan(50);
   });
 });

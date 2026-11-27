@@ -61,7 +61,7 @@ import {
   type Stop,
 } from "../help/history";
 import { formIn, formsOf } from "../help/forms";
-import { cardOf } from "../help/hover";
+import { namesFor, shownFor, type Shown as Card } from "../help/hover";
 import { once } from "../help/once";
 import { homesOf } from "../help/trail";
 import { usingText } from "../using/pages";
@@ -612,12 +612,17 @@ export class Workspace {
 
   /**
    * What the card under the pointer shows for the word at a place of a script (open decision
-   * #220, item 6): a function's usage block alone, read from the page the language server
-   * answers with; whatever else the server says of a word, as it says it. F1 opens the page.
+   * #245, which redraws the card of #220, item 6): for a function, its name and what it does,
+   * its usage, and what it matches in R and Stata, read from the page the language server
+   * answers with and, where that page names no equivalent, from the engine's index; whatever
+   * else the server says of a word, as it says it. F1 opens the page.
    */
-  async hoverCard(path: string, line: number, character: number): Promise<string | null> {
+  async hoverCard(path: string, line: number, character: number): Promise<Card | null> {
     const said = await this.hover(path, line, character);
-    return said === null ? null : cardOf(said);
+    if (said === null || said.trim() === "") return null;
+    // The index is asked for once and kept; a card does not wait on a worker that cannot give it.
+    const index = this.helpIndex ?? (await this.indexHelp().catch(() => null));
+    return shownFor(said, namesFor(index, said));
   }
 
   async #begin(): Promise<void> {

@@ -149,6 +149,8 @@ test("links go from one page to another and to the engine's pages, each into the
     // From 0.2.4 the page says what Return does with no match marked, and names the key twice.
     "↵",
     "↵",
+    // From 0.3.1 the card of a function is shown by the keyboard too.
+    "⇧F1",
     "F1",
     // From 0.3 the section on running an example names the keys that run one.
     "⌘↵",

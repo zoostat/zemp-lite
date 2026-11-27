@@ -33,6 +33,10 @@ const HELD: Record<string, [string, string]> = {
   "⌘⇧↵": ["editor", "the script runs from the keyboard, with ⌘↵ and with ⌘⇧↵"],
   "⌥↵": ["margin", "⌥↵ unfolds and folds the output of the statement at the cursor"],
   F1: ["help", "F1 on a function's name opens the Help place at its page, every word the engine's"],
+  "⇧F1": [
+    "hover",
+    "⇧F1 shows the card of the word the cursor is on, by the keyboard alone, and Escape or a move of the cursor takes it away",
+  ],
   Tab: ["language", "Tab completes a statement in the console line, as if it followed the script"],
   Esc: ["palette", "⌘K opens the palette, typing narrows it, the arrows choose, Escape closes"],
   "↵": [
@@ -107,9 +111,19 @@ describe("the page of keyboard shortcuts", () => {
     const given = [...text("src/editor/Editor.svelte").matchAll(/key: "([^"]+)"/g)].map(
       (found) => found[1] ?? "",
     );
-    expect(given.sort()).toEqual(["Alt-Enter", "F1", "Mod-Enter", "Shift-Mod-Enter"]);
+    // (Escape is every editor's key for taking a card away, and is on the page as Esc.)
+    expect(given.filter((key) => key !== "Escape").sort()).toEqual([
+      "Alt-Enter",
+      "F1",
+      "Mod-Enter",
+      "Shift-F1",
+      "Shift-Mod-Enter",
+    ]);
     const keys = keysOfThePage();
-    for (const key of given) expect(keys, key).toContain(written(key));
+    for (const key of given.filter((one) => one !== "Escape")) {
+      expect(keys, key).toContain(written(key));
+    }
+    expect(written("Shift-F1")).toBe("⇧F1");
     expect(written("Shift-Mod-Enter")).toBe("⌘⇧↵");
     expect(written("Alt-Enter")).toBe("⌥↵");
   });

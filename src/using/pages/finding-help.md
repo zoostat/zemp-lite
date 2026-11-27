@@ -23,7 +23,7 @@ Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From t
 
 ## From the script
 
-Rest the pointer on a function's name in the script, and its usage is shown: the function's name with its arguments. Put the cursor on the name and press <kbd>F1</kbd>: Help opens at its page. When a run gives a warning or an error, press **Explain** beside it for the page of its code.
+Rest the pointer on a function's name in the script, and a card says what the function does, how it is called, and what it matches in R and Stata, with **Open its page** at its foot. With the cursor on the name, <kbd>⇧F1</kbd> shows the same card and <kbd>F1</kbd> opens Help at its page. When a run gives a warning or an error, press **Explain** beside it for the page of its code.
 
 ## Running an example
 
