@@ -55,6 +55,7 @@
     language = "zeff",
     wrap = false,
     said = [],
+    readOnly = false,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -101,8 +102,10 @@
     onusage?: (line: number, character: number) => Promise<Omit<Usage, "pos"> | null>;
     /** F1: the help page of the name at the cursor, with where the name begins (from 0). */
     onhelp?: (name: string, line: number, character: number) => void;
-    /** What the text is read and coloured as: a script of Zeff, or the source of a paper. */
-    language?: "zeff" | "typst";
+    /** What the text is read and coloured as: a script of Zeff, the source of a paper, or nothing. */
+    language?: "zeff" | "typst" | "plain";
+    /** Whether the text is shown to be read and cannot be changed here. */
+    readOnly?: boolean;
     /** Whether a long line wraps where the editor scrolls itself (a paper's paragraphs do). */
     wrap?: boolean;
     /** What is said of lines of the text (Typst, of a paper): its words stand under each line. */
@@ -240,7 +243,10 @@
           bracketMatching(),
           indentUnit.of("    "),
           EditorState.tabSize.of(4),
-          language === "typst" ? typstLanguage() : zeffLanguage(),
+          language === "typst" ? typstLanguage() : language === "plain" ? [] : zeffLanguage(),
+          // A file shown to be read: the cursor moves through it and it can be copied from,
+          // and nothing typed changes it.
+          readOnly ? [EditorState.readOnly.of(true)] : [],
           saidAtLines(),
           look,
           // Completion from the language server: each item makes the edit the server names.
@@ -368,6 +374,7 @@
             indentWithTab,
           ]),
           EditorView.contentAttributes.of({
+            ...(readOnly ? { "aria-readonly": "true" } : {}),
             "aria-label": label,
             "aria-description": "Press Escape and then Tab to leave the editor.",
             spellcheck: "false",

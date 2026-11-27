@@ -54,9 +54,11 @@
     <h1>{workspace.project.info.name}</h1>
     {#if path !== null}
       <span class="file"
-        >/ {path.split("/").at(-1)} · {buffer === undefined || buffer.saved
-          ? "saved"
-          : "saving"}</span
+        >/ {path.split("/").at(-1)} · {buffer?.readOnly
+          ? "read only"
+          : buffer === undefined || buffer.saved
+            ? "saved"
+            : "saving"}</span
       >
     {/if}
   </span>

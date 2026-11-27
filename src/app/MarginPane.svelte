@@ -26,6 +26,7 @@
   import PaperPlace from "./PaperPlace.svelte";
   import { DATA, HELP, PAPER, PLOTS } from "./views";
   import DataViewer from "../data/DataViewer.svelte";
+  import { readOnlyWords } from "../project/text";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
@@ -180,8 +181,12 @@
 
   // The engine's reading of the script as it stands, for the marks and for Run to here.
   $effect(() => {
-    if (workspace.ready && buffer?.loaded) workspace.readStatements(path, buffer.text);
+    if (workspace.ready && buffer?.loaded && !buffer.readOnly) {
+      workspace.readStatements(path, buffer.text);
+    }
   });
+  // A text file that is no script, shown to be read (#228).
+  const reading = $derived(buffer?.readOnly === true);
   // Run to here on every statement's line number but the first, which has nothing before it.
   const runto = $derived.by(() => {
     const now = workspace.now;
@@ -313,6 +318,11 @@
         <button class="word" onclick={() => (workspace.exportAsking = null)}>Cancel</button>
       </div>
     {/if}
+    {#if reading}
+      <p class="reading" role="note" data-testid="read-only">
+        {readOnlyWords(path, workspace.writerOf(path))}
+      </p>
+    {/if}
     <div class="place">
       <section class="margin" aria-label="Script with its notes and output" bind:this={pane}>
         <div
@@ -327,7 +337,9 @@
               <Editor
                 bind:this={editor}
                 text={buffer.text}
-                label="The script"
+                label={reading ? "The file, read only" : "The script"}
+                language={reading ? "plain" : "zeff"}
+                readOnly={reading}
                 onchange={(text) => workspace.edit(path, text)}
                 onrun={() => void workspace.run()}
                 inline={output}
@@ -431,6 +443,15 @@
   .word.strong {
     border: 1px solid var(--line-strong);
     color: var(--ink);
+  }
+  .reading {
+    background: var(--softer);
+    border-bottom: 1px solid var(--line-strong);
+    color: var(--ink-2);
+    flex: none;
+    font-size: 13.5px;
+    margin: 0;
+    padding: 8px 18px;
   }
   .asking {
     align-items: center;

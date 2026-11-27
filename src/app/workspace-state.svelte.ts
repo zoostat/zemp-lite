@@ -117,6 +117,7 @@ import {
 import type { Section } from "../editor/sections";
 import { exportFolder, exportProject } from "../project/export";
 import { own, placeOf } from "../project/files";
+import { READ_LIMIT, isText } from "../project/text";
 import { reminderOf, type Keeping } from "../project/keeping";
 import { noteLeft, takeLeft } from "./left";
 import type { Kept } from "../theme/theme";
@@ -145,6 +146,8 @@ export interface Buffer {
   loaded: boolean;
   /** Whether what is typed has been written to the project. */
   saved: boolean;
+  /** Whether the file is shown to be read, and not edited (a text file that is no script; #228). */
+  readOnly?: boolean;
 }
 
 /** Whether the editor opens a file of this name: scripts and the plain text beside them. */
@@ -659,10 +662,85 @@ export class Workspace {
   /** Read the project's files again. */
   async refresh(): Promise<void> {
     this.tree = await this.project.tree();
+    void this.#classify();
+  }
+
+  /**
+   * The files of the project that are shown to be read (release 0.3, step 19; open decision
+   * #228, option A), each by its path: those the app neither edits nor sets as a paper, that
+   * are text and no larger than a megabyte. A file not among them stays a row with no action.
+   */
+  readable = $state<Record<string, boolean>>({});
+  /** The size each file had when it was last read to see whether it is text. */
+  #sized: Record<string, number> = {};
+  #classifying: Promise<void> = Promise.resolve();
+
+  /** Read the files that changed since they were last looked at, to see which are text. */
+  #classify(): Promise<void> {
+    const work = this.#classifying.then(async () => {
+      const files: { path: string; size: number }[] = [];
+      const walk = (nodes: TreeNode[]) => {
+        for (const node of nodes) {
+          if (node.kind === "folder") walk(node.children);
+          else if (!editable(node.path) && !isPaper(node.path) && !own(node.path)) {
+            files.push({ path: node.path, size: node.size });
+          }
+        }
+      };
+      walk(this.tree);
+      const next: Record<string, boolean> = {};
+      for (const file of files) {
+        const known = this.readable[file.path];
+        if (known !== undefined && this.#sized[file.path] === file.size) {
+          next[file.path] = known;
+          continue;
+        }
+        let text = false;
+        if (file.size <= READ_LIMIT) {
+          try {
+            const bytes = await this.project.read(file.path);
+            text = bytes !== null && isText(bytes);
+          } catch {
+            // It cannot be read: it is not shown.
+          }
+        }
+        next[file.path] = text;
+        this.#sized = { ...this.#sized, [file.path]: file.size };
+      }
+      this.readable = next;
+    });
+    this.#classifying = work.catch(() => undefined);
+    return work;
+  }
+
+  /** Let go of a file's text as the window holds it, so that it is read again. */
+  #forget(path: string): void {
+    this.buffers = Object.fromEntries(
+      Object.entries(this.buffers).filter(([held]) => held !== path),
+    );
   }
 
   async #load(path: string): Promise<void> {
     if (this.buffers[path]?.loaded) {
+      return;
+    }
+    // A text file that is no script is read to be shown, not edited; one that is not text is
+    // not opened, and its tab, kept from an earlier visit, is closed.
+    if (!editable(path) && !isPaper(path)) {
+      const bytes = await this.project.read(path);
+      if (bytes === null || !isText(bytes)) {
+        this.views.tabs = this.views.tabs.filter((tab) => tab !== fileTab(path));
+        if (this.views.active === fileTab(path)) {
+          this.views.active = this.views.tabs.find((tab) => tabPath(tab) !== null) ?? null;
+        }
+        return;
+      }
+      this.buffers[path] = {
+        text: new TextDecoder().decode(bytes),
+        loaded: true,
+        saved: true,
+        readOnly: true,
+      };
       return;
     }
     this.buffers[path] = { text: "", loaded: false, saved: true };
@@ -677,12 +755,28 @@ export class Workspace {
     return this.views.active === null ? null : tabPath(this.views.active);
   }
 
-  /** The script Run runs: the one shown, or the first one open, or the project's main script. */
+  /**
+   * The script Run runs: the one shown; where a file a script wrote is shown to be read, the
+   * script that wrote it; or the first one open, or the project's main script.
+   */
   get scriptPath(): string {
-    const scripts = [this.activePath, ...this.views.tabs.map(tabPath)].filter(
+    const wrote = this.writerOf(this.activePath);
+    const scripts = [this.activePath, wrote, ...this.views.tabs.map(tabPath)].filter(
       (path): path is string => path !== null && path.endsWith(".zeff"),
     );
     return scripts[0] ?? MAIN;
+  }
+
+  /**
+   * The script that wrote a file, as the project's record has it (step 15b), where that
+   * script is still in the project; `null` for a file no run is known to have written.
+   */
+  writerOf(path: string | null): string | null {
+    const script = path === null ? undefined : this.#written[path]?.script;
+    if (script === undefined) return null;
+    const there = (nodes: TreeNode[]): boolean =>
+      nodes.some((node) => (node.kind === "folder" ? there(node.children) : node.path === script));
+    return there(this.tree) ? script : null;
   }
 
   /**
@@ -776,7 +870,11 @@ export class Workspace {
       return;
     }
     if (!editable(path)) {
-      return;
+      // Another text file is opened to be read (#228); what is not text is not opened.
+      await this.#classifying;
+      if (this.readable[path] !== true) return;
+      // It is read afresh each time it is opened: a run may have written it again.
+      this.#forget(path);
     }
     Object.assign(this.views, withTab(this.views, fileTab(path)));
     this.#keep();
@@ -925,6 +1023,13 @@ export class Workspace {
       this.problem = `What the run wrote could not be kept in the project: ${(error as Error).message}`;
     }
     await this.refresh();
+    // A file of these that is open to be read is read again: it shows what the run wrote.
+    for (const path of paths) {
+      if (this.buffers[path]?.readOnly) {
+        this.#forget(path);
+        await this.#load(path);
+      }
+    }
     // Which script wrote these files, and from what text, is noted and kept with the project,
     // so that a paper can say which of its tables and figures are stale.
     try {
@@ -940,7 +1045,7 @@ export class Workspace {
   }
 
   /** Which script wrote which file, and from what text; kept in `.zemp/written.json`. */
-  #written: Written = {};
+  #written = $state.raw<Written>({});
 
   /**
    * Give the project to the computer as a zip (open decision #208): what is typed is saved
@@ -1017,7 +1122,7 @@ export class Workspace {
   /** The text of a file changed in the editor: it is saved as it is typed. */
   edit(path: string, text: string): void {
     const buffer = this.buffers[path];
-    if (buffer === undefined || !buffer.loaded || buffer.text === text) {
+    if (buffer === undefined || !buffer.loaded || buffer.text === text || buffer.readOnly) {
       return;
     }
     buffer.text = text;

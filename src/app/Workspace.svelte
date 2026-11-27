@@ -91,7 +91,7 @@
     return nodes.flatMap((node) =>
       node.kind === "folder"
         ? files(node.children)
-        : editable(node.path) || isPaper(node.path)
+        : editable(node.path) || isPaper(node.path) || workspace.readable[node.path] === true
           ? [node.path]
           : [],
     );

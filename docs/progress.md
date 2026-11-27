@@ -118,7 +118,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 18 `[function]`.** **Export script with output**, in the Script place's bar and in ⌘K, saves the script with what each statement printed, said and drew as a PDF under the script's name, in the layout of the samples. A script not yet run is offered **Run, then export** or **Export the script alone**. Typst is fetched by the first use, the status line saying its size, and not again. The file is the same whatever the window's width and in both browsers, and the same the engine and Typst give under Node: one digest in the three. Green here: the whole routine (528 unit tests; 785 browser tests in both browsers, 3 skipped).
 
-**Next.** Step 19 `[function]`: a project's other text files opened to be read (#228, option A).
+**Done, step 19 `[function]`.** A file of a project that is text, and that the app neither edits nor sets as a paper, opens in a tab to be read: a LaTeX table a script exported, a CSV. The tab says it is read only; nothing typed changes it; where a script is known to have written it the line names the script, and **Run** runs that script and the tab shows the new file. A file that is not text stays a row with no action. Green here: the whole routine but the 21 browser tests in WebKit that need a real mouse click, the Mac's screen being locked again (768 browser tests passed; none of the 21 is of this step); GitHub runs them. GitHub's checks of steps 16, 17 and 18 are read as they come: step 16's passed, and its build is at both addresses with every check passing.
+
+**Next.** Step 20 `[function]`: long text in the Variables pane (#209).
 
 **For the owner to read, when he wishes (added at step 15c).** The sample paper a first visitor meets in Paper: its two sentences, its equation, and the captions of its table and its figure (`examples/scratch/paper/paper.typ`), and the comments of the script that writes them (`examples/scratch/scripts/paper.zeff`).
 

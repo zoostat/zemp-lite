@@ -3345,3 +3345,21 @@ The wait is there at the trial address every time and at the address once in fou
 **Tests.** With the engine and Typst under Node: the example's document set to the kept digest. Browser, both engines, three: a script that has run saved with its output, its name, the kept digest, Typst and its nine fonts fetched by the first use and nothing by the second, the same bytes again, and again from ⌘K in a narrower window; a script not run asked about, cancelled with nothing done, exported alone with no run, and run then exported to the kept digest, and not asked a second time; a paper open in Paper set again after Typst was used for a script.
 
 **Reason.** The row of 0.3 in section 15 of the Zemp Specification; its section 5 ("A ⌘K command **Export script with output** writes the script with every output unfolded"); open decision #172.
+
+## 27 November 2026: release 0.3, step 19: a project's other text files opened to be read
+
+**What opens** (#228, option A). The app edits scripts, the manifest and plain notes (`.zeff`, `.toml`, `.txt`, `.md`) and sets papers (`.typ`). Every other file of a project that is text now opens too, in a tab of the Script place, to be read and not edited: a table a script exported for LaTeX, a data file of comma-separated values, a figure's own SVG. Its row in the Project pane is pressed as a script's is, and it is among the files ⌘K opens.
+
+**What counts as text.** A file whose bytes are valid UTF-8 from first to last, with no byte that only a file that is not text holds (a null, or a control character other than a tab, a line break, a form feed or an escape), and no larger than a megabyte (1,000,000 bytes; a file a byte larger is saved to the computer and read there). An empty file is text. A file in another encoding (Latin-1, say) is not shown as text it is not. The files are read to see this when the Project pane's list is made, and again only where a file's size has changed.
+
+**A file that is not text stays a row with no action**, with its name and its size, and **Save a copy…** in its menu, as before.
+
+**Read only, and said to be.** The tab's line under the bar says: "Read only: this file is shown to be read, and is not changed here." The top bar says "read only" where a script's says "saved". The cursor moves through the file and it can be copied from; nothing typed, pasted or deleted changes it. It is not coloured as a script, and nothing of a run stands beside it.
+
+**A file a script wrote names its script, and Run is that script's.** Where the project's record (step 15b) knows which script wrote the file, the line says so: "scripts/instruments.zeff wrote it: Run runs that script, and writes it again." And **Run**, pressed while the file is shown, runs that script, not whichever script happens to be the first open, which is what it did before this step for any file that is no script; the tab then shows what the run wrote. For a file under `output` that no run is known to have written the line says that the next run that writes it replaces it.
+
+**A flaw found on the way, and mended.** In the light theme the size beside a file's name stood at 4.47 to 1 while the pointer rested on its row, a shade under the 4.5 the app keeps to. It is set a shade darker on a row pointed at.
+
+**Tests.** Unit: what is text (in any language, with tabs and line breaks, an SVG, an empty file, a terminal's colours; not Latin-1, a sequence cut short, a null, a PNG's first bytes; at the megabyte, and a byte over it); the words of the line. Browser, both engines, four: the LaTeX table of the Scratch project's second example opened and read, its text the engine's, the line naming its script, nothing typed into it, its menu, and the script come back to; a CSV opened, a file of bytes and a Latin-1 file left as rows with no action, and ⌘K opening the one and not offering the other; sizes and contrast in both themes, and the tab showing what a run wrote again while it was open.
+
+**Reason.** Open decision #228, option A, as the checklist of this release has it.
