@@ -50,6 +50,11 @@
   const fetching = $derived(workspace.paperFetching);
   const pageShare = $derived(workspace.views.paper.share);
 
+  // The Scratch project is given its sample paper the first time the place is shown in it.
+  $effect(() => {
+    if (workspace.ready) untrack(() => void workspace.giveSample());
+  });
+
   // A paper the place has open is read when the place is first shown with it, and Typst is
   // fetched the first time a paper is open. Where the fetching failed it is not begun again
   // of itself (the pane offers **Try again**), but the next paper opened asks afresh.

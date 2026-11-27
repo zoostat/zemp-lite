@@ -1,0 +1,17 @@
+// The table and the figure of the paper in Paper (the top bar): each is written with export,
+// and the paper sets what is written. Press Run, here or in Paper, and both are made again.
+
+// # Sample
+let wages = dataset(wages)
+    .where(year >= 2012 && age >= 25)
+    .add(lwage = log(wage), exper2 = exper^2)
+
+// # The table
+let m1 = wages.reg(lwage ~ educ + exper + exper2, se: robust)
+let m2 = wages.reg(lwage ~ educ + exper + exper2 + female + union,
+    cluster: worker)
+report([m1, m2]).export("output/returns.typ")
+
+// # The figure
+let y2019 = wages.where(year == 2019)
+y2019.scatter(educ, lwage, fit: linear).export("output/schooling.svg")

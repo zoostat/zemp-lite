@@ -62,6 +62,12 @@ interface Each {
    * test's browser has opened it before, and opens on the welcome screen.
    */
   firstVisit: boolean;
+  /**
+   * Whether the Scratch project is given its sample paper when Paper is opened in it, as a
+   * visitor's is (release 0.3, step 15c); every other test's browser was given it before, and
+   * the reader has taken it out, so that Paper opens with no paper.
+   */
+  samplePaper: boolean;
   /** Press a button or a control: with the mouse where it works, by its click event where not. */
   press: (target: Locator) => Promise<void>;
 }
@@ -69,6 +75,7 @@ interface Each {
 export const test = base.extend<Each, Shared>({
   keptProfile: [false, { option: true }],
   firstVisit: [false, { option: true }],
+  samplePaper: [false, { option: true }],
   // WebKit gives a page no private file system in the short-lived profile a test normally
   // gets, which behaves as a private window does: there the interface keeps projects for the
   // life of the tab, and most tests run so. A test of projects that are kept asks for
@@ -77,7 +84,16 @@ export const test = base.extend<Each, Shared>({
   // machine, shared by all of them and by later runs, so those tests are in one file, run one
   // after another, and the storage is emptied before and after each (`kept.spec.ts`).
   context: async (
-    { browser, browserName, playwright, contextOptions, baseURL, keptProfile, firstVisit },
+    {
+      browser,
+      browserName,
+      playwright,
+      contextOptions,
+      baseURL,
+      keptProfile,
+      firstVisit,
+      samplePaper,
+    },
     use,
     testInfo,
   ) => {
@@ -94,6 +110,18 @@ export const test = base.extend<Each, Shared>({
             // A page that is given no storage opens on the Start screen.
           }
         }, STARTED);
+      }
+      // A visitor who was given the sample paper before, unless the test is of its giving.
+      if (!samplePaper) {
+        await context.addInitScript(() => {
+          try {
+            if (location.pathname !== "/empty-the-storage") {
+              localStorage.setItem("zemp-scratch-paper", "given");
+            }
+          } catch {
+            // A page that is given no storage is given no sample either.
+          }
+        });
       }
     };
     if (browserName !== "webkit" || !keptProfile) {

@@ -108,7 +108,11 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 15b `[function]`.** A table or a figure whose script has changed since it wrote it is said to be stale, in a sentence at the top edge of the page's pane ("output/fit.typ is stale: scripts/main.zeff has changed since it wrote it. Press Run to write it again."), and the run that writes it again clears the mark. Which script wrote which file, and from what text, is kept with the project, so the mark is there after the page is loaded again. A paper now speaks only of the files it uses as it stands. Green here: the whole routine (31 native tests of the module; 511 unit tests; 771 browser tests in both browsers, 3 skipped). GitHub's check of step 15a passed, and its build is at both addresses with every check passing.
 
-**Next.** Step 15c `[function]`: the sample paper of the Scratch project.
+**Done, step 15c `[function]`; step 15 is whole.** A visitor who opens Paper in the Scratch project meets a page: "Returns to schooling", with the wage equation, a table of two regressions and a figure, set from files a fourth example script, `scripts/paper.zeff`, exports. Nothing has run to show it; **Run** makes the table and the figure again, to the same page. The sample is fetched only when Paper is opened, is given once, and never over anything of the reader's. Its table and figure are held by test to what the engine writes, byte for byte. Green here: the whole routine (777 browser tests in both browsers, 3 skipped). GitHub's check of step 15b passed, and its build is at both addresses with every check passing.
+
+**Next.** Step 16 `[function]`: the PDF of a paper.
+
+**For the owner to read, when he wishes (added at step 15c).** The sample paper a first visitor meets in Paper: its two sentences, its equation, and the captions of its table and its figure (`examples/scratch/paper/paper.typ`), and the comments of the script that writes them (`examples/scratch/scripts/paper.zeff`).
 
 **For the coordinating session (added at step 15a).** Which files a script would write is read from its text here (the paths in its calls of `export`); a path built from other values is not seen. The engine could say it of a script without running it, beside its reading of statements and sections.
 

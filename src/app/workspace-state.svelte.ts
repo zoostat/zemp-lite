@@ -61,7 +61,14 @@ import { cardOf } from "../help/hover";
 import { once } from "../help/once";
 import { homesOf } from "../help/trail";
 import { usingText } from "../using/pages";
-import { engineIn, movedTo, ProjectError, type Project, type TreeNode } from "../project/projects";
+import {
+  SCRATCH,
+  engineIn,
+  movedTo,
+  ProjectError,
+  type Project,
+  type TreeNode,
+} from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
 import { begin, blocks, clockOf, end, hear, refused, said, type Run, oneRun } from "../output/run";
@@ -120,6 +127,9 @@ function openable(run: Run): number[] {
 }
 
 const VIEWS = ".zemp/views.json";
+/** Where the browser keeps the note that the Scratch project was given its sample paper. */
+export const SAMPLE_GIVEN = "zemp-scratch-paper";
+
 /** The project's manifest, which names the engine it runs on. */
 const MANIFEST = "zeff.toml";
 const MAIN = "scripts/main.zeff";
@@ -2277,6 +2287,54 @@ export class Workspace {
   closeLive(): void {
     this.paperLive?.close();
     this.paperLive = null;
+  }
+
+  /** Whether the sample paper has been looked to in this window (`giveSample`). */
+  #sampleAsked = false;
+
+  /**
+   * Give the Scratch project its sample paper, the first time Paper is opened in it (release
+   * 0.3, step 15c; the owner's answer to question 4): a paper of one page, the script that
+   * writes its table and its figure, and the two files as the engine writes them, so that a
+   * first visitor meets Paper with a page on it. The sample is a part of the app fetched only
+   * now. It is given once in a browser, and never over anything: a Scratch project that has a
+   * paper already, or a file of one of the sample's names, is left as it is.
+   */
+  async giveSample(): Promise<void> {
+    if (this.#sampleAsked || this.project.info.folder !== SCRATCH || this.#record === null) return;
+    this.#sampleAsked = true;
+    try {
+      if (this.#record.getItem(SAMPLE_GIVEN) !== null) return;
+      this.#record.setItem(SAMPLE_GIVEN, "given");
+    } catch {
+      // The browser keeps no note: the sample is not given, so that it is not given twice.
+      return;
+    }
+    try {
+      const { SAMPLE, SAMPLE_PAPER, SAMPLE_SCRIPT, SAMPLE_WRITTEN } =
+        await import("../paper/sample");
+      if (this.paperFiles.length > 0) return;
+      for (const file of SAMPLE) {
+        if ((await this.project.read(file.path)) !== null) return;
+      }
+      for (const file of SAMPLE) {
+        await this.project.writeText(file.path, file.text);
+        this.session.changed(file.path);
+        this.language?.changed(file.path);
+      }
+      // The table and the figure are noted as the script's, from its text as it is given.
+      const script = SAMPLE.find((file) => file.path === SAMPLE_SCRIPT)?.text ?? "";
+      this.#written = noted(this.#written, SAMPLE_WRITTEN, SAMPLE_SCRIPT, await digestOf(script));
+      const kept = writeWritten(this.#written);
+      this.#saving = this.#saving.then(() => this.project.writeText(WRITTEN, kept));
+      await this.refresh();
+      // The paper is opened where the reader is still in Paper with none open.
+      if (this.views.active === PAPER && this.views.paper.open === null) {
+        await this.open(SAMPLE_PAPER);
+      }
+    } catch (error) {
+      this.problem = `The sample paper could not be given: ${(error as Error).message}`;
+    }
   }
 
   /** Where Typst, the module that sets the page, stands: not asked for, coming, here, or not come. */
