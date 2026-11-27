@@ -14,8 +14,9 @@
 //! (Typst's own memory, `comemo`): a letter typed costs a few milliseconds, not a whole
 //! setting.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::num::NonZeroUsize;
+use std::sync::Mutex;
 
 use serde_json::{Value, json};
 use typst::diag::{FileError, FileResult, Severity, SourceDiagnostic};
@@ -59,6 +60,10 @@ struct Held {
     names: HashMap<FileId, String>,
     /// The day `datetime.today()` gives: the reader's, as the page gave it.
     today: Option<(i32, u8, u8)>,
+    /// The files Typst asked for since the last setting began and was told are not there, each
+    /// by its path in the project: the page looks for these in the project and gives those it
+    /// finds. (Typst asks through `&self`, from any thread, hence the lock.)
+    missing: Mutex<BTreeSet<String>>,
 }
 
 impl World for Held {
@@ -103,8 +108,13 @@ impl World for Held {
 
 impl Held {
     /// What Typst is told of a file that is not there: that it was not found, by its path.
+    /// The path is noted for the page.
     fn absent(&self, id: FileId) -> FileError {
-        FileError::NotFound(id.vpath().get_without_slash().into())
+        let path = id.vpath().get_without_slash();
+        if let Ok(mut missing) = self.missing.lock() {
+            missing.insert(path.to_string());
+        }
+        FileError::NotFound(path.into())
     }
 }
 
@@ -138,6 +148,7 @@ impl Paper {
                 files: HashMap::new(),
                 names: HashMap::new(),
                 today: None,
+                missing: Mutex::new(BTreeSet::new()),
             },
             document: None,
         }
@@ -265,9 +276,16 @@ impl Paper {
 
     /// Set the paper. A line of JSON of type `set`: `ok`, whether Typst set it; `pages`, the
     /// sizes in points of the pages of the last document that set (those of this setting where
-    /// `ok`, and otherwise those of the setting before, which stay to be shown); `said`, what
-    /// Typst said of this setting, its errors where it refused the source and its warnings.
+    /// `ok`, and otherwise those of the setting before, which stay to be shown); `marks`, one
+    /// for each of those pages, the same for a page that is drawn the same and another for one
+    /// that is not, so that the page asks again only for the pages that changed; `said`, what
+    /// Typst said of this setting, its errors where it refused the source and its warnings;
+    /// `missing`, the files Typst asked for in this setting that the paper does not hold, each
+    /// by its path in the project, in the order of their paths.
     pub fn set(&mut self) -> String {
+        if let Ok(mut missing) = self.world.missing.lock() {
+            missing.clear();
+        }
         let compiled = typst::compile::<PagedDocument>(&self.world);
         // What no setting has used for a while is dropped.
         comemo::evict(KEPT_FOR);
@@ -291,7 +309,31 @@ impl Paper {
                 [size.x.to_pt(), size.y.to_pt()]
             })
             .collect();
-        json!({ "type": "set", "ok": ok, "pages": pages, "said": said }).to_string()
+        let marks: Vec<String> = self
+            .document
+            .iter()
+            .flat_map(|document| document.pages())
+            // What a page is drawn from: its frame and its ground. Two pages of one mark are
+            // drawn the same; a page may get another mark and still be drawn the same (its
+            // frame also holds where in the source each piece came from), which costs a
+            // drawing and nothing else.
+            .map(|page| format!("{:032x}", typst::utils::hash128(&(&page.frame, &page.fill))))
+            .collect();
+        let missing: Vec<String> = self
+            .world
+            .missing
+            .lock()
+            .map(|missing| missing.iter().cloned().collect())
+            .unwrap_or_default();
+        json!({
+            "type": "set",
+            "ok": ok,
+            "pages": pages,
+            "marks": marks,
+            "said": said,
+            "missing": missing,
+        })
+        .to_string()
     }
 
     /// A page of the last document that set, counted from 0, as Typst's own SVG of it; empty

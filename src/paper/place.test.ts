@@ -7,8 +7,12 @@ import {
   isPaper,
   megabytes,
   offeredName,
+  pagesWords,
   papersOf,
   shownOf,
+  standingWords,
+  toldOf,
+  wordsOf,
 } from "./place";
 
 const file = (path: string) => ({ kind: "file" as const, path });
@@ -126,6 +130,89 @@ describe("what the page's pane says of Typst", () => {
     );
     expect(fetchingWords({ state: "failed", message: "the host answered 503" }, 7_531_100)).toBe(
       "Typst could not be fetched: the host answered 503",
+    );
+  });
+});
+
+describe("what Typst said, as the app shows it", () => {
+  const said = (
+    more: Partial<Parameters<typeof toldOf>[0][number]> = {},
+  ): Parameters<typeof toldOf>[0][number] => ({
+    severity: "error",
+    message: "unknown variable: nosuch",
+    hints: [],
+    file: "paper/paper.typ",
+    line: 3,
+    column: 2,
+    end_line: 3,
+    end_column: 8,
+    from: 20,
+    to: 26,
+    ...more,
+  });
+
+  it("is Typst's message with its hints, and for a formula without its face the line to begin with", () => {
+    expect(wordsOf({ message: "unknown variable: nosuch", hints: [] })).toBe(
+      "unknown variable: nosuch",
+    );
+    expect(wordsOf({ message: "unexpected argument", hints: ["remove it", "or name it"] })).toBe(
+      "unexpected argument (remove it) (or name it)",
+    );
+    expect(
+      wordsOf({
+        message: "current font is not designed for math",
+        hints: ["rendering may be poor"],
+      }),
+    ).toBe(
+      'current font is not designed for math (rendering may be poor). Begin the paper with the line: #show math.equation: set text(font: "Libertinus Math")',
+    );
+  });
+
+  it("is placed at its line of the paper, or named by the file it is of, each thing once", () => {
+    expect(
+      toldOf(
+        [
+          said(),
+          said(),
+          said({ severity: "warning", message: "unknown font family: arial", line: 1 }),
+          said({ file: "paper/tables/fit.typ", line: 2, message: "expected expression" }),
+          said({ file: "output/table.typ", line: null, message: "file is not valid utf-8" }),
+          said({ file: null, line: null, message: "the document has no pages" }),
+        ],
+        "paper/paper.typ",
+      ),
+    ).toEqual([
+      { severity: "error", line: 3, where: "line 3", text: "unknown variable: nosuch" },
+      { severity: "warning", line: 1, where: "line 1", text: "unknown font family: arial" },
+      {
+        severity: "error",
+        line: null,
+        where: "paper/tables/fit.typ, line 2",
+        text: "expected expression",
+      },
+      { severity: "error", line: null, where: "output/table.typ", text: "file is not valid utf-8" },
+      { severity: "error", line: null, where: "", text: "the document has no pages" },
+    ]);
+  });
+
+  it("says above the pages how they stand to the text", () => {
+    const error = { severity: "error" as const, line: 3, where: "line 3", text: "x" };
+    const warning = { severity: "warning" as const, line: 1, where: "line 1", text: "y" };
+    expect(pagesWords(1)).toBe("1 page");
+    expect(pagesWords(12)).toBe("12 pages");
+    expect(standingWords(true, 2, [])).toBe("");
+    expect(standingWords(true, 2, [warning])).toBe("Typst set the paper, with 1 warning.");
+    expect(standingWords(true, 2, [warning, warning])).toBe(
+      "Typst set the paper, with 2 warnings.",
+    );
+    expect(standingWords(false, 1, [error, warning])).toBe(
+      "Typst refuses the text as it stands (1 error). The page is of the text as it last set, not of the present text.",
+    );
+    expect(standingWords(false, 3, [error, error])).toBe(
+      "Typst refuses the text as it stands (2 errors). The pages are of the text as it last set, not of the present text.",
+    );
+    expect(standingWords(false, 0, [error])).toBe(
+      "Typst refuses the text as it stands (1 error). There is no page yet.",
     );
   });
 });

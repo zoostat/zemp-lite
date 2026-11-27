@@ -9,16 +9,31 @@
   //
   // Typst, which sets the page, is a module of its own: it is fetched the first time a paper
   // is opened, and the page's pane says its size and how far the fetching has gone.
+  //
+  // The page is live (step 13): the source is set a short pause after the last key and drawn
+  // page by page, each page a picture of Typst's own SVG, asked for when it is near the
+  // reader's view. It is drawn to the width of its pane, or at a size the reader chooses; a
+  // page is always in the light print theme, whichever theme the window is in. Where Typst
+  // refuses the text its words stand at their line in the editor and above the pages, and the
+  // pages of the text as it last set stay, marked as not of the present text.
   import { tick, untrack } from "svelte";
   import Editor from "../editor/Editor.svelte";
   import { share } from "../paper/fetching";
   import { PAPER_TRAVELS } from "../paper/lazy";
-  import { PAPERS, fetchingWords, fileNamed, offeredName } from "../paper/place";
+  import {
+    PAPERS,
+    fetchingWords,
+    fileNamed,
+    offeredName,
+    pagesWords,
+    standingWords,
+    toldOf,
+  } from "../paper/place";
   import { paneOf } from "./panes";
   import Place from "./Place.svelte";
   import ProjectTree from "./ProjectTree.svelte";
   import Splitter from "./Splitter.svelte";
-  import { PAGE_SHARE } from "./views";
+  import { PAGE_SHARE, PAGE_SIZE, pageSizeStep } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
@@ -37,6 +52,83 @@
     if (!workspace.ready || path === null) return;
     if (buffer === undefined) void workspace.open(path);
     untrack(() => workspace.fetchPaper());
+  });
+
+  // The live page: Typst is here and the paper's text is read; no paper, no live page.
+  $effect(() => {
+    if (shown.kind === "paper" && fetching.state === "ready") {
+      const open = shown.path;
+      untrack(() => workspace.showLive(open));
+    } else if (shown.kind === "none") {
+      untrack(() => workspace.closeLive());
+    }
+  });
+  const live = $derived(workspace.paperLive?.main === path ? workspace.paperLive : null);
+  const outcome = $derived(live?.outcome ?? null);
+  const pages = $derived(outcome?.pages ?? []);
+  // What Typst said, placed: at its line of this paper, or named by the file it is of.
+  const told = $derived(outcome === null || path === null ? [] : toldOf(outcome.said, path));
+  const atLines = $derived(
+    told.flatMap((one) =>
+      one.line === null ? [] : [{ line: one.line, severity: one.severity, text: one.text }],
+    ),
+  );
+  const standing = $derived(
+    outcome === null ? "" : standingWords(outcome.ok, outcome.pages.length, told),
+  );
+
+  // The size the pages are drawn at: a printed point is 96/72 of a pixel of the screen at 100
+  // per cent; to fit, the widest page takes the width of the pane.
+  const POINT = 96 / 72;
+  let scroller = $state<HTMLElement | null>(null);
+  let room = $state(0);
+  $effect(() => {
+    const within = scroller;
+    if (within === null) return;
+    const measure = () => {
+      const style = getComputedStyle(within);
+      room = within.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    };
+    const watch = new ResizeObserver(measure);
+    watch.observe(within);
+    measure();
+    return () => watch.disconnect();
+  });
+  const size = $derived(workspace.views.paper.size);
+  const widest = $derived(Math.max(0, ...pages.map((page) => page.width)));
+  /** Pixels of the screen to a point of the page. */
+  const scale = $derived(
+    size === "fit" ? (room > 0 && widest > 0 ? room / widest : POINT) : (POINT * size) / 100,
+  );
+  const percent = $derived(Math.round((scale / POINT) * 100));
+
+  // The pages near the reader's view, whose pictures are asked for: now, and each time the
+  // paper is set again.
+  let near = $state<number[]>([]);
+  function watched(node: HTMLElement, index: number) {
+    let at = index;
+    const watch = new IntersectionObserver(
+      (entries) => {
+        const inView = entries.some((entry) => entry.isIntersecting);
+        near = inView ? [...new Set([...near, at])] : near.filter((one) => one !== at);
+      },
+      { root: scroller, rootMargin: "900px 0px" },
+    );
+    watch.observe(node);
+    return {
+      update(next: number) {
+        at = next;
+      },
+      destroy() {
+        watch.disconnect();
+        near = near.filter((one) => one !== at);
+      },
+    };
+  }
+  $effect(() => {
+    const page = live;
+    if (page === null || page.outcome === null) return;
+    for (const index of near) page.want(index);
   });
 
   // New paper…: its name is asked in a line of the place, and it is made in the folder `paper`.
@@ -188,6 +280,8 @@
               wrap
               onchange={(text) => workspace.edit(path, text)}
               onrun={() => void workspace.run()}
+              said={atLines}
+              reveal={workspace.reveal?.path === path ? workspace.reveal : null}
             />
           {/key}
         {/if}
@@ -203,18 +297,115 @@
           onstep={(direction) => workspace.setPageShare(pageShare - direction * 0.02)}
         />
         <section class="page" aria-label="The page" style:width="{pageShare * 100}%">
-          <p class="typst" role="note" aria-live="polite" data-testid="paper-typst">
-            {fetchingWords(fetching, PAPER_TRAVELS)}
-          </p>
-          {#if fetching.state === "fetching"}
-            <progress
-              max="100"
-              value={fetching.progress === null ? 0 : share(fetching.progress)}
-              aria-label="How much of Typst has been fetched"
-            ></progress>
-          {:else if fetching.state === "failed"}
-            <button class="word strong" onclick={() => workspace.fetchPaper()}>Try again</button>
+          {#if live !== null}
+            <div class="tools" role="toolbar" aria-label="The page: its pages and its size">
+              <span class="count" data-testid="paper-pages"
+                >{outcome === null ? "" : pagesWords(pages.length)}</span
+              >
+              <span class="gap"></span>
+              <button
+                class="view"
+                aria-pressed={size === "fit"}
+                onclick={() => workspace.setPageSize("fit")}
+                title="Draw the page to the width of this pane">Fit width</button
+              >
+              <button
+                class="view step"
+                aria-label="Smaller page"
+                title="A size smaller"
+                disabled={percent <= PAGE_SIZE.least}
+                onclick={() => workspace.setPageSize(pageSizeStep(percent, -1))}>−</button
+              >
+              <span class="percent" aria-live="polite" data-testid="paper-size">{percent}%</span>
+              <button
+                class="view step"
+                aria-label="Larger page"
+                title="A size larger"
+                disabled={percent >= PAGE_SIZE.most}
+                onclick={() => workspace.setPageSize(pageSizeStep(percent, 1))}>+</button
+              >
+            </div>
           {/if}
+          <div class="pages" bind:this={scroller} data-testid="paper-pages-view">
+            {#if live === null}
+              {#if fetching.state === "fetching"}
+                <progress
+                  max="100"
+                  value={fetching.progress === null ? 0 : share(fetching.progress)}
+                  aria-label="How much of Typst has been fetched"
+                ></progress>
+              {:else if fetching.state === "failed"}
+                <button class="word strong" onclick={() => workspace.fetchPaper()}>Try again</button
+                >
+              {/if}
+            {:else}
+              {#if live.failed !== null}
+                <p class="standing refused" role="note">
+                  The paper could not be set: {live.failed}
+                </p>
+              {:else if standing !== ""}
+                <p
+                  class="standing"
+                  class:refused={outcome !== null && !outcome.ok}
+                  role="note"
+                  aria-live="polite"
+                  data-testid="paper-standing"
+                >
+                  {standing}
+                </p>
+              {/if}
+              {#if told.length > 0}
+                <ul class="told" aria-label="What Typst says of the paper">
+                  {#each told as one, index (index)}
+                    <li class={one.severity}>
+                      {#if one.line !== null && path !== null}
+                        <button
+                          class="where"
+                          onclick={() => void workspace.goTo(path, one.line ?? 1)}
+                          title="Go to this line of the source">{one.where}</button
+                        >
+                      {:else if one.where !== ""}
+                        <span class="where">{one.where}</span>
+                      {/if}
+                      <span>{one.text}</span>
+                    </li>
+                  {/each}
+                </ul>
+              {/if}
+              {#each pages as page, index (index)}
+                <figure
+                  class="sheet"
+                  class:stale={outcome !== null && !outcome.ok}
+                  style:width="{page.width * scale}px"
+                  style:height="{page.height * scale}px"
+                  data-testid="paper-page"
+                  use:watched={index}
+                >
+                  {#if live.shown[index] !== undefined}
+                    <img
+                      src={live.shown[index]}
+                      alt="Page {index + 1} of {pages.length}"
+                      draggable="false"
+                    />
+                  {/if}
+                  {#if outcome !== null && !outcome.ok}
+                    <figcaption>not the present text</figcaption>
+                  {/if}
+                </figure>
+              {/each}
+            {/if}
+          </div>
+          <p class="typst" role="note" aria-live="polite" data-testid="paper-typst">
+            {#if fetching.state !== "ready"}
+              {fetchingWords(fetching, PAPER_TRAVELS)}
+            {:else if outcome === null}
+              Typst {fetching.typst} · setting the paper…
+            {:else}
+              Typst {fetching.typst} · set in {Math.max(1, Math.round(outcome.ms))} ms{live?.busy
+                ? " · setting again…"
+                : ""}
+            {/if}
+          </p>
         </section>
       {/if}
     </div>
@@ -239,21 +430,158 @@
     background: var(--softer);
     border-left: 1px solid var(--line-strong);
     box-sizing: border-box;
+    display: flex;
     flex: none;
+    flex-direction: column;
+    min-height: 0;
     min-width: 0;
+  }
+  /* The count of pages, and the controls of the page's size, which change only the view. */
+  .tools {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    flex: none;
+    gap: 4px;
+    min-height: 34px;
+    padding: 0 12px 0 18px;
+  }
+  .count,
+  .percent {
+    color: var(--ink-3);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .percent {
+    min-width: 44px;
+    text-align: center;
+  }
+  .view {
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--ink-2);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13.5px;
+    padding: 3px 6px;
+    text-decoration: underline dashed var(--line-strong);
+    text-underline-offset: 4px;
+  }
+  .view.step {
+    min-width: 26px;
+    text-decoration: none;
+  }
+  .view:hover:not(:disabled) {
+    background: var(--soft);
+  }
+  .view:disabled {
+    color: var(--ink-3);
+    cursor: default;
+  }
+  .view[aria-pressed="true"] {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .view:focus-visible,
+  .where:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+  .pages {
+    flex: 1;
+    min-height: 0;
     overflow: auto;
     padding: 14px 18px;
   }
   .typst {
-    color: var(--ink-2);
-    font-size: 13.5px;
-    margin: 0 0 10px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-3);
+    flex: none;
+    font-size: 13px;
+    margin: 0;
+    padding: 6px 18px;
   }
   progress {
     accent-color: var(--accent);
     display: block;
     height: 6px;
     width: min(100%, 320px);
+  }
+  .standing {
+    color: var(--ink-2);
+    font-size: 13.5px;
+    margin: 0 0 8px;
+  }
+  .standing.refused {
+    color: var(--error);
+  }
+  /* What Typst says, each thing with where it is; its own line of the source is gone to. */
+  .told {
+    font-size: 13px;
+    list-style: none;
+    margin: 0 0 12px;
+    max-height: 132px;
+    overflow: auto;
+    padding: 0;
+  }
+  .told li {
+    border-left: 3px solid var(--error);
+    color: var(--ink-2);
+    display: flex;
+    gap: 8px;
+    padding: 2px 0 2px 10px;
+  }
+  .told li + li {
+    margin-top: 4px;
+  }
+  .told li.warning {
+    border-left-color: var(--warning);
+  }
+  .told .where {
+    background: none;
+    border: 0;
+    border-radius: 5px;
+    color: var(--ink-3);
+    flex: none;
+    font: inherit;
+    padding: 0;
+    white-space: nowrap;
+  }
+  .told button.where {
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  /* A page: always the light print theme, whichever theme the window is in. */
+  .sheet {
+    background: #fff;
+    box-shadow:
+      0 0 0 1px var(--line-strong),
+      0 2px 8px rgb(0 0 0 / 12%);
+    margin: 0 auto 16px;
+    position: relative;
+  }
+  .sheet img {
+    display: block;
+    height: 100%;
+    user-select: none;
+    width: 100%;
+  }
+  /* A page of the text as it last set, while Typst refuses the text as it stands: quieter,
+     and said to be so. */
+  .sheet.stale img {
+    opacity: 0.45;
+  }
+  .sheet figcaption {
+    background: var(--error-soft);
+    border-radius: 0 0 0 6px;
+    color: var(--error);
+    font-size: 12.5px;
+    padding: 2px 8px;
+    position: absolute;
+    right: 0;
+    top: 0;
   }
   .none {
     margin: 0 auto;

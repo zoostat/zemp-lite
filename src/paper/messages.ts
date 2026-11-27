@@ -27,8 +27,18 @@ export interface Setting {
    * setting's where `ok`, and otherwise those of the setting before, which stay to be shown.
    */
   pages: [number, number][];
+  /**
+   * A mark for each of those pages: two pages of one mark are drawn the same, so a page whose
+   * mark has not changed need not be asked for again.
+   */
+  marks: string[];
   /** What Typst said of this setting: its errors where it refused the source, and its warnings. */
   said: Said[];
+  /**
+   * The files Typst asked for in this setting that the paper does not hold, each by its path
+   * in the project: the page looks for them in the project and gives those it finds.
+   */
+  missing: string[];
 }
 
 /** The place in the sources that a point of a page came from. */

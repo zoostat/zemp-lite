@@ -610,3 +610,72 @@ test("a project made while the app stood at /app/ is opened by the address it ha
   await page.goBack();
   expect(page.url()).toBe("about:blank");
 });
+
+// The Paper place (release 0.3, step 12). It is held here and not in `paper.spec.ts`, because
+// in WebKit every test that keeps a profile shares one storage, and they run one after another
+// in this file alone.
+test("a paper is saved as it is typed and found again: after Close, and after the page is loaded again, with the place's panes", async ({
+  page,
+  press,
+}) => {
+  const places = page.getByRole("navigation", { name: "Places" });
+  const bar = page.getByRole("toolbar", { name: "Paper: its panes and its controls" });
+  const project = page
+    .getByRole("complementary", { name: "Paper: the left pane" })
+    .getByRole("region", { name: "Project" });
+  const none = page.getByRole("region", { name: "No paper is open" });
+  const source = page.getByRole("textbox", { name: "The paper's source" });
+  const thePage = page.getByRole("region", { name: "The page" });
+  const sourceText = async () =>
+    (
+      await source.locator(".cm-line").evaluateAll((lines) => lines.map((line) => line.textContent))
+    ).join("\n");
+  await page.goto("/");
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(places.getByRole("button", { name: "Paper" }));
+  await press(bar.getByRole("button", { name: "New paper…" }));
+  await page.getByRole("textbox", { name: "The new paper's name" }).press("Enter");
+  await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
+  await source.focus();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.insertText("The mean wage was 27.37.\n");
+  await expect(page.locator("header .file")).toHaveText("/ paper.typ · saved");
+  // Closed, the paper is listed among the papers of the project, and opens as it was left.
+  await press(bar.getByRole("button", { name: "Close", exact: true }));
+  await expect(none).toContainText("The papers of this project");
+  await expect(page.locator("header .file")).toHaveCount(0);
+  await press(none.getByRole("button", { name: "paper/paper.typ" }));
+  await expect.poll(sourceText).toContain("The mean wage was 27.37.");
+  // The panes as the reader leaves them, and the size of the page: Project open, the page
+  // a size larger and then closed.
+  await press(bar.getByRole("button", { name: "Project", exact: true }));
+  await expect(page.getByTestId("paper-typst")).toHaveText(/set in \d+ ms$/, { timeout: 60_000 });
+  await press(thePage.getByRole("button", { name: "Larger page" }));
+  const size = await page.getByTestId("paper-size").textContent();
+  await press(bar.getByRole("button", { name: "Page", exact: true }));
+  await expect(thePage).toHaveCount(0);
+  await expect(project).toBeVisible();
+
+  // The page loaded again: a start opens on the script, and Paper is as it was left.
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await expect(places.getByRole("button", { name: "Script" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await press(places.getByRole("button", { name: "Paper" }));
+  await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
+  await expect.poll(sourceText).toContain("The mean wage was 27.37.");
+  await expect(thePage).toHaveCount(0);
+  await expect(project.getByRole("button", { name: /^paper\.typ/ })).toHaveClass(/\bon\b/);
+  // The page's pane opened again: Typst is fetched for this visit, as for the first, and the
+  // page is drawn at the size it was left at.
+  await press(bar.getByRole("button", { name: "Page", exact: true }));
+  await expect(page.getByTestId("paper-typst")).toHaveText(/set in \d+ ms$/, { timeout: 60_000 });
+  await expect(page.getByTestId("paper-size")).toHaveText(size ?? "");
+  await expect(thePage.getByRole("button", { name: "Fit width" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+});

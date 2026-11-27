@@ -97,6 +97,11 @@ test("a paper is set to pages in the fonts given before it was opened, and each 
   assert.equal(set.ok, true);
   // Nothing is said: the fonts given are found, bold and italic among them.
   assert.deepEqual(set.said, []);
+  // A mark for each page, each its own, and no file asked for that the paper lacks.
+  assert.equal(set.marks.length, 2);
+  assert.match(set.marks[0], /^[0-9a-f]{32}$/);
+  assert.notEqual(set.marks[0], set.marks[1]);
+  assert.deepEqual(set.missing, []);
   assert.equal(set.pages.length, 2);
   assert.ok(Math.abs(set.pages[0][0] - 595.276) < 0.001);
   worker.postMessage({ type: "page", id: 3, index: 0 });
@@ -153,6 +158,8 @@ test("what Typst refuses is said with its file, line and column, and the last pa
   assert.equal(absent.said[0].file, MAIN);
   assert.equal(absent.said[0].line, 3);
   assert.match(absent.said[0].message, /file not found/);
+  // And it is named, for the page to look for in the project.
+  assert.deepEqual(absent.missing, ["paper/tables/fit.typ"]);
 });
 
 test("a figure is given as bytes, a point of the page leads to its source, and the day is the one given", async (t) => {

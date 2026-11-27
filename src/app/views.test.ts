@@ -14,6 +14,7 @@ import {
   withTab,
   writeViews,
   pageShare,
+  pageSizeStep,
 } from "./views";
 
 describe("the view state of a project", () => {
@@ -27,7 +28,7 @@ describe("the view state of a project", () => {
       paper: { project: true, outline: true, page: false },
       help: { topics: false },
     };
-    state.paper = { open: "paper/returns.typ", share: 0.62 };
+    state.paper = { open: "paper/returns.typ", share: 0.62, size: 125 };
     state.right = { width: 400 };
     state.left = { width: 312 };
     state.tabs = [fileTab("scripts/main.zeff"), fileTab("scripts/second.zeff"), "view:plots"];
@@ -226,27 +227,45 @@ describe("the view state of a project", () => {
   });
 
   it("reads the paper the Paper place has open and the page's share, within its limits", () => {
-    expect(usual().paper).toEqual({ open: null, share: 0.5 });
+    expect(usual().paper).toEqual({ open: null, share: 0.5, size: "fit" });
     expect(usual().panes.paper).toEqual({ project: false, outline: false, page: true });
     const read = readViews(
       JSON.stringify({
         version: 5,
         panes: { paper: { project: true, page: false, later: true } },
-        paper: { open: "paper/returns.typ", share: 0.9, later: 1 },
+        paper: { open: "paper/returns.typ", share: 0.9, size: 150, later: 1 },
       }),
     );
     expect(read.panes.paper).toEqual({ project: true, outline: false, page: false });
-    expect(read.paper).toEqual({ open: "paper/returns.typ", share: 0.75 });
-    // What is not a path or a share is passed over.
-    for (const paper of [{ open: 3, share: "half" }, { open: "" }, "none", null]) {
-      expect(readViews(JSON.stringify({ paper })).paper).toEqual({ open: null, share: 0.5 });
+    expect(read.paper).toEqual({ open: "paper/returns.typ", share: 0.75, size: 150 });
+    // What is not a path, a share or a size the page is drawn at is passed over.
+    for (const paper of [
+      { open: 3, share: "half", size: "large" },
+      { open: "", size: 123 },
+      "none",
+      null,
+    ]) {
+      expect(readViews(JSON.stringify({ paper })).paper).toEqual({
+        open: null,
+        share: 0.5,
+        size: "fit",
+      });
     }
+    // A step smaller or larger from a size, or from the size a fitted page happens to have.
+    expect(pageSizeStep(100, 1)).toBe(110);
+    expect(pageSizeStep(100, -1)).toBe(90);
+    expect(pageSizeStep(83.4, 1)).toBe(90);
+    expect(pageSizeStep(83.4, -1)).toBe(80);
+    expect(pageSizeStep(200, 1)).toBe(200);
+    expect(pageSizeStep(31, -1)).toBe(50);
+    expect(pageSizeStep(31, 1)).toBe(50);
+    expect(pageSizeStep(260, -1)).toBe(200);
     expect(pageShare(0.1)).toBe(0.25);
     expect(pageShare(0.4449)).toBe(0.44);
     // A file of an earlier version names no paper, and opens as a first one does.
     expect(
       readViews(JSON.stringify({ version: 4, panes: { script: { notes: false } } })).paper,
-    ).toEqual({ open: null, share: 0.5 });
+    ).toEqual({ open: null, share: 0.5, size: "fit" });
   });
 
   it("reads what is unfolded, each script's lines whole numbers, once each and in order", () => {

@@ -68,9 +68,10 @@ export interface ViewState {
   help: { topics: Record<string, boolean> };
   /**
    * The Paper place: the paper it has open, by its path, or `null` where it has none; and the
-   * share of the place's width the page takes beside the source.
+   * share of the place's width the page takes beside the source; and the size the page is
+   * drawn at, to fit the width of its pane or at a per cent of its printed size.
    */
-  paper: { open: string | null; share: number };
+  paper: { open: string | null; share: number; size: PageSize };
   /** The parts of the file this build does not know, kept as they were (a later build's). */
   others: Record<string, unknown>;
   /** The left pane of a place: its width, in pixels. */
@@ -104,6 +105,25 @@ export const RIGHT_WIDTH = { least: 240, most: 560, usual: 310 } as const;
 
 /** The least, the most and the usual share of the Paper place its page takes. */
 export const PAGE_SHARE = { least: 0.25, most: 0.75, usual: 0.5 } as const;
+
+/** The size a paper's page is drawn at: to the width of its pane, or a per cent of its printed size. */
+export type PageSize = "fit" | number;
+/** The sizes a page is drawn at, in per cent of its printed size, from the smallest. */
+export const PAGE_SIZES = [50, 67, 80, 90, 100, 110, 125, 150, 175, 200] as const;
+/** The smallest and the largest of them. */
+export const PAGE_SIZE = { least: 50, most: 200 } as const;
+
+/**
+ * The size a step smaller (−1) or larger (+1) than a page now drawn at `now` per cent: the
+ * next of the sizes below or above it, and the same size where there is none.
+ */
+export function pageSizeStep(now: number, direction: -1 | 1): number {
+  const next =
+    direction === 1
+      ? PAGE_SIZES.find((size) => size > now + 0.5)
+      : [...PAGE_SIZES].reverse().find((size) => size < now - 0.5);
+  return next ?? (direction === 1 ? PAGE_SIZE.most : PAGE_SIZE.least);
+}
 
 /** The tab of the plot viewer. */
 export const PLOTS = "view:plots";
@@ -148,7 +168,7 @@ export function usual(): ViewState {
     script: { unfolded: {} },
     data: { frame: null, variable: null, hidden: {}, shown: {} },
     help: { topics: {} },
-    paper: { open: null, share: PAGE_SHARE.usual },
+    paper: { open: null, share: PAGE_SHARE.usual, size: "fit" },
     others: {},
     left: { width: LEFT_WIDTH.usual },
     tabs: [fileTab("scripts/main.zeff")],
@@ -217,6 +237,10 @@ export function readViews(text: string | null): ViewState {
     if (typeof paper["open"] === "string" && paper["open"] !== "") state.paper.open = paper["open"];
     if (typeof paper["share"] === "number" && Number.isFinite(paper["share"])) {
       state.paper.share = pageShare(paper["share"]);
+    }
+    const size = paper["size"];
+    if (typeof size === "number" && (PAGE_SIZES as readonly number[]).includes(size)) {
+      state.paper.size = size;
     }
   }
   const right = from["right"] as Record<string, unknown> | undefined;

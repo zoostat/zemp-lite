@@ -28,10 +28,14 @@
 //   { type: "put", path }               the file was put into the paper
 //   { type: "removed", path, was }      the file was forgotten; `was`, whether there was one
 //   { type: "dated" }
-//   { type: "set", ok, pages, said }    the setting: whether Typst set it; the sizes in points
-//                                       of the pages of the last document that set; and what
+//   { type: "set", ok, pages, marks, said, missing }
+//                                       the setting: whether Typst set it; the sizes in points
+//                                       of the pages of the last document that set; a mark for
+//                                       each of them, the same for a page drawn the same; what
 //                                       Typst said, each thing { severity, message, hints,
-//                                       file, line, column, end_line, end_column, from, to }
+//                                       file, line, column, end_line, end_column, from, to };
+//                                       and the files it asked for that the paper does not
+//                                       hold, by their paths in the project
 //   { type: "page", index, svg }        the page as Typst's own SVG; empty where there is none
 //   { type: "pdf", bytes }              the PDF, in a Uint8Array whose buffer is passed to
 //                                       the interface and not copied

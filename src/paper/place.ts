@@ -3,6 +3,7 @@
 // holds, what the place shows, and the words of the fetching of Typst.
 import type { Progress } from "./fetching";
 import { share } from "./fetching";
+import type { Said } from "./messages";
 
 /** The folder a new paper is made in (the owner's answer to question 3 of release 0.3). */
 export const PAPERS = "paper";
@@ -124,4 +125,76 @@ export function fetchingWords(fetching: Fetching, travels: number | null): strin
     case "failed":
       return `Typst could not be fetched: ${fetching.message}`;
   }
+}
+
+/** What Typst says of a formula set with no face for mathematics among the paper's fonts. */
+const NO_MATHEMATICS = "current font is not designed for math";
+
+/**
+ * What Typst said, as the app shows it at a line: Typst's own message, its hints after it,
+ * and, for a formula set without the face of its mathematics, the line the paper is to begin
+ * with (Typst names its own face, which Zemp Lite does not carry).
+ */
+export function wordsOf(said: Pick<Said, "message" | "hints">): string {
+  const hints = said.hints.map((hint) => ` (${hint})`).join("");
+  const more =
+    said.message === NO_MATHEMATICS ? `. Begin the paper with the line: ${MATHEMATICS}` : "";
+  return `${said.message}${hints}${more}`;
+}
+
+/** One thing Typst said, placed for the page's pane and for the editor. */
+export interface Told {
+  severity: "error" | "warning";
+  /** The line of the paper's own source it stands at, from 1; `null` where it is of another file, or of none. */
+  line: number | null;
+  /** Where it is, in words, before the message: `line 3`, or another file's path and line. */
+  where: string;
+  text: string;
+}
+
+/**
+ * What Typst said of a setting, each thing placed: at its line of the paper's own source, or
+ * named by its file where it is of another (a table the paper includes). Things said twice of
+ * one place are said once.
+ */
+export function toldOf(said: readonly Said[], main: string): Told[] {
+  const seen = new Set<string>();
+  const told: Told[] = [];
+  for (const one of said) {
+    const own = one.file === main;
+    const where =
+      one.file === null
+        ? ""
+        : own
+          ? one.line === null
+            ? ""
+            : `line ${one.line}`
+          : one.line === null
+            ? one.file
+            : `${one.file}, line ${one.line}`;
+    const text = wordsOf(one);
+    const key = `${one.severity}|${where}|${text}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    told.push({ severity: one.severity, line: own ? one.line : null, where, text });
+  }
+  return told;
+}
+
+/** The count of pages, in words: `1 page`, `3 pages`. */
+export const pagesWords = (count: number): string => `${count} page${count === 1 ? "" : "s"}`;
+
+/**
+ * What the page's pane says above the pages: that the pages are of the text as it stands,
+ * with what Typst warns of; or that Typst refuses the text, and what is shown meanwhile.
+ */
+export function standingWords(ok: boolean, pages: number, told: readonly Told[]): string {
+  const errors = told.filter((one) => one.severity === "error").length;
+  const warnings = told.length - errors;
+  const counted = (count: number, word: string) => `${count} ${word}${count === 1 ? "" : "s"}`;
+  if (ok) return warnings === 0 ? "" : `Typst set the paper, with ${counted(warnings, "warning")}.`;
+  const refused = `Typst refuses the text as it stands (${counted(Math.max(errors, 1), "error")}).`;
+  return pages === 0
+    ? `${refused} There is no page yet.`
+    : `${refused} The ${pages === 1 ? "page is" : "pages are"} of the text as it last set, not of the present text.`;
 }

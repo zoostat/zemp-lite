@@ -5,6 +5,7 @@ import { EXAMPLE_LIMIT, type Engine } from "../engine/engine";
 import { Examples } from "../engine/examples";
 import type { Drawn, ExampleRuns } from "../help/runs.svelte";
 import type { Papers } from "../paper/lazy";
+import { LivePage } from "../paper/live.svelte";
 import {
   PAPERS,
   fileNamed,
@@ -84,6 +85,7 @@ import {
   usual,
   withTab,
   writeViews,
+  type PageSize,
   type PaneName,
   type PlaceName,
   type ViewState,
@@ -976,6 +978,8 @@ export class Workspace {
         void this.#readStatements(path, text);
       }, 120);
     }
+    // The paper open in the Paper place is set again, a short pause after the last key.
+    if (this.paperLive?.main === path) this.paperLive.edit(text);
     buffer.saved = false;
     this.#saving = this.#saving
       .then(() => this.project.writeText(path, text))
@@ -2056,6 +2060,47 @@ export class Workspace {
   askNewPaper(): void {
     this.openPaper();
     this.paperAsked += 1;
+  }
+
+  /** The size a paper's page is drawn at; kept with the project. */
+  setPageSize(size: PageSize): void {
+    this.views.paper = { ...this.views.paper, size };
+    this.#keep();
+  }
+
+  /**
+   * The live page of the paper the place shows (release 0.3, step 13): the paper set by Typst
+   * as it is typed. `null` until Typst is here and the paper's text has been read, and where
+   * no paper is open.
+   */
+  paperLive = $state<LivePage | null>(null);
+
+  /**
+   * Have the live page be that of this paper, whose text has been read: the one of another
+   * paper is let go. The paper reads the other files it names from the project.
+   */
+  showLive(path: string): void {
+    if (this.papers === null || this.paperLive?.main === path) return;
+    this.closeLive();
+    void this.papers.module().then(
+      (module) => {
+        const text = this.buffers[path]?.text;
+        // Another paper was opened, or this one closed, while the module was asked for.
+        if (text === undefined || this.views.paper.open !== path) return;
+        if (this.paperLive?.main === path) return;
+        this.closeLive();
+        this.paperLive = new LivePage(module, (file) => this.project.read(file), path, text);
+      },
+      () => {
+        // The fetching failed: the pane says so (`paperFetching`).
+      },
+    );
+  }
+
+  /** Let the live page go: no paper is shown. */
+  closeLive(): void {
+    this.paperLive?.close();
+    this.paperLive = null;
   }
 
   /** Where Typst, the module that sets the page, stands: not asked for, coming, here, or not come. */

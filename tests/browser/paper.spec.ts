@@ -9,6 +9,8 @@ import { expect, faintText, scriptText, smallestText, test } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const MATHEMATICS = '#show math.equation: set text(font: "Libertinus Math")';
+/** What the page's pane says at its foot once Typst is here and has set the paper. */
+const SET = /^Typst 0\.15\.1 · set in \d+ ms$/;
 
 type Press = (target: Locator) => Promise<void>;
 
@@ -183,7 +185,7 @@ test("Typst is fetched the first time a paper is opened, its size said and how f
   await page.keyboard.insertText("Written while Typst was being fetched.");
   await expect.poll(() => sourceText(page)).toContain("Written while Typst was being fetched.");
   release();
-  await expect(typst(page)).toHaveText("Typst 0.15.1 is ready.", { timeout: 60_000 });
+  await expect(typst(page)).toHaveText(SET, { timeout: 60_000 });
   await expect(progress).toHaveCount(0);
   // The module and each of the nine fonts were asked for, the fonts once each; a browser is
   // told to keep each as never changing.
@@ -196,10 +198,10 @@ test("Typst is fetched the first time a paper is opened, its size said and how f
   // A second paper, and the first opened again: nothing more is fetched.
   const before = asked.length;
   await make(page, press, "second");
-  await expect(typst(page)).toHaveText("Typst 0.15.1 is ready.");
+  await expect(typst(page)).toHaveText(SET);
   await press(bar(page).getByRole("button", { name: "Close", exact: true }));
   await press(none(page).getByRole("button", { name: "paper/paper.typ" }));
-  await expect(typst(page)).toHaveText("Typst 0.15.1 is ready.");
+  await expect(typst(page)).toHaveText(SET);
   expect(asked.length).toBe(before);
 });
 
@@ -222,7 +224,7 @@ test("where Typst cannot be fetched the page's pane says so, and Try again fetch
   await expect(page.locator("header .file")).toHaveText("/ paper.typ · saved");
   failing = false;
   await press(thePage(page).getByRole("button", { name: "Try again" }));
-  await expect(typst(page)).toHaveText("Typst 0.15.1 is ready.", { timeout: 60_000 });
+  await expect(typst(page)).toHaveText(SET, { timeout: 60_000 });
 });
 
 test("the Project pane lists a paper and marks the one open; a paper pressed there opens in Paper, a script in Script", async ({
@@ -371,7 +373,7 @@ for (const theme of ["light", "dark"] as const) {
     expect(await faintText(frame)).toEqual([]);
     await field(page).fill("paper");
     await field(page).press("Enter");
-    await expect(typst(page)).toHaveText("Typst 0.15.1 is ready.", { timeout: 60_000 });
+    await expect(typst(page)).toHaveText(SET, { timeout: 60_000 });
     for (const pane of ["Project", "Outline"]) {
       await press(bar(page).getByRole("button", { name: pane, exact: true }));
     }
@@ -391,7 +393,7 @@ test("at a phone's width the page stands under the source, and nothing reaches p
 }) => {
   await scratch(page, press);
   await make(page, press);
-  await expect(typst(page)).toHaveText("Typst 0.15.1 is ready.", { timeout: 60_000 });
+  await expect(typst(page)).toHaveText(SET, { timeout: 60_000 });
   await page.setViewportSize({ width: 390, height: 844 });
   const editor = (await page.getByRole("region", { name: "The paper's source" }).boundingBox())!;
   const pane = (await thePage(page).boundingBox())!;
@@ -403,49 +405,5 @@ test("at a phone's width the page stands under the source, and nothing reaches p
   await expect(page.getByRole("separator", { name: "The width of the page" })).toBeHidden();
 });
 
-test.describe("what is kept", () => {
-  test.use({ keptProfile: true });
-
-  test("a paper is saved as it is typed and found again: after Close, and after the page is loaded again, with the place's panes", async ({
-    page,
-    press,
-  }) => {
-    await scratch(page, press);
-    await make(page, press);
-    await source(page).focus();
-    await page.keyboard.press("ControlOrMeta+End");
-    await page.keyboard.insertText("The mean wage was 27.37.\n");
-    await expect(page.locator("header .file")).toHaveText("/ paper.typ · saved");
-    // Closed, the paper is listed among the papers of the project, and opens as it was left.
-    await press(bar(page).getByRole("button", { name: "Close", exact: true }));
-    await expect(none(page)).toContainText("The papers of this project");
-    await expect(page.locator("header .file")).toHaveCount(0);
-    await press(none(page).getByRole("button", { name: "paper/paper.typ" }));
-    await expect.poll(() => sourceText(page)).toContain("The mean wage was 27.37.");
-    // The panes as the reader leaves them: Project open, the page closed.
-    await press(bar(page).getByRole("button", { name: "Project", exact: true }));
-    await press(bar(page).getByRole("button", { name: "Page", exact: true }));
-    await expect(thePage(page)).toHaveCount(0);
-    await expect(leftPane(page).getByRole("region", { name: "Project" })).toBeVisible();
-
-    // The page loaded again: a start opens on the script, and Paper is as it was left.
-    await page.reload();
-    await expect(page.getByRole("status")).toHaveText(READY);
-    await expect(places(page).getByRole("button", { name: "Script" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    await press(places(page).getByRole("button", { name: "Paper" }));
-    await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
-    await expect.poll(() => sourceText(page)).toContain("The mean wage was 27.37.");
-    await expect(thePage(page)).toHaveCount(0);
-    await expect(
-      leftPane(page)
-        .getByRole("region", { name: "Project" })
-        .getByRole("button", { name: /^paper\.typ/ }),
-    ).toHaveClass(/\bon\b/);
-    // The page's pane opened again: Typst is fetched for this visit, as for the first.
-    await press(bar(page).getByRole("button", { name: "Page", exact: true }));
-    await expect(typst(page)).toHaveText("Typst 0.15.1 is ready.", { timeout: 60_000 });
-  });
-});
+// That a paper is found again after the page is loaded anew, with the place's panes, is held
+// in `kept.spec.ts`, with the other tests that keep a browser's profile.

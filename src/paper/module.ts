@@ -111,7 +111,13 @@ export class PaperModule {
   /** Set the paper to pages. */
   async set(): Promise<Setting> {
     const set = expect(await this.#ask({ type: "set" }), "set");
-    return { ok: set.ok, pages: set.pages, said: set.said };
+    return {
+      ok: set.ok,
+      pages: set.pages,
+      marks: set.marks,
+      said: set.said,
+      missing: set.missing,
+    };
   }
 
   /** A page of the last document that set, counted from 0, as Typst's own SVG; empty where there is none. */

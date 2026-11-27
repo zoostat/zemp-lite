@@ -31,6 +31,7 @@
   import { marginNotes, showNotes, showRunTo, type MarginNotes, type RunTo } from "./margin";
   import { zeffLanguage } from "./language";
   import { typstLanguage } from "./typst-language";
+  import { saidAtLines, showSaid, type SaidAt } from "./said";
 
   let {
     text,
@@ -53,6 +54,7 @@
     onhelp,
     language = "zeff",
     wrap = false,
+    said = [],
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -100,6 +102,8 @@
     language?: "zeff" | "typst";
     /** Whether a long line wraps where the editor scrolls itself (a paper's paragraphs do). */
     wrap?: boolean;
+    /** What is said of lines of the text (Typst, of a paper): its words stand under each line. */
+    said?: readonly SaidAt[];
   } = $props();
 
   let host: HTMLDivElement;
@@ -169,6 +173,24 @@
       borderRadius: "8px",
       color: "var(--ink)",
     },
+    // What is said of a line, under it: words of the interface, not code.
+    ".cm-zemp-said": {
+      backgroundColor: "var(--error-soft)",
+      borderLeft: "3px solid var(--error)",
+      color: "var(--error)",
+      fontFamily: '"Atkinson Hyperlegible Next", system-ui, sans-serif',
+      fontSize: "13px",
+      lineHeight: "1.45",
+      margin: "2px 0 4px",
+      padding: "4px 12px 5px 13px",
+      whiteSpace: "normal",
+    },
+    ".cm-zemp-said.warning": {
+      backgroundColor: "var(--warning-soft)",
+      borderLeftColor: "var(--warning)",
+      color: "var(--warning)",
+    },
+    ".cm-zemp-said strong": { fontWeight: "600" },
     ".cm-zemp-hover pre": {
       fontFamily: '"JetBrains Mono", ui-monospace, Menlo, monospace',
       fontSize: "12.5px",
@@ -216,6 +238,7 @@
           indentUnit.of("    "),
           EditorState.tabSize.of(4),
           language === "typst" ? typstLanguage() : zeffLanguage(),
+          saidAtLines(),
           look,
           // Completion from the language server: each item makes the edit the server names.
           autocompletion({
@@ -400,6 +423,12 @@
       };
     });
     view.dispatch(setDiagnostics(view.state, marked));
+  });
+
+  // What is said of the text's lines, each time it changes.
+  $effect(() => {
+    const told = said;
+    if (view !== null) view.dispatch({ effects: showSaid.of(told) });
   });
 
   // A line asked for (the error's trail, a section of the outline): the cursor put on it, and
