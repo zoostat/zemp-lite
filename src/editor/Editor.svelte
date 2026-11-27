@@ -78,8 +78,11 @@
     runto?: RunTo | null;
     /** The cursor moved to this line. */
     oncursor?: (line: number) => void;
-    /** A line to bring into view with the cursor on it; a new `count` asks again. */
-    reveal?: { line: number; count: number; top?: boolean } | null;
+    /**
+     * A line to bring into view with the cursor on it, at a column of it (from 1) where one is
+     * given; a new `count` asks again.
+     */
+    reveal?: { line: number; count: number; top?: boolean; column?: number } | null;
     /**
      * A statement to put into the script at the cursor (⌘↵ on the console line): on the
      * cursor's line where it is blank, else on a line of its own after it, as one edit that
@@ -439,9 +442,10 @@
     if (view === null || asked === null || asked.count === revealed) return;
     revealed = asked.count;
     const line = view.state.doc.line(Math.min(Math.max(asked.line, 1), view.state.doc.lines));
+    const at = Math.min(line.from + Math.max((asked.column ?? 1) - 1, 0), line.to);
     view.dispatch({
-      selection: { anchor: line.from },
-      effects: EditorView.scrollIntoView(line.from, { y: asked.top ? "start" : "center" }),
+      selection: { anchor: at },
+      effects: EditorView.scrollIntoView(at, { y: asked.top ? "start" : "center" }),
     });
     view.focus();
   });

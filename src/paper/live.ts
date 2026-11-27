@@ -3,7 +3,7 @@
 // are kept to be drawn, each asked of the module only where it is not the page already held.
 // This file is the logic, with the module and the project behind two small interfaces so that
 // a test can stand in for either; what a screen draws from it is in `live.svelte.ts`.
-import type { Said, Setting } from "./messages";
+import type { Heading, Place, Said, Setting } from "./messages";
 
 /** As much of the module as a paper's setting uses. */
 export interface Typesetter {
@@ -13,6 +13,8 @@ export interface Typesetter {
   putBytes(path: string, bytes: Uint8Array): Promise<void>;
   set(): Promise<Setting>;
   page(index: number): Promise<string>;
+  outline(): Promise<Heading[]>;
+  click(page: number, x: number, y: number): Promise<Place | null>;
 }
 
 /** A file of the project, as its bytes; `null` where the project holds none at that path. */
@@ -34,6 +36,8 @@ export interface Outcome {
   /** Whether Typst set that text: where it did not, the pages are those of the text before. */
   ok: boolean;
   pages: Page[];
+  /** The headings of those pages, in the paper's order. */
+  headings: Heading[];
   /** What Typst said: its errors where it refused the text, and its warnings. */
   said: Said[];
   /** The files the paper asks for that the project does not hold, by their paths. */
@@ -66,6 +70,8 @@ export class Live {
   readonly #drawn = new Map<string, string>();
   /** The marks of the pages of the last setting, in their order: what the module now holds. */
   #current: string[] = [];
+  /** The headings of those pages; `null` before the paper has been asked for them. */
+  #headings: Heading[] | null = null;
   #opened: Promise<void> | null = null;
   #last: Promise<unknown> = Promise.resolve();
 
@@ -136,16 +142,21 @@ export class Live {
         height,
         mark: setting.marks[index] ?? `${index}`,
       }));
-      this.#current = pages.map((page) => page.mark);
+      // The headings of the pages that stand: asked again only where the pages have changed.
+      const marks = pages.map((page) => page.mark);
+      if (this.#headings === null || marks.join() !== this.#current.join()) {
+        this.#headings = await this.#module.outline();
+      }
+      this.#current = marks;
       // A page that is no longer among the paper's is no longer held.
-      const marks = new Set(this.#current);
       for (const mark of [...this.#drawn.keys()]) {
-        if (!marks.has(mark)) this.#drawn.delete(mark);
+        if (!marks.includes(mark)) this.#drawn.delete(mark);
       }
       return {
         text,
         ok: setting.ok,
         pages,
+        headings: this.#headings,
         said: setting.said,
         absent: [...setting.missing],
         ms,
@@ -174,6 +185,19 @@ export class Live {
       this.#drawn.set(page.mark, svg);
       return svg;
     });
+  }
+
+  /**
+   * Where in the sources a point of a page came from (a click on it): `x` and `y` in points
+   * from the page's top left. `null` where it leads to no place of the paper, or where the
+   * paper has been set again since and the page is no longer that one.
+   */
+  place(pages: readonly Page[], index: number, x: number, y: number): Promise<Place | null> {
+    const page = pages[index];
+    if (page === undefined) return Promise.resolve(null);
+    return this.#inTurn(async () =>
+      this.#current[index] === page.mark ? this.#module.click(index, x, y) : null,
+    );
   }
 
   /** The files of the project the paper has been given, in the order of their paths. */

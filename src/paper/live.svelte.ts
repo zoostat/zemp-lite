@@ -3,6 +3,7 @@
 // when it is near the reader's view. The source is set a short pause after the last key. The
 // logic is in `live.ts`; this keeps the state a place draws from.
 import { Live, type Outcome, type Read, type Typesetter } from "./live";
+import type { Place } from "./messages";
 
 /** The pause after the last key before the paper is set, in milliseconds. */
 export const PAUSE = 200;
@@ -144,6 +145,16 @@ export class LivePage {
       if (!live.includes(url)) URL.revokeObjectURL(url);
     }
     this.#made = this.#made.filter((url) => live.includes(url));
+  }
+
+  /**
+   * Where in the sources a point of a page came from: `x` and `y` in points from the page's
+   * top left. `null` where it leads nowhere, or the page is no longer that one.
+   */
+  place(index: number, x: number, y: number): Promise<Place | null> {
+    const outcome = this.outcome;
+    if (this.#closed || outcome === null) return Promise.resolve(null);
+    return this.#live.place(outcome.pages, index, x, y).catch(() => null);
   }
 
   /** The paper is left: its pictures are let go, and nothing more is set. */

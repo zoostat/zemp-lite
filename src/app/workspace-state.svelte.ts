@@ -11,6 +11,7 @@ import {
   fileNamed,
   firstLines,
   isPaper,
+  lineNaming,
   papersOf,
   shownOf,
   type Fetching,
@@ -281,7 +282,14 @@ export class Workspace {
   /** What floats over the window about the last run: its facts, or what it said. */
   panel = $state<"facts" | "said" | null>(null);
   /** A line to be brought into view, with the cursor on it (`goTo`). */
-  reveal = $state<{ path: string; line: number; count: number; top?: boolean } | null>(null);
+  reveal = $state<{
+    path: string;
+    line: number;
+    count: number;
+    top?: boolean;
+    /** The column of the line the cursor is put at, from 1; the line's first where none is given. */
+    column?: number;
+  } | null>(null);
   /** The line of the cursor in the margin editor, for the commands that run from it. */
   cursor = $state<{ path: string; line: number } | null>(null);
   #reading: ReturnType<typeof setTimeout> | null = null;
@@ -827,10 +835,19 @@ export class Workspace {
     if (this.inserting?.count === count) this.inserting = null;
   }
 
-  /** Show a line of a file: in the middle of the view, or at its top (a section's heading). */
-  async goTo(path: string, line: number, top = false): Promise<void> {
+  /**
+   * Show a line of a file: in the middle of the view, or at its top (a section's heading),
+   * with the cursor at a column of it where one is given.
+   */
+  async goTo(path: string, line: number, top = false, column?: number): Promise<void> {
     await this.open(path);
-    this.reveal = { path, line, count: (this.reveal?.count ?? 0) + 1, top };
+    this.reveal = {
+      path,
+      line,
+      count: (this.reveal?.count ?? 0) + 1,
+      top,
+      ...(column === undefined ? {} : { column }),
+    };
   }
 
   show(tab: string): void {
@@ -2095,6 +2112,29 @@ export class Workspace {
         // The fetching failed: the pane says so (`paperFetching`).
       },
     );
+  }
+
+  /**
+   * A point of a page of the paper was pressed (release 0.3, step 14): the cursor is put at
+   * the place in the source it came from, and that place brought into view. What came from
+   * another file of the project (a table the paper includes) is gone to at the line of the
+   * paper that names that file. Whether a place was found.
+   */
+  async goFromPage(index: number, x: number, y: number): Promise<boolean> {
+    const live = this.paperLive;
+    if (live === null) return false;
+    const place = await live.place(index, x, y);
+    if (place === null || this.paperLive !== live) return false;
+    const main = live.main;
+    if (place.file === main) {
+      if (place.line === null) return false;
+      await this.goTo(main, place.line, false, place.column ?? 1);
+      return true;
+    }
+    const naming = lineNaming(this.buffers[main]?.text ?? "", main, place.file);
+    if (naming === null) return false;
+    await this.goTo(main, naming);
+    return true;
   }
 
   /** Let the live page go: no paper is shown. */

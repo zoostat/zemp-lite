@@ -50,6 +50,20 @@ export interface Place {
   column: number | null;
 }
 
+/** A heading of the paper as it last set. */
+export interface Heading {
+  /** 1 for a heading, 2 for one under it, and so on. */
+  level: number;
+  text: string;
+  /** The file it is written in, by its path in the project, and its line there from 1; `null` where it comes from no file. */
+  file: string | null;
+  line: number | null;
+  /** Where it stands on the pages: the page from 0, and points from the page's top left. */
+  page: number;
+  x: number;
+  y: number;
+}
+
 /** A message the interface sends. Each carries an `id`, which its answer carries back. */
 export type Request =
   | { type: "font"; bytes: Uint8Array }
@@ -61,6 +75,7 @@ export type Request =
   | { type: "set" }
   | { type: "page"; index: number }
   | { type: "pdf"; created: number | null }
+  | { type: "outline" }
   | { type: "click"; page: number; x: number; y: number };
 
 /** An answer of the worker. */
@@ -73,6 +88,7 @@ export type Reply =
   | ({ type: "set" } & Setting)
   | { type: "page"; index: number; svg: string }
   | { type: "pdf"; bytes: Uint8Array }
+  | { type: "outline"; headings: Heading[] }
   | {
       type: "place";
       file: string | null;

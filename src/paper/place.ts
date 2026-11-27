@@ -3,7 +3,7 @@
 // holds, what the place shows, and the words of the fetching of Typst.
 import type { Progress } from "./fetching";
 import { share } from "./fetching";
-import type { Said } from "./messages";
+import type { Heading, Said } from "./messages";
 
 /** The folder a new paper is made in (the owner's answer to question 3 of release 0.3). */
 export const PAPERS = "paper";
@@ -197,4 +197,71 @@ export function standingWords(ok: boolean, pages: number, told: readonly Told[])
   return pages === 0
     ? `${refused} There is no page yet.`
     : `${refused} The ${pages === 1 ? "page is" : "pages are"} of the text as it last set, not of the present text.`;
+}
+
+/**
+ * The line of a paper's own source, from 1, that names another file of the project (a table
+ * it includes, a figure it places), so that what came from that file can be gone to in the
+ * paper itself; `null` where no line names it. A name is read as Typst reads it: from the
+ * paper's own folder, or from the project's top where it begins with `/`.
+ */
+export function lineNaming(text: string, main: string, file: string): number | null {
+  const folder = main.split("/").slice(0, -1);
+  const lines = text.split("\n");
+  for (const [index, line] of lines.entries()) {
+    for (const quoted of line.matchAll(/"([^"\n]+)"/g)) {
+      const named = quoted[1] as string;
+      const parts = named.startsWith("/") ? [] : [...folder];
+      for (const part of named.replace(/^\//, "").split("/")) {
+        if (part === "..") parts.pop();
+        else if (part !== "." && part !== "") parts.push(part);
+      }
+      if (parts.join("/") === file) return index + 1;
+    }
+  }
+  return null;
+}
+
+/** A row of the Outline: a heading of the paper, with where it is gone to. */
+export interface OutlineRow {
+  level: number;
+  text: string;
+  /**
+   * The line of the paper's own source it is gone to, from 1: its own, or for a heading of a
+   * file the paper includes, the line that names that file; `null` where neither is known.
+   */
+  line: number | null;
+  /** The file it is written in where that is not the paper itself. */
+  from: string | null;
+  /** Where it stands on the pages: the page from 0, and points from the page's top. */
+  page: number;
+  y: number;
+}
+
+/** The rows of the Outline: the paper's headings in its order, each with where it is gone to. */
+export function outlineOf(headings: readonly Heading[], main: string, text: string): OutlineRow[] {
+  return headings.map((one) => {
+    const own = one.file === main;
+    return {
+      level: one.level,
+      text: one.text,
+      line: own ? one.line : one.file === null ? null : lineNaming(text, main, one.file),
+      from: own ? null : one.file,
+      page: one.page,
+      y: one.y,
+    };
+  });
+}
+
+/**
+ * The row the cursor is under, by its place among the rows: the last heading written at or
+ * above the cursor's line; `null` where the cursor is above them all, or its line is not known.
+ */
+export function rowAt(rows: readonly OutlineRow[], line: number | null): number | null {
+  if (line === null) return null;
+  let found: number | null = null;
+  rows.forEach((row, index) => {
+    if (row.line !== null && row.line <= line) found = index;
+  });
+  return found;
 }

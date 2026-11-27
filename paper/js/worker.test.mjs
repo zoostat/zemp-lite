@@ -110,6 +110,23 @@ test("a paper is set to pages in the fonts given before it was opened, and each 
   assert.ok(first.svg.startsWith("<svg"));
   worker.postMessage({ type: "page", id: 4, index: 5 });
   assert.equal((await next("page")).svg, "");
+  // The headings of the paper: the one there is, with its line and its place on the first page.
+  worker.postMessage({ type: "outline", id: 8 });
+  const outline = await next("outline");
+  assert.equal(outline.id, 8);
+  assert.equal(outline.headings.length, 1);
+  const [heading] = outline.headings;
+  assert.deepEqual(
+    {
+      level: heading.level,
+      text: heading.text,
+      file: heading.file,
+      line: heading.line,
+      page: heading.page,
+    },
+    { level: 1, text: "Returns to schooling", file: MAIN, line: 2, page: 0 },
+  );
+  assert.ok(heading.x > 0 && heading.y > 0 && heading.y < 841.89);
   // The PDF, its bytes passed and not copied; the same bytes when asked again at the same time.
   worker.postMessage({ type: "pdf", id: 5, created: 1_795_000_000 });
   const pdf = await next("pdf");

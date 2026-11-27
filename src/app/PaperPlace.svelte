@@ -25,9 +25,12 @@
     fetchingWords,
     fileNamed,
     offeredName,
+    outlineOf,
     pagesWords,
+    rowAt,
     standingWords,
     toldOf,
+    type OutlineRow,
   } from "../paper/place";
   import { paneOf } from "./panes";
   import Place from "./Place.svelte";
@@ -131,6 +134,42 @@
     for (const index of near) page.want(index);
   });
 
+  // A press on a page finds its place in the source (step 14): where on the page, in points.
+  function pressed(event: MouseEvent, index: number): void {
+    const sheet = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    void workspace.goFromPage(
+      index,
+      (event.clientX - sheet.left) / scale,
+      (event.clientY - sheet.top) / scale,
+    );
+  }
+
+  // The Outline: the headings of the paper as it last set, each going to its place in the
+  // source and on the page; the one the cursor is under is marked.
+  const rows = $derived(
+    outcome === null || path === null
+      ? []
+      : outlineOf(outcome.headings, path, buffer?.text ?? outcome.text),
+  );
+  const under = $derived(
+    rowAt(
+      rows,
+      workspace.cursor !== null && workspace.cursor.path === path ? workspace.cursor.line : null,
+    ),
+  );
+  function goTo(row: OutlineRow): void {
+    if (path !== null && row.line !== null) void workspace.goTo(path, row.line, true);
+    // On the page: the heading a little under the top of the pane, where its page is drawn.
+    const sheet = scroller?.querySelectorAll<HTMLElement>('[data-testid="paper-page"]')[row.page];
+    if (scroller === null || sheet === undefined) return;
+    const top =
+      sheet.getBoundingClientRect().top -
+      scroller.getBoundingClientRect().top +
+      scroller.scrollTop +
+      row.y * scale;
+    scroller.scrollTo({ top: Math.max(0, top - 24) });
+  }
+
   // New paper…: its name is asked in a line of the place, and it is made in the folder `paper`.
   let naming = $state(false);
   let name = $state("");
@@ -180,9 +219,39 @@
   <ProjectTree {workspace} />
 {/snippet}
 {#snippet outline()}
-  <p class="quiet" data-testid="paper-outline">
-    The headings of the paper are listed here once its page is set.
-  </p>
+  {#if outcome === null}
+    <p class="quiet" data-testid="paper-outline">
+      The headings of the paper are listed here once its page is set.
+    </p>
+  {:else if rows.length === 0}
+    <p class="quiet" data-testid="paper-outline">
+      This paper has no headings. A line begun with <span class="mono">=</span> and a space is one,
+      and <span class="mono">==</span> a heading under it.
+    </p>
+  {:else}
+    <ul class="outline" data-testid="paper-outline">
+      {#each rows as row, index (index)}
+        <li>
+          <button
+            class="go"
+            class:on={index === under}
+            style:padding-left="{14 + (Math.min(row.level, 6) - 1) * 14}px"
+            aria-current={index === under ? "location" : undefined}
+            disabled={row.line === null && !pageOpen}
+            title={row.line === null
+              ? `Go to page ${row.page + 1}`
+              : row.from === null
+                ? `Go to line ${row.line}, and to page ${row.page + 1}`
+                : `Go to line ${row.line}, which names ${row.from}, and to page ${row.page + 1}`}
+            onclick={() => goTo(row)}
+          >
+            <span class="title">{row.text === "" ? "(a heading with no words)" : row.text}</span>
+            <span class="line mono">{row.line ?? ""}</span>
+          </button>
+        </li>
+      {/each}
+    </ul>
+  {/if}
 {/snippet}
 {#snippet controls()}
   {#if path !== null}
@@ -280,6 +349,7 @@
               wrap
               onchange={(text) => workspace.edit(path, text)}
               onrun={() => void workspace.run()}
+              oncursor={(line) => (workspace.cursor = { path, line })}
               said={atLines}
               reveal={workspace.reveal?.path === path ? workspace.reveal : null}
             />
@@ -373,12 +443,18 @@
                 </ul>
               {/if}
               {#each pages as page, index (index)}
+                <!-- A press on the page goes to its place in the source. The page is a picture,
+                     and has no parts for the keyboard to stand on: by the keyboard the
+                     Outline goes to each heading, in the source and on the page. -->
+                <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
                 <figure
                   class="sheet"
                   class:stale={outcome !== null && !outcome.ok}
                   style:width="{page.width * scale}px"
                   style:height="{page.height * scale}px"
                   data-testid="paper-page"
+                  title="Press a word, a table or a figure to go to its place in the source"
+                  onclick={(event) => pressed(event, index)}
                   use:watched={index}
                 >
                   {#if live.shown[index] !== undefined}
@@ -553,9 +629,56 @@
     text-decoration: underline;
     text-underline-offset: 3px;
   }
+  /* The headings of the paper, by level, each with its line; the one the cursor is under marked. */
+  .outline {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 10px;
+  }
+  .go {
+    align-items: baseline;
+    background: none;
+    border: 0;
+    color: var(--ink-2);
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    font-size: 13.5px;
+    gap: 8px;
+    padding: 4px 12px 4px 14px;
+    text-align: left;
+    width: 100%;
+  }
+  .go:hover:not(:disabled) {
+    background: var(--soft);
+  }
+  .go:disabled {
+    cursor: default;
+  }
+  .go:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .go.on {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .go .title {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .go .line {
+    color: var(--ink-3);
+    flex: none;
+    font-size: 12.5px;
+    font-weight: 400;
+  }
   /* A page: always the light print theme, whichever theme the window is in. */
   .sheet {
     background: #fff;
+    cursor: pointer;
     box-shadow:
       0 0 0 1px var(--line-strong),
       0 2px 8px rgb(0 0 0 / 12%);

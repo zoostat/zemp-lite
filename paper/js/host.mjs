@@ -18,6 +18,7 @@
 //   { type: "page", index }             a page of the last document that set, from 0
 //   { type: "pdf", created }            the PDF; `created` is seconds since 1970 in UTC, or
 //                                       null for a file that names no time
+//   { type: "outline" }                 the headings of the last document that set
 //   { type: "click", page, x, y }       where a point of a page came from in the sources;
 //                                       `x` and `y` in points from the page's top left
 // Messages out:
@@ -39,6 +40,9 @@
 //   { type: "page", index, svg }        the page as Typst's own SVG; empty where there is none
 //   { type: "pdf", bytes }              the PDF, in a Uint8Array whose buffer is passed to
 //                                       the interface and not copied
+//   { type: "outline", headings }       each heading { level, text, file, line, page, x, y }:
+//                                       where it is written, and where it stands on the
+//                                       pages (`page` from 0, `x` and `y` in points)
 //   { type: "place", file, offset, line, column }   the answer to `click`; `file` is null
 //                                       where the point leads to no place of the paper
 //   { type: "error", message }          a message the worker could not act on
@@ -83,7 +87,8 @@ export function serve(module, port) {
       answer({ type: "opened", main: said.main });
       return;
     }
-    if (!["text", "bytes", "remove", "today", "set", "page", "pdf", "click"].includes(said.type)) {
+    const known = ["text", "bytes", "remove", "today", "set", "page", "pdf", "outline", "click"];
+    if (!known.includes(said.type)) {
       refuse(`no such message: ${String(said.type)}`);
       return;
     }
@@ -96,6 +101,7 @@ export function serve(module, port) {
         set: "a setting was asked for",
         page: "a page was asked for",
         pdf: "the PDF was asked for",
+        outline: "the headings were asked for",
         click: "a place was asked for",
       }[said.type];
       refuse(`${what} before a paper was opened`);
@@ -140,6 +146,9 @@ export function serve(module, port) {
         } catch (error) {
           refuse(String(error));
         }
+        break;
+      case "outline":
+        answer(JSON.parse(paper.outline()));
         break;
       case "click":
         answer(JSON.parse(paper.click(Number(said.page), Number(said.x), Number(said.y))));

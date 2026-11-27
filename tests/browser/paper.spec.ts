@@ -257,11 +257,12 @@ test("the Project pane lists a paper and marks the one open; a paper pressed the
     "page",
   );
   await expect.poll(() => sourceText(page)).toContain("= Paper");
-  // The Outline pane is there, and says what it will hold.
+  // The Outline pane is there, and lists the paper's one heading once its page is set (what
+  // it does is held in `paper-places.spec.ts`).
   await press(bar(page).getByRole("button", { name: "Outline", exact: true }));
-  await expect(leftPane(page).getByRole("region", { name: "Outline" })).toContainText(
-    "The headings of the paper are listed here once its page is set.",
-  );
+  await expect(
+    leftPane(page).getByRole("region", { name: "Outline" }).getByTestId("paper-outline"),
+  ).toHaveText("Paper 4", { timeout: 60_000 });
 });
 
 test("the source is coloured as Typst, in the app's colours", async ({ page, press }) => {

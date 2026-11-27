@@ -74,6 +74,11 @@ impl Paper {
             .pdf(created.is_finite().then_some(created as i64))
     }
 
+    /// The headings of the last document that set: a line of JSON of type `outline`.
+    pub fn outline(&self) -> String {
+        self.paper.outline()
+    }
+
     /// Where a point of a page came from: a line of JSON of type `place`.
     pub fn click(&self, page: u32, x: f64, y: f64) -> String {
         self.paper.click(page as usize, x, y)

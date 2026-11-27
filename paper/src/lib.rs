@@ -20,9 +20,10 @@ use std::sync::Mutex;
 
 use serde_json::{Value, json};
 use typst::diag::{FileError, FileResult, Severity, SourceDiagnostic};
-use typst::foundations::{Bytes, Datetime, Duration};
-use typst::introspection::PagedPosition;
+use typst::foundations::{Bytes, Datetime, Duration, NativeElement, StyleChain};
+use typst::introspection::{Introspector, PagedPosition};
 use typst::layout::{Abs, Point};
+use typst::model::HeadingElem;
 use typst::syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot};
 use typst::text::{Font, FontBook};
 use typst::utils::LazyHash;
@@ -384,6 +385,44 @@ impl Paper {
                 .collect::<Vec<_>>()
                 .join("; ")
         })
+    }
+
+    /// The headings of the last document that set, in the order of the paper: a line of JSON
+    /// of type `outline`, with `headings`, each its `level` (1 for a heading, 2 for one under
+    /// it), its `text`, the `file` and the `line` (from 1) of the source it is written at
+    /// (`file` null where it comes from no file of the paper), and where it stands on the
+    /// pages: `page` from 0, `x` and `y` in points from the page's top left.
+    pub fn outline(&self) -> String {
+        let Some(document) = self.document.as_ref() else {
+            return json!({ "type": "outline", "headings": [] }).to_string();
+        };
+        let introspector = document.introspector();
+        let headings: Vec<Value> = introspector
+            .query(&HeadingElem::ELEM.select())
+            .iter()
+            .filter_map(|element| {
+                let heading = element.to_packed::<HeadingElem>()?;
+                let position = introspector.position(element.location()?)?;
+                let span = element.span();
+                let file = span.id().and_then(|id| self.world.names.get(&id));
+                let line = span.id().and_then(|id| {
+                    let range = self.world.range(span)?;
+                    let source = self.world.sources.get(&id)?;
+                    let (line, _) = source.lines().byte_to_line_column(range.start)?;
+                    Some(line + 1)
+                });
+                Some(json!({
+                    "level": heading.resolve_level(StyleChain::default()).get(),
+                    "text": heading.body.plain_text(),
+                    "file": file,
+                    "line": line,
+                    "page": position.page.get() - 1,
+                    "x": position.point.x.to_pt(),
+                    "y": position.point.y.to_pt(),
+                }))
+            })
+            .collect();
+        json!({ "type": "outline", "headings": headings }).to_string()
     }
 
     /// Where in the sources a point of a page came from (a click on the page): a line of JSON

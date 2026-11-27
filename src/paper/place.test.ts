@@ -5,10 +5,13 @@ import {
   fileNamed,
   firstLines,
   isPaper,
+  lineNaming,
   megabytes,
   offeredName,
+  outlineOf,
   pagesWords,
   papersOf,
+  rowAt,
   shownOf,
   standingWords,
   toldOf,
@@ -214,5 +217,75 @@ describe("what Typst said, as the app shows it", () => {
     expect(standingWords(false, 0, [error])).toBe(
       "Typst refuses the text as it stands (1 error). There is no page yet.",
     );
+  });
+});
+
+describe("the Outline of a paper", () => {
+  const heading = (more: Partial<Parameters<typeof outlineOf>[0][number]> = {}) => ({
+    level: 1,
+    text: "Returns",
+    file: "paper/paper.typ" as string | null,
+    line: 2 as number | null,
+    page: 0,
+    x: 72,
+    y: 80,
+    ...more,
+  });
+
+  it("finds the line of the paper that names another file, as Typst reads the name", () => {
+    const text = [
+      "= Returns",
+      '#include "tables/fit.typ"',
+      '#figure(image("../output/wages.svg", width: 80%), caption: [Wages])',
+      '#include "/output/table.typ"',
+      '#let note = "tables/fit.typ is included above"',
+    ].join("\n");
+    expect(lineNaming(text, "paper/paper.typ", "paper/tables/fit.typ")).toBe(2);
+    expect(lineNaming(text, "paper/paper.typ", "output/wages.svg")).toBe(3);
+    expect(lineNaming(text, "paper/paper.typ", "output/table.typ")).toBe(4);
+    expect(lineNaming(text, "paper/paper.typ", "output/none.typ")).toBe(null);
+    // A paper at the project's top reads from there.
+    expect(lineNaming('#include "tables/fit.typ"', "draft.typ", "tables/fit.typ")).toBe(1);
+    expect(lineNaming('#include "./a.typ"', "paper/p.typ", "paper/a.typ")).toBe(1);
+  });
+
+  it("lists the headings in the paper's order, each with the line it is gone to", () => {
+    const text = '= Returns\n\n== The data\n#include "tables/fit.typ"\n';
+    expect(
+      outlineOf(
+        [
+          heading({ line: 1 }),
+          heading({ level: 2, text: "The data", line: 3, y: 140 }),
+          // A heading of the included table is gone to at the line that includes it.
+          heading({ level: 2, text: "Fit", file: "paper/tables/fit.typ", line: 1, y: 200 }),
+          // One of a file no line names, and one of no file at all.
+          heading({ text: "Elsewhere", file: "output/other.typ", line: 5, page: 1 }),
+          heading({ text: "Made by a function", file: null, line: null, page: 1 }),
+        ],
+        "paper/paper.typ",
+        text,
+      ),
+    ).toEqual([
+      { level: 1, text: "Returns", line: 1, from: null, page: 0, y: 80 },
+      { level: 2, text: "The data", line: 3, from: null, page: 0, y: 140 },
+      { level: 2, text: "Fit", line: 4, from: "paper/tables/fit.typ", page: 0, y: 200 },
+      { level: 1, text: "Elsewhere", line: null, from: "output/other.typ", page: 1, y: 80 },
+      { level: 1, text: "Made by a function", line: null, from: null, page: 1, y: 80 },
+    ]);
+  });
+
+  it("marks the heading the cursor is under: the last at or above its line", () => {
+    const rows = outlineOf(
+      [heading({ line: 2 }), heading({ line: 9 }), heading({ file: null, line: null })],
+      "paper/paper.typ",
+      "",
+    );
+    expect(rowAt(rows, 1)).toBe(null);
+    expect(rowAt(rows, 2)).toBe(0);
+    expect(rowAt(rows, 8)).toBe(0);
+    expect(rowAt(rows, 9)).toBe(1);
+    expect(rowAt(rows, 400)).toBe(1);
+    expect(rowAt(rows, null)).toBe(null);
+    expect(rowAt([], 3)).toBe(null);
   });
 });
