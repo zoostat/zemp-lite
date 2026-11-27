@@ -162,6 +162,38 @@ export async function newScript(files: Folder, name: string, folder = "scripts")
   return path;
 }
 
+/**
+ * Make a paper, a Typst source, in a folder at the project's top, which is made where it is
+ * not there: `.typ` after its name where the name lacks it, and `text` in it. Where the name
+ * cannot be given, nothing is made, the folder included.
+ */
+export async function newPaper(
+  files: Folder,
+  name: string,
+  folder: string,
+  text: Uint8Array,
+): Promise<string> {
+  const named = name.trim();
+  const whole = named === "" || named.toLowerCase().endsWith(".typ") ? named : `${named}.typ`;
+  const there = await files.kind(folder);
+  if (there === "file") {
+    throw new ProjectError(
+      `\`${folder}\` is a file of this project, so no folder of that name can hold the paper. Rename the file first.`,
+    );
+  }
+  if (there === null) {
+    // The name is held to the rules before the folder is made for it.
+    const problem = nameProblem(whole);
+    if (problem !== null) throw new ProjectError(problem);
+    await free(files, "", folder);
+    await files.make(folder);
+  }
+  await free(files, folder, whole);
+  const path = inside(folder, whole);
+  await files.write(path, text);
+  return path;
+}
+
 /** Make a folder in a folder (`""` is the project's own). */
 export async function newFolder(files: Folder, name: string, parent = ""): Promise<string> {
   await free(files, parent, name.trim());

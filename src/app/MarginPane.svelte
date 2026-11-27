@@ -23,7 +23,8 @@
   import ProjectTree from "./ProjectTree.svelte";
   import { held } from "./steady";
   import HelpPlace from "./HelpPlace.svelte";
-  import { DATA, HELP, PLOTS } from "./views";
+  import PaperPlace from "./PaperPlace.svelte";
+  import { DATA, HELP, PAPER, PLOTS } from "./views";
   import DataViewer from "../data/DataViewer.svelte";
   import type { Workspace } from "./workspace-state.svelte";
 
@@ -237,6 +238,8 @@
   <DataViewer {workspace} />
 {:else if workspace.views.active === HELP}
   <HelpPlace {workspace} />
+{:else if workspace.views.active === PAPER}
+  <PaperPlace {workspace} />
 {:else}
   {#snippet project()}
     <ProjectTree {workspace} />

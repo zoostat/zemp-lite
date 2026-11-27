@@ -5,6 +5,16 @@ import { EXAMPLE_LIMIT, type Engine } from "../engine/engine";
 import { Examples } from "../engine/examples";
 import type { Drawn, ExampleRuns } from "../help/runs.svelte";
 import type { Papers } from "../paper/lazy";
+import {
+  PAPERS,
+  fileNamed,
+  firstLines,
+  isPaper,
+  papersOf,
+  shownOf,
+  type Fetching,
+  type Shown,
+} from "../paper/place";
 import { Language, type Diagnostic, type Range } from "../engine/language";
 import type {
   Checked,
@@ -60,9 +70,11 @@ import { parts } from "../project/folder";
 import {
   DATA,
   HELP,
+  PAPER,
   PLOTS,
   fileTab,
   leftWidth,
+  pageShare,
   rightWidth,
   readViews,
   started,
@@ -713,8 +725,18 @@ export class Workspace {
     this.#keep();
   }
 
-  /** Open a file of the project in a tab, and show it. */
+  /**
+   * Open a file of the project and show it: a script, or a plain text beside one, in a tab of
+   * the Script place; a paper in the Paper place, which has one paper open at a time.
+   */
   async open(path: string): Promise<void> {
+    if (isPaper(path)) {
+      this.views.paper = { ...this.views.paper, open: path };
+      Object.assign(this.views, withTab(this.views, PAPER));
+      this.#keep();
+      await this.#load(path);
+      return;
+    }
     if (!editable(path)) {
       return;
     }
@@ -945,12 +967,15 @@ export class Workspace {
       this.#telling = null;
       this.#tell(path, text);
     }, 150);
-    // The engine reads the script as it now stands, a moment after the last keystroke.
-    if (this.#reading !== null) clearTimeout(this.#reading);
-    this.#reading = setTimeout(() => {
-      this.#reading = null;
-      void this.#readStatements(path, text);
-    }, 120);
+    // The engine reads the script as it now stands, a moment after the last keystroke. A
+    // paper is not the engine's to read: Typst sets it.
+    if (!isPaper(path)) {
+      if (this.#reading !== null) clearTimeout(this.#reading);
+      this.#reading = setTimeout(() => {
+        this.#reading = null;
+        void this.#readStatements(path, text);
+      }, 120);
+    }
     buffer.saved = false;
     this.#saving = this.#saving
       .then(() => this.project.writeText(path, text))
@@ -1972,6 +1997,95 @@ export class Workspace {
     this.#keep();
   }
 
+  // Paper (release 0.3, step 12).
+
+  /** Show the Paper place, with the paper it has open, or with none. */
+  openPaper(): void {
+    Object.assign(this.views, withTab(this.views, PAPER));
+    this.#keep();
+  }
+
+  /** The papers of the project, each by its path: those of the folder `paper` first. */
+  get paperFiles(): string[] {
+    return papersOf(this.tree);
+  }
+
+  /** What the Paper place shows: the paper it has open, where that file is still there. */
+  get paperShown(): Shown {
+    return shownOf(
+      this.views.paper.open,
+      this.paperFiles,
+      (path) => this.buffers[path]?.loaded ?? false,
+    );
+  }
+
+  /** Close the paper the place has open: the file stays in the project. */
+  closePaper(): void {
+    this.views.paper = { ...this.views.paper, open: null };
+    this.#keep();
+  }
+
+  /** The page's share of the Paper place, within its limits; kept with the project. */
+  setPageShare(share: number): void {
+    this.views.paper = { ...this.views.paper, share: pageShare(share) };
+    this.#keep();
+  }
+
+  /**
+   * Make a paper in the folder `paper` of the project, with its first lines, and open it. Gives
+   * the reason, as a sentence, where it cannot be made, and `null` where it was.
+   */
+  async newPaper(name: string): Promise<string | null> {
+    try {
+      const path = await this.project.newPaper(name, PAPERS, firstLines(fileNamed(name)));
+      this.session.changed(path);
+      await this.refresh();
+      this.unfoldFolder(PAPERS);
+      await this.open(path);
+      return null;
+    } catch (error) {
+      return error instanceof ProjectError ? error.message : String(error);
+    }
+  }
+
+  /**
+   * A new paper asked for from outside the place (⌘K): the place is shown, and asks its name.
+   * Each asking is told apart by its count.
+   */
+  paperAsked = $state(0);
+  askNewPaper(): void {
+    this.openPaper();
+    this.paperAsked += 1;
+  }
+
+  /** Where Typst, the module that sets the page, stands: not asked for, coming, here, or not come. */
+  paperFetching = $state<Fetching>({ state: "waiting" });
+
+  /**
+   * Fetch Typst, the first time a paper is opened (open decision #172): once in a window,
+   * however many papers are opened, and again only where the fetching failed and is asked for
+   * again. The page's pane says how far it has gone.
+   */
+  fetchPaper(): void {
+    const now = this.paperFetching.state;
+    if (this.papers === null || now === "fetching" || now === "ready") return;
+    this.paperFetching = { state: "fetching", progress: null };
+    this.papers
+      .module((progress) => {
+        if (this.paperFetching.state === "fetching") {
+          this.paperFetching = { state: "fetching", progress };
+        }
+      })
+      .then(
+        (module) => (this.paperFetching = { state: "ready", typst: module.typst ?? "" }),
+        (error: unknown) =>
+          (this.paperFetching = {
+            state: "failed",
+            message: error instanceof Error ? error.message : String(error),
+          }),
+      );
+  }
+
   /** How the output stands to the script: not run yet, running, in sync, or edited since. */
   get sync(): string {
     if (this.running) return this.status === "checking" ? "checking" : "running";
@@ -2320,6 +2434,9 @@ export class Workspace {
     this.#told = Object.fromEntries(Object.entries(this.#told).filter(([path]) => !hit(path)));
     this.views.script.unfolded = keyed(this.views.script.unfolded);
     this.views.folded = this.views.folded.flatMap((path) => (hit(path) ? (at(path) ?? []) : path));
+    // The paper the Paper place has open follows its file, and closes where the file is gone.
+    const paper = this.views.paper.open;
+    if (paper !== null && hit(paper)) this.views.paper = { ...this.views.paper, open: at(paper) };
     const tab = (one: string): string | null => {
       const path = tabPath(one);
       if (path === null || !hit(path)) return one;

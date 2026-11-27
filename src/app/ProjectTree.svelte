@@ -8,7 +8,8 @@
   import { fixed, inside, own, placeOf } from "../project/files";
   import { size } from "./format";
   import RowMenu, { type RowAction } from "./RowMenu.svelte";
-  import { fileTab } from "./views";
+  import { isPaper } from "../paper/place";
+  import { PAPER, fileTab } from "./views";
   import { editable, type Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
@@ -297,10 +298,11 @@
           {/if}
         {:else}
           <div class="line">
-            {#if editable(node.path)}
+            {#if editable(node.path) || isPaper(node.path)}
               <button
                 class="row file"
-                class:on={workspace.views.active === fileTab(node.path)}
+                class:on={workspace.views.active === fileTab(node.path) ||
+                  (workspace.views.active === PAPER && workspace.views.paper.open === node.path)}
                 style:padding-left="{26 + depth * 18}px"
                 onclick={() => void workspace.open(node.path)}
               >

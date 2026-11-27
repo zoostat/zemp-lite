@@ -30,6 +30,7 @@
   import { inlineOutput, showOutput, type InlineOutput } from "./inline";
   import { marginNotes, showNotes, showRunTo, type MarginNotes, type RunTo } from "./margin";
   import { zeffLanguage } from "./language";
+  import { typstLanguage } from "./typst-language";
 
   let {
     text,
@@ -50,6 +51,8 @@
     oncomplete,
     onusage,
     onhelp,
+    language = "zeff",
+    wrap = false,
   }: {
     /** The text of the file. A change made elsewhere is taken into the editor. */
     text: string;
@@ -93,6 +96,10 @@
     onusage?: (line: number, character: number) => Promise<Omit<Usage, "pos"> | null>;
     /** F1: the help page of the name at the cursor, with where the name begins (from 0). */
     onhelp?: (name: string, line: number, character: number) => void;
+    /** What the text is read and coloured as: a script of Zeff, or the source of a paper. */
+    language?: "zeff" | "typst";
+    /** Whether a long line wraps where the editor scrolls itself (a paper's paragraphs do). */
+    wrap?: boolean;
   } = $props();
 
   let host: HTMLDivElement;
@@ -208,7 +215,7 @@
           bracketMatching(),
           indentUnit.of("    "),
           EditorState.tabSize.of(4),
-          zeffLanguage(),
+          language === "typst" ? typstLanguage() : zeffLanguage(),
           look,
           // Completion from the language server: each item makes the edit the server names.
           autocompletion({
@@ -289,7 +296,11 @@
             };
           }),
           // In the margin editor a long line wraps, so that nothing reaches past it.
-          inline === null ? [] : [tall, inlineOutput(), marginNotes(), EditorView.lineWrapping],
+          inline === null
+            ? wrap
+              ? [EditorView.lineWrapping]
+              : []
+            : [tall, inlineOutput(), marginNotes(), EditorView.lineWrapping],
           // Run from the keyboard: ⌘↵ and ⌘⇧↵ (Ctrl on Windows and Linux). Tab indents;
           // Escape and then Tab moves on to the next control, for those who use the keyboard alone.
           keymap.of([

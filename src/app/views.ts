@@ -10,24 +10,26 @@
 // of each place are open and how wide the two sides are. From 0.2.3 the left pane of Help is
 // **Topics** (open decision #211; it was **Outline**), and the file says which of its sections
 // the reader folded or unfolded; its right pane is **On this page** (#211, item 13; it was
-// **Related functions**).
+// **Related functions**). From 0.3 there is a fifth place, **Paper**: the file says which of
+// its panes are open, the paper it has open, and the page's share of its width.
 
 import type { View } from "../engine/messages";
 
 /** The version of the view state this build writes; a file without one is of version 1. */
-export const VIEWS_VERSION = 4;
+export const VIEWS_VERSION = 5;
 
 /**
  * The panes of each place, and whether each is open in a project opened for the first time
  * (#203): beside the script, Project and Outline closed and Notes open; beside the data, the
  * frames open and the variables closed; beside a plot, both open; beside a page of Help,
  * Topics open (the sections of the page open are a part of the page from 0.2.4, not a pane:
- * open decision #220, item 7).
+ * open decision #220, item 7); beside a paper, Project and Outline closed and the page open.
  */
 export const PANES = {
   script: { project: false, outline: false, notes: true },
   data: { frames: true, variables: false },
   plots: { list: true, about: true },
+  paper: { project: false, outline: false, page: true },
   help: { topics: true },
 } as const;
 export type PlaceName = keyof typeof PANES;
@@ -64,6 +66,11 @@ export interface ViewState {
    * (`topicOpen`).
    */
   help: { topics: Record<string, boolean> };
+  /**
+   * The Paper place: the paper it has open, by its path, or `null` where it has none; and the
+   * share of the place's width the page takes beside the source.
+   */
+  paper: { open: string | null; share: number };
   /** The parts of the file this build does not know, kept as they were (a later build's). */
   others: Record<string, unknown>;
   /** The left pane of a place: its width, in pixels. */
@@ -95,6 +102,9 @@ export const LEFT_WIDTH = { least: 180, most: 520, usual: 268 } as const;
 /** The narrowest and the widest the right pane of a place goes. */
 export const RIGHT_WIDTH = { least: 240, most: 560, usual: 310 } as const;
 
+/** The least, the most and the usual share of the Paper place its page takes. */
+export const PAGE_SHARE = { least: 0.25, most: 0.75, usual: 0.5 } as const;
+
 /** The tab of the plot viewer. */
 export const PLOTS = "view:plots";
 /** A frame's view as the file has it; `null` where it is not one, or is the frame as it is. */
@@ -116,6 +126,8 @@ function viewOf(from: unknown): View | null {
 export const DATA = "view:data";
 /** The tab of the Help place. */
 export const HELP = "view:help";
+/** The tab of the Paper place. */
+export const PAPER = "view:paper";
 
 /** The tab of a file of the project. */
 export const fileTab = (path: string) => `file:${path}`;
@@ -129,12 +141,14 @@ export function usual(): ViewState {
       script: { ...PANES.script },
       data: { ...PANES.data },
       plots: { ...PANES.plots },
+      paper: { ...PANES.paper },
       help: { ...PANES.help },
     },
     right: { width: RIGHT_WIDTH.usual },
     script: { unfolded: {} },
     data: { frame: null, variable: null, hidden: {}, shown: {} },
     help: { topics: {} },
+    paper: { open: null, share: PAGE_SHARE.usual },
     others: {},
     left: { width: LEFT_WIDTH.usual },
     tabs: [fileTab("scripts/main.zeff")],
@@ -154,6 +168,10 @@ export const leftWidth = (width: number) =>
 /** The width the right pane is given when `width` is asked for. */
 export const rightWidth = (width: number) =>
   Math.round(within(width, RIGHT_WIDTH.least, RIGHT_WIDTH.most));
+
+/** The share of the Paper place the page is given when `share` is asked for, to a hundredth. */
+export const pageShare = (share: number) =>
+  Math.round(within(share, PAGE_SHARE.least, PAGE_SHARE.most) * 100) / 100;
 
 /** The view state a file holds, each part that cannot be read replaced by the usual one. */
 export function readViews(text: string | null): ViewState {
@@ -192,6 +210,13 @@ export function readViews(text: string | null): ViewState {
   if (typeof topics === "object" && topics !== null && !Array.isArray(topics)) {
     for (const [key, open] of Object.entries(topics as Record<string, unknown>)) {
       if (typeof open === "boolean") state.help.topics[key] = open;
+    }
+  }
+  const paper = from["paper"] as Record<string, unknown> | undefined;
+  if (typeof paper === "object" && paper !== null) {
+    if (typeof paper["open"] === "string" && paper["open"] !== "") state.paper.open = paper["open"];
+    if (typeof paper["share"] === "number" && Number.isFinite(paper["share"])) {
+      state.paper.share = pageShare(paper["share"]);
     }
   }
   const right = from["right"] as Record<string, unknown> | undefined;

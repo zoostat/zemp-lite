@@ -48,6 +48,7 @@ test("the top bar carries its controls in order, Run the one filled, and Script 
     "Script",
     "Data",
     "Plots",
+    "Paper",
     "Help",
     "Commands",
     "Smaller code text",

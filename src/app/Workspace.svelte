@@ -24,6 +24,7 @@
   import TopBar from "./TopBar.svelte";
   import { fileTab } from "./views";
   import type { Papers } from "../paper/lazy";
+  import { isPaper } from "../paper/place";
   import { Workspace, editable } from "./workspace-state.svelte";
 
   let {
@@ -88,7 +89,11 @@
   /** The files the editor opens, each by its path. */
   function files(nodes: TreeNode[]): string[] {
     return nodes.flatMap((node) =>
-      node.kind === "folder" ? files(node.children) : editable(node.path) ? [node.path] : [],
+      node.kind === "folder"
+        ? files(node.children)
+        : editable(node.path) || isPaper(node.path)
+          ? [node.path]
+          : [],
     );
   }
 
@@ -208,6 +213,29 @@
     },
     { name: "Place: Data", hint: "the frames of the run", run: () => workspace.openData() },
     { name: "Place: Plots", hint: "the plots of the run", run: () => workspace.openPlots() },
+    {
+      name: "Place: Paper",
+      hint: "a paper of the project, its source beside its page",
+      run: () => workspace.openPaper(),
+    },
+    {
+      name: "Paper: new paper…",
+      hint: "a Typst file, made in the folder paper of the project",
+      run: () => workspace.askNewPaper(),
+    },
+    // The paper the place has open is closed there; its file stays in the project.
+    ...(workspace.paperShown.kind === "none"
+      ? []
+      : [
+          {
+            name: `Paper: close ${workspace.paperShown.path.split("/").pop()}`,
+            hint: "the file stays in the project",
+            run: () => {
+              workspace.openPaper();
+              workspace.closePaper();
+            },
+          },
+        ]),
     paneCommand(workspace, "script", "project"),
     paneCommand(workspace, "script", "outline"),
     paneCommand(workspace, "script", "notes"),
@@ -215,6 +243,9 @@
     paneCommand(workspace, "data", "variables"),
     paneCommand(workspace, "plots", "list"),
     paneCommand(workspace, "plots", "about"),
+    paneCommand(workspace, "paper", "project"),
+    paneCommand(workspace, "paper", "outline"),
+    paneCommand(workspace, "paper", "page"),
     paneCommand(workspace, "help", "topics"),
     {
       name: "Place: Help",

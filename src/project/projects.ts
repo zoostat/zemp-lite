@@ -617,6 +617,11 @@ export class Project {
     return files.newScript(this.#files, name, folder);
   }
 
+  /** Make a paper in a folder at the project's top, made where it is not there; its path. */
+  newPaper(name: string, folder: string, text: string): Promise<string> {
+    return files.newPaper(this.#files, name, folder, encoder.encode(text));
+  }
+
   /** Make a folder in a folder of the project (the project's own where none is named); its path. */
   newFolder(name: string, parent = ""): Promise<string> {
     return files.newFolder(this.#files, name, parent);

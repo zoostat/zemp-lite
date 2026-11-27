@@ -28,6 +28,11 @@ export const WORDS: { [P in PlaceName]: { [N in PaneName<P>]: Words } } = {
     list: { label: "Plots of the run", holds: "the plots of the run" },
     about: { label: "The plot", holds: "the plot's statement and size" },
   },
+  paper: {
+    project: { label: "Project", holds: "the files of the project" },
+    outline: { label: "Outline", holds: "the headings of the paper" },
+    page: { label: "Page", holds: "the page as Typst sets it" },
+  },
   help: {
     topics: { label: "Topics", holds: "the topics of Help" },
   },
@@ -38,6 +43,7 @@ export const PLACE: Record<PlaceName, string> = {
   script: "Script",
   data: "Data",
   plots: "Plots",
+  paper: "Paper",
   help: "Help",
 };
 

@@ -10,6 +10,7 @@ import {
   move,
   nameProblem,
   newFolder,
+  newPaper,
   newScript,
   remove,
 } from "./files";
@@ -105,6 +106,39 @@ describe("a script, a folder and a file made in a project", () => {
     expect(await newScript(files, "Third.ZEFF")).toBe("scripts/Third.ZEFF");
     await newFolder(files, "drafts", "scripts");
     expect(await newScript(files, "idea", "scripts/drafts")).toBe("scripts/drafts/idea.zeff");
+  });
+
+  it("makes a paper in the folder for papers, which it makes where it is not there, with `.typ` and its first lines", async () => {
+    const files = await project();
+    expect(await files.kind("paper")).toBe(null);
+    expect(await newPaper(files, "returns", "paper", text("= Returns\n"))).toBe(
+      "paper/returns.typ",
+    );
+    expect(await read(files, "paper/returns.typ")).toBe("= Returns\n");
+    // A second, in the folder that is now there; a name with its ending keeps it as typed.
+    expect(await newPaper(files, " Second.TYP ", "paper", text(""))).toBe("paper/Second.TYP");
+    // A name taken, or one that differs only in capitals, is refused, and nothing is written over.
+    await expect(newPaper(files, "returns", "paper", text("other"))).rejects.toThrow(
+      new ProjectError("`paper/returns.typ` is already in this project. Choose another name."),
+    );
+    await expect(newPaper(files, "RETURNS", "paper", text("other"))).rejects.toThrow(
+      /differs from that name only in capitals/,
+    );
+    expect(await read(files, "paper/returns.typ")).toBe("= Returns\n");
+  });
+
+  it("makes no folder for a paper whose name cannot be given, and none over a file of that name", async () => {
+    const files = await project();
+    await expect(newPaper(files, "", "paper", text(""))).rejects.toThrow(
+      new ProjectError("It needs a name."),
+    );
+    await expect(newPaper(files, "a/b", "paper", text(""))).rejects.toThrow(/one part of a path/);
+    expect(await files.kind("paper")).toBe(null);
+    await files.write("paper", text("a file, not a folder"));
+    await expect(newPaper(files, "returns", "paper", text(""))).rejects.toThrow(
+      /`paper` is a file of this project/,
+    );
+    expect(await read(files, "paper")).toBe("a file, not a folder");
   });
 
   it("makes a folder, in the project or in a folder of it", async () => {

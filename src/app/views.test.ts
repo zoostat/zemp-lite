@@ -13,6 +13,7 @@ import {
   usual,
   withTab,
   writeViews,
+  pageShare,
 } from "./views";
 
 describe("the view state of a project", () => {
@@ -23,8 +24,10 @@ describe("the view state of a project", () => {
       script: { project: true, outline: true, notes: false },
       data: { frames: false, variables: true },
       plots: { list: false, about: false },
+      paper: { project: true, outline: true, page: false },
       help: { topics: false },
     };
+    state.paper = { open: "paper/returns.typ", share: 0.62 };
     state.right = { width: 400 };
     state.left = { width: 312 };
     state.tabs = [fileTab("scripts/main.zeff"), fileTab("scripts/second.zeff"), "view:plots"];
@@ -101,6 +104,7 @@ describe("the view state of a project", () => {
       script: { project: false, outline: false, notes: true },
       data: { frames: true, variables: false },
       plots: { list: true, about: true },
+      paper: { project: false, outline: false, page: true },
       help: { topics: true },
     });
     expect(usual().right).toEqual({ width: 310 });
@@ -123,6 +127,7 @@ describe("the view state of a project", () => {
       script: { project: true, outline: false, notes: true },
       data: { frames: true, variables: false },
       plots: { list: true, about: false },
+      paper: { project: false, outline: false, page: true },
       help: { topics: true },
     });
     expect(read.right).toEqual({ width: 560 });
@@ -213,11 +218,35 @@ describe("the view state of a project", () => {
   });
 
   it("writes its version, and keeps what a later build wrote that this one does not know", () => {
-    const read = readViews(JSON.stringify({ version: 5, paper: { file: "p.zmd" } }));
+    const read = readViews(JSON.stringify({ version: 6, report: { file: "p.zmd" } }));
     const written = JSON.parse(writeViews(read)) as Record<string, unknown>;
-    expect(written["version"]).toBe(4);
-    expect(written["paper"]).toEqual({ file: "p.zmd" });
+    expect(written["version"]).toBe(5);
+    expect(written["report"]).toEqual({ file: "p.zmd" });
     expect(Object.keys(written)).not.toContain("others");
+  });
+
+  it("reads the paper the Paper place has open and the page's share, within its limits", () => {
+    expect(usual().paper).toEqual({ open: null, share: 0.5 });
+    expect(usual().panes.paper).toEqual({ project: false, outline: false, page: true });
+    const read = readViews(
+      JSON.stringify({
+        version: 5,
+        panes: { paper: { project: true, page: false, later: true } },
+        paper: { open: "paper/returns.typ", share: 0.9, later: 1 },
+      }),
+    );
+    expect(read.panes.paper).toEqual({ project: true, outline: false, page: false });
+    expect(read.paper).toEqual({ open: "paper/returns.typ", share: 0.75 });
+    // What is not a path or a share is passed over.
+    for (const paper of [{ open: 3, share: "half" }, { open: "" }, "none", null]) {
+      expect(readViews(JSON.stringify({ paper })).paper).toEqual({ open: null, share: 0.5 });
+    }
+    expect(pageShare(0.1)).toBe(0.25);
+    expect(pageShare(0.4449)).toBe(0.44);
+    // A file of an earlier version names no paper, and opens as a first one does.
+    expect(
+      readViews(JSON.stringify({ version: 4, panes: { script: { notes: false } } })).paper,
+    ).toEqual({ open: null, share: 0.5 });
   });
 
   it("reads what is unfolded, each script's lines whole numbers, once each and in order", () => {

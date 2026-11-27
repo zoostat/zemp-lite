@@ -8,7 +8,7 @@
   import { CODE_SIZES } from "../theme/codesize";
   import Logo from "../theme/Logo.svelte";
   import { switchTheme, theme } from "../theme/theme.svelte";
-  import { DATA, HELP, PLOTS, fileTab } from "./views";
+  import { DATA, HELP, PAPER, PLOTS, fileTab } from "./views";
   import type { Workspace } from "./workspace-state.svelte";
 
   let {
@@ -20,7 +20,14 @@
   // The key of the command palette as this computer writes it.
   const mac = /Mac|iPhone|iPad/.test(navigator.platform);
 
-  const path = $derived(workspace.activePath);
+  // The file the place shows: a script's in Script, the open paper's in Paper.
+  const path = $derived(
+    workspace.views.active === PAPER
+      ? workspace.paperShown.kind === "none"
+        ? null
+        : workspace.paperShown.path
+      : workspace.activePath,
+  );
   const buffer = $derived(path === null ? undefined : workspace.buffers[path]);
   // The places (the margin editor's design, section 6): the script, its data and its plots.
   const place = $derived(
@@ -30,7 +37,9 @@
         ? "data"
         : workspace.views.active === HELP
           ? "help"
-          : "script",
+          : workspace.views.active === PAPER
+            ? "paper"
+            : "script",
   );
   const smallest = CODE_SIZES[0];
   const largest = CODE_SIZES[CODE_SIZES.length - 1];
@@ -66,6 +75,11 @@
       class:on={place === "plots"}
       aria-current={place === "plots" ? "page" : undefined}
       onclick={() => workspace.openPlots()}>Plots</button
+    >
+    <button
+      class:on={place === "paper"}
+      aria-current={place === "paper" ? "page" : undefined}
+      onclick={() => workspace.openPaper()}>Paper</button
     >
     <button
       class:on={place === "help"}
