@@ -138,6 +138,8 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done.** On the owner's word ("Release 0.3"): version 0.3.0; the pictures that show the version made again; the notes dated (`docs/releases/0.3-notes.md`); the whole routine green here on the release's tree in both browsers (550 unit tests, 825 browser tests, 3 skipped by design); the commit "Release 0.3" tagged `v0.3.0`, pushed, and published as a GitHub pre-release carrying the notes.
 
+**The release on GitHub and at the address (commit `8578fd2`).** GitHub's check green in both browsers, for the branch and for the tag; the build sent to the trial address and then to the address, all 18 checks passing at each. At `https://lite.zeff-lang.dev`, in Chromium and in WebKit: first start 0.80 s and 1.03 s; the engine 3.08 MB as it travels; Typst and its fonts 7.54 MB; the first paper 1.43 s and 1.48 s; a key to its page 0.24 s and 0.25 s. The wait of about three seconds before a first ⌘↵ was seen once more in Chromium (2.9 s; 39 ms in WebKit), as the known issues say. The GitHub release `v0.3.0` is published as a pre-release with the notes.
+
 **Next.** Nothing is planned in this repository until the owner opens a release. Placed after this one by the registers: the pages of Help reordered (#223), a release of its own; Paper's second stage and the index of methods at Zemp 0.4, on Zeff 0.10.0.
 
 **For the owner to decide.** Nothing is owed. His to read when he wishes, and to change in a later release: the page **Papers and PDFs**, the sample paper, the layout of a script exported with its output (`docs/releases/0.3-samples/`), and the words listed below under "For the owner to read".
