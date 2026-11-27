@@ -37,6 +37,8 @@ export class LivePage {
   #since = 0;
   /** The marks of the pages asked for and not yet come. */
   #asked: string[] = [];
+  /** Those waiting for the paper to be set from its text as it stands (`settled`). */
+  #waiting: (() => void)[] = [];
   #closed = false;
 
   /** A paper of the project, with its text as it stands: it is set at once. */
@@ -85,6 +87,7 @@ export class LivePage {
       if (this.#closed) return;
       this.failed = error instanceof Error ? error.message : String(error);
       this.busy = false;
+      this.#tell();
       return;
     }
     if (this.#closed) return;
@@ -102,6 +105,7 @@ export class LivePage {
     if (this.#text === text && this.#timer === null) {
       this.busy = false;
       this.took = performance.now() - since;
+      this.#tell();
     }
   }
 
@@ -148,6 +152,19 @@ export class LivePage {
   }
 
   /**
+   * Files of the project were written (a run exported them): where any is a file of this
+   * paper, the paper is set again at once, with the file as it now is.
+   */
+  wrote(paths: readonly string[]): void {
+    if (!this.#closed && this.#live.written(paths)) this.again();
+  }
+
+  /** The files of the project the paper reads: those it was given, and those it lacks. */
+  get files(): string[] {
+    return this.#live.files;
+  }
+
+  /**
    * Where in the sources a point of a page came from: `x` and `y` in points from the page's
    * top left. `null` where it leads nowhere, or the page is no longer that one.
    */
@@ -157,9 +174,22 @@ export class LivePage {
     return this.#live.place(outcome.pages, index, x, y).catch(() => null);
   }
 
+  /** Resolves once the paper has been set from its text as it stands, or is left. */
+  settled(): Promise<void> {
+    if (!this.busy || this.#closed) return Promise.resolve();
+    return new Promise((resolve) => this.#waiting.push(resolve));
+  }
+
+  #tell(): void {
+    const waiting = this.#waiting;
+    this.#waiting = [];
+    for (const resolve of waiting) resolve();
+  }
+
   /** The paper is left: its pictures are let go, and nothing more is set. */
   close(): void {
     this.#closed = true;
+    this.#tell();
     if (this.#timer !== null) clearTimeout(this.#timer);
     this.#timer = null;
     for (const url of this.#made) URL.revokeObjectURL(url);

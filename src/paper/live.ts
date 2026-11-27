@@ -11,6 +11,7 @@ export interface Typesetter {
   today(day: Date): Promise<void>;
   putText(path: string, text: string): Promise<void>;
   putBytes(path: string, bytes: Uint8Array): Promise<void>;
+  remove(path: string): Promise<boolean>;
   set(): Promise<Setting>;
   page(index: number): Promise<string>;
   outline(): Promise<Heading[]>;
@@ -66,6 +67,10 @@ export class Live {
   readonly main: string;
   /** The files of the project the paper has been given, by their paths. */
   readonly #given = new Set<string>();
+  /** The files the last setting asked for and the project did not hold, by their paths. */
+  #lacked: string[] = [];
+  /** The files given that the project has since written again: read again at the next setting. */
+  readonly #rewritten = new Set<string>();
   /** The pages held, each by its mark: what the module was asked for and need not be again. */
   readonly #drawn = new Map<string, string>();
   /** The marks of the pages of the last setting, in their order: what the module now holds. */
@@ -113,6 +118,18 @@ export class Live {
     return this.#inTurn(async () => {
       await this.#open();
       await this.#module.putText(this.main, text);
+      // A file given before that the project has written again since (a run exported it) is
+      // read again; one that is gone from the project is gone from the paper.
+      for (const path of [...this.#rewritten]) {
+        this.#rewritten.delete(path);
+        const bytes = await this.#read(path);
+        if (bytes === null) {
+          this.#given.delete(path);
+          await this.#module.remove(path);
+        } else {
+          await this.#give(path, bytes);
+        }
+      }
       let ms = 0;
       let setting: Setting;
       const absent = new Set<string>();
@@ -130,9 +147,7 @@ export class Live {
             continue;
           }
           found += 1;
-          this.#given.add(path);
-          if (isSource(path)) await this.#module.putText(path, decoder.decode(bytes));
-          else await this.#module.putBytes(path, bytes);
+          await this.#give(path, bytes);
         }
         // Nothing more to give: Typst's words of what is not there stand.
         if (found === 0) break;
@@ -152,6 +167,7 @@ export class Live {
       for (const mark of [...this.#drawn.keys()]) {
         if (!marks.includes(mark)) this.#drawn.delete(mark);
       }
+      this.#lacked = [...setting.missing];
       return {
         text,
         ok: setting.ok,
@@ -162,6 +178,36 @@ export class Live {
         ms,
       };
     });
+  }
+
+  /** Give a file of the project to the paper: a source as text, anything else as bytes. */
+  async #give(path: string, bytes: Uint8Array): Promise<void> {
+    this.#given.add(path);
+    if (isSource(path)) await this.#module.putText(path, decoder.decode(bytes));
+    else await this.#module.putBytes(path, bytes);
+  }
+
+  /**
+   * Files of the project were written (a run exported them, or took them away). Whether any
+   * is a file of this paper: one it was given, which is then read again at the next setting,
+   * or one it asked for and the project did not hold.
+   */
+  written(paths: readonly string[]): boolean {
+    let concerned = false;
+    for (const path of paths) {
+      if (this.#given.has(path)) {
+        this.#rewritten.add(path);
+        concerned = true;
+      } else if (this.#lacked.includes(path)) {
+        concerned = true;
+      }
+    }
+    return concerned;
+  }
+
+  /** The files of the project the paper reads: those it was given, and those it lacks. */
+  get files(): string[] {
+    return [...new Set([...this.#given, ...this.#lacked])].sort();
   }
 
   /**

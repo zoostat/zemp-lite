@@ -38,6 +38,10 @@ class Stand implements Typesetter {
     this.files.set(path, new TextDecoder().decode(bytes));
     return Promise.resolve();
   }
+  remove(path: string): Promise<boolean> {
+    this.asked.push(`remove ${path}`);
+    return Promise.resolve(this.files.delete(path));
+  }
   #path(named: string): string {
     if (named.startsWith("/")) return named.slice(1);
     const parts = this.main.split("/").slice(0, -1);
@@ -353,6 +357,38 @@ describe("a paper set as it is typed", () => {
     await again;
     expect(await stale).toBe(null);
     expect(module.asked.filter((one) => one.startsWith("click"))).toEqual(["click 0", "click 0"]);
+  });
+
+  it("reads again a file the project has written again, and lets go one that is gone", async () => {
+    const module = new Stand();
+    const files = project({ "output/fit.typ": "educ 0.08", "output/wages.svg": "<svg/>" });
+    const live = new Live(module, files.read, MAIN, clock());
+    const text = '#include "../output/fit.typ"\n#image("../output/wages.svg")\n';
+    const first = await live.set(text);
+    expect(first.ok).toBe(true);
+    expect(live.files).toEqual(["output/fit.typ", "output/wages.svg"]);
+    // A run wrote the table again, and a file the paper does not read.
+    files.files["output/fit.typ"] = "educ 0.09";
+    expect(live.written(["output/other.typ"])).toBe(false);
+    expect(live.written(["output/fit.typ", "output/other.typ"])).toBe(true);
+    const asked = files.asked.length;
+    const second = await live.set(text);
+    expect(second.pages[0]?.mark).not.toBe(first.pages[0]?.mark);
+    expect(await live.drawn(second.pages, 0)).toContain("educ 0.09");
+    // Only the file written again was read again, once.
+    expect(files.asked.slice(asked)).toEqual(["output/fit.typ"]);
+    // The figure is taken out of the project: the paper lacks it, and Typst says so.
+    delete files.files["output/wages.svg"];
+    expect(live.written(["output/wages.svg"])).toBe(true);
+    const third = await live.set(text);
+    expect(third.ok).toBe(false);
+    expect(third.absent).toEqual(["output/wages.svg"]);
+    expect(module.asked).toContain("remove output/wages.svg");
+    expect(live.files).toEqual(["output/fit.typ", "output/wages.svg"]);
+    // Written at last, a file the paper lacked concerns it, and is found at the next setting.
+    files.files["output/wages.svg"] = "<svg again/>";
+    expect(live.written(["output/wages.svg"])).toBe(true);
+    expect((await live.set(text)).ok).toBe(true);
   });
 
   it("stops asking where a paper's files never end", async () => {

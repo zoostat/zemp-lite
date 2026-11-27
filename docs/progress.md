@@ -104,7 +104,11 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 14 `[function]`.** A press on a word, a heading, a table or a figure of the page puts the cursor at its place in the source, in the word pressed, and brings it into view; what came from a table the paper includes is gone to at the line that includes it. The **Outline** pane lists the paper's headings by level with their lines, as Typst reads them from the paper that set; each goes to its place in the source and on the page, by a press or by the keyboard, and the heading the cursor is under is marked. Green here: the whole routine (30 native tests of the module; 500 unit tests; 761 browser tests in both browsers, 3 skipped). GitHub's check of step 13 passed, and its build is at both addresses with every check passing.
 
-**Next.** Step 15 `[function]`: tables and figures from scripts, refreshed by **Run**, with the sample paper of the Scratch project.
+**Done, step 15a `[function]`** (step 15 is split in three: 15a, 15b, 15c). A paper sets what scripts wrote with `export`: a table as a Typst file, a figure as the engine's own SVG. **Run** in the Paper place runs the scripts whose exported files the paper uses, in the order of their names, and the page is set again with what they wrote; a paper that uses none says so. A file a run writes again redraws the page, whichever place the run was asked from. An export the paper lacks is named with the script that writes it ("press Run to make it"). Green here: the whole routine (505 unit tests; 767 browser tests in both browsers, 3 skipped). GitHub's check of step 14 passed, and its build is at both addresses with every check passing.
+
+**Next.** Step 15b `[function]`: the stale mark. Then 15c `[function]`: the sample paper of the Scratch project.
+
+**For the coordinating session (added at step 15a).** Which files a script would write is read from its text here (the paths in its calls of `export`); a path built from other values is not seen. The engine could say it of a script without running it, beside its reading of statements and sections.
 
 **For the owner to read, when he wishes (added at step 12).** The three sentences the Paper place shows with no paper open, and the first lines of a new paper: a comment, the line for the mathematics, and a heading of the paper's name.
 

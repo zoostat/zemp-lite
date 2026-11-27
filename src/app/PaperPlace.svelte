@@ -18,6 +18,7 @@
   // pages of the text as it last set stay, marked as not of the present text.
   import { tick, untrack } from "svelte";
   import Editor from "../editor/Editor.svelte";
+  import { lackingWords } from "../paper/exports";
   import { share } from "../paper/fetching";
   import { PAPER_TRAVELS } from "../paper/lazy";
   import {
@@ -78,6 +79,17 @@
   );
   const standing = $derived(
     outcome === null ? "" : standingWords(outcome.ok, outcome.pages.length, told),
+  );
+
+  // The files the paper lacks that a script of the project writes: each named with its script
+  // (step 15a). The scripts are read again each time the paper is set, and when the place is shown.
+  $effect(() => {
+    const page = live;
+    if (page === null || page.outcome === null) return;
+    untrack(() => void workspace.findWriters());
+  });
+  const lacking = $derived(
+    outcome === null ? [] : lackingWords(outcome.absent, workspace.paperWriters),
   );
 
   // The size the pages are drawn at: a printed point is 96/72 of a pixel of the screen at 100
@@ -424,6 +436,9 @@
                   {standing}
                 </p>
               {/if}
+              {#each lacking as words (words)}
+                <p class="lacking" role="note" data-testid="paper-lacking">{words}</p>
+              {/each}
               {#if told.length > 0}
                 <ul class="told" aria-label="What Typst says of the paper">
                   {#each told as one, index (index)}
@@ -590,6 +605,14 @@
   }
   .standing.refused {
     color: var(--error);
+  }
+  /* A file the paper lacks that a script writes: what to do, in words. */
+  .lacking {
+    border-left: 3px solid var(--accent);
+    color: var(--ink);
+    font-size: 13.5px;
+    margin: 0 0 8px;
+    padding: 2px 0 2px 10px;
   }
   /* What Typst says, each thing with where it is; its own line of the source is gone to. */
   .told {

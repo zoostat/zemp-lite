@@ -5,6 +5,7 @@ import { EXAMPLE_LIMIT, type Engine } from "../engine/engine";
 import { Examples } from "../engine/examples";
 import type { Drawn, ExampleRuns } from "../help/runs.svelte";
 import type { Papers } from "../paper/lazy";
+import { NOTHING_TO_RUN, writersOf, type Writer } from "../paper/exports";
 import { LivePage } from "../paper/live.svelte";
 import {
   PAPERS,
@@ -897,6 +898,8 @@ export class Workspace {
       this.problem = `What the run wrote could not be kept in the project: ${(error as Error).message}`;
     }
     await this.refresh();
+    // A paper that reads one of these files is set again, with the file as it now is.
+    this.paperLive?.wrote(paths);
   }
 
   /**
@@ -1025,21 +1028,103 @@ export class Workspace {
     };
   }
 
-  /** Run the script, as the editor holds it. */
-  async run(): Promise<void> {
+  /**
+   * Run: the script, as the editor holds it; and in the Paper place, with a paper open, the
+   * scripts whose exported files the paper uses (the owner's answer to question 2 of release
+   * 0.3). `script` names the script to run where it is not the one shown.
+   */
+  async run(script?: string): Promise<void> {
     if (this.running) {
       return;
     }
+    if (script === undefined && this.views.active === PAPER && this.paperShown.kind !== "none") {
+      await this.#runForPaper();
+      return;
+    }
     this.running = true;
-    const work = this.#run(this.#busy);
+    const work = this.#run(this.#busy, script);
     this.#busy = work;
     await work;
   }
 
-  async #run(before: Promise<void>): Promise<void> {
+  /** The scripts of the project, each with its text as it stands (as typed, where it is open). */
+  async #scripts(): Promise<{ path: string; text: string }[]> {
+    const paths: string[] = [];
+    const walk = (nodes: TreeNode[]) => {
+      for (const node of nodes) {
+        if (node.kind === "folder") walk(node.children);
+        else if (node.path.endsWith(".zeff")) paths.push(node.path);
+      }
+    };
+    walk(this.tree);
+    const scripts: { path: string; text: string }[] = [];
+    for (const path of paths) {
+      const open = this.buffers[path];
+      const text = open?.loaded ? open.text : await this.project.readText(path);
+      if (text !== null) scripts.push({ path, text });
+    }
+    return scripts;
+  }
+
+  /**
+   * The scripts that write files the open paper uses, each with those files (`exports.ts`):
+   * for **Run** in the Paper place, and for the words of a file the paper lacks.
+   */
+  paperWriters = $state<Writer[]>([]);
+
+  /** Read the scripts of the project for the files the open paper uses. */
+  async findWriters(): Promise<Writer[]> {
+    const live = this.paperLive;
+    const writers = live === null ? [] : writersOf(await this.#scripts(), live.files);
+    if (this.paperLive === live) this.paperWriters = writers;
+    return writers;
+  }
+
+  /**
+   * Run in the Paper place: the scripts whose exported files the paper uses are run one after
+   * another, in the order of their names; what each writes is brought into the project, and
+   * the paper is set again with it (`#keepWritten`). A script that ends with an error stops
+   * the others. A paper that uses no file a script exports says so, and nothing runs.
+   */
+  async #runForPaper(): Promise<void> {
+    // Which files the paper uses is known once Typst has set it: Run waits for that.
+    const open = this.paperShown;
+    if (open.kind === "none" || this.papers === null) return;
+    if (this.paperLive?.main !== open.path) {
+      this.status = "waiting for Typst, to see which files the paper uses";
+      try {
+        await this.papers.module();
+      } catch {
+        this.status = "Typst could not be fetched, so the paper's files are not known";
+        return;
+      }
+      await this.#load(open.path);
+      this.showLive(open.path);
+      // The live page is made a moment after the module is asked for.
+      await Promise.resolve();
+      await this.papers.module();
+    }
+    const live = this.paperLive;
+    if (live === null || live.main !== open.path) return;
+    await live.settled();
+    if (this.running) return;
+    const writers = await this.findWriters();
+    if (writers.length === 0) {
+      this.status = NOTHING_TO_RUN;
+      return;
+    }
+    for (const writer of writers) {
+      await this.run(writer.script);
+      const last = this.lastRun;
+      if (last === null || last.script !== writer.script || last.state !== "done") break;
+    }
+    void this.findWriters();
+  }
+
+  async #run(before: Promise<void>, asked?: string): Promise<void> {
     // A drawing of figures that is going is let end first: the engine does one thing at a time.
     await before;
-    const script = this.scriptPath;
+    const script = asked ?? this.scriptPath;
     await this.#load(script);
     const text = this.buffers[script]?.text ?? "";
     this.running = true;
