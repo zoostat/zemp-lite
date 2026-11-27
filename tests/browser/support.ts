@@ -326,7 +326,8 @@ export async function scriptText(page: Page): Promise<string> {
     .evaluateAll((all) =>
       all.map((line) => {
         const copy = line.cloneNode(true) as Element;
-        for (const note of copy.querySelectorAll('[data-testid="note"]')) note.remove();
+        for (const note of copy.querySelectorAll('[data-testid="note"], [data-testid="note-go"]'))
+          note.remove();
         return copy.textContent ?? "";
       }),
     );

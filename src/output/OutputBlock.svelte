@@ -92,7 +92,9 @@
         >
       {/if}
       {#if plot !== null}
-        <button class="act" onclick={() => workspace.openPlots()}>Open in Plots ↗</button>
+        <button class="act" onclick={() => workspace.openPlotAt(block.line as number)}
+          >Open in Plots ↗</button
+        >
       {/if}
       {#if onfold && block.state !== "failed"}
         <button class="act" onclick={onfold}>Fold</button>

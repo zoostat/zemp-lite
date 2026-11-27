@@ -170,12 +170,17 @@ test("a note stands inside the page, in the 300 pixels at the right of its state
     const at = await page.evaluate(() => {
       const box = (one: Element) => one.getBoundingClientRect();
       const sheet = box(document.querySelector(".sheet")!);
-      const notes = [...document.querySelectorAll('[data-testid="note"]')].map((note) => ({
-        left: box(note).left,
-        right: box(note).right,
-        top: box(note).top,
-        line: box(note.closest(".cm-line")!),
-      }));
+      // A note with the arrow to its place beside it shares its 300 pixels with the arrow
+      // (release 0.3.1, step 6c): what is measured is the two together.
+      const notes = [...document.querySelectorAll('[data-testid="note"]')].map((note) => {
+        const whole = note.closest(".cm-zemp-note-with") ?? note;
+        return {
+          left: box(whole).left,
+          right: box(whole).right,
+          top: box(whole).top,
+          line: box(note.closest(".cm-line")!),
+        };
+      });
       return { sheet, notes, window: window.innerWidth };
     });
     expect(at.notes.length).toBe(9);

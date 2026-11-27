@@ -79,6 +79,18 @@ describe("the notes of the example", () => {
     expect(run.info.find((one) => one.line === 13)?.stdout).toContain("N = 18,179");
     expect(at(17).place).toBe("plots");
     expect(at(17).main).toBe("plot");
+    // The place that shows what a statement made at length (release 0.3.1, step 6c; open
+    // decision #245): Data for a frame a `let` binds, Plots for a plot, none for a table or a fit.
+    expect(at(4).place).toBe("data");
+    expect(at(5).place).toBe("data");
+    expect(at(8).place).toBeNull();
+    expect(at(12).place).toBeNull();
+    expect(at(13).place).toBeNull();
+    // A plot is at the statement that draws it: here the two that name a plot bound above.
+    expect(notes.filter((note) => note.place === "plots").map((note) => note.line)).toEqual([
+      17, 21,
+    ]);
+    expect(notes.filter((note) => note.place === "data").map((note) => note.line)).toEqual([4, 5]);
     // A `let` that printed and said nothing has nothing to unfold; one the engine said a
     // note of has (line 16: rows with NA dropped), and so has a statement that printed.
     expect(at(4).opens).toBe(false);

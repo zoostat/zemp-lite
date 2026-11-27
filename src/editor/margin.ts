@@ -2,7 +2,10 @@
 // note on the first row of each statement, in a column at the right of the code. A note is a
 // widget of the editor, never text of the script, so it scrolls with its line and the script
 // stays a plain `.zeff` file. A note with something to unfold is a button that unfolds or
-// folds the statement's output; one with nothing to unfold is a line of text.
+// folds the statement's output; one with nothing to unfold is a line of text. From release
+// 0.3.1 (open decision #245) a note also leads to the place that shows what its statement
+// made at length: a frame's note opens the frame in Data, and a plot's has a small arrow
+// beside it that opens the plot in Plots.
 import { StateEffect, StateField, type EditorState, type Extension } from "@codemirror/state";
 import { RangeSet } from "@codemirror/state";
 import {
@@ -27,6 +30,11 @@ export interface MarginNotes {
   unfolded: number[];
   /** A note was pressed: unfold or fold the output of the statement on `line`. */
   onnote: (line: number) => void;
+  /**
+   * A note was asked for the place that shows what its statement made at length: its frame
+   * in Data, its plot in Plots (release 0.3.1, step 6c; open decision #245).
+   */
+  onplace?: (note: Note) => void;
 }
 
 /** Show these notes, in place of those shown; `null` hides the margin's notes. */
@@ -37,18 +45,28 @@ function words(note: Note): string[] {
   return [note.main, note.sub, ...note.tags.map((tag) => tag.text)].filter((word) => word !== "");
 }
 
+/** Where a note's place is, in words. */
+const PLACE = { data: "Data", plots: "Plots" } as const;
+
 class NoteWidget extends WidgetType {
   readonly #note: Note;
   readonly #open: boolean;
   readonly #onnote: (line: number) => void;
+  readonly #onplace: ((note: Note) => void) | undefined;
   readonly #shows: string;
 
-  constructor(note: Note, open: boolean, onnote: (line: number) => void) {
+  constructor(
+    note: Note,
+    open: boolean,
+    onnote: (line: number) => void,
+    onplace: ((note: Note) => void) | undefined,
+  ) {
     super();
     this.#note = note;
     this.#open = open;
     this.#onnote = onnote;
-    this.#shows = JSON.stringify([note, open]);
+    this.#onplace = onplace;
+    this.#shows = JSON.stringify([note, open, onplace !== undefined]);
   }
 
   override eq(other: NoteWidget): boolean {
@@ -57,7 +75,12 @@ class NoteWidget extends WidgetType {
 
   override toDOM(): HTMLElement {
     const note = this.#note;
-    const dom = document.createElement(note.opens ? "button" : "span");
+    // The place that shows what the statement made, where the window can go to it.
+    const place = this.#onplace === undefined ? null : note.place;
+    // A note with something to unfold folds and unfolds it; one with nothing to unfold whose
+    // statement made a frame or a plot goes to its place; any other is words alone.
+    const goes = !note.opens && place !== null;
+    const dom = document.createElement(note.opens || goes ? "button" : "span");
     dom.className = `cm-zemp-note cm-zemp-note-${note.state.replace(" ", "-")}`;
     dom.dataset["testid"] = "note";
     dom.dataset["line"] = String(note.line);
@@ -80,10 +103,34 @@ class NoteWidget extends WidgetType {
         `${words(note).join(", ")}; ${this.#open ? "fold" : "unfold"} the output of line ${note.line}`,
       );
       button.addEventListener("click", () => this.#onnote(note.line));
+    } else if (goes) {
+      const button = dom as HTMLButtonElement;
+      button.type = "button";
+      part("↗", "cm-zemp-note-open");
+      button.dataset["place"] = place;
+      button.title = `Open ${note.main} in ${PLACE[place]}`;
+      button.setAttribute("aria-label", `${words(note).join(", ")}; open in ${PLACE[place]}`);
+      button.addEventListener("click", () => this.#onplace?.(note));
     } else {
       dom.setAttribute("aria-label", `line ${note.line}: ${words(note).join(", ")}`);
     }
-    return dom;
+    if (!note.opens || place === null) return dom;
+    // Something to unfold and a place of its own: the note folds and unfolds, and a small
+    // arrow at its end goes to the place.
+    const both = document.createElement("span");
+    both.className = "cm-zemp-note-with";
+    const go = document.createElement("button");
+    go.type = "button";
+    go.className = "cm-zemp-note-go";
+    go.dataset["testid"] = "note-go";
+    go.dataset["line"] = String(note.line);
+    go.dataset["place"] = place;
+    go.textContent = "↗";
+    go.title = `Open ${note.main} in ${PLACE[place]}`;
+    go.setAttribute("aria-label", `${note.main}: open in ${PLACE[place]}`);
+    go.addEventListener("click", () => this.#onplace?.(note));
+    both.append(dom, go);
+    return both;
   }
 
   // A press on a note is the note's, not the editor's.
@@ -112,7 +159,7 @@ function placed(
       .filter((note) => note.line <= doc.lines)
       .map((note, index, all) =>
         Decoration.widget({
-          widget: new NoteWidget(note, open.has(note.line), margin.onnote),
+          widget: new NoteWidget(note, open.has(note.line), margin.onnote, margin.onplace),
           side: 1,
         }).range(kept.length === all.length ? (kept[index] as number) : doc.line(note.line).to),
       ),
@@ -179,6 +226,40 @@ const look = EditorView.theme({
     cursor: "default",
   },
   "button.cm-zemp-note": { cursor: "pointer" },
+  // A note with the arrow to its place beside it: the two share the notes' column, the note
+  // giving way to the arrow.
+  ".cm-zemp-note-with": {
+    position: "absolute",
+    left: "100%",
+    top: "0",
+    width: "var(--zemp-margin, 0px)",
+    boxSizing: "border-box",
+    display: "flex",
+    alignItems: "stretch",
+  },
+  ".cm-zemp-note-with > .cm-zemp-note": {
+    position: "static",
+    width: "auto",
+    flex: "1 1 0",
+    minWidth: "0",
+  },
+  ".cm-zemp-note-go": {
+    flex: "none",
+    background: "none",
+    border: "none",
+    borderRadius: "5px",
+    color: "var(--accent)",
+    cursor: "pointer",
+    font: "inherit",
+    fontSize: "calc(var(--code-size, 14px) - 1.5px)",
+    padding: "0 8px",
+  },
+  ".cm-zemp-note-go:hover, .cm-zemp-note-go:focus-visible": {
+    background: "var(--soft)",
+    outline: "none",
+  },
+  ".cm-zemp-note-go:focus-visible": { boxShadow: "inset 0 0 0 2px var(--accent)" },
+  "button.cm-zemp-note[data-place] .cm-zemp-note-open": { color: "var(--accent)" },
   "button.cm-zemp-note:hover, button.cm-zemp-note:focus-visible": {
     background: "var(--soft)",
     outline: "none",

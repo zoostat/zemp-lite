@@ -23,8 +23,11 @@ export interface Note {
   state: "fresh" | "running" | "waiting" | "failed" | "not run" | "edited" | "stale";
   /** Whether it has an output to unfold: something printed or said. */
   opens: boolean;
-  /** The place that shows what it made at length: Plots for a plot; none otherwise yet. */
-  place: "plots" | null;
+  /**
+   * The place that shows what it made at length: Plots for a plot, and Data for a frame a
+   * `let` binds (release 0.3.1, step 6c; open decision #245); none for anything else.
+   */
+  place: "plots" | "data" | null;
 }
 
 /**
@@ -148,7 +151,12 @@ export function notesOf(run: Run, marked: ReadonlyMap<number, { mark: Mark }> = 
       state,
       // A plot bound with `let` prints nothing, and opens to its figure.
       opens: printed !== "" || spoken !== "" || (event?.passes.length ?? 0) > 0 || bound,
-      place: printed.startsWith(PLOT) || bound ? "plots" : null,
+      place:
+        printed.startsWith(PLOT) || bound
+          ? "plots"
+          : info?.name != null && info.frame !== null
+            ? "data"
+            : null,
     };
   });
 }

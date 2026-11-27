@@ -12,9 +12,13 @@ A note names what its statement made, in the engine's words: the name it bound, 
 
 A note with something to show is a button. Press it to unfold what the statement printed, under the statement; press it again to fold it. <kbd>⌥↵</kbd> does the same for the statement the cursor is in.
 
-**Fold all** and **Unfold all**, over the script, act on every statement at once. An error stays unfolded. **Notes**, at the right of that bar, hides the notes and shows them again.
+**Fold all** and **Unfold all**, at the right end of the row over the script, act on every statement at once. An error stays unfolded. **Notes**, at the left of that row, hides the notes and shows them again.
 
-An unfolded output has a line of its own at its head: the line of its statement, how long it took, **Copy as text**, which copies what was printed, and **Fold**.
+An unfolded output has a line of its own at its head: the name of what the statement made, its line, how long it took, **Copy as text**, which copies what was printed, and **Fold**.
+
+## From a note to Data and to Plots
+
+A note with an arrow at its end leads to the place that shows what its statement made at length. Press the note of a frame, and Data opens on that frame. A plot's note folds and unfolds its figure as any other; the arrow beside it opens Plots on that plot.
 
 ## When the script changes
 

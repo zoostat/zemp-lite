@@ -3611,3 +3611,18 @@ The wait is there at the trial address every time and at the address once in fou
 5. **A result keeps its rounded box for what the engine said,** inside the block; the mockup's band across the block's width is its drawing of one warning, and a statement may be told several things.
 
 **Tests.** Browser, both engines (`margin.spec.ts`, in place of the test of Explain in place): the header's words and that they stand on one line no taller than 28 pixels; the warning's words on one line with Explain at its end and nothing under it; Explain to the page of W0201 in Help; the way back, its words, and that it puts the cursor on the line in the Script place; that it is still there when the page is reached by ⌘5 and gone after another run. The failed fit of the binary sample and the list of what the run said lead to Help and back the same way (`binary.spec.ts`, `help.spec.ts`).
+
+## 28 November 2026: release 0.3.1, step 6c: Script's notes
+
+**Built (#245).** A note in the margin leads to the place that shows what its statement made at length. The note of a frame a `let` binds is a button, with an arrow at its end: pressed, Data opens on that frame. The note of a plot folds and unfolds its figure as before, and a small arrow beside it, at the end of the notes' column, opens Plots on that plot. The note of a table, a fit or a test folds and unfolds its result as before. **Open in Plots**, in a figure's header, opens Plots on that figure's plot; until now it opened Plots on whichever plot was last shown.
+
+**Choices, mine to take.**
+
+1. **A plot's note keeps folding its figure, and the way to Plots is the arrow beside it.** The mockup, which draws no figure under a statement, sends a plot's note straight to Plots. The app draws the figure under its statement (since 0.3), and nothing it can do is taken away: so the note does what it did, and the arrow is the new way. The same holds for a frame whose statement also said something: its note unfolds what was said, and the arrow opens Data.
+2. **A frame's note with nothing to unfold is itself the way to Data,** since a press on it did nothing until now.
+3. **The note says what it does** to a screen reader and on resting over it: "wages, Frame · 18,412 × 11; open in Data"; the arrow, "schooling: open in Plots".
+4. **A note of anything else with nothing to unfold stays words alone:** a number or a text a `let` binds has no place of its own.
+5. **The coloured dot the mockup draws before a note, by kind (frame, table, fit, plot), is not built.** It would say by colour alone what the note already says in a word ("Frame", "Table", "RegFit", "Plot"), and the ruling's table does not name it. For the coordinating session, if it is wanted.
+6. **The Project panel's list of past runs, which the mockup draws, is not built:** the app keeps no record of runs before the last, and the ruling's table does not name it. For the coordinating session.
+
+**Tests.** Unit: each note's place for the example (Data for the two frames, Plots for the two statements that draw, none for the table and the fit). Browser, both engines (`notes-place.spec.ts`): a frame's note by a press and by the keyboard, Data opening on the frame of the note pressed and not on the first of the run; a plot's note folding and unfolding its figure, its arrow's place in the notes' column, the arrow by a press and by the keyboard opening Plots on that plot, and **Open in Plots** doing the same; a table's and a fit's note with no arrow; a number's note as words alone. The tests' reading of the script's text leaves the arrow out with the note. Help's page **The notes** says the row as it now stands and has a section on going from a note to Data and to Plots.

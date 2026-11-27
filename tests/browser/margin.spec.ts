@@ -74,7 +74,8 @@ const notes = (page: Page) =>
   page.getByTestId("note").evaluateAll((all) =>
     all.map((note) => {
       const copy = note.closest(".cm-line")!.cloneNode(true) as Element;
-      for (const one of copy.querySelectorAll('[data-testid="note"]')) one.remove();
+      for (const one of copy.querySelectorAll('[data-testid="note"], [data-testid="note-go"]'))
+        one.remove();
       return [copy.textContent ?? "", note.textContent ?? ""];
     }),
   );
@@ -89,7 +90,8 @@ const under = (page: Page) =>
       }
       if (before === null) return null;
       const copy = before.cloneNode(true) as Element;
-      for (const note of copy.querySelectorAll('[data-testid="note"]')) note.remove();
+      for (const note of copy.querySelectorAll('[data-testid="note"], [data-testid="note-go"]'))
+        note.remove();
       return copy.textContent;
     }),
   );
@@ -598,7 +600,8 @@ test("a script opens with no output; Run puts a note beside each statement and u
     "let shape = w2010.plot(x: log(wage)).histogram(bins: 30)",
     "shape",
   ]);
-  expect(shown[0]![1]).toBe("wagesFrame · 18,412 × 11");
+  // (The arrow at its end: a frame's note opens the frame in Data, from release 0.3.1.)
+  expect(shown[0]![1]).toBe("wagesFrame · 18,412 × 11↗");
   expect(shown[2]![1]).toContain("summaryTable · by femaleW0201");
   // Running never moved the code: the script is the file as it was.
   expect(await scriptText(page)).toBe(file("tests/scripts/example/scripts/main.zeff"));

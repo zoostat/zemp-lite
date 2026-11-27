@@ -117,6 +117,11 @@
           notes,
           unfolded,
           onnote: (line: number) => workspace.toggleUnfolded(path, line),
+          // A frame's note opens the frame in Data; a plot's, the plot in Plots.
+          onplace: (note: Note) => {
+            if (note.place === "data") workspace.openData(note.main);
+            else if (note.place === "plots") workspace.openPlotAt(note.line);
+          },
         }
       : null,
   );

@@ -2159,6 +2159,13 @@ export class Workspace {
     this.#keep();
   }
 
+  /** Open the Plots place on the plot the statement on `line` drew, where it drew one. */
+  openPlotAt(line: number): void {
+    const plot = this.plots.find((one) => one.line === line);
+    if (plot !== undefined) this.views.plots.shown = plot.id;
+    this.openPlots();
+  }
+
   /** Move the plot at `from` in the strip to stand at `to`. */
   movePlot(from: number, to: number): void {
     this.views.plots.order = moved(
