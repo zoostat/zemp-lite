@@ -11,6 +11,7 @@
   import Editor from "../editor/Editor.svelte";
   import { notesOf } from "../margin/notes";
   import { runLine } from "../margin/runline";
+  import { blocks as blocksOf } from "../output/run";
   import { marks } from "../margin/stale";
   import { trailOf } from "../margin/trail";
   import type { Note } from "../margin/notes";
@@ -97,6 +98,15 @@
   );
   // The run's facts, as the results bar gives them (the design, section 5).
   const facts = $derived(runLine(ours, true));
+  // The warnings of this script's run, said beside its facts once the run is over.
+  const warned = $derived(
+    ours === null || ours.checkOnly || ours.state === "running"
+      ? 0
+      : blocksOf(ours).reduce(
+          (count, block) => count + block.said.filter((one) => one.kind === "warning").length,
+          0,
+        ),
+  );
   const margin = $derived(
     notesShown
       ? {
@@ -257,6 +267,17 @@
       onclick={() => (workspace.panel = workspace.panel === "facts" ? null : "facts")}
       >{facts}</button
     >
+    {#if warned > 0}
+      <!-- The run's warnings, beside its facts (open decision #245): pressed, what the run said. -->
+      <button
+        class="warned"
+        data-testid="run-warnings"
+        aria-haspopup="dialog"
+        title="What the run said: every warning, note and error, with its line"
+        onclick={() => (workspace.panel = workspace.panel === "said" ? null : "said")}
+        >· {warned} warning{warned === 1 ? "" : "s"}</button
+      >
+    {/if}
     <span class="copied" aria-live="polite" data-testid="copied">{workspace.copied}</span>
     <span class="gap"></span>
     {#if path.endsWith(".zeff")}
@@ -265,8 +286,9 @@
         disabled={workspace.running}
         onclick={() => void workspace.exportScript()}
         title="The script with what each statement printed, said and drew, as a PDF saved to this computer"
-        >Export script with output</button
+        >Export script with output…</button
       >
+      <span class="rule" aria-hidden="true"></span>
     {/if}
     <button
       class="view"
@@ -289,6 +311,7 @@
     ]}
     right={[paneOf(workspace, "script", "notes", null)]}
     bar={controls}
+    together
   >
     {#if workspace.exportAsking === path}
       <!-- A script that has not been run has no output to set: the reader says which is meant. -->
@@ -382,20 +405,39 @@
   }
   /* The run's facts, and the two controls that change only the view, which are words with a
      dashed underline (the design, sections 5 and 14.2); they stand in the place's bar. */
-  .facts {
+  .facts,
+  .warned {
     background: none;
     border: 0;
     border-radius: 6px;
     color: var(--ink-3);
     cursor: pointer;
+    flex: none;
     font: inherit;
-    font-size: 13px;
+    font-size: 12.5px;
     font-variant-numeric: tabular-nums;
     padding: 2px 6px;
+    white-space: nowrap;
   }
-  .facts:hover:not(:disabled) {
+  .warned {
+    color: var(--warning);
+    margin-left: -14px;
+    padding-left: 2px;
+  }
+  .facts:hover:not(:disabled),
+  .warned:hover {
     background: var(--soft);
     color: var(--ink-2);
+  }
+  .warned:hover {
+    color: var(--warning);
+  }
+  .rule {
+    background: var(--line);
+    flex: none;
+    height: 20px;
+    margin: 0 -2px;
+    width: 1px;
   }
   .facts:disabled {
     cursor: default;
@@ -408,13 +450,14 @@
   .word {
     background: none;
     border: 0;
-    border-radius: 6px;
+    border-radius: 7px;
     color: var(--ink-2);
     cursor: pointer;
     flex: none;
     font: inherit;
-    font-size: 13.5px;
-    padding: 3px 8px;
+    font-weight: 600;
+    height: 27px;
+    padding: 0 10px;
     white-space: nowrap;
   }
   .word:hover:not(:disabled) {
@@ -456,17 +499,20 @@
     color: var(--ok);
     font-size: 13px;
   }
+  /* Fold all and Unfold all, at the row's right end: words as the others are. */
   .view {
     background: none;
     border: none;
-    border-radius: 6px;
+    border-radius: 7px;
     color: var(--ink-2);
     cursor: pointer;
+    flex: none;
     font: inherit;
-    font-size: 13.5px;
-    padding: 3px 6px;
-    text-decoration: underline dashed var(--line-strong);
-    text-underline-offset: 4px;
+    font-weight: 600;
+    margin-left: -8px;
+    height: 27px;
+    padding: 0 10px;
+    white-space: nowrap;
   }
   .view:hover {
     background: var(--soft);
@@ -477,5 +523,12 @@
   }
   .view:focus-visible {
     outline: 2px solid var(--accent);
+  }
+  /* Where the pointer is a finger the row's words are taller than they are drawn. */
+  @media (pointer: coarse) {
+    .word,
+    .view {
+      height: 32px;
+    }
   }
 </style>

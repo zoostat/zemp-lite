@@ -32,4 +32,4 @@ A paper sets what a script writes with [export](help:export): a table as a Typst
 
 ## A script with its output as a PDF
 
-**Export script with output**, in the bar of **Script**, saves the script as a PDF, with what each statement printed, said and drew under it. A script that has not been run has no output: you are offered **Run, then export**, or **Export the script alone**.
+**Export script with output…**, in the row of **Script**, saves the script as a PDF, with what each statement printed, said and drew under it. A script that has not been run has no output: you are offered **Run, then export**, or **Export the script alone**.

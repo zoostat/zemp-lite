@@ -33,6 +33,7 @@
     left = [],
     right = [],
     bar = null,
+    together = false,
     children,
   }: {
     workspace: Workspace;
@@ -42,6 +43,12 @@
     right?: Pane[];
     /** What the bar holds between the links of the left panes and those of the right. */
     bar?: Snippet | null;
+    /**
+     * Whether the links of the right panes stand with those of the left, at the row's start
+     * (release 0.3.1, step 6: Script's **Project**, **Outline** and **Notes**; open decision
+     * #245), and not at its end.
+     */
+    together?: boolean;
     children: Snippet;
   } = $props();
 
@@ -58,11 +65,7 @@
     title={pane.title}
     onclick={() => pane.set(!pane.open)}
   >
-    <svg viewBox="0 0 15 13" aria-hidden="true">
-      <rect class="frame" x=".65" y=".65" width="13.7" height="11.7" rx="2" />
-      <rect class="side" x={side === "left" ? 1.3 : 9.3} y="1.3" width="4.4" height="10.4" rx="1" />
-    </svg>
-    <span>{pane.label}</span>
+    {pane.label}
   </button>
 {/snippet}
 
@@ -86,10 +89,20 @@
     {#each left as pane (pane.key)}
       {@render link(pane, "left")}
     {/each}
+    {#if together}
+      {#each right as pane (pane.key)}
+        {@render link(pane, "right")}
+      {/each}
+    {/if}
+    {#if left.length + right.length > 0 && bar !== null}
+      <span class="rule" aria-hidden="true"></span>
+    {/if}
     <div class="between">{@render bar?.()}</div>
-    {#each right as pane (pane.key)}
-      {@render link(pane, "right")}
-    {/each}
+    {#if !together}
+      {#each right as pane (pane.key)}
+        {@render link(pane, "right")}
+      {/each}
+    {/if}
   </div>
   <div class="columns" bind:this={body}>
     {#if atLeft.length > 0}
@@ -145,72 +158,63 @@
     min-height: 0;
     min-width: 0;
   }
+  /* The row of a place (open decision #245): 36 pixels, its panes' words first. */
   .bar {
     align-items: center;
     background: var(--window);
-    border-bottom: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line);
+    box-sizing: border-box;
     display: flex;
     flex: none;
     gap: 4px;
-    min-height: 38px;
-    padding: 0 10px;
+    min-height: 36px;
+    padding: 0 8px;
   }
   .between {
     align-items: center;
     display: flex;
     flex: 1;
-    gap: 14px;
+    gap: 12px;
     min-width: 0;
-    padding: 0 10px;
+    padding: 0 2px;
   }
-  /* A link of the bar: a word with the picture of its side, filled where its pane is open. */
+  .rule {
+    background: var(--line);
+    flex: none;
+    height: 20px;
+    margin: 0 6px;
+    width: 1px;
+  }
+  /* A pane's word: quiet where its pane is closed, in the accent where it is open. */
   .link {
-    align-items: center;
-    background: none;
-    border: 1px solid var(--line-strong);
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 7px;
-    color: var(--ink-3);
+    color: var(--ink-2);
     cursor: pointer;
-    display: inline-flex;
     flex: none;
     font: inherit;
-    font-size: 13px;
-    gap: 6px;
-    padding: 3px 10px 3px 8px;
+    font-weight: 600;
+    height: 27px;
+    padding: 0 10px;
     white-space: nowrap;
-  }
-  .link.right {
-    flex-direction: row-reverse;
-    padding: 3px 8px 3px 10px;
   }
   .link:hover {
     background: var(--soft);
+    color: var(--ink);
   }
   .link:focus-visible {
     outline: 2px solid var(--accent);
   }
-  .link svg {
-    flex: none;
-    height: 13px;
-    width: 15px;
-  }
-  .link .frame {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.3;
-  }
-  .link .side {
-    fill: currentColor;
-    opacity: 0.25;
-  }
   .link[aria-pressed="true"] {
     background: var(--accent-soft);
-    border-color: transparent;
+    border-color: color-mix(in srgb, var(--accent) 25%, transparent);
     color: var(--accent);
-    font-weight: 600;
   }
-  .link[aria-pressed="true"] .side {
-    opacity: 0.9;
+  @media (pointer: coarse) {
+    .link {
+      height: 32px;
+    }
   }
   .columns {
     background: var(--window);

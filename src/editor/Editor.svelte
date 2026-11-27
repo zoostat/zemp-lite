@@ -149,7 +149,8 @@
     "&.cm-focused": { outline: "none" },
     ".cm-scroller": {
       fontFamily: '"JetBrains Mono", ui-monospace, Menlo, monospace',
-      lineHeight: "1.75",
+      // Lines at 1.6 times the size of code text (open decision #245; 1.75 until release 0.3.1).
+      lineHeight: "1.6",
       overflow: "auto",
     },
     // The space above and below only: the right padding is the margin's (`margin.ts`), which a

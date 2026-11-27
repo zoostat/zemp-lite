@@ -182,6 +182,30 @@ test("the code size control changes the code and its output together, and is rem
   const output = page.getByTestId("printed").first();
   expect(await size(script)).toBe("14px");
   expect(await size(output)).toBe("13px");
+  // A line of the script is 1.6 times the size of code text, at every size from 12 to 22
+  // (release 0.3.1, step 6; open decision #245).
+  // (The height one row of a line is set at: a long line may wrap into several.)
+  const lineOf = () =>
+    script
+      .locator(".cm-line")
+      .first()
+      .evaluate((node) => parseFloat(getComputedStyle(node).lineHeight));
+  const sizes = page.getByRole("group", { name: "Code text size" });
+  const smaller = page.getByRole("button", { name: "Smaller code text" });
+  const larger = page.getByRole("button", { name: "Larger code text" });
+  while (await smaller.isEnabled()) await press(smaller);
+  const seen: number[] = [];
+  for (;;) {
+    const px = Number((await sizes.locator("span").innerText()).trim());
+    seen.push(px);
+    expect(await size(script)).toBe(`${px}px`);
+    expect(Math.abs((await lineOf()) - 1.6 * px), `at ${px}`).toBeLessThan(0.6);
+    if (await larger.isDisabled()) break;
+    await press(larger);
+  }
+  expect(seen[0]).toBe(12);
+  expect(seen.at(-1)).toBe(22);
+  while (Number((await sizes.locator("span").innerText()).trim()) > 14) await press(smaller);
   await press(page.getByRole("button", { name: "Larger code text" }));
   await press(page.getByRole("button", { name: "Larger code text" }));
   await press(page.getByRole("button", { name: "Larger code text" }));

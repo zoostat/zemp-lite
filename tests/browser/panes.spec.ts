@@ -16,7 +16,7 @@ const bar = (page: Page) =>
   page.getByRole("toolbar", { name: "Script: its panes and its controls" });
 const leftPane = (page: Page) => page.getByRole("complementary", { name: "Script: the left pane" });
 
-test("the Script place opens with Notes open and Project closed, each link over its side", async ({
+test("the Script place opens with Notes open and Project closed; its row holds the three panes' words, the run, and at its right end Export, Fold all and Unfold all", async ({
   page,
   press,
 }) => {
@@ -26,14 +26,37 @@ test("the Script place opens with Notes open and Project closed, each link over 
   await expect(project).toHaveAttribute("aria-pressed", "false");
   await expect(notes).toHaveAttribute("aria-pressed", "true");
   await expect(leftPane(page)).toHaveCount(0);
-  // The links of the left panes stand at the bar's left, those of the right at its right, and
-  // the run's facts with the two controls of the view between them.
+  // The row of Script (release 0.3.1, step 6; open decision #245): Project, Outline and Notes
+  // together at its left, each a word; then the run; and at its right end Export script with
+  // output…, Fold all and Unfold all. (Until 0.3.1 Notes stood at the right end, over its side.)
   const at = async (target: ReturnType<Page["locator"]>) => (await target.boundingBox())!.x;
+  const outline = bar(page).getByRole("button", { name: "Outline", exact: true });
   const facts = bar(page).getByTestId("run-facts");
+  const exporting = bar(page).getByRole("button", { name: "Export script with output…" });
+  const fold = bar(page).getByRole("button", { name: "Fold all", exact: true });
   const unfold = bar(page).getByRole("button", { name: "Unfold all", exact: true });
-  expect(await at(project)).toBeLessThan(await at(facts));
-  expect(await at(facts)).toBeLessThan(await at(unfold));
-  expect(await at(unfold)).toBeLessThan(await at(notes));
+  const order = [project, outline, notes, facts, exporting, fold, unfold];
+  const lefts: number[] = [];
+  for (const part of order) lefts.push(await at(part));
+  expect([...lefts].sort((a, b) => a - b)).toEqual(lefts);
+  // The row is 36 pixels high and ends with Unfold all, at the place's right edge.
+  const row = (await bar(page).boundingBox())!;
+  expect(row.height).toBe(36);
+  const last = (await unfold.boundingBox())!;
+  expect(row.x + row.width - (last.x + last.width)).toBeLessThan(16);
+  // The three panes' words are words alone: no picture stands in them.
+  for (const word of [project, outline, notes]) await expect(word.locator("svg")).toHaveCount(0);
+  // After a run, its facts and its warnings stand side by side, the warnings in their colour;
+  // pressed, they open what the run said.
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  const warned = bar(page).getByTestId("run-warnings");
+  await expect(warned).toHaveText("· 1 warning");
+  expect(await at(facts)).toBeLessThan(await at(warned));
+  expect(await at(warned)).toBeLessThan(await at(exporting));
+  await press(warned);
+  await expect(page.getByRole("dialog", { name: "What the run said" })).toBeVisible();
+  await page.keyboard.press("Escape");
   // What a link holds is said on resting over it.
   await expect(project).toHaveAttribute("title", "Show or hide the files of the project");
 });
