@@ -111,13 +111,16 @@ test("where the browser has agreed to keep the storage the status bar is silent,
   expect(await asked(page)).toBe(1);
 });
 
-test("at the narrowest window the reminder leaves the console room to type in", async ({
+test("at the narrowest window the note leaves the console room to type in, and gives way from its first words", async ({
   page,
   press,
   browserName,
 }) => {
   // Found by eye at the pre-release look of 0.2.2: at 1,200 pixels the reminder left the
-  // console's field 146 pixels in Chromium, and 39 where the browser keeps nothing.
+  // console's field 146 pixels in Chromium, and 39 where the browser keeps nothing. From
+  // release 0.3.1 the narrowest window is a tablet's held sideways (open decision #243), and
+  // the line holds the run and its warnings too (#245): what the browser does with the project
+  // gives way first, and when it was last exported is never cut.
   await browserThat(page, false);
   await page.setViewportSize({ width: 1200, height: 800 });
   await page.goto("/");
@@ -131,28 +134,47 @@ test("at the narrowest window the reminder leaves the console room to type in", 
   const field = page.getByRole("textbox", { name: /^Console/ });
   const widths = async () => ({
     field: (await field.boundingBox())!.width,
-    cut: await reminder(page).evaluate((node) => node.scrollWidth > node.clientWidth),
-    // Nothing of the line runs past the window's edge.
+    // Whether the note's first words are cut, and whether its last are.
+    cut: await reminder(page)
+      .locator(".first")
+      .evaluate((node) => node.scrollWidth > node.clientWidth),
+    last: await reminder(page)
+      .locator(".last")
+      .evaluate((node) => node.scrollWidth > node.clientWidth),
+    // Nothing of the line runs past the window's edge, and its last part is inside it.
     over: await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     ),
+    end: await page
+      .locator("footer.bottom .engine")
+      .evaluate((node) => window.innerWidth - node.getBoundingClientRect().right),
   });
   const ready = await widths();
-  expect(ready.field).toBeGreaterThanOrEqual(240);
+  expect(ready.field).toBeGreaterThanOrEqual(200);
   expect(ready.over).toBe(0);
-  // The shorter of the two lines stands whole at this width; the longer may be cut short,
-  // and either way the whole of it is the line's title.
+  // The shorter of the two notes stands whole at this width; the longer may be cut short,
+  // and either way the whole of it is the note's title.
   if (browserName !== "webkit") expect(ready.cut).toBe(false);
+  expect(ready.last).toBe(false);
   await expect(reminder(page)).toHaveAttribute("title", line);
   await expect(exportButton(page)).toBeVisible();
-  // A longer word in the status beside it changes nothing of that.
+  // After a run the line holds the run and its warnings too, here and at a tablet's width:
+  // the console keeps its room, the note's last words are whole, and the engine ends the line.
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await expect(page.getByRole("status")).toHaveText("done");
-  const done = await widths();
-  expect(done.field).toBeGreaterThanOrEqual(240);
-  expect(done.over).toBe(0);
-  // In a wide window the keys stand beside the reminder as before.
+  for (const width of [1200, 1024]) {
+    await page.setViewportSize({ width, height: 768 });
+    const done = await widths();
+    expect(done.field, `${width}`).toBeGreaterThanOrEqual(200);
+    expect(done.over, `${width}`).toBe(0);
+    expect(done.last, `${width}`).toBe(false);
+    expect(done.end, `${width}`).toBeGreaterThanOrEqual(8);
+    await expect(reminder(page)).toHaveAttribute("title", line);
+    await expect(reminder(page)).toContainText("not exported yet");
+    await expect(exportButton(page)).toBeVisible();
+  }
+  // In a wide window the whole of the line stands. (Until release 0.3.1 the keys stood beside
+  // it there; the top bar names them now.)
   await page.setViewportSize({ width: 1600, height: 800 });
-  await expect(page.locator("footer .keys")).toBeVisible();
   expect((await widths()).cut).toBe(false);
 });

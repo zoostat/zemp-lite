@@ -394,12 +394,15 @@
   // Each column as wide as its header or its widest cell of the first page, within bounds. The
   // header holds the name (in the code face) over the type and the count of NA (in the text
   // face), beside the sort and hide buttons, which take about 34 pixels with the padding.
+  // Where the pointer is a finger those two buttons are 32 pixels each (open decision #243),
+  // and the column is made wider by as much, so that the name is not squeezed out of its header.
+  const finger = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
   const widths = $derived(
     (first?.variables ?? []).map((variable, at) => {
       const facts =
         variable.type.length +
         (variable.missing > 0 ? ` · ${counted(variable.missing)} NA`.length : 0);
-      const head = Math.max(variable.name.length * 8, facts * 7) + 52;
+      const head = Math.max(variable.name.length * 8, facts * 7) + (finger ? 88 : 52);
       const longest = Math.max(
         0,
         ...(first?.rows ?? []).slice(0, 100).map((row) => (row[at] ?? "").length),

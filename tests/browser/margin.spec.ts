@@ -225,7 +225,8 @@ test("when the check refuses a script, the results of the run before stay on the
 }) => {
   await scratch(page, press);
   await runUnfolded(page, press);
-  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.getByTestId("sync")).toHaveText("in sync");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   await expect(page.locator('[data-testid="figure"] img')).toHaveCount(2);
   const before = await printed(page);
   const blocks = await page.getByTestId("block").count();
@@ -253,13 +254,15 @@ test("when the check refuses a script, the results of the run before stay on the
 
   // The script edited again: what the check said is not of the script as it stands either.
   await page.keyboard.insertText("// a note\n");
-  await expect(page.getByTestId("sync")).toHaveText("edited · not run · 1 warning");
+  await expect(page.getByTestId("sync")).toHaveText("edited · not run");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   await expect(error).toContainText("edited · not run");
 
   // The slip mended: the script runs, and the page is the run's own again.
   await write(page, file("tests/scripts/example/scripts/main.zeff"));
   await press(page.getByRole("button", { name: "Run", exact: true }));
-  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.getByTestId("sync")).toHaveText("in sync");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   await expect(error).toHaveCount(0);
   // The whole script was written anew, so the editor draws its last outputs a moment after
   // the run is said to be in step: the page is read until it holds them.
@@ -311,13 +314,14 @@ test("the results bar gives the run's number, time of day, statements and time",
   await expect(page.getByTestId("run-facts")).toHaveText(/^run 2 · /);
 });
 
-test("the foot is one line: the state after its dot, the console, the keys, the engine", async ({
+test("the foot is one line of 26 pixels: the console, the state after its dot, the run, its warnings, the note with Export project…, and the engine", async ({
   page,
   press,
 }) => {
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
-  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.getByTestId("sync")).toHaveText("in sync");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   const foot = page.locator("footer.bottom .line");
   // The parts of the line that are shown, each with where it stands.
   const shown = () =>
@@ -331,23 +335,53 @@ test("the foot is one line: the state after its dot, the console, the keys, the 
           left: box.left,
         })),
     );
-  // One line: every part on the same row, from left to right in the design's order. In a
-  // wide window the keys are among them; in a narrower one they give their place to the
-  // reminder to export where it stands (release 0.2.2), and are there where it does not.
-  await page.setViewportSize({ width: 1600, height: 800 });
-  for (const wide of [true, false]) {
-    if (!wide) await page.setViewportSize({ width: 1280, height: 720 });
+  // One line: every part on the same row, from left to right in the order of open decision
+  // #245, at a wide window, a laptop's and a tablet's held sideways. (Until release 0.3.1 the
+  // line began with the state and named the keys, which the top bar now does.)
+  for (const size of [
+    { width: 1600, height: 800 },
+    { width: 1280, height: 720 },
+    { width: 1024, height: 768 },
+  ]) {
+    await page.setViewportSize(size);
     const parts = await shown();
     const middles = parts.map((part) => part.middle);
     expect(Math.max(...middles) - Math.min(...middles)).toBeLessThan(3);
     const order = parts.map((part) => part.name);
-    expect(order.indexOf("state")).toBeLessThan(order.indexOf("mono"));
-    expect(order.at(-1)).toBe("engine");
     const reminded = (await page.getByTestId("reminder").count()) > 0;
-    expect(order.includes("keys")).toBe(wide || !reminded);
+    expect(order).toEqual([
+      "prompt",
+      "mono",
+      "state",
+      "run",
+      "warnings",
+      ...(reminded ? ["reminder", "export"] : []),
+      "status",
+      "engine",
+    ]);
     const lefts = parts.map((part) => part.left);
     expect([...lefts].sort((a, b) => a - b)).toEqual(lefts);
+    // The line is 26 pixels high, spans the window, and nothing of it runs past the window.
+    const line = (await foot.boundingBox())!;
+    expect([line.x, line.width, line.height]).toEqual([0, size.width, 26]);
+    expect(line.y + line.height).toBe(size.height);
+    const last = parts.at(-1)!;
+    expect(last.left).toBeLessThan(size.width);
+    // The console keeps room to type a statement in.
+    expect(
+      (await page.getByRole("textbox", { name: /^Console/ }).boundingBox())!.width,
+    ).toBeGreaterThanOrEqual(200);
   }
+  // The run, in the bar's words without the time of day; pressed, it opens the run's facts.
+  const run = page.getByTestId("foot-run");
+  await expect(run).toHaveText(/^run 1 · 9 statements in (\d+ ms|\d+\.\d\d s)$/);
+  await press(run);
+  await expect(page.getByRole("dialog", { name: "The run's facts" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  // The warnings, pressed, open what the run said.
+  await press(page.getByTestId("warnings"));
+  await expect(page.getByRole("dialog", { name: "What the run said" })).toBeVisible();
+  await page.keyboard.press("Escape");
   // The state's dot is coloured, and its words are there beside it.
   await expect(foot.locator(".state.ok")).toBeVisible();
   await write(page, "print(1)\n");
@@ -490,7 +524,8 @@ test("a run leaves the reader where they were in the script, not at the top of t
     } else {
       await press(page.getByRole("button", { name: "Run", exact: true }));
     }
-    await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+    await expect(page.getByTestId("sync")).toHaveText("in sync");
+    await expect(page.getByTestId("warnings")).toHaveText("1 warning");
     await expect(page.locator('[data-testid="figure"] img').first()).toBeVisible();
     await page.waitForTimeout(600);
     const after = await seen();
@@ -520,7 +555,8 @@ test("a reader who scrolls as a run ends is left where they went", async ({ page
   // From down the page, and off again while the run goes: not brought back when it ends.
   await press(page.getByRole("button", { name: "Run", exact: true }));
   await wheelTo(pane, 400);
-  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.getByTestId("sync")).toHaveText("in sync");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   await page.waitForTimeout(600);
   expect(await top()).toBe(400);
 });

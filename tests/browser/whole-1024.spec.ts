@@ -108,6 +108,16 @@ for (const theme of ["light", "dark"] as const) {
       await entry.focus();
       await expect(entry.getByRole("tooltip")).toBeVisible();
       await whole(page, "Script, an entry of the side menu saying its words");
+      // The line at the foot (step 5): 26 pixels, every part of it inside the window, and the
+      // console's drawer grown out of it.
+      const foot = page.locator("footer.bottom .line");
+      expect((await foot.boundingBox())!.height).toBe(26);
+      const console_ = page.getByRole("textbox", { name: /^Console/ });
+      await console_.fill("1 + 1");
+      await console_.press("Enter");
+      await expect(page.getByRole("log", { name: "Console output" })).toContainText("2");
+      await whole(page, "Script, the console's drawer open");
+      await console_.press("Escape");
       await page.keyboard.press("ControlOrMeta+k");
       await expect(page.getByRole("dialog", { name: "Commands" })).toBeVisible();
       await whole(page, "Script, the commands open");

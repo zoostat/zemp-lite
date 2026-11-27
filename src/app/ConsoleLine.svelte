@@ -1,14 +1,37 @@
 <script lang="ts">
-  // The foot of the window (Zemp Specification, section 5; the margin editor's design, section
-  // 5): one line holding the state of the page after a coloured dot, which always has its words
-  // beside it; the console, which runs a statement without adding it to the script; the keys;
-  // and the engine. The line grows
-  // upward into a drawer of what was typed and what came of it; Escape shrinks it again.
+  // The foot of the window (release 0.3.1, step 5; open decision #245): one line of 26 pixels
+  // holding the console, which runs a statement without adding it to the script; the state of
+  // the page after a coloured dot, which always has its words beside it; the run; its
+  // warnings; the note on where the work is kept, with **Export project…**; what was last
+  // done; and the engine. The line grows upward into a drawer of what was typed and what came
+  // of it; Escape shrinks it again. (The keys it named until 0.3.1 are in the top bar.)
+  import { runLine } from "../margin/runline";
   import type { Workspace } from "./workspace-state.svelte";
 
   let { workspace }: { workspace: Workspace } = $props();
 
-  const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+  // The run, in a few words: nothing before the first, which the state beside it says.
+  const run = $derived(workspace.lastRun === null ? null : runLine(workspace.lastRun, false));
+  // The warnings of the last run, said while the page is in step with it or edited since.
+  const warnings = $derived(
+    workspace.lastRun !== null &&
+      !workspace.lastRun.checkOnly &&
+      !workspace.running &&
+      workspace.refusedErrors === 0 &&
+      workspace.sync !== workspace.checked?.summary
+      ? workspace.warnings
+      : null,
+  );
+  // The note on where the work is kept: what the browser does with it, which gives way first
+  // where the line has no room, and when the project was last exported, which never does.
+  const kept = $derived.by(() => {
+    const whole = workspace.reminder;
+    if (whole === null) return null;
+    const at = whole.lastIndexOf(" · ");
+    return at < 0
+      ? { first: "", last: whole }
+      : { first: whole.slice(0, at), last: whole.slice(at) };
+  });
   /** The colour of the state's dot: in step, out of step, refused, or nothing yet. */
   const tone = $derived.by(() => {
     const sync = workspace.sync;
@@ -96,22 +119,6 @@
     </div>
   {/if}
   <div class="line">
-    <button
-      class="state {tone}"
-      aria-haspopup="dialog"
-      title="What the run said: every warning, note and error, with its line"
-      onclick={() => (workspace.panel = workspace.panel === "said" ? null : "said")}
-      ><i aria-hidden="true"></i>
-      <span class="sync" data-testid="sync"
-        >{workspace.sync}{workspace.lastRun !== null &&
-        !workspace.lastRun.checkOnly &&
-        !workspace.running &&
-        workspace.refusedErrors === 0 &&
-        workspace.sync !== workspace.checked?.summary
-          ? ` · ${workspace.warnings} warning${workspace.warnings === 1 ? "" : "s"}`
-          : ""}</span
-      ></button
-    >
     <span class="prompt mono" aria-hidden="true">›</span>
     <input
       class="mono"
@@ -121,30 +128,56 @@
       onfocus={() => (workspace.consoleOpen = true)}
       disabled={!workspace.ready}
       aria-label="Console: a statement to run without adding it to the script"
-      placeholder="Type a statement · ⌃` opens the console"
+      placeholder="Type a statement · ⌃`"
+      title="Type a statement and press Return: it runs without being added to the script. ⌃` puts the cursor here."
       autocomplete="off"
       spellcheck="false"
     />
-
-    {#if workspace.reminder !== null}
-      <!-- Where the window is narrow the line is cut short before the console is: its whole
-           text is then in its title. -->
+    <button
+      class="state {tone}"
+      aria-haspopup="dialog"
+      title="What the run said: every warning, note and error, with its line"
+      onclick={() => (workspace.panel = workspace.panel === "said" ? null : "said")}
+      ><i aria-hidden="true"></i>
+      <span class="sync" data-testid="sync">{workspace.sync}</span></button
+    >
+    {#if run !== null}
+      <button
+        class="run"
+        data-testid="foot-run"
+        aria-haspopup="dialog"
+        title="The run's facts: the engine, the seed, where the time and the memory went"
+        onclick={() => (workspace.panel = workspace.panel === "facts" ? null : "facts")}
+        >{run}</button
+      >
+    {/if}
+    {#if warnings !== null}
+      <button
+        class="warnings"
+        class:some={warnings > 0}
+        data-testid="warnings"
+        aria-haspopup="dialog"
+        title="What the run said: every warning, note and error, with its line"
+        onclick={() => (workspace.panel = workspace.panel === "said" ? null : "said")}
+        >{warnings} warning{warnings === 1 ? "" : "s"}</button
+      >
+    {/if}
+    {#if kept !== null}
+      <!-- Where the line has no room, what the browser does with the project is cut short
+           before anything else is: the whole of the note is then in its title. -->
       <span class="reminder" data-testid="reminder" title={workspace.reminder}
-        >{workspace.reminder}</span
+        ><span class="first">{kept.first}</span><span class="last">{kept.last}</span></span
       >
       <button class="export" onclick={() => void workspace.exportProject()}>Export project…</button>
     {/if}
-    <span class="keys mono" class:beside={workspace.reminder !== null} aria-hidden="true"
-      >{mac ? "⌘↵ run · ⌘K" : "Ctrl ↵ run · Ctrl K"}</span
-    >
-    <span role="status">{workspace.status}</span>
-    <span class="engine">engine Zeff {workspace.engineVersion ?? "…"} · in this browser</span>
+    <span class="status" role="status" title={workspace.status}>{workspace.status}</span>
+    <span class="engine">Zeff {workspace.engineVersion ?? "…"} · in this browser</span>
   </div>
 </footer>
 
 <style>
   .bottom {
-    background: var(--window);
+    background: var(--softer);
     border-top: 1px solid var(--line);
     color: var(--ink-3);
     flex: none;
@@ -152,42 +185,68 @@
   }
   .line {
     align-items: center;
+    box-sizing: border-box;
     display: flex;
-    gap: 12px;
-    height: 36px;
-    padding: 0 18px;
+    font-size: 12.5px;
+    gap: 14px;
+    height: 26px;
+    overflow: hidden;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  .line > * {
+    flex: none;
   }
   .prompt {
-    color: var(--ink-2);
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: -6px;
   }
+  /* The console takes what room the line has, and is never left less than a statement needs:
+     the note on where the work is kept gives way to it. */
   input {
     background: transparent;
     border: 0;
     color: var(--ink);
-    flex: 1;
-    font-size: calc(var(--code-size, 14px) - 1px);
-    /* Room to type a statement in, whatever else the line holds: the reminder gives way. */
-    min-width: 240px;
+    flex: 1 1 0;
+    font-size: 12.5px;
+    min-width: 200px;
     outline: none;
     padding: 0;
   }
   input::placeholder {
     color: var(--ink-3);
-    font-family: "Atkinson Hyperlegible Next", sans-serif;
-    font-size: 13.5px;
+  }
+  .state,
+  .run,
+  .warnings,
+  .export {
+    background: none;
+    border: 0;
+    border-radius: 5px;
+    color: inherit;
+    font: inherit;
+    margin: 0 -4px;
+    padding: 1px 4px;
+  }
+  .state:hover,
+  .run:hover,
+  .warnings:hover,
+  .export:hover {
+    background: var(--soft);
+    color: var(--ink);
+  }
+  .state:focus-visible,
+  .run:focus-visible,
+  .warnings:focus-visible,
+  .export:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
   }
   .state {
     align-items: center;
-    background: none;
-    border: 0;
-    border-radius: 6px;
-    color: inherit;
-    cursor: pointer;
-    font: inherit;
-    padding: 2px 6px;
     display: inline-flex;
-    flex: none;
-    gap: 7px;
+    gap: 6px;
   }
   .state i {
     background: var(--ink-3);
@@ -199,6 +258,9 @@
   .state.ok i {
     background: var(--ok);
   }
+  .state.ok .sync {
+    color: var(--ok);
+  }
   .state.warning i {
     background: var(--warning);
   }
@@ -208,54 +270,49 @@
   .state.error .sync {
     color: var(--error);
   }
-  .state.warning .sync {
+  .state.warning .sync,
+  .warnings.some {
     color: var(--warning);
   }
-  .keys {
-    color: var(--ink-3);
-    flex: none;
-    font-size: 12.5px;
-  }
-  /* Beside the reminder, in a window with no room to spare, the keys are left out: the top bar
-     names both. */
-  @media (max-width: 1439px) {
-    .keys.beside {
-      display: none;
-    }
-  }
-  /* The reminder to export: quiet words, and the one thing to press beside them. */
+  /* The note on where the work is kept: quiet words, and the one thing to press beside them. */
   .reminder {
-    color: var(--ink-3);
+    display: inline-flex;
+    flex: 0 1000 auto;
+    min-width: 0;
+  }
+  .reminder .first {
     flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+  }
+  .reminder .last {
+    flex: none;
+    white-space: pre;
   }
   .export {
-    background: none;
-    border: 0;
-    border-radius: 6px;
     color: var(--accent);
-    cursor: pointer;
-    flex: none;
-    font: inherit;
-    padding: 2px 6px;
+    font-weight: 600;
   }
   .export:hover {
-    background: var(--soft);
+    color: var(--accent);
   }
-  .export:focus-visible {
-    outline: 2px solid var(--accent);
-  }
-  .sync,
-  [role="status"],
-  .engine {
-    flex: none;
-    white-space: nowrap;
+  /* What was last done is said whole where there is room; a long sentence gives way with the
+     note, its whole in its title. */
+  [role="status"] {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .engine {
     color: var(--ink-2);
+  }
+  /* Where the pointer is a finger the line's controls are taller than the line is drawn for. */
+  @media (pointer: coarse) {
+    .line {
+      height: 38px;
+    }
   }
   .drawer {
     border-bottom: 1px solid var(--line);

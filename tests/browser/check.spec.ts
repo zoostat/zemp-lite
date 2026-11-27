@@ -37,7 +37,8 @@ test("what Check finds stands under its line, and the results of the run before 
   await page.setViewportSize({ width: 1280, height: 3600 });
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
-  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.getByTestId("sync")).toHaveText("in sync");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   // The run unfolded its seven outputs, each under its statement.
   await expect(page.getByTestId("block")).toHaveCount(7);
   const before = await printed(page);

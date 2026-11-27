@@ -96,8 +96,9 @@ test("from 1,000 pixels nothing is said; a window made narrower is told, over th
   page,
   press,
 }) => {
+  // (A tall window, so that the editor draws the whole script: it draws what is near the window.)
   for (const width of [1024, 1000]) {
-    await page.setViewportSize({ width, height: 768 });
+    await page.setViewportSize({ width, height: 3200 });
     await page.goto("/");
     await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
     await expect(notice(page)).toHaveCount(0);
@@ -109,16 +110,16 @@ test("from 1,000 pixels nothing is said; a window made narrower is told, over th
   await expect(page.getByRole("status")).toHaveText("done");
   const before = await scriptText(page);
   // One pixel under: the page stands over the work, which is not lost.
-  await page.setViewportSize({ width: 999, height: 768 });
+  await page.setViewportSize({ width: 999, height: 3200 });
   await expect(notice(page)).toBeVisible();
   await expect(notice(page)).toContainText("This window is 999 pixels wide.");
   // Wide again: the page is gone with nothing pressed, and nothing was kept of it.
-  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.setViewportSize({ width: 1024, height: 3200 });
   await expect(notice(page)).toHaveCount(0);
-  expect(await scriptText(page)).toBe(before);
+  await expect.poll(() => scriptText(page)).toBe(before);
   await expect(page.getByTestId("run-facts")).toHaveText(/^run 1 · /);
   await expect(page.getByRole("status")).toHaveText("done");
-  await page.setViewportSize({ width: 999, height: 768 });
+  await page.setViewportSize({ width: 999, height: 3200 });
   await expect(notice(page)).toBeVisible();
 });
 
@@ -174,14 +175,15 @@ test.describe("where the pointer is a finger", () => {
         return found;
       });
     await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
-    expect(await small(), "the projects screen").toEqual([]);
+    // (Each screen is measured once it has settled: a table's columns are sized as it is drawn.)
+    await expect.poll(small, { message: "the projects screen" }).toEqual([]);
     expect(await notWhole(page), "the projects screen").toEqual([]);
     await press(page.getByRole("button", { name: /^Scratch project/ }));
     await expect(page.getByRole("status")).toHaveText(READY);
     await useExample(page);
     await press(page.getByRole("button", { name: "Run", exact: true }));
     await expect(page.getByRole("status")).toHaveText("done");
-    expect(await small(), "Script").toEqual([]);
+    await expect.poll(small, { message: "Script" }).toEqual([]);
     expect(await notWhole(page), "Script").toEqual([]);
     for (const place of ["Data", "Plots", "Paper", "Help"]) {
       await press(
@@ -192,7 +194,12 @@ test.describe("where the pointer is a finger", () => {
       await expect(
         page.getByRole("toolbar", { name: `${place}: its panes and its controls` }),
       ).toBeVisible();
-      expect(await small(), place).toEqual([]);
+      // What the place holds is drawn before it is measured: the table of the data with its
+      // headers, the plot, the place's own words.
+      if (place === "Data") await expect(page.getByRole("columnheader").nth(3)).toBeVisible();
+      if (place === "Plots") await expect(page.locator("img").first()).toBeVisible();
+      if (place === "Help") await expect(page.getByTestId("help-counts")).toBeVisible();
+      await expect.poll(small, { message: place }).toEqual([]);
       expect(await notWhole(page), place).toEqual([]);
     }
   });

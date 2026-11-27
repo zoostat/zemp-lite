@@ -120,7 +120,8 @@ test("the lines added to draw the figures never show: the script and its output 
   expect(await printed(page)).toBe(file("tests/scripts/example/expected/stdout.txt"));
   expect(await saidAsWritten(page)).toBe(file("tests/scripts/example/expected/stderr.txt"));
   await expect(page.locator("header.top")).toContainText("· saved");
-  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.getByTestId("sync")).toHaveText("in sync");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   // The statements of the run are still the script's nine.
   await expect(page.getByTestId("run-facts")).toContainText("9 statements");
 });

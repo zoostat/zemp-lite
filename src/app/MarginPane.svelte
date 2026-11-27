@@ -9,12 +9,12 @@
   // wider with the code, and the 300 pixels of the notes beside it.
   import { tick } from "svelte";
   import Editor from "../editor/Editor.svelte";
-  import { counted, notesOf } from "../margin/notes";
+  import { notesOf } from "../margin/notes";
+  import { runLine } from "../margin/runline";
   import { marks } from "../margin/stale";
   import { trailOf } from "../margin/trail";
   import type { Note } from "../margin/notes";
   import { placed } from "../output/place";
-  import { took } from "../output/run";
   import PlotViewer from "../plots/PlotViewer.svelte";
   import { sectionAt } from "../editor/sections";
   import OutlinePane from "./OutlinePane.svelte";
@@ -96,20 +96,7 @@
         ),
   );
   // The run's facts, as the results bar gives them (the design, section 5).
-  const facts = $derived.by(() => {
-    if (ours === null) return "not run yet";
-    const statements = (n: number) => `${counted(n)} statement${n === 1 ? "" : "s"}`;
-    const head = `run ${ours.number} · ${ours.clock}`;
-    if (ours.checkOnly) return `check · ${ours.clock}`;
-    if (ours.state === "running") {
-      const at = ours.statements.length;
-      return ours.of === null ? `${head} · running` : `${head} · statement ${at} of ${ours.of}`;
-    }
-    const ran = ours.statements.length;
-    const time = ours.ms === null ? "" : ` in ${took(ours.ms)}`;
-    if (ours.state === "done") return `${head} · ${statements(ran)}${time}`;
-    return `${head} · ${ours.state === "failed" ? "ended with an error" : ours.state} after ${statements(ran)}`;
-  });
+  const facts = $derived(runLine(ours, true));
   const margin = $derived(
     notesShown
       ? {

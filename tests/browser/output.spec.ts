@@ -158,7 +158,8 @@ test("a refused script leaves the results of the run before, and the run's facts
 }) => {
   await scratch(page, press);
   await press(page.getByRole("button", { name: "Run", exact: true }));
-  await expect(page.getByTestId("sync")).toHaveText("in sync · 1 warning");
+  await expect(page.getByTestId("sync")).toHaveText("in sync");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   await expect(page.getByTestId("block")).toHaveCount(7);
   const before = await printed(page);
   const facts = await page.getByTestId("run-facts").textContent();

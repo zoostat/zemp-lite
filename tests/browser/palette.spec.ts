@@ -209,12 +209,16 @@ test("the last line says how the output stands to the script, and names the engi
   const sync = page.getByTestId("sync");
   await expect(sync).toHaveText("not run yet");
   await press(page.getByRole("button", { name: "Run", exact: true }));
-  await expect(sync).toHaveText("in sync · 1 warning");
+  await expect(sync).toHaveText("in sync");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
   await editor(page).focus();
   await page.keyboard.press("ControlOrMeta+End");
   await page.keyboard.type("\nprint(1)");
-  await expect(sync).toHaveText("edited · not run · 1 warning");
-  await expect(page.getByText("engine Zeff 0.9.0 · in this browser")).toBeVisible();
+  await expect(sync).toHaveText("edited · not run");
+  await expect(page.getByTestId("warnings")).toHaveText("1 warning");
+  await expect(
+    page.getByRole("contentinfo").getByText("Zeff 0.9.0 · in this browser", { exact: true }),
+  ).toBeVisible();
 });
 
 test("every control of the window can be reached from the keyboard", async ({ page, press }) => {
