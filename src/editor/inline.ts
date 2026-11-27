@@ -29,6 +29,8 @@ export interface InlineOutput {
   oncancel: () => void;
   /** Fold the output of the statement on `line` away. */
   onfold?: (line: number) => void;
+  /** What the statement on `line` made, as its note names it; its block's header says it. */
+  named?: (line: number) => string | null;
   /** The window, which a block asks for the figure of a statement that ended in a plot. */
   workspace: Workspace;
 }
@@ -57,6 +59,7 @@ class BlockWidget extends WidgetType {
   readonly #edited: "edited" | "stale" | null;
   readonly #oncancel: () => void;
   readonly #onfold: ((line: number) => void) | undefined;
+  readonly #name: string | null;
   readonly #workspace: Workspace;
   #watch: ResizeObserver | null = null;
   /** What the widget shows, as text: two widgets that show the same are the same widget. */
@@ -68,12 +71,13 @@ class BlockWidget extends WidgetType {
   constructor(placed: Placed, output: InlineOutput, edited: "edited" | "stale" | null) {
     super();
     const { oncancel, onfold, workspace } = output;
+    this.#name = placed.block.line === null ? null : (output.named?.(placed.block.line) ?? null);
     this.#placed = placed;
     this.#edited = edited;
     this.#oncancel = oncancel;
     this.#onfold = onfold;
     this.#workspace = workspace;
-    this.#shows = JSON.stringify([placed.block, edited]);
+    this.#shows = JSON.stringify([placed.block, edited, this.#name]);
     const { state, printed, said } = placed.block;
     this.#sized = JSON.stringify([placed.after, state, printed, said, edited]);
   }
@@ -94,6 +98,7 @@ class BlockWidget extends WidgetType {
         oncancel: this.#oncancel,
         workspace: this.#workspace,
         last: this.#placed.after,
+        name: this.#name,
         ...(this.#onfold === undefined || this.#placed.block.line === null
           ? {}
           : { onfold: () => this.#onfold?.(this.#placed.block.line as number) }),

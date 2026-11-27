@@ -145,6 +145,8 @@
       return ours?.statements.find((one) => one.line === line)?.mark ?? null;
     },
     refused,
+    // What each statement made, as its note names it, for the header of its output.
+    named: (line: number) => notes.find((note) => note.line === line)?.main ?? null,
     oncancel: () => workspace.cancel(),
     onfold: (line: number) => workspace.toggleUnfolded(path, line),
     workspace,

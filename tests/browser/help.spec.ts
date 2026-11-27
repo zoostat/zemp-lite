@@ -263,6 +263,10 @@ test("a code's explained page opens in the Help place from what the run said, an
   );
   const help = page.getByTestId("help");
   await expect(help.getByTestId("help-title")).toHaveText("W0201");
+  // From what the run said too, the page leads back to the statement the warning stood under.
+  await expect(help.getByTestId("help-raised")).toHaveText(
+    /^Back to line \d+ of main\.zeff, where the run said W0201\.$/,
+  );
   await holdsPrint(page, file("tests/scripts/explain-W0201.txt"));
   await expect(outline(page).getByRole("button")).toHaveText([
     "Meaning",

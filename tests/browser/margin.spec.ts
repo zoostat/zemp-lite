@@ -831,21 +831,67 @@ test("Copy as text gives what `zeff run` prints, at the engine's own width", asy
   }
 });
 
-test("Explain opens the engine's page for a code in place, and closes it", async ({
+test("a result's header is one line with its name; a warning is one line with Explain at its end, which opens the code's page in Help and leads back to the line", async ({
   page,
   press,
 }) => {
+  // Release 0.3.1, step 6b (open decision #245). Until then Explain opened the engine's page
+  // in place, under the warning; the page is now Help's, which says more and leads back.
   await scratch(page, press);
   await runUnfolded(page, press);
   const summary = page.locator('[data-testid="block"][data-line="8"]');
-  const explain = summary.getByRole("button", { name: "Explain" });
-  await press(explain);
-  await expect(summary.getByTestId("explained")).toHaveText(
-    file("tests/scripts/explain-W0201.txt").trimEnd(),
+  // The header: what the statement made, its line and its time, then Copy as text and Fold,
+  // all on one line.
+  const header = summary.locator("header");
+  await expect(header.getByTestId("block-name")).toHaveText("summary");
+  expect((await header.innerText()).replace(/\s+/g, " ").trim()).toMatch(
+    /^summary line 8 (\d+ ms|\d+\.\d\d s) Copy as text Fold$/,
   );
-  await expect(explain).toHaveAttribute("aria-expanded", "true");
+  const rows = async (within: ReturnType<typeof summary.locator>) =>
+    within.evaluate((node) => {
+      const middles = [...node.children]
+        .map((child) => child.getBoundingClientRect())
+        .filter((box) => box.width > 0)
+        .map((box) => Math.round(box.top + box.height / 2));
+      return Math.max(...middles) - Math.min(...middles);
+    });
+  expect(await rows(header)).toBeLessThan(4);
+  expect((await header.boundingBox())!.height).toBeLessThanOrEqual(28);
+  // The warning: what it is, its code, the engine's sentence and Explain, on one line, with
+  // Explain at the line's end.
+  const warning = summary.getByTestId("said").first();
+  const first = warning.locator("p.first");
+  expect((await first.innerText()).replace(/\s+/g, " ").trim()).toBe(
+    "warning W0201 6 rows with NA in wage, 1 with NA in exper and 1 with NA in hours were skipped Explain",
+  );
+  expect(await rows(first)).toBeLessThan(6);
+  const explain = warning.getByRole("button", { name: "Explain" });
+  const [line, button] = [(await first.boundingBox())!, (await explain.boundingBox())!];
+  expect(line.x + line.width - (button.x + button.width)).toBeLessThan(4);
+  await expect(warning.locator("p.first ~ *")).toHaveCount(0);
+  // Explain opens the code's page in the Help place.
   await press(explain);
-  await expect(summary.getByTestId("explained")).toHaveCount(0);
+  const help = page.getByTestId("help");
+  await expect(help.getByTestId("help-title")).toHaveText("W0201");
+  await expect(help.getByTestId("help-page")).toContainText(
+    "missing values skipped by a statistic",
+  );
+  // The page leads back to the line that raised the code, in the Script place.
+  const back = help.getByTestId("help-raised");
+  await expect(back).toHaveText("Back to line 8 of main.zeff, where the run said W0201.");
+  await press(back.getByRole("button", { name: "Back to line 8 of main.zeff" }));
+  await expect(
+    page.getByRole("region", { name: "Script with its notes and output" }),
+  ).toBeVisible();
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("8");
+  // The same page reached another way keeps the way back, while that run is the last run;
+  // after another run the line may raise nothing, and the page no longer says so.
+  await page.keyboard.press("ControlOrMeta+5");
+  await expect(back).toBeVisible();
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await expect(help.getByTestId("help-title")).toHaveText("W0201");
+  await expect(back).toHaveCount(0);
 });
 
 test("⌥↵ unfolds and folds the output of the statement at the cursor", async ({ page, press }) => {

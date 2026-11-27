@@ -1759,6 +1759,34 @@ export class Workspace {
     await this.#openStop({ kind: "code", code });
   }
 
+  /**
+   * Where the code whose page **Explain** last opened was raised: the script and the line of
+   * the statement, which the page links back to (release 0.3.1, step 6b; open decision #245).
+   * `null` once the reader has gone back, or where the code was raised at no line of a script.
+   */
+  raised = $state<{ code: string; path: string; line: number; run: number } | null>(null);
+
+  /** Where the code was raised, while the run that raised it is still the last run. */
+  get raisedNow(): { code: string; path: string; line: number } | null {
+    const at = this.raised;
+    return at !== null && this.lastRun?.startedAt === at.run ? at : null;
+  }
+
+  /** Explain, under a statement or in what the run said: the code's page, and the way back. */
+  async explainAt(code: string, line: number | null): Promise<void> {
+    const run = this.lastRun;
+    const path = run?.script ?? this.scriptPath;
+    this.raised = line === null || run === null ? null : { code, path, line, run: run.startedAt };
+    await this.showCode(code);
+  }
+
+  /** Back from a code's page to the line that raised it, in the Script place. */
+  async backToRaised(): Promise<void> {
+    const to = this.raisedNow;
+    if (to === null) return;
+    await this.goTo(to.path, to.line);
+  }
+
   /** Open the Help place on Home, where it starts. */
   async showHelpHome(): Promise<void> {
     await this.#openStop(HELP_HOME);

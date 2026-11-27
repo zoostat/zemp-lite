@@ -64,6 +64,17 @@
         all.findIndex((other) => other.raw === one.raw && other.line === one.line) === at,
     );
   });
+  // The line of the statement each message was said under, where the message names none: the
+  // line its code's page in Help leads back to.
+  const under = $derived.by(() => {
+    const lines: Record<string, number> = {};
+    if (run === null) return lines;
+    for (const block of blocks(run)) {
+      if (block.line === null) continue;
+      for (const one of block.said) lines[one.raw] ??= block.line;
+    }
+    return lines;
+  });
   const statistical = $derived(messages.filter((one) => one.code?.startsWith("W1") ?? false));
   const others = $derived(messages.filter((one) => !(one.code?.startsWith("W1") ?? false)));
 
@@ -171,7 +182,7 @@
                 <button
                   class="act"
                   onclick={() => {
-                    void workspace.showCode(code);
+                    void workspace.explainAt(code, one.line ?? under[one.raw] ?? null);
                     onclose();
                   }}>Explain</button
                 >

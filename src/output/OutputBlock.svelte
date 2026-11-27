@@ -1,8 +1,10 @@
 <script lang="ts">
   // One block of a run: what a statement printed and what the engine said of it, as a
-  // statement's output unfolded under it (#174; the design, 7.4): a header of its lines, its time or state, and its actions (Copy as text,
-  // Open in Plots, Fold); then what the engine said, each warning and error with Explain,
-  // which opens the engine's explained page in place; then what it printed, or its figure.
+  // statement's output unfolded under it (#174; the design, 7.4): a header of one line, with
+  // its name, its lines, its time or state, and its actions (Copy as text, Open in Plots,
+  // Fold); then what the engine said, each warning, note and error on one line with Explain
+  // at its end, which opens the code's page in Help (open decision #245; until release 0.3.1
+  // it opened the page in place); then what it printed, or its figure.
   import type { Workspace } from "../app/workspace-state.svelte";
   import { counted } from "../margin/notes";
   import { trailOf } from "../margin/trail";
@@ -17,6 +19,7 @@
     last = null,
     onfold,
     word = "edited · not run",
+    name = null,
   }: {
     block: Block;
     /** The script has been edited since this ran: the block is not the script's any more. */
@@ -30,24 +33,9 @@
     onfold?: () => void;
     /** What an output that is not the script's is said to be: edited, or stale. */
     word?: string;
+    /** What the statement made, as its note names it: the name it binds, or its verb. */
+    name?: string | null;
   } = $props();
-
-  // The explained pages opened, by code, while they are being fetched `null`.
-  let explained = $state<Record<string, string | null>>({});
-  async function explain(code: string): Promise<void> {
-    if (workspace === null) return;
-    if (code in explained) {
-      explained = Object.fromEntries(Object.entries(explained).filter(([one]) => one !== code));
-      return;
-    }
-    explained = { ...explained, [code]: null };
-    try {
-      const page = await workspace.explain(code);
-      explained = { ...explained, [code]: page };
-    } catch (error) {
-      explained = { ...explained, [code]: (error as Error).message };
-    }
-  }
 
   // The passes of a loop (#76; the design, 7.16.2): a list of up to 20 is shown whole, a longer
   // one by its first three and its last three until **Show all** is pressed.
@@ -79,6 +67,7 @@
 
 <section class="block {block.state}" class:edited data-testid="block" data-line={block.line ?? ""}>
   <header>
+    {#if name !== null}<b class="name mono" data-testid="block-name">{name}</b>{/if}
     <span class="line mono">{lines}</span>
     {#if edited}
       <span class="state warn">{word}</span>
@@ -122,10 +111,20 @@
     <!-- What the engine said comes first, then the print (the design, 7.4). -->
     {#each block.said as one, index (index)}
       <div class="said {one.kind}" data-testid="said">
+        <!-- One line: what it is, its code, the engine's sentence, and Explain at its end,
+             which opens the code's page in Help (open decision #245). -->
         <p class="first">
           <span class="kind">{label[one.kind]}</span>
           {#if one.code !== null}<span class="code mono">{one.code}</span>{/if}
           <span class="sentence">{one.sentence}</span>
+          {#if workspace !== null && one.code !== null}
+            {@const code = one.code}
+            <button
+              class="act explain"
+              title="The page of {code} in Help, which leads back to this line"
+              onclick={() => void workspace.explainAt(code, block.line)}>Explain</button
+            >
+          {/if}
         </p>
         {#if one.detail !== ""}<pre class="mono detail">{one.detail}</pre>{/if}
         {#each one.help as help (help)}
@@ -150,21 +149,10 @@
             </div>
           {/if}
         {/if}
-        {#if workspace !== null && one.code !== null}
-          {@const code = one.code}
-          <button
-            class="act explain"
-            aria-expanded={code in explained}
-            onclick={() => void explain(code)}>Explain</button
+        {#if workspace !== null && one.code !== null && one.code.startsWith("Z9")}
+          <button class="act" onclick={() => void workspace?.reportProblem()}
+            >Report a problem</button
           >
-          {#if code.startsWith("Z9")}
-            <button class="act" onclick={() => void workspace?.reportProblem()}
-              >Report a problem</button
-            >
-          {/if}
-          {#if code in explained}
-            <pre class="mono explained" data-testid="explained">{explained[code] ?? "…"}</pre>
-          {/if}
         {/if}
       </div>
     {/each}
@@ -220,7 +208,7 @@
   .block {
     background: var(--softer);
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 8px;
     display: block;
     font-family: "Atkinson Hyperlegible Next", sans-serif;
     line-height: 1.5;
@@ -235,12 +223,30 @@
   .block.edited .body {
     opacity: 0.55;
   }
+  /* The header: one line, with what the statement made named first. */
   .block header {
     align-items: center;
     border-bottom: 1px solid var(--line);
+    box-sizing: border-box;
     display: flex;
-    gap: 12px;
-    padding: 4px 10px 4px 16px;
+    gap: 10px;
+    min-height: 26px;
+    padding: 0 6px 0 12px;
+    white-space: nowrap;
+  }
+  .name {
+    color: var(--ink);
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  /* The line and the time read as one: "line 10 · 9 ms". */
+  .line + .time::before {
+    content: "· ";
+    margin-left: -4px;
+  }
+  .block header .act {
+    color: var(--accent);
+    font-weight: 600;
   }
   .block .body {
     min-width: 0;
@@ -319,6 +325,20 @@
   .said p {
     margin: 0;
   }
+  /* What it is, its code and the engine's sentence on one line, Explain at the line's end;
+     a sentence longer than the line runs on under itself, never cut. */
+  .said .first {
+    align-items: baseline;
+    display: flex;
+    gap: 6px;
+  }
+  .said .first > * {
+    flex: none;
+  }
+  .said .first .sentence {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
   .said.warning {
     background: var(--warning-soft);
   }
@@ -382,7 +402,14 @@
     outline: 2px solid var(--accent);
   }
   .explain {
-    margin-top: 2px;
+    font-weight: 700;
+    margin-left: auto;
+  }
+  .warning .explain {
+    color: var(--warning);
+  }
+  .error .explain {
+    color: var(--error);
   }
   .trail {
     margin-top: 6px;
@@ -438,14 +465,5 @@
   }
   .trail .given {
     font-size: 12.5px;
-  }
-  .explained {
-    background: var(--window);
-    border-left: 2px solid var(--line-strong);
-    font-size: 12.5px;
-    margin: 6px 0 0;
-    overflow-x: auto;
-    padding: 6px 10px;
-    white-space: pre;
   }
 </style>

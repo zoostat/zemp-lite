@@ -48,6 +48,10 @@
   // The page shown: a list (a package's functions, the codes by family, the app's own pages),
   // a page of the app's own, Home, or the engine's print.
   const shown = $derived(workspace.help.stop);
+  // Where the code shown was raised, if Explain opened its page.
+  const raised = $derived(
+    shown?.kind === "code" && workspace.raisedNow?.code === shown.code ? workspace.raisedNow : null,
+  );
   const listed = $derived(
     shown?.kind === "package"
       ? packagePage(workspace.helpIndex, shown.name)
@@ -282,6 +286,15 @@
     <div class="page" bind:this={pane} onscroll={watch}>
       <div class="with" class:beside={beside && sections.length > 0}>
         <div class="text">
+          {#if raised !== null}
+            <!-- The page of a code that Explain opened links back to the line that raised it
+                 (release 0.3.1, step 6b; open decision #245). -->
+            <p class="raised" data-testid="help-raised">
+              <button onclick={() => void workspace.backToRaised()}
+                >Back to line {raised.line} of {raised.path.split("/").at(-1)}</button
+              >, where the run said {raised.code}.
+            </p>
+          {/if}
           {#if list !== null}
             <ListPage {list} onopen={(to) => void workspace.showHelpStop(to)} />
           {:else if own !== null}
@@ -472,6 +485,22 @@
   }
   .text {
     min-width: 0;
+  }
+  .raised {
+    color: var(--ink-2);
+    margin: 0 0 14px;
+  }
+  .raised button {
+    background: none;
+    border: 0;
+    border-radius: 4px;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 600;
+    padding: 0;
+  }
+  .raised button:hover {
+    text-decoration: underline;
   }
   .otp {
     font-size: 13px;

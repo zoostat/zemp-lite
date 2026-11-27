@@ -72,9 +72,11 @@ test("a binary model runs as any other: each statement with its note and its pri
   await expect(note(page, 10)).toContainText("Z0803");
   await expect(block(page, 11)).toHaveCount(0);
   await expect(note(page, 11)).toContainText("not run");
-  // Explain opens the engine's page for the code, in place.
+  // Explain opens the page of the code in Help, which leads back to the line (release 0.3.1,
+  // step 6b; in place, under the error, until then).
   await press(failed.getByRole("button", { name: "Explain" }));
-  await expect(failed.getByTestId("explained")).toContainText("Z0803");
+  await expect(page.getByTestId("help-title")).toHaveText("Z0803");
+  await expect(page.getByTestId("help-raised")).toContainText(/^Back to line 10 of [\w-]+\.zeff/);
 });
 
 test("the ROC curve is drawn under its statement and stands in the Plots place, in both themes of the app", async ({

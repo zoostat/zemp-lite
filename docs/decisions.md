@@ -3597,3 +3597,17 @@ The wait is there at the trial address every time and at the address once in fou
 5. **Fold all and Unfold all are words as the others are;** the dashed line under them, which marked the controls that change only the view (#174), is gone with the mockup's drawing.
 
 **Tests.** Browser, both engines: the row's parts in their order, its height, its right end, no picture in the panes' words, the warnings beside the run opening what the run said (`panes.spec.ts`, in place of the test that held Notes over its side); a line set at 1.6 times the code size at each size from 12 to 22 (`workspace.spec.ts`); the row's words 32 pixels high under a finger and the row whole at 1,024 by 768, by the suites of step 3. Help's page **Papers and PDFs** names the button with its dots.
+
+## 28 November 2026: release 0.3.1, step 6b: Script's results
+
+**Built (#245).** The header of a result is one line: what the statement made, by the name its note gives it (the name a `let` binds, or the statement's verb), its line and its time ("summary  line 10 · 9 ms"), and at the line's end **Copy as text**, **Open in Plots** where it is a plot, and **Fold**. What the engine said of a statement is one line each: what it is (warning, note, error), its code, the engine's sentence, and **Explain** at the line's end. **Explain** opens the code's page in the Help place, and that page begins with the way back: "Back to line 10 of main.zeff, where the run said W0201."
+
+**Choices, mine to take.**
+
+1. **The engine's print is shown whole under the header, its own first line with it** ("summary · by female"). The mockup puts that line in the header and leaves it out of the print; here the header takes the note's name and the print is not touched, since every print on the page is the engine's own, to the character, and tests hold it so.
+2. **Explain no longer opens the page in place, under the warning.** The ruling sends it to Help, where the page is set in type with its sections, its example and what stands beside it. The words "warning", "note" and "error" stay before the code: what a thing is, is never said by its colour alone.
+3. **A sentence longer than its line runs on under itself;** it is never cut, as the mockup's drawing would cut it.
+4. **The way back is kept while the run that raised the code is the last run,** however the page is reached again, and is gone at the next run, when that line may raise nothing. From **What the run said**, a message that names no line leads back to the statement it was said under.
+5. **A result keeps its rounded box for what the engine said,** inside the block; the mockup's band across the block's width is its drawing of one warning, and a statement may be told several things.
+
+**Tests.** Browser, both engines (`margin.spec.ts`, in place of the test of Explain in place): the header's words and that they stand on one line no taller than 28 pixels; the warning's words on one line with Explain at its end and nothing under it; Explain to the page of W0201 in Help; the way back, its words, and that it puts the cursor on the line in the Script place; that it is still there when the page is reached by ⌘5 and gone after another run. The failed fit of the binary sample and the list of what the run said lead to Help and back the same way (`binary.spec.ts`, `help.spec.ts`).
