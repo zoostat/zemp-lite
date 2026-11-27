@@ -39,6 +39,11 @@ export interface Setting {
    * in the project: the page looks for them in the project and gives those it finds.
    */
   missing: string[];
+  /**
+   * The files besides the paper's own main file that Typst asked for in this setting and was
+   * given, likewise: the files the paper reads, as it now stands.
+   */
+  read: string[];
 }
 
 /** The place in the sources that a point of a page came from. */

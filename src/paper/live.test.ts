@@ -56,6 +56,7 @@ class Stand implements Typesetter {
     await this.hold;
     const text = this.files.get(this.main) ?? "";
     const missing: string[] = [];
+    const given: string[] = [];
     const read = (source: string): string | null =>
       source
         .split("\n")
@@ -68,6 +69,7 @@ class Stand implements Typesetter {
             missing.push(path);
             return null;
           }
+          given.push(path);
           return line.startsWith("#include") ? read(held) : `[${held}]`;
         })
         .reduce<string | null>(
@@ -99,6 +101,7 @@ class Stand implements Typesetter {
         : [],
       // Typst stops at the first file it lacks.
       missing: missing.slice(0, 1),
+      read: [...new Set(given)].sort(),
     };
   }
   page(index: number): Promise<string> {
@@ -389,6 +392,15 @@ describe("a paper set as it is typed", () => {
     files.files["output/wages.svg"] = "<svg again/>";
     expect(live.written(["output/wages.svg"])).toBe(true);
     expect((await live.set(text)).ok).toBe(true);
+    // The paper names the figure no more: its files are those it reads now, and the figure
+    // written again does not concern it; named again, it is read as it then is.
+    await live.set('#include "../output/fit.typ"\n');
+    expect(live.files).toEqual(["output/fit.typ"]);
+    files.files["output/wages.svg"] = "<svg a third time/>";
+    expect(live.written(["output/wages.svg"])).toBe(false);
+    const back = await live.set(text);
+    expect(live.files).toEqual(["output/fit.typ", "output/wages.svg"]);
+    expect(await live.drawn(back.pages, 0)).toContain("<svg a third time/>");
   });
 
   it("stops asking where a paper's files never end", async () => {

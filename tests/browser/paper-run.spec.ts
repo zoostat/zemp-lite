@@ -19,6 +19,7 @@ const foot = (page: Page) => page.getByTestId("paper-typst");
 const sheets = (page: Page) => page.getByTestId("paper-page");
 const standing = (page: Page) => page.getByTestId("paper-standing");
 const lacking = (page: Page) => page.getByTestId("paper-lacking");
+const stale = (page: Page) => page.getByTestId("paper-stale");
 const run = (page: Page) => page.getByRole("button", { name: "Run", exact: true });
 
 /** A script that writes a table for a paper and a figure, from the wages that ship with Zeff. */
@@ -173,4 +174,58 @@ test("Run in Paper, on a paper that uses no file a script exports, says so and r
     "this paper uses no file a script of the project exports: there is nothing to run",
   );
   expect(await runs()).toBe(0);
+});
+
+test("a table and a figure whose script has changed since it wrote them are marked stale, and the mark is cleared by the run that writes them again", async ({
+  page,
+  press,
+}) => {
+  test.slow();
+  await opened(page, press);
+  await paper(page, press, PAPER);
+  await press(run(page));
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  await expect(standing(page)).toHaveCount(0, { timeout: 30_000 });
+  // Fresh from the run: nothing is stale.
+  await expect(stale(page)).toHaveCount(0);
+  const fresh = await drawn(page);
+  // The script changed, and not run: back in Paper both its files are said to be stale, in
+  // words, above the page, which is still drawn from them as they are.
+  await press(places(page).getByRole("button", { name: "Script" }));
+  await write(page, script("educ + exper"));
+  await expect(page.getByText("saving")).toHaveCount(0);
+  await press(places(page).getByRole("button", { name: "Paper" }));
+  await expect(stale(page)).toHaveText([
+    "output/fit.typ and output/wages.svg are stale: scripts/main.zeff has changed since it wrote them. Press Run to write them again.",
+  ]);
+  expect(await drawn(page)).toBe(fresh);
+  await expect(standing(page)).toHaveCount(0);
+  // The script put back as it was when it wrote them: nothing is stale.
+  await press(places(page).getByRole("button", { name: "Script" }));
+  await write(page, script("educ"));
+  await expect(page.getByText("saving")).toHaveCount(0);
+  await press(places(page).getByRole("button", { name: "Paper" }));
+  await expect(page.getByTestId("paper-pages")).toHaveText("1 page");
+  await expect(stale(page)).toHaveCount(0);
+  // Changed again, and run from Paper: the mark is set, and cleared by the run.
+  await press(places(page).getByRole("button", { name: "Script" }));
+  await write(page, script("educ + female"));
+  await expect(page.getByText("saving")).toHaveCount(0);
+  await press(places(page).getByRole("button", { name: "Paper" }));
+  await expect(stale(page)).toHaveCount(1);
+  await press(run(page));
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  await expect(stale(page)).toHaveCount(0, { timeout: 30_000 });
+  await expect.poll(() => drawn(page), { timeout: 30_000 }).not.toBe(fresh);
+  // A paper that uses only one of the two files says it of that one alone.
+  await press(places(page).getByRole("button", { name: "Script" }));
+  await write(page, script("educ + female + union"));
+  await expect(page.getByText("saving")).toHaveCount(0);
+  await press(places(page).getByRole("button", { name: "Paper" }));
+  await source(page).focus();
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.insertText('= Only the table\n\n#include "../output/fit.typ"\n');
+  await expect(stale(page)).toHaveText([
+    "output/fit.typ is stale: scripts/main.zeff has changed since it wrote it. Press Run to write it again.",
+  ]);
 });

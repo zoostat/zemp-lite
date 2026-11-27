@@ -20,6 +20,7 @@
   import Editor from "../editor/Editor.svelte";
   import { lackingWords } from "../paper/exports";
   import { share } from "../paper/fetching";
+  import { staleWords } from "../paper/written";
   import { PAPER_TRAVELS } from "../paper/lazy";
   import {
     PAPERS,
@@ -91,6 +92,8 @@
   const lacking = $derived(
     outcome === null ? [] : lackingWords(outcome.absent, workspace.paperWriters),
   );
+  // The tables and figures whose script has changed since it wrote them (step 15b).
+  const stale = $derived(outcome === null ? [] : staleWords(workspace.paperStale));
 
   // The size the pages are drawn at: a printed point is 96/72 of a pixel of the screen at 100
   // per cent; to fit, the widest page takes the width of the pane.
@@ -436,6 +439,9 @@
                   {standing}
                 </p>
               {/if}
+              {#each stale as words (words)}
+                <p class="lacking stale" role="note" data-testid="paper-stale">{words}</p>
+              {/each}
               {#each lacking as words (words)}
                 <p class="lacking" role="note" data-testid="paper-lacking">{words}</p>
               {/each}
@@ -613,6 +619,17 @@
     font-size: 13.5px;
     margin: 0 0 8px;
     padding: 2px 0 2px 10px;
+  }
+  /* A table or a figure whose script has changed since it wrote it: hatched, as a stale
+     result is in the Script place, and said in words. */
+  .lacking.stale {
+    background: repeating-linear-gradient(
+      135deg,
+      transparent 0 6px,
+      color-mix(in srgb, var(--warning) 9%, transparent) 6px 12px
+    );
+    border-left-color: var(--warning);
+    padding: 4px 8px 4px 10px;
   }
   /* What Typst says, each thing with where it is; its own line of the source is gone to. */
   .told {

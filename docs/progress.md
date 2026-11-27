@@ -106,7 +106,9 @@ Decided by the owner the same day (#225, and his proposal #224), planned (`docs/
 
 **Done, step 15a `[function]`** (step 15 is split in three: 15a, 15b, 15c). A paper sets what scripts wrote with `export`: a table as a Typst file, a figure as the engine's own SVG. **Run** in the Paper place runs the scripts whose exported files the paper uses, in the order of their names, and the page is set again with what they wrote; a paper that uses none says so. A file a run writes again redraws the page, whichever place the run was asked from. An export the paper lacks is named with the script that writes it ("press Run to make it"). Green here: the whole routine (505 unit tests; 767 browser tests in both browsers, 3 skipped). GitHub's check of step 14 passed, and its build is at both addresses with every check passing.
 
-**Next.** Step 15b `[function]`: the stale mark. Then 15c `[function]`: the sample paper of the Scratch project.
+**Done, step 15b `[function]`.** A table or a figure whose script has changed since it wrote it is said to be stale, in a sentence at the top edge of the page's pane ("output/fit.typ is stale: scripts/main.zeff has changed since it wrote it. Press Run to write it again."), and the run that writes it again clears the mark. Which script wrote which file, and from what text, is kept with the project, so the mark is there after the page is loaded again. A paper now speaks only of the files it uses as it stands. Green here: the whole routine (31 native tests of the module; 511 unit tests; 771 browser tests in both browsers, 3 skipped). GitHub's check of step 15a passed, and its build is at both addresses with every check passing.
+
+**Next.** Step 15c `[function]`: the sample paper of the Scratch project.
 
 **For the coordinating session (added at step 15a).** Which files a script would write is read from its text here (the paths in its calls of `export`); a path built from other values is not seen. The engine could say it of a script without running it, beside its reading of statements and sections.
 

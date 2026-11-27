@@ -131,6 +131,50 @@ fn a_paper_that_has_never_set_has_no_page_and_no_mark() {
     assert_eq!(told["pages"].as_array().unwrap().len(), 0);
 }
 
+fn read(told: &Value) -> Vec<String> {
+    told["read"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|path| path.as_str().unwrap().to_string())
+        .collect()
+}
+
+#[test]
+fn the_files_a_paper_reads_are_named_at_each_setting_and_no_longer_once_it_reads_them_no_more() {
+    let figure = br#"<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>"#;
+    let text = "#include \"tables/fit.typ\"\n#image(\"../output/figure.svg\", width: 40pt)\n";
+    let mut paper = paper(text);
+    assert!(paper.put_text(
+        "paper/tables/fit.typ",
+        "#table(columns: 2, [educ], [0.08])\n"
+    ));
+    assert!(paper.put_bytes("output/figure.svg", figure.to_vec()));
+    // A file the paper holds and does not read is not among them.
+    assert!(paper.put_bytes("output/unused.svg", figure.to_vec()));
+    let told = set(&mut paper);
+    assert_eq!(told["ok"], true, "{told}");
+    assert_eq!(read(&told), ["output/figure.svg", "paper/tables/fit.typ"]);
+    // Set again with nothing changed, and with a word changed: the same files.
+    assert_eq!(
+        read(&set(&mut paper)),
+        ["output/figure.svg", "paper/tables/fit.typ"]
+    );
+    assert!(paper.put_text(MAIN, &format!("{text}A word more.\n")));
+    assert_eq!(
+        read(&set(&mut paper)),
+        ["output/figure.svg", "paper/tables/fit.typ"]
+    );
+    // The figure taken out of the paper's text: it is read no more, though the paper holds it.
+    assert!(paper.put_text(MAIN, "#include \"tables/fit.typ\"\n"));
+    let told = set(&mut paper);
+    assert_eq!(read(&told), ["paper/tables/fit.typ"]);
+    assert_eq!(missing(&told), Vec::<String>::new());
+    // A paper that reads no other file reads none.
+    assert!(paper.put_text(MAIN, "Only words.\n"));
+    assert_eq!(read(&set(&mut paper)), Vec::<String>::new());
+}
+
 #[test]
 fn the_files_a_paper_asks_for_and_does_not_hold_are_named_at_each_setting() {
     let mut paper = paper(

@@ -117,6 +117,7 @@ export class PaperModule {
       marks: set.marks,
       said: set.said,
       missing: set.missing,
+      read: set.read,
     };
   }
 

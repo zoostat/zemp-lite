@@ -8,6 +8,17 @@ import type { Papers } from "../paper/lazy";
 import { NOTHING_TO_RUN, writersOf, type Writer } from "../paper/exports";
 import { LivePage } from "../paper/live.svelte";
 import {
+  WRITTEN,
+  digestOf,
+  noted,
+  readWritten,
+  repathed,
+  staleOf,
+  writeWritten,
+  type Stale,
+  type Written,
+} from "../paper/written";
+import {
   PAPERS,
   fileNamed,
   firstLines,
@@ -609,6 +620,8 @@ export class Workspace {
       this.#saving = this.#saving.then(() => this.project.writeText(VIEWS, left));
     }
     const views = readViews(left ?? (await this.project.readText(VIEWS)));
+    // Which script wrote which file, as the project keeps it (`paper/written.ts`).
+    this.#written = readWritten(await this.project.readText(WRITTEN));
     // A tab whose file is gone is not opened.
     const tabs: string[] = [];
     for (const tab of views.tabs) {
@@ -883,7 +896,7 @@ export class Workspace {
    * for; the runs the interface makes for itself (to draw a figure, to lay a print out afresh,
    * to ask a variable's statistics) write nothing of the visitor's that the run before did not.
    */
-  async #keepWritten(outcome: Outcome): Promise<void> {
+  async #keepWritten(outcome: Outcome, script: string, text: string): Promise<void> {
     // The interface's own folder is not the engine's to write into.
     const paths = outcome.written.filter((path) => path !== ".zemp" && !path.startsWith(".zemp/"));
     if (outcome.stopped || paths.length === 0) return;
@@ -898,9 +911,22 @@ export class Workspace {
       this.problem = `What the run wrote could not be kept in the project: ${(error as Error).message}`;
     }
     await this.refresh();
+    // Which script wrote these files, and from what text, is noted and kept with the project,
+    // so that a paper can say which of its tables and figures are stale.
+    try {
+      this.#written = noted(this.#written, paths, script, await digestOf(text));
+      const kept = writeWritten(this.#written);
+      this.#saving = this.#saving.then(() => this.project.writeText(WRITTEN, kept));
+    } catch {
+      // The note could not be taken: the files are written all the same, and none is marked.
+    }
     // A paper that reads one of these files is set again, with the file as it now is.
     this.paperLive?.wrote(paths);
+    void this.findWriters();
   }
+
+  /** Which script wrote which file, and from what text; kept in `.zemp/written.json`. */
+  #written: Written = {};
 
   /**
    * Give the project to the computer as a zip (open decision #208): what is typed is saved
@@ -1072,11 +1098,36 @@ export class Workspace {
    */
   paperWriters = $state<Writer[]>([]);
 
-  /** Read the scripts of the project for the files the open paper uses. */
+  /**
+   * The files of the open paper that are stale (step 15b): a script wrote each, and reads
+   * differently now than it did then. The page says so until a run writes them again.
+   */
+  paperStale = $state<Stale[]>([]);
+
+  /**
+   * Read the scripts of the project for the files the open paper uses: which scripts write
+   * them, and which of them are stale.
+   */
   async findWriters(): Promise<Writer[]> {
     const live = this.paperLive;
-    const writers = live === null ? [] : writersOf(await this.#scripts(), live.files);
-    if (this.paperLive === live) this.paperWriters = writers;
+    if (live === null) {
+      this.paperWriters = [];
+      this.paperStale = [];
+      return [];
+    }
+    const scripts = await this.#scripts();
+    const files = live.files;
+    const writers = writersOf(scripts, files);
+    // Only the scripts that wrote one of the paper's files are digested.
+    const wrote = files.flatMap((file) => this.#written[file]?.script ?? []);
+    const digests: Record<string, string> = {};
+    for (const script of scripts) {
+      if (wrote.includes(script.path)) digests[script.path] = await digestOf(script.text);
+    }
+    if (this.paperLive === live) {
+      this.paperWriters = writers;
+      this.paperStale = staleOf(this.#written, files, digests);
+    }
     return writers;
   }
 
@@ -1190,7 +1241,7 @@ export class Workspace {
       }
       // A script that was refused made no frames: those of the results kept are kept too.
       if (shown) this.frames = outcome.frames;
-      await this.#keepWritten(outcome);
+      await this.#keepWritten(outcome, script, text);
       if (shown) this.setUnfolded(script, openable(run));
       // A run that drew a plot puts the Plots tab beside the script's, without leaving the script.
       if (shown && plotsOf(run).length > 0 && !this.views.tabs.includes(PLOTS)) {
@@ -1366,7 +1417,7 @@ export class Workspace {
       this.lastRun =
         previous !== null && previous.script === script ? merged(previous, fresh) : fresh;
       this.frames = outcome.frames;
-      await this.#keepWritten(outcome);
+      await this.#keepWritten(outcome, script, text);
       // A run of part of the script unfolds the outputs of the statements asked for, and
       // leaves the others as they were (the owner's answer of 22 November 2026): not those
       // of the statements run only because the ones asked for read them.
@@ -2332,7 +2383,8 @@ export class Workspace {
         // A statement that ran is kept, so that the next one typed sees what it made.
         if (entry.state === "done") this.#kept.push(statement);
         this.frames = outcome.frames;
-        await this.#keepWritten(outcome);
+        // What a statement of the console line wrote is the script's, as it stands.
+        await this.#keepWritten(outcome, script, this.buffers[script]?.text ?? "");
       } catch (error) {
         entry.state = "failed";
         entry.told = (error as Error).message;
@@ -2604,6 +2656,13 @@ export class Workspace {
     this.#told = Object.fromEntries(Object.entries(this.#told).filter(([path]) => !hit(path)));
     this.views.script.unfolded = keyed(this.views.script.unfolded);
     this.views.folded = this.views.folded.flatMap((path) => (hit(path) ? (at(path) ?? []) : path));
+    // The record of which script wrote which file follows both.
+    const written = repathed(this.#written, from, to);
+    if (JSON.stringify(written) !== JSON.stringify(this.#written)) {
+      this.#written = written;
+      const kept = writeWritten(written);
+      this.#saving = this.#saving.then(() => this.project.writeText(WRITTEN, kept));
+    }
     // The paper the Paper place has open follows its file, and closes where the file is gone.
     const paper = this.views.paper.open;
     if (paper !== null && hit(paper)) this.views.paper = { ...this.views.paper, open: at(paper) };

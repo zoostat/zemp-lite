@@ -65,6 +65,9 @@ struct Held {
     /// by its path in the project: the page looks for these in the project and gives those it
     /// finds. (Typst asks through `&self`, from any thread, hence the lock.)
     missing: Mutex<BTreeSet<String>>,
+    /// The files Typst asked for since the last setting began and was given, likewise: the
+    /// files the paper reads, as it now stands.
+    read: Mutex<BTreeSet<String>>,
 }
 
 impl World for Held {
@@ -81,20 +84,27 @@ impl World for Held {
     }
 
     fn source(&self, id: FileId) -> FileResult<Source> {
-        self.sources
-            .get(&id)
-            .cloned()
-            .ok_or_else(|| self.absent(id))
+        match self.sources.get(&id) {
+            Some(source) => {
+                self.found(id);
+                Ok(source.clone())
+            }
+            None => Err(self.absent(id)),
+        }
     }
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
         if let Some(bytes) = self.files.get(&id) {
+            self.found(id);
             return Ok(bytes.clone());
         }
-        self.sources
-            .get(&id)
-            .map(|source| Bytes::from_string(source.text().to_string()))
-            .ok_or_else(|| self.absent(id))
+        match self.sources.get(&id) {
+            Some(source) => {
+                self.found(id);
+                Ok(Bytes::from_string(source.text().to_string()))
+            }
+            None => Err(self.absent(id)),
+        }
     }
 
     fn font(&self, index: usize) -> Option<Font> {
@@ -108,6 +118,17 @@ impl World for Held {
 }
 
 impl Held {
+    /// A file Typst asked for and was given is noted for the page: the paper reads it. The
+    /// paper's own main file is not among them.
+    fn found(&self, id: FileId) {
+        if id == self.main {
+            return;
+        }
+        if let (Some(name), Ok(mut read)) = (self.names.get(&id), self.read.lock()) {
+            read.insert(name.clone());
+        }
+    }
+
     /// What Typst is told of a file that is not there: that it was not found, by its path.
     /// The path is noted for the page.
     fn absent(&self, id: FileId) -> FileError {
@@ -150,6 +171,7 @@ impl Paper {
                 names: HashMap::new(),
                 today: None,
                 missing: Mutex::new(BTreeSet::new()),
+                read: Mutex::new(BTreeSet::new()),
             },
             document: None,
         }
@@ -282,10 +304,14 @@ impl Paper {
     /// that is not, so that the page asks again only for the pages that changed; `said`, what
     /// Typst said of this setting, its errors where it refused the source and its warnings;
     /// `missing`, the files Typst asked for in this setting that the paper does not hold, each
-    /// by its path in the project, in the order of their paths.
+    /// by its path in the project, in the order of their paths; `read`, the files besides the
+    /// paper's own main file that Typst asked for in this setting and was given, likewise.
     pub fn set(&mut self) -> String {
         if let Ok(mut missing) = self.world.missing.lock() {
             missing.clear();
+        }
+        if let Ok(mut read) = self.world.read.lock() {
+            read.clear();
         }
         let compiled = typst::compile::<PagedDocument>(&self.world);
         // What no setting has used for a while is dropped.
@@ -326,6 +352,12 @@ impl Paper {
             .lock()
             .map(|missing| missing.iter().cloned().collect())
             .unwrap_or_default();
+        let read: Vec<String> = self
+            .world
+            .read
+            .lock()
+            .map(|read| read.iter().cloned().collect())
+            .unwrap_or_default();
         json!({
             "type": "set",
             "ok": ok,
@@ -333,6 +365,7 @@ impl Paper {
             "marks": marks,
             "said": said,
             "missing": missing,
+            "read": read,
         })
         .to_string()
     }

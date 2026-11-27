@@ -679,3 +679,60 @@ test("a paper is saved as it is typed and found again: after Close, and after th
     "false",
   );
 });
+
+// The stale mark (release 0.3, step 15b): which script wrote which file is kept with the
+// project, so a table whose script changed is still said to be stale after the page is loaded
+// again. (Held here for the reason given above the test of a paper found again.)
+test("which script wrote a paper's table is kept with the project: its stale mark is there after the page is loaded again", async ({
+  page,
+  press,
+}) => {
+  test.slow();
+  const places = page.getByRole("navigation", { name: "Places" });
+  const bar = page.getByRole("toolbar", { name: "Paper: its panes and its controls" });
+  const stale = page.getByTestId("paper-stale");
+  const script = (terms: string) =>
+    `let w = dataset(wages).where(year == 2019)\nlet m = w.reg(wage ~ ${terms}, se: robust)\nreport([m]).export("output/fit.typ")\n`;
+  await page.goto("/");
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await write(page, script("educ"));
+  await expect(page.getByText("saving")).toHaveCount(0);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  // A paper that sets the table; then the script changed, and not run.
+  await press(places.getByRole("button", { name: "Paper" }));
+  await press(bar.getByRole("button", { name: "New paper…" }));
+  await page.getByRole("textbox", { name: "The new paper's name" }).press("Enter");
+  await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
+  const source = page.getByRole("textbox", { name: "The paper's source" });
+  await source.focus();
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.insertText('#include "../output/fit.typ"\n');
+  await expect(page.locator("header .file")).toHaveText("/ paper.typ · saved");
+  await expect(page.getByTestId("paper-pages")).toHaveText("1 page", { timeout: 60_000 });
+  await expect(stale).toHaveCount(0);
+  await press(places.getByRole("button", { name: "Script" }));
+  await write(page, script("educ + exper"));
+  await expect(page.getByText("saving")).toHaveCount(0);
+
+  // The page loaded again: Paper says the table is stale, though nothing has run in this visit.
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(places.getByRole("button", { name: "Paper" }));
+  await expect(stale).toHaveText(
+    [
+      "output/fit.typ is stale: scripts/main.zeff has changed since it wrote it. Press Run to write it again.",
+    ],
+    { timeout: 60_000 },
+  );
+  // Run, in Paper: the table is written again, and the mark is gone; and it stays gone.
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done", { timeout: 30_000 });
+  await expect(stale).toHaveCount(0, { timeout: 30_000 });
+  await page.reload();
+  await expect(page.getByRole("status")).toHaveText(READY);
+  await press(places.getByRole("button", { name: "Paper" }));
+  await expect(page.getByTestId("paper-pages")).toHaveText("1 page", { timeout: 60_000 });
+  await expect(stale).toHaveCount(0);
+});

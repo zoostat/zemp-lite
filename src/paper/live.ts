@@ -69,6 +69,8 @@ export class Live {
   readonly #given = new Set<string>();
   /** The files the last setting asked for and the project did not hold, by their paths. */
   #lacked: string[] = [];
+  /** The files the last setting read: those the paper uses as it now stands. */
+  #used: string[] = [];
   /** The files given that the project has since written again: read again at the next setting. */
   readonly #rewritten = new Set<string>();
   /** The pages held, each by its mark: what the module was asked for and need not be again. */
@@ -168,6 +170,7 @@ export class Live {
         if (!marks.includes(mark)) this.#drawn.delete(mark);
       }
       this.#lacked = [...setting.missing];
+      this.#used = [...setting.read];
       return {
         text,
         ok: setting.ok,
@@ -189,25 +192,25 @@ export class Live {
 
   /**
    * Files of the project were written (a run exported them, or took them away). Whether any
-   * is a file of this paper: one it was given, which is then read again at the next setting,
-   * or one it asked for and the project did not hold.
+   * is a file of this paper as it now stands: one it reads, or one it asked for and the
+   * project did not hold. A file the paper was given, read now or not, is read again from the
+   * project the next time the paper is set.
    */
   written(paths: readonly string[]): boolean {
     let concerned = false;
     for (const path of paths) {
-      if (this.#given.has(path)) {
-        this.#rewritten.add(path);
-        concerned = true;
-      } else if (this.#lacked.includes(path)) {
-        concerned = true;
-      }
+      if (this.#given.has(path)) this.#rewritten.add(path);
+      if (this.#used.includes(path) || this.#lacked.includes(path)) concerned = true;
     }
     return concerned;
   }
 
-  /** The files of the project the paper reads: those it was given, and those it lacks. */
+  /**
+   * The files of the project the paper uses, as it now stands: those its last setting read,
+   * and those it asked for and lacks. A file it read once and names no more is not among them.
+   */
   get files(): string[] {
-    return [...new Set([...this.#given, ...this.#lacked])].sort();
+    return [...new Set([...this.#used, ...this.#lacked])].sort();
   }
 
   /**
