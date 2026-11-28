@@ -1,6 +1,16 @@
 // ⌘K and the console line (release 0.1, step 10).
 import type { Page } from "@playwright/test";
-import { cursorTo, editor, expect, printed, scriptText, test, write, useExample } from "./support";
+import {
+  cursorTo,
+  editor,
+  expect,
+  printed,
+  projectButton,
+  scriptText,
+  test,
+  useExample,
+  write,
+} from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 
@@ -418,7 +428,7 @@ test("what release 0.2.2 added is reached from the keyboard: every menu, naming 
 
   // The start screen: each project's row and its menu, and each question asked in the row.
   await command(page, "project duplicate");
-  const recent = page.getByRole("region", { name: "Recent projects" });
+  const recent = page.getByRole("region", { name: "Your projects" });
   const copy = recent.getByLabel("The name of the copy of Scratch");
   await expect(copy).toBeFocused();
   await reached("The name of the copy of Scratch", "Actions for Scratch", "New project…");
@@ -444,7 +454,7 @@ test("what release 0.2.2 added is reached from the keyboard: every menu, naming 
   await page.keyboard.press("Escape");
   await expect(going).toHaveCount(0);
   // The copy opened has the commands of a project of the reader's own.
-  await press(recent.getByRole("button", { name: /^Wages in this browser/ }));
+  await press(projectButton(page, "Wages"));
   await expect(page.getByRole("status")).toHaveText(READY);
   const inWages = await names();
   for (const word of ["Project: rename…", "Project: duplicate…", "Project: delete…"]) {

@@ -1,12 +1,17 @@
 <script lang="ts">
   // The watermark behind the welcome screen: never behind code, always behind the content.
+  // `faint` draws it at half its strength (release 0.3.1, step 12b; open decision #245, as
+  // completed: it stays, faint, behind the front page and the projects screen), where a table
+  // or a column of text lies over it.
   import { rings } from "./watermark";
+
+  let { faint = false }: { faint?: boolean } = $props();
 
   const made = rings();
   const centre = made[made.length - 1];
 </script>
 
-<div class="watermark" aria-hidden="true">
+<div class="watermark" class:faint aria-hidden="true">
   <svg viewBox="-75 -50 230 230">
     <defs>
       <linearGradient id="watermark-stroke" x1="1" y1="0" x2="0" y2="1">
@@ -41,6 +46,12 @@
   }
   :global(:root[data-theme="dark"]) .watermark {
     opacity: 0.24;
+  }
+  .watermark.faint {
+    opacity: 0.08;
+  }
+  :global(:root[data-theme="dark"]) .watermark.faint {
+    opacity: 0.12;
   }
   svg {
     display: block;

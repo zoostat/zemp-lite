@@ -8,7 +8,7 @@ of the choice of repository in `docs/decisions.md`, the Apache 2.0 licence, and 
 **Next.** Release 0.1, the prototype (Zemp Specification, section 15): the owner says "Start release 0.1"
 in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 0.1 runs on.
 
-**For the owner to decide.** Nothing.
+**For the owner to decide.** Nothing. **His to read when he wishes:** the words of two cards under the table of projects, which differ from the mockup where the mockup said more than the engine holds (the entry of step 12b in `docs/decisions.md`, choice 6).
 
 ## 15 to 20 November 2026: release 0.1, the prototype (folded)
 
@@ -90,6 +90,8 @@ Opened on the owner's word once Zeff 0.9.0 was released, planned (`docs/releases
 
 **Done, step 12a `[function]`.** What the projects screen knows of each project (#245; step 12 split in two at the step): its scripts and its size, read with the list; how its last run went, remembered by the browser as each run of a whole script ends; and the words a row will say. Nothing on the screen changes yet. Green in Chromium; in WebKit here the same tests as before fail at the locked screen.
 
-**Next.** Step 12b `[function]`: the projects screen itself (#245, as completed): the left column with Scratch project, New project…, Open project… and the note on where the work is kept; the projects as a table with a filter; Export all projects…; three cards. It is shown to the owner when done.
+**Done, step 12b `[function]`.** The projects screen (#245, as completed): a column of what can be done at the left (Scratch project, New project…, Open project…, Open folder… marked for the desktop app), with the note on where the work is kept, the space used and **Export all projects…** at its foot; the projects as a table (scripts, last run, size, opened, exported, with Open, Export… and ⋯), a field that finds a project, and three cards. A first visit's table has the Scratch project alone. The address's own checks are now run here before each commit: step 10's deployment had stopped at one I had not updated (corrected in a commit of its own). Green in Chromium; in WebKit here the same tests as before fail at the locked screen.
+
+**Next.** Step 13 `[function]`: the front page (#245, as completed): the headline "Reproducible empirical research, in your browser.", Start, three facts, and the engine's card with its three steps and a three-line example.
 
 **For the owner to decide.** Nothing. **His to read when he wishes:** the words of the page a narrow window is shown (the entry of step 3 in `docs/decisions.md`, choice 4). **For him to know:** at a tablet's width the foot shortens the note on where the work is kept to its last words ("… · not exported yet"), the one text of the frame that is shortened there (step 5, choice 4); and Data's row shortens a panel's facts there ("15,571 rows × 13 variables · panel worker × year"), whole in the frames' menu (step 8a, choice 5). **His to try by hand, in his own browser:** whether ⌘1 to ⌘5 open the places or the browser keeps them for its tabs (step 4, choice 5).

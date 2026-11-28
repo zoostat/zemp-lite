@@ -6,7 +6,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Page } from "@playwright/test";
-import { expect, printed, scriptText, test, wholeScript, write } from "./support";
+import { expect, printed, projectButton, scriptText, test, wholeScript, write } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const folder = mkdtempSync(join(tmpdir(), "zemp-open-zip-"));
@@ -27,7 +27,6 @@ function written(name: string, script: string): string {
 }
 
 const chooser = (page: Page) => page.getByLabel("A project's zip to open");
-const recent = (page: Page) => page.getByRole("region", { name: "Recent projects" });
 const tree = (page: Page) =>
   page
     .getByRole("complementary", { name: "Script: the left pane" })
@@ -101,12 +100,8 @@ test("a project exported and opened again from its zip is the same project, unde
   );
   // Both projects are listed, and the first is as it was.
   await press(page.getByRole("button", { name: "All projects" }));
-  await expect(
-    recent(page).getByRole("button", { name: /^Scratch 2 in this browser/ }),
-  ).toBeVisible();
-  await expect(
-    recent(page).getByRole("button", { name: /^Scratch in this browser/ }),
-  ).toBeVisible();
+  await expect(projectButton(page, "Scratch 2")).toBeVisible();
+  await expect(projectButton(page, "Scratch")).toBeVisible();
 });
 
 test("a project's folder zipped by another tool is opened: its one folder taken off, a file manager's own files left out", async ({
@@ -168,7 +163,8 @@ test("a zip that cannot be opened is refused in a sentence, and no project is ma
     ],
   ];
   await page.goto("/");
-  await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
+  // A first visit: the table has the Scratch project alone, not yet made.
+  await expect(page.getByTestId("first-visit")).toBeVisible();
   for (const [name, script, sentence] of refused) {
     await chooser(page).setInputFiles(written(`${name}.zip`, script));
     const said = page.getByRole("alert");
@@ -176,7 +172,8 @@ test("a zip that cannot be opened is refused in a sentence, and no project is ma
     else await expect(said, name).toHaveText(sentence);
     // Still the start screen, and no project in its list.
     await expect(page.getByRole("button", { name: "New project…" })).toBeVisible();
-    await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("first-visit")).toBeVisible();
+    await expect(page.locator("tbody tr.project")).toHaveCount(1);
   }
   // A zip that opens takes the sentence away with it.
   const good = written(

@@ -220,7 +220,7 @@ test("Projects ▾ lists what is done with the project as a whole, and each entr
   // All projects: back to the list; and the side menu's entry of that name does the same.
   await press(
     page
-      .getByRole("region", { name: "Recent projects" })
+      .getByRole("region", { name: "Your projects" })
       .getByRole("button", { name: /^Frame/ })
       .first(),
   );

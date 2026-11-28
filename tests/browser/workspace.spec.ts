@@ -294,7 +294,7 @@ for (const theme of ["light", "dark"] as const) {
     await press(page.getByRole("button", { name: "Create" }));
     await expect(page.getByRole("status")).toHaveText(READY);
     await press(page.getByRole("button", { name: "All projects" }));
-    const recent = page.getByRole("region", { name: "Recent projects" });
+    const recent = page.getByRole("region", { name: "Your projects" });
     await sound(page.getByRole("region", { name: "Start" }));
     for (const [asks, shown] of [
       ["Rename…", recent.getByLabel("The new name of Wages")],

@@ -3,7 +3,7 @@
 // in for, since a test cannot make a browser agree; WebKit's test profile gives a page no
 // private storage at all, which is the third case.
 import type { Page } from "@playwright/test";
-import { expect, test } from "./support";
+import { expect, projectButton, test } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
 const DAY = 24 * 60 * 60 * 1000;
@@ -42,7 +42,7 @@ test("where the browser may clear the projects the status bar says so, with Expo
   await page.goto("/");
   const kept = browserName !== "webkit";
   if (kept) {
-    await expect(page.getByText("Kept on this computer.")).toBeVisible();
+    await expect(page.getByText("Kept in this browser.")).toBeVisible();
     await expect(page.getByTestId("kept")).toContainText(
       "the browser may clear it when the computer runs short of room",
     );
@@ -96,7 +96,7 @@ test("where the browser has agreed to keep the storage the status bar is silent,
   // Thirty-one days on, never exported: the line says so.
   await page.clock.setFixedTime(new Date(Date.now() + 31 * DAY));
   await page.reload();
-  await press(page.getByRole("button", { name: /^Scratch in this browser/ }));
+  await press(projectButton(page, "Scratch"));
   await expect(page.getByRole("status")).toHaveText(READY);
   await expect(reminder(page)).toHaveText("not exported yet, 31 days after it was made");
   const [download] = await Promise.all([page.waitForEvent("download"), press(exportButton(page))]);

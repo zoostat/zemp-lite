@@ -40,19 +40,22 @@ test("the welcome screen opens, names the release and says where projects are ke
   // Open folder… is not here yet, and says where it comes (#208): with the desktop beta.
   const folder = page.getByRole("button", { name: "Open folder…" });
   await expect(folder).toBeDisabled();
-  await expect(folder).toContainText("comes with the desktop app");
+  await expect(folder).toContainText("desktop app");
   await expect(folder).not.toContainText("prototype");
   await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeEnabled();
   // WebKit's test profile behaves as a private window does, which keeps nothing; that
   // projects are kept, in both browsers, is tested in `kept.spec.ts`.
   await expect(
-    page.getByText(browserName === "webkit" ? "Not kept." : "Kept on this computer."),
+    page.getByText(browserName === "webkit" ? "Not kept." : "Kept in this browser."),
   ).toBeVisible();
-  // And how a project is taken out of the browser, whichever of the two holds.
-  await expect(page.getByTestId("kept")).toContainText(
-    "Taking a project out. Choose Export project… in its ⋯ menu to save it as a zip on this computer, or in ⌘K while it is open; Open project… opens it again, here or in another browser.",
-  );
-  await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
+  // And how a project is taken out of the browser, whichever of the two holds: the note
+  // says to export the ones one keeps, and has what exports them all under it.
+  await expect(page.getByTestId("kept")).toContainText("export the ones you keep.");
+  await expect(
+    page.getByTestId("kept").getByRole("button", { name: "Export all projects…" }),
+  ).toBeVisible();
+  // A first visit: the table has the Scratch project alone, not yet made.
+  await expect(page.getByTestId("first-visit")).toBeVisible();
   await expect(page.getByText("engine Zeff 0.9.0 · in this browser")).toBeVisible();
   // The shipped fonts are the ones drawn: no outside server is asked for one.
   await page.evaluate(() => document.fonts.ready);

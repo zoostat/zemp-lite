@@ -74,7 +74,7 @@ for (const theme of ["light", "dark"] as const) {
       });
     });
 
-    test("the projects screen: as it opens, a name asked, a row's menu", async ({
+    test("the projects screen: as it opens, a name asked, a row's menu, a question, no row found", async ({
       page,
       press,
     }) => {
@@ -89,10 +89,18 @@ for (const theme of ["light", "dark"] as const) {
       await name.press("Enter");
       await expect(page.getByRole("status")).toHaveText(READY);
       await press(page.getByRole("button", { name: "All projects" }));
-      const recent = page.getByRole("region", { name: "Recent projects" });
+      const recent = page.getByRole("region", { name: "Your projects" });
       await press(recent.getByRole("button", { name: "Actions for Seven", exact: true }));
       await expect(page.getByRole("menu", { name: "Actions for Seven" })).toBeVisible();
       await whole(page, "the projects screen, a row's menu open");
+      // What the menu asks, under the row; and the field over the table with no row found.
+      await press(page.getByRole("menuitem", { name: "Delete…" }));
+      await expect(recent.getByRole("group", { name: "Delete Seven?" })).toBeVisible();
+      await whole(page, "the projects screen, a deletion asked");
+      await press(recent.getByRole("button", { name: "Keep" }));
+      await recent.getByRole("searchbox", { name: "Find a project" }).fill("no such project");
+      await expect(page.getByTestId("none-found")).toBeVisible();
+      await whole(page, "the projects screen, no row found");
     });
 
     test("Script: as it opens, run, with every pane open, the commands, the largest code", async ({

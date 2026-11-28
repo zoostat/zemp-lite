@@ -13,6 +13,7 @@ import {
   expect,
   faintText,
   printed,
+  projectButton,
   scriptText,
   smallestText,
   test,
@@ -139,7 +140,7 @@ test("a project that names another engine says so, is refused a run in the engin
   await expect(page.getByText("saving")).toHaveCount(0);
   // Left, and opened again from its row of the start screen.
   await press(page.getByRole("button", { name: "All projects" }));
-  await press(page.getByRole("button", { name: /^demo in this browser/ }));
+  await press(projectButton(page, "demo"));
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("demo");
   await expect(page.getByRole("status")).toHaveText(READY);
   await expect(line(page)).toHaveCount(0);
@@ -190,7 +191,7 @@ test("the Scratch project of an earlier visit is moved to this engine without th
   await expect(page.getByText("saving")).toHaveCount(0);
   // Left, and opened again from the start screen: it names this engine, and runs.
   await press(page.getByRole("button", { name: "All projects" }));
-  await press(page.getByRole("button", { name: /^Scratch in this browser/ }));
+  await press(projectButton(page, "Scratch"));
   await expect(page.getByRole("status")).toHaveText(READY);
   await expect(line(page)).toHaveCount(0);
   await expect.poll(() => scriptText(page)).toBe(now);

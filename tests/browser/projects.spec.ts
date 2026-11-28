@@ -3,12 +3,11 @@
 // project's row of the start screen, and for the project open, from ⌘K.
 import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
-import { expect, printed, scriptText, test, wholeScript, write } from "./support";
+import { expect, printed, projectButton, scriptText, test, wholeScript, write } from "./support";
 
 const READY = "engine Zeff 0.9.0 ready";
-const recent = (page: Page) => page.getByRole("region", { name: "Recent projects" });
-const row = (page: Page, name: string) =>
-  recent(page).getByRole("button", { name: new RegExp(`^${name} in this browser`) });
+const recent = (page: Page) => page.getByRole("region", { name: "Your projects" });
+const row = (page: Page, name: string) => projectButton(page, name);
 const more = (page: Page, name: string) =>
   recent(page).getByRole("button", { name: `Actions for ${name}`, exact: true });
 const item = (page: Page, project: string, name: string) =>

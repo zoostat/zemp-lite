@@ -127,7 +127,8 @@ for (const theme of ["light", "dark"] as const) {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.goto("/");
       await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
-      await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
+      // A first visit: the Scratch project alone in the table, not yet made.
+      await expect(page.getByTestId("first-visit")).toBeVisible();
       await floor(page, "the project screen, empty");
       // The naming row, with a name that is refused.
       await made("Wages");
@@ -137,12 +138,12 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByRole("alert")).toContainText("is already here");
       await floor(page, "the project screen, naming, a name refused");
       await press(page.getByRole("button", { name: "Cancel" }));
-      // With projects enough for the list to fade.
+      // With six projects in the table.
       for (const name of ["Two", "Three", "Four", "Five", "Six"]) await made(name);
       // The list is read after the screen is drawn: until its rows are there.
       await expect(
         page
-          .getByRole("region", { name: "Recent projects" })
+          .getByRole("region", { name: "Your projects" })
           .getByRole("button", { name: /^Actions for / }),
       ).toHaveCount(6);
       await floor(page, "the project screen, with six projects");
@@ -153,7 +154,7 @@ for (const theme of ["light", "dark"] as const) {
         expect(reached).toContain(name);
       }
       // A row's menu open, and the question it asks.
-      const recent = page.getByRole("region", { name: "Recent projects" });
+      const recent = page.getByRole("region", { name: "Your projects" });
       await press(recent.getByRole("button", { name: "Actions for Six", exact: true }));
       await expect(page.getByRole("menu", { name: "Actions for Six" })).toBeVisible();
       await floor(page, "the project screen, a row's menu open");
@@ -166,6 +167,15 @@ for (const theme of ["light", "dark"] as const) {
       await expect(recent.getByLabel("The new name of Six")).toBeVisible();
       await floor(page, "the project screen, a new name asked");
       await page.keyboard.press("Escape");
+      // The field over the table, with rows kept and with none.
+      const find = recent.getByRole("searchbox", { name: "Find a project" });
+      await find.fill("t");
+      await expect(recent.locator("tbody tr.project")).toHaveCount(2);
+      await floor(page, "the project screen, two rows found");
+      await find.fill("no such project");
+      await expect(page.getByTestId("none-found")).toBeVisible();
+      await floor(page, "the project screen, no row found");
+      await find.fill("");
       // At a tablet's width: the same states of the list.
       await page.setViewportSize({ width: 1024, height: 768 });
       await floor(page, "the project screen at a tablet's width");

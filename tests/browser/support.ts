@@ -623,3 +623,36 @@ export async function chooseVariable(
   await expect(view.getByTestId("variable-asking")).toHaveCount(0);
   return view;
 }
+
+/** The projects of the projects screen: the table, with its field and what the screen last said. */
+export const projectsOf = (page: Page): Locator =>
+  page.getByRole("region", { name: "Your projects" });
+
+/**
+ * The button that opens a project from its row of the projects screen: its name, set over its
+ * scripts (release 0.3.1, step 12b). Found by the name alone, so that `Scratch` is not also
+ * `Scratch 2`.
+ */
+export const projectButton = (page: Page, name: string): Locator =>
+  projectsOf(page)
+    .getByRole("rowheader")
+    .getByRole("button")
+    .filter({
+      has: page.locator("b", {
+        hasText: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+      }),
+    });
+
+/**
+ * The cells of a project's row of the projects screen, after its name: its scripts, its last
+ * run, its size, when it was opened and exported, and what can be done with it.
+ */
+export const projectCells = (page: Page, name: string): Locator =>
+  projectsOf(page)
+    .locator("tbody tr.project")
+    .filter({
+      has: page.locator("th b", {
+        hasText: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+      }),
+    })
+    .locator("td");

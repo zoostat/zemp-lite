@@ -104,7 +104,7 @@ test("a project's row of the start screen has a menu, by the mouse and by the ke
   await press(page.getByRole("button", { name: /^Scratch project/ }));
   await expect(page.getByRole("status")).toHaveText(READY);
   await press(page.getByRole("button", { name: "All projects" }));
-  const recent = page.getByRole("region", { name: "Recent projects" });
+  const recent = page.getByRole("region", { name: "Your projects" });
   const more = recent.getByRole("button", { name: "Actions for Scratch" });
   await expect(more).toHaveAttribute("aria-expanded", "false");
   // By the mouse.

@@ -1,17 +1,28 @@
 // Projects that are kept: made, closed, and found again. In WebKit these tests have a browser
 // profile on disk, whose private file system is one place shared by every test (see
 // `support.ts`), so they run one after another and nowhere else is that storage used.
-import { cursorTo, expect, printed, scriptText, test, write, useExample } from "./support";
+import {
+  cursorTo,
+  expect,
+  printed,
+  projectButton,
+  projectCells,
+  scriptText,
+  test,
+  useExample,
+  write,
+} from "./support";
 
 test.use({ keptProfile: true });
 test.describe.configure({ mode: "serial" });
 
 const READY = "engine Zeff 0.9.0 ready";
 
-test("the welcome screen says that projects are kept on this computer", async ({ page }) => {
+test("the projects screen says that projects are kept in this browser", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText("Kept on this computer.")).toBeVisible();
-  await expect(page.getByText("No project yet", { exact: true })).toBeVisible();
+  await expect(page.getByText("Kept in this browser.")).toBeVisible();
+  // A first visit: the Scratch project alone in the table, not yet made.
+  await expect(page.getByTestId("first-visit")).toBeVisible();
 });
 
 test("a project is made, and is still there with its script after the page is reloaded", async ({
@@ -42,8 +53,13 @@ test("a project is made, and is still there with its script after the page is re
   // capitals are typed: the refusal names the project as it is written in the list.
   await press(page.getByRole("button", { name: "All projects" }));
   await expect(page).toHaveURL(/\/#?$/);
-  const listed = page.getByRole("button", { name: /^Returns to schooling in this browser/ });
-  await expect(listed).toContainText("in this browser · today,");
+  const listed = projectButton(page, "Returns to schooling");
+  await expect(listed).toHaveText(/^\s*Returns to schooling\s*main\.zeff\s*$/);
+  // Its row says it was opened today, and how its run went.
+  await expect(projectCells(page, "Returns to schooling").nth(3)).toHaveText(
+    /^today, \d{1,2}:\d\d$/,
+  );
+  await expect(projectCells(page, "Returns to schooling").nth(1)).toHaveText("clean");
   await press(page.getByRole("button", { name: "New project…" }));
   await page.getByLabel("The name of the new project").fill("returns to schooling");
   await press(page.getByRole("button", { name: "Create" }));
@@ -571,7 +587,7 @@ test("a start opens on the Script place, and Help then on Home with Topics close
     );
     await file.close();
   });
-  await press(page.getByRole("button", { name: /^Topics kept in this browser/ }));
+  await press(projectButton(page, "Topics kept"));
   await expect(page.getByRole("status")).toHaveText(READY);
   await expect(on("Script")).toHaveAttribute("aria-current", "page");
   await press(on("Help"));
