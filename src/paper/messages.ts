@@ -69,6 +69,24 @@ export interface Heading {
   y: number;
 }
 
+/**
+ * A table or a figure of the paper as it last set (Zemp Lite 0.3.1, for the Outline): its kind
+ * as Typst names it (`table`, `image`, or a name the paper gives), the word Typst sets before
+ * its number, its number among those of its kind (`null` where the paper numbers none), its
+ * caption (`null` where it has none), and where it is written and stands, as a heading has.
+ */
+export interface Figure {
+  kind: string;
+  supplement: string;
+  number: number | null;
+  caption: string | null;
+  file: string | null;
+  line: number | null;
+  page: number;
+  x: number;
+  y: number;
+}
+
 /** A message the interface sends. Each carries an `id`, which its answer carries back. */
 export type Request =
   | { type: "font"; bytes: Uint8Array }
@@ -93,7 +111,7 @@ export type Reply =
   | ({ type: "set" } & Setting)
   | { type: "page"; index: number; svg: string }
   | { type: "pdf"; bytes: Uint8Array }
-  | { type: "outline"; headings: Heading[] }
+  | { type: "outline"; headings: Heading[]; figures?: Figure[] }
   | {
       type: "place";
       file: string | null;

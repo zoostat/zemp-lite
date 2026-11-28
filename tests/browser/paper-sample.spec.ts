@@ -64,12 +64,43 @@ test("a visitor who opens Paper in the Scratch project meets a page, with its ta
   expect(await drawn(page)).toMatch(/^blob:/);
   expect(ofSample()).toHaveLength(1);
   expect(await runs()).toBe(0);
-  // Its heading is in the Outline, and its files are in the project: the paper, the script
-  // that writes its table and its figure, and the two as the engine writes them.
+  // The row says the paper and where its table and its figure come from (release 0.3.1, step
+  // 10; open decision #245), with New paper… and Export PDF… at its right end.
+  await expect(page.getByTestId("paper-path")).toHaveText(
+    "paper/paper.typ · its table and figure from scripts/paper.zeff",
+  );
+  const ends = [];
+  for (const name of ["Outline", "Close", "New paper…", "Export PDF…", "Page"]) {
+    ends.push((await bar(page).getByRole("button", { name, exact: true }).boundingBox())!.x);
+  }
+  expect([...ends].sort((a, b) => a - b)).toEqual(ends);
+  // Its heading is in the Outline, with its table and its figure under it, each by the name
+  // the page gives it and the line it is written at; and its files are in the project: the
+  // paper, the script that writes its table and its figure, and the two as the engine writes
+  // them.
   await press(bar(page).getByRole("button", { name: "Outline", exact: true }));
-  await expect(
-    left(page).getByRole("region", { name: "Outline" }).getByTestId("paper-outline"),
-  ).toHaveText("Returns to schooling 10");
+  const outline = left(page).getByRole("region", { name: "Outline" }).getByTestId("paper-outline");
+  await expect(outline.getByRole("button")).toHaveText([
+    "Returns to schooling 10",
+    "Table 1 18",
+    "Figure 1 24",
+  ]);
+  // A table's row says its caption on resting over it, and goes to its line as a heading's does.
+  const table = outline.getByRole("button", { name: /^Table 1/ });
+  await expect(table).toHaveAttribute(
+    "title",
+    /^The log wage on schooling and experience.* · Go to line 18, and to page 1$/,
+  );
+  await table.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("18");
+  await expect(table).toHaveAttribute("aria-current", "location");
+  // It stands a level under the heading it follows.
+  const insets = await outline
+    .getByRole("button")
+    .evaluateAll((rows) => rows.map((row) => parseFloat(getComputedStyle(row).paddingLeft)));
+  expect(insets[1]).toBeGreaterThan(insets[0]!);
+  expect(insets[2]).toBe(insets[1]);
   await press(bar(page).getByRole("button", { name: "Project", exact: true }));
   const project = left(page).getByRole("region", { name: "Project" });
   for (const name of ["paper.typ", "paper.zeff", "returns.typ", "schooling.svg"]) {

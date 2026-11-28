@@ -17,6 +17,30 @@ export interface Writer {
   files: string[];
 }
 
+/**
+ * Where the tables and figures a paper uses come from, in a few words for the row of the Paper
+ * place (release 0.3.1, step 10; open decision #245): "its table and figure from
+ * scripts/paper.zeff". A file a script writes for Typst to include is a table, and any other
+ * (an SVG, a PNG, a PDF) a figure. Empty where no script writes a file the paper uses.
+ */
+export function comesFrom(writers: readonly Writer[]): string {
+  const files = [...new Set(writers.flatMap((one) => one.files))];
+  if (files.length === 0) return "";
+  const tables = files.filter((file) => /\.typ$/i.test(file)).length;
+  const figures = files.length - tables;
+  const some = (count: number, one: string, many: string) =>
+    count === 0 ? [] : [count === 1 ? one : many];
+  const what = [...some(tables, "table", "tables"), ...some(figures, "figure", "figures")];
+  const scripts = [
+    ...new Set(writers.filter((one) => one.files.length > 0).map((one) => one.script)),
+  ];
+  const listed =
+    scripts.length <= 2
+      ? scripts.join(" and ")
+      : `${scripts.slice(0, -1).join(", ")} and ${scripts.at(-1)}`;
+  return `its ${what.join(" and ")} from ${listed}`;
+}
+
 /** A script's text without its comments: `//` to the end of a line, outside a text in quotes. */
 function uncommented(text: string): string {
   return text

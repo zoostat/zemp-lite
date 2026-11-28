@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exportsOf, lackingWords, listed, writersOf } from "./exports";
+import { comesFrom, exportsOf, lackingWords, listed, writersOf } from "./exports";
 
 describe("which scripts a paper's files come from", () => {
   it("reads the paths a script exports to, after a value or with the value first, each once", () => {
@@ -76,5 +76,42 @@ describe("which scripts a paper's files come from", () => {
     expect(lackingWords([], writers)).toEqual([]);
     expect(lackingWords(["data/x.csv"], writers)).toEqual([]);
     expect(listed(["a", "b", "c"])).toBe("a, b and c");
+  });
+});
+
+describe("where a paper's tables and figures come from, in the row of the Paper place", () => {
+  it("is said in a few words: what they are, and the scripts that write them", () => {
+    expect(
+      comesFrom([
+        { script: "scripts/paper.zeff", files: ["output/returns.typ", "output/schooling.svg"] },
+      ]),
+    ).toBe("its table and figure from scripts/paper.zeff");
+    expect(
+      comesFrom([
+        { script: "scripts/a.zeff", files: ["output/one.typ", "output/two.typ"] },
+        { script: "scripts/b.zeff", files: ["output/shape.png", "output/fit.pdf"] },
+      ]),
+    ).toBe("its tables and figures from scripts/a.zeff and scripts/b.zeff");
+    expect(comesFrom([{ script: "scripts/a.zeff", files: ["output/one.typ"] }])).toBe(
+      "its table from scripts/a.zeff",
+    );
+    expect(
+      comesFrom([
+        { script: "scripts/a.zeff", files: ["output/s.svg"] },
+        { script: "scripts/b.zeff", files: ["output/t.svg"] },
+        { script: "scripts/c.zeff", files: ["output/u.svg"] },
+      ]),
+    ).toBe("its figures from scripts/a.zeff, scripts/b.zeff and scripts/c.zeff");
+  });
+
+  it("counts a file two scripts write once, and says nothing where no script writes any", () => {
+    expect(
+      comesFrom([
+        { script: "scripts/a.zeff", files: ["output/one.typ"] },
+        { script: "scripts/b.zeff", files: ["output/one.typ"] },
+      ]),
+    ).toBe("its table from scripts/a.zeff and scripts/b.zeff");
+    expect(comesFrom([])).toBe("");
+    expect(comesFrom([{ script: "scripts/a.zeff", files: [] }])).toBe("");
   });
 });

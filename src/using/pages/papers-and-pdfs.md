@@ -18,7 +18,7 @@ The page is set again a moment after you stop typing. **Fit width** draws it to 
 
 Where Typst cannot set the text, its words stand under the line they are about, and above the page. The page of the text as it last set stays, marked as not the present text, until the text sets again.
 
-Press a word, a table or a figure of the page to put the cursor at its place in the source. **Outline** lists the headings of the paper and goes to each, in the source and on the page. **Project** shows the files of the project, and **Page** closes and opens the page.
+Press a word, a table or a figure of the page to put the cursor at its place in the source. **Outline** lists the headings of the paper, with its tables and figures under them by the names the page gives them, as Table 1, and goes to each, in the source and on the page. The row over the paper says where its tables and figures come from: the scripts that write them. **Project** shows the files of the project, and **Page** closes and opens the page.
 
 ## Tables and figures from your scripts
 

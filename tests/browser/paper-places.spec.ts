@@ -376,5 +376,5 @@ test("the Outline follows the paper as it is typed, names a heading that came fr
   await page.keyboard.press("ControlOrMeta+a");
   await page.keyboard.insertText("Only a paragraph.\n");
   await expect(rows).toHaveCount(0);
-  await expect(outline(page)).toContainText("This paper has no headings.");
+  await expect(outline(page)).toContainText("This paper has no headings, tables or figures.");
 });

@@ -201,3 +201,92 @@ fn a_figure_leads_to_the_line_that_places_it() {
         .expect("a point of the figure");
     assert_eq!(place["file"], MAIN);
 }
+
+fn figures(paper: &Paper) -> Vec<Value> {
+    let told: Value = serde_json::from_str(&paper.outline()).unwrap();
+    assert_eq!(told["type"], "outline");
+    told["figures"].as_array().unwrap().clone()
+}
+
+/// The tables and figures of a paper (Zemp Lite 0.3.1, for the Outline): each by its kind, the
+/// word Typst sets before its number, its number among those of its kind, its caption, the
+/// line it is written at and where it stands on the pages.
+#[test]
+fn the_tables_and_figures_of_a_paper_are_given_with_their_numbers_and_their_places() {
+    let text = "#set page(paper: \"a4\")\n\
+        = Returns\n\
+        #figure(table(columns: 2, [a], [b]), caption: [The estimates.])\n\
+        Some words.\n\
+        #figure(rect(width: 2cm, height: 1cm), caption: [A drawing.])\n\
+        #figure(kind: table, supplement: [Table], table(columns: 1, [c]))\n\
+        #pagebreak()\n\
+        #figure(numbering: none, kind: image, supplement: [Figure], rect(width: 1cm, height: 1cm), caption: [Not numbered.])\n";
+    let mut paper = paper(text);
+    let told = set(&mut paper);
+    assert_eq!(told["ok"], true, "{told}");
+    let found = figures(&paper);
+    let brief: Vec<(String, String, Value, Value, Value, Value)> = found
+        .iter()
+        .map(|one| {
+            (
+                one["kind"].as_str().unwrap().to_string(),
+                one["supplement"].as_str().unwrap().to_string(),
+                one["number"].clone(),
+                one["caption"].clone(),
+                one["line"].clone(),
+                one["page"].clone(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        brief,
+        vec![
+            (
+                "table".to_string(),
+                "Table".to_string(),
+                Value::from(1),
+                Value::from("The estimates."),
+                Value::from(3),
+                Value::from(0)
+            ),
+            (
+                "image".to_string(),
+                "Figure".to_string(),
+                Value::from(1),
+                Value::from("A drawing."),
+                Value::from(5),
+                Value::from(0)
+            ),
+            (
+                "table".to_string(),
+                "Table".to_string(),
+                Value::from(2),
+                Value::Null,
+                Value::from(6),
+                Value::from(0)
+            ),
+            (
+                "image".to_string(),
+                "Figure".to_string(),
+                Value::Null,
+                Value::from("Not numbered."),
+                Value::from(8),
+                Value::from(1)
+            ),
+        ]
+    );
+    // Each is written in the paper itself, and stands under the one before it on its page.
+    assert!(found.iter().all(|one| one["file"] == MAIN));
+    let downs: Vec<f64> = found[..3]
+        .iter()
+        .map(|one| one["y"].as_f64().unwrap())
+        .collect();
+    assert!(downs[0] < downs[1] && downs[1] < downs[2], "{downs:?}");
+    // The headings are given as before, beside them.
+    assert_eq!(headings(&paper).len(), 1);
+    // A paper with neither says so with two empty lists.
+    let mut plain = self::paper("Words alone.\n");
+    assert_eq!(set(&mut plain)["ok"], true);
+    assert!(figures(&plain).is_empty());
+    assert!(headings(&plain).is_empty());
+}

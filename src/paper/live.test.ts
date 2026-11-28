@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Live, ROUNDS, type Typesetter } from "./live";
-import type { Heading, Place, Setting } from "./messages";
+import type { Figure, Heading, Place, Setting } from "./messages";
 
 const encode = (text: string) => new TextEncoder().encode(text);
 
@@ -110,10 +110,31 @@ class Stand implements Typesetter {
     return Promise.resolve(page === undefined ? "" : `<svg>${page}</svg>`);
   }
   /** A line that begins with `=` is a heading, at its line of the page it is on. */
-  outline(): Promise<Heading[]> {
+  outline(): Promise<{ headings: Heading[]; figures: Figure[] }> {
     this.asked.push("outline");
-    return Promise.resolve(
-      this.#pages.flatMap((page, index) =>
+    // A line that begins with `#figure` is a figure, a table where it says so.
+    const figures = this.#pages.flatMap((page, index) =>
+      page.split("\n").flatMap((line, at): Figure[] =>
+        line.startsWith("#figure")
+          ? [
+              {
+                kind: line.includes("table") ? "table" : "image",
+                supplement: line.includes("table") ? "Table" : "Figure",
+                number: 1,
+                caption: null,
+                file: this.main,
+                line: at + 1,
+                page: index,
+                x: 72,
+                y: 72 + at * 14,
+              },
+            ]
+          : [],
+      ),
+    );
+    return Promise.resolve({
+      figures,
+      headings: this.#pages.flatMap((page, index) =>
         page.split("\n").flatMap((line, at): Heading[] => {
           const marks = /^(=+) (.*)$/.exec(line);
           return marks === null
@@ -131,7 +152,7 @@ class Stand implements Typesetter {
               ];
         }),
       ),
-    );
+    });
   }
   pdf(created: Date | null): Promise<Uint8Array> {
     this.asked.push(`pdf ${created === null ? "with no time" : created.toISOString()}`);
@@ -178,6 +199,7 @@ describe("a paper set as it is typed", () => {
       ok: true,
       pages: [{ width: 595, height: 842, mark: "mark:One page.\n\n" }],
       headings: [],
+      figures: [],
       said: [],
       absent: [],
       ms: 10,
@@ -343,6 +365,14 @@ describe("a paper set as it is typed", () => {
     const more = await live.set(`${text}= Results\n`);
     expect(more.headings.map((one) => one.text)).toEqual(["Returns", "The data", "Results"]);
     expect(module.asked.filter((one) => one === "outline")).toHaveLength(2);
+    // The tables and figures of the pages come with their headings, asked for in the one asking.
+    const drawn = await live.set(`${text}\n#figure(table())\n#figure(image())\n`);
+    expect(drawn.figures.map((one) => [one.kind, one.supplement, one.line])).toEqual([
+      ["table", "Table", expect.any(Number)],
+      ["image", "Figure", expect.any(Number)],
+    ]);
+    expect(set.figures).toEqual([]);
+    expect(module.asked.filter((one) => one === "outline")).toHaveLength(3);
   });
 
   it("leads a point of a page to its place in the source, and never by the page of a later setting", async () => {

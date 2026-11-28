@@ -18,7 +18,7 @@
   // pages of the text as it last set stay, marked as not of the present text.
   import { tick, untrack } from "svelte";
   import Editor from "../editor/Editor.svelte";
-  import { lackingWords } from "../paper/exports";
+  import { comesFrom, lackingWords } from "../paper/exports";
   import { share } from "../paper/fetching";
   import { staleWords } from "../paper/written";
   import { PAPER_TRAVELS } from "../paper/lazy";
@@ -164,13 +164,16 @@
     );
   }
 
-  // The Outline: the headings of the paper as it last set, each going to its place in the
-  // source and on the page; the one the cursor is under is marked.
+  // The Outline: the headings of the paper as it last set, with its tables and figures among
+  // them (release 0.3.1, step 10; open decision #245), each going to its place in the source
+  // and on the page; the one the cursor is under is marked.
   const rows = $derived(
     outcome === null || path === null
       ? []
-      : outlineOf(outcome.headings, path, buffer?.text ?? outcome.text),
+      : outlineOf(outcome.headings, path, buffer?.text ?? outcome.text, outcome.figures),
   );
+  // Where the paper's tables and figures come from: the scripts that write the files it uses.
+  const from = $derived(comesFrom(workspace.paperWriters));
   const under = $derived(
     rowAt(
       rows,
@@ -241,12 +244,12 @@
 {#snippet outline()}
   {#if outcome === null}
     <p class="quiet" data-testid="paper-outline">
-      The headings of the paper are listed here once its page is set.
+      The headings, tables and figures of the paper are listed here once its page is set.
     </p>
   {:else if rows.length === 0}
     <p class="quiet" data-testid="paper-outline">
-      This paper has no headings. A line begun with <span class="mono">=</span> and a space is one,
-      and <span class="mono">==</span> a heading under it.
+      This paper has no headings, tables or figures. A line begun with <span class="mono">=</span>
+      and a space is a heading, and <span class="mono">==</span> a heading under it.
     </p>
   {:else}
     <ul class="outline" data-testid="paper-outline">
@@ -258,14 +261,17 @@
             style:padding-left="{14 + (Math.min(row.level, 6) - 1) * 14}px"
             aria-current={index === under ? "location" : undefined}
             disabled={row.line === null && !pageOpen}
-            title={row.line === null
-              ? `Go to page ${row.page + 1}`
-              : row.from === null
-                ? `Go to line ${row.line}, and to page ${row.page + 1}`
-                : `Go to line ${row.line}, which names ${row.from}, and to page ${row.page + 1}`}
+            title={(row.figure?.caption ? `${row.figure.caption} · ` : "") +
+              (row.line === null
+                ? `Go to page ${row.page + 1}`
+                : row.from === null
+                  ? `Go to line ${row.line}, and to page ${row.page + 1}`
+                  : `Go to line ${row.line}, which names ${row.from}, and to page ${row.page + 1}`)}
             onclick={() => goTo(row)}
           >
-            <span class="title">{row.text === "" ? "(a heading with no words)" : row.text}</span>
+            <span class="title" class:figure={row.figure !== undefined}
+              >{row.text === "" ? "(a heading with no words)" : row.text}</span
+            >
             <span class="line mono">{row.line ?? ""}</span>
           </button>
         </li>
@@ -274,8 +280,14 @@
   {/if}
 {/snippet}
 {#snippet controls()}
+  <!-- The row of Paper (open decision #245): the paper, and where its table and figure come
+       from; and at the right end New paper… and Export PDF…. -->
   {#if path !== null}
-    <span class="path mono" data-testid="paper-path">{path}</span>
+    <span class="path" data-testid="paper-path"
+      ><span class="mono">{path}</span>{#if from !== ""}<span data-testid="paper-from"
+          >{` · ${from}`}</span
+        >{/if}</span
+    >
     <button
       class="word"
       onclick={() => workspace.closePaper()}
@@ -283,6 +295,11 @@
     >
   {/if}
   <span class="gap"></span>
+  <button
+    class="word"
+    onclick={begin}
+    title="A new paper, made in the folder {PAPERS} of this project">New paper…</button
+  >
   {#if path !== null}
     <button
       class="word"
@@ -290,11 +307,6 @@
       title="The paper as a PDF, set by Typst, saved to this computer">Export PDF…</button
     >
   {/if}
-  <button
-    class="word"
-    onclick={begin}
-    title="A new paper, made in the folder {PAPERS} of this project">New paper…</button
-  >
 {/snippet}
 
 <Place
@@ -730,6 +742,10 @@
     flex: 1;
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+  /* A table or a figure: its name in the accent's quiet, its caption after it. */
+  .go .title.figure {
+    font-style: italic;
   }
   .go .line {
     color: var(--ink-3);

@@ -3,7 +3,7 @@
 // are kept to be drawn, each asked of the module only where it is not the page already held.
 // This file is the logic, with the module and the project behind two small interfaces so that
 // a test can stand in for either; what a screen draws from it is in `live.svelte.ts`.
-import type { Heading, Place, Said, Setting } from "./messages";
+import type { Figure, Heading, Place, Said, Setting } from "./messages";
 
 /** As much of the module as a paper's setting uses. */
 export interface Typesetter {
@@ -14,7 +14,7 @@ export interface Typesetter {
   remove(path: string): Promise<boolean>;
   set(): Promise<Setting>;
   page(index: number): Promise<string>;
-  outline(): Promise<Heading[]>;
+  outline(): Promise<{ headings: Heading[]; figures: Figure[] }>;
   click(page: number, x: number, y: number): Promise<Place | null>;
   pdf(created: Date | null): Promise<Uint8Array>;
 }
@@ -40,6 +40,8 @@ export interface Outcome {
   pages: Page[];
   /** The headings of those pages, in the paper's order. */
   headings: Heading[];
+  /** The tables and figures of those pages, in the paper's order. */
+  figures: Figure[];
   /** What Typst said: its errors where it refused the text, and its warnings. */
   said: Said[];
   /** The files the paper asks for that the project does not hold, by their paths. */
@@ -80,6 +82,7 @@ export class Live {
   #current: string[] = [];
   /** The headings of those pages; `null` before the paper has been asked for them. */
   #headings: Heading[] | null = null;
+  #figures: Figure[] = [];
   #opened: Promise<void> | null = null;
   #last: Promise<unknown> = Promise.resolve();
 
@@ -163,7 +166,9 @@ export class Live {
       // The headings of the pages that stand: asked again only where the pages have changed.
       const marks = pages.map((page) => page.mark);
       if (this.#headings === null || marks.join() !== this.#current.join()) {
-        this.#headings = await this.#module.outline();
+        const outline = await this.#module.outline();
+        this.#headings = outline.headings;
+        this.#figures = outline.figures;
       }
       this.#current = marks;
       // A page that is no longer among the paper's is no longer held.
@@ -177,6 +182,7 @@ export class Live {
         ok: setting.ok,
         pages,
         headings: this.#headings,
+        figures: this.#figures,
         said: setting.said,
         absent: [...setting.missing],
         ms,

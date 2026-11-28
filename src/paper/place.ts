@@ -3,7 +3,7 @@
 // holds, what the place shows, and the words of the fetching of Typst.
 import type { Progress } from "./fetching";
 import { share } from "./fetching";
-import type { Heading, Said } from "./messages";
+import type { Figure, Heading, Said } from "./messages";
 
 /** The folder a new paper is made in (the owner's answer to question 3 of release 0.3). */
 export const PAPERS = "paper";
@@ -222,10 +222,17 @@ export function lineNaming(text: string, main: string, file: string): number | n
   return null;
 }
 
-/** A row of the Outline: a heading of the paper, with where it is gone to. */
+/**
+ * A row of the Outline: a heading of the paper, or one of its tables and figures (release
+ * 0.3.1, step 10; open decision #245), with where it is gone to.
+ */
 export interface OutlineRow {
+  /** A heading's level; a table or a figure stands one level under the heading it follows. */
   level: number;
+  /** A heading's words; for a table or a figure its name, as "Table 1". */
   text: string;
+  /** For a table or a figure: which it is, and its caption where it has one. */
+  figure?: { kind: "table" | "figure"; caption: string | null };
   /**
    * The line of the paper's own source it is gone to, from 1: its own, or for a heading of a
    * file the paper includes, the line that names that file; `null` where neither is known.
@@ -238,19 +245,64 @@ export interface OutlineRow {
   y: number;
 }
 
-/** The rows of the Outline: the paper's headings in its order, each with where it is gone to. */
-export function outlineOf(headings: readonly Heading[], main: string, text: string): OutlineRow[] {
-  return headings.map((one) => {
+/** The name of a table or a figure, as the page numbers it: "Table 1", "Figure 2", "Figure". */
+export function figureName(figure: Pick<Figure, "kind" | "supplement" | "number">): string {
+  const word =
+    figure.supplement.trim() !== ""
+      ? figure.supplement.trim()
+      : figure.kind === "table"
+        ? "Table"
+        : "Figure";
+  return figure.number === null ? word : `${word} ${figure.number}`;
+}
+
+/**
+ * The rows of the Outline: the paper's headings, and its tables and figures, in the order
+ * they stand on the pages, each with where it is gone to.
+ */
+export function outlineOf(
+  headings: readonly Heading[],
+  main: string,
+  text: string,
+  figures: readonly Figure[] = [],
+): OutlineRow[] {
+  const placed = (one: Heading | Figure) => {
     const own = one.file === main;
     return {
-      level: one.level,
-      text: one.text,
       line: own ? one.line : one.file === null ? null : lineNaming(text, main, one.file),
       from: own ? null : one.file,
       page: one.page,
       y: one.y,
     };
-  });
+  };
+  const rows: OutlineRow[] = headings.map((one) => ({
+    level: one.level,
+    text: one.text,
+    ...placed(one),
+  }));
+  for (const one of figures) {
+    // Where it stands among the rows: after the last that is above it on the pages.
+    let at = 0;
+    while (
+      at < rows.length &&
+      ((rows[at] as OutlineRow).page < one.page ||
+        ((rows[at] as OutlineRow).page === one.page && (rows[at] as OutlineRow).y <= one.y))
+    ) {
+      at += 1;
+    }
+    // One level under the heading it follows, or at the first level where it follows none.
+    const above = rows
+      .slice(0, at)
+      .reverse()
+      .find((row) => row.figure === undefined);
+    rows.splice(at, 0, {
+      level: above === undefined ? 1 : above.level + 1,
+      text: figureName(one),
+      figure: { kind: one.kind === "table" ? "table" : "figure", caption: one.caption },
+      ...placed(one),
+    });
+  }
+  return rows;
 }
 
 /**

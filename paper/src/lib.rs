@@ -20,10 +20,10 @@ use std::sync::Mutex;
 
 use serde_json::{Value, json};
 use typst::diag::{FileError, FileResult, Severity, SourceDiagnostic};
-use typst::foundations::{Bytes, Datetime, Duration, NativeElement, StyleChain};
+use typst::foundations::{Bytes, Datetime, Duration, NativeElement, Smart, StyleChain};
 use typst::introspection::{Introspector, PagedPosition};
 use typst::layout::{Abs, Point};
-use typst::model::HeadingElem;
+use typst::model::{FigureElem, FigureKind, HeadingElem, Supplement};
 use typst::syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot};
 use typst::text::{Font, FontBook};
 use typst::utils::LazyHash;
@@ -424,10 +424,15 @@ impl Paper {
     /// of type `outline`, with `headings`, each its `level` (1 for a heading, 2 for one under
     /// it), its `text`, the `file` and the `line` (from 1) of the source it is written at
     /// (`file` null where it comes from no file of the paper), and where it stands on the
-    /// pages: `page` from 0, `x` and `y` in points from the page's top left.
+    /// pages: `page` from 0, `x` and `y` in points from the page's top left. With them, its
+    /// `figures`, the tables and figures of the paper in its order (Zemp Lite 0.3.1): each
+    /// its `kind` as Typst names it (`table`, `image`, or the name a paper gives), the word
+    /// Typst sets before its number (`supplement`: "Table", "Figure"), its `number` among
+    /// those of its kind (null where the paper numbers none), its `caption` (null where it
+    /// has none), and the same `file`, `line`, `page`, `x` and `y` as a heading.
     pub fn outline(&self) -> String {
         let Some(document) = self.document.as_ref() else {
-            return json!({ "type": "outline", "headings": [] }).to_string();
+            return json!({ "type": "outline", "headings": [], "figures": [] }).to_string();
         };
         let introspector = document.introspector();
         let headings: Vec<Value> = introspector
@@ -455,7 +460,58 @@ impl Paper {
                 }))
             })
             .collect();
-        json!({ "type": "outline", "headings": headings }).to_string()
+        let styles = StyleChain::default();
+        let mut counted: HashMap<String, usize> = HashMap::new();
+        let figures: Vec<Value> = introspector
+            .query(&FigureElem::ELEM.select())
+            .iter()
+            .filter_map(|element| {
+                let figure = element.to_packed::<FigureElem>()?;
+                let position = introspector.position(element.location()?)?;
+                let span = element.span();
+                let file = span.id().and_then(|id| self.world.names.get(&id));
+                let line = span.id().and_then(|id| {
+                    let range = self.world.range(span)?;
+                    let source = self.world.sources.get(&id)?;
+                    let (line, _) = source.lines().byte_to_line_column(range.start)?;
+                    Some(line + 1)
+                });
+                let kind = match figure.kind.get_cloned(styles) {
+                    Smart::Custom(FigureKind::Elem(element)) => element.name().to_string(),
+                    Smart::Custom(FigureKind::Name(name)) => name.to_string(),
+                    Smart::Auto => String::from("figure"),
+                };
+                // Typst counts the figures of each kind apart, and those a paper numbers.
+                let number = figure.numbering.get_ref(styles).as_ref().map(|_| {
+                    let count = counted.entry(kind.clone()).or_insert(0);
+                    *count += 1;
+                    *count
+                });
+                let supplement = match figure.supplement.get_ref(styles) {
+                    Smart::Custom(Some(Supplement::Content(content))) => {
+                        content.plain_text().to_string()
+                    }
+                    _ => String::new(),
+                };
+                let caption = figure
+                    .caption
+                    .get_ref(styles)
+                    .as_ref()
+                    .map(|caption| caption.body.plain_text().to_string());
+                Some(json!({
+                    "kind": kind,
+                    "supplement": supplement,
+                    "number": number,
+                    "caption": caption,
+                    "file": file,
+                    "line": line,
+                    "page": position.page.get() - 1,
+                    "x": position.point.x.to_pt(),
+                    "y": position.point.y.to_pt(),
+                }))
+            })
+            .collect();
+        json!({ "type": "outline", "headings": headings, "figures": figures }).to_string()
     }
 
     /// Where in the sources a point of a page came from (a click on the page): a line of JSON

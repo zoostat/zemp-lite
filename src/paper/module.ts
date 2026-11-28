@@ -4,7 +4,7 @@
 // source of a point on a page. The worker is apart from the engine's: a paper is set while a
 // script runs, and neither waits for the other.
 import type { WorkerLike } from "../engine/engine";
-import type { FromWorker, Heading, Place, Reply, Request, Setting } from "./messages";
+import type { Figure, FromWorker, Heading, Place, Reply, Request, Setting } from "./messages";
 
 /** The module could not do what it was asked: the worker's own words, or how the worker failed. */
 export class PaperError extends Error {
@@ -135,9 +135,10 @@ export class PaperModule {
     return expect(await this.#ask({ type: "pdf", created: seconds }), "pdf").bytes;
   }
 
-  /** The headings of the last document that set, in the order of the paper. */
-  async outline(): Promise<Heading[]> {
-    return expect(await this.#ask({ type: "outline" }), "outline").headings;
+  /** The headings, and the tables and figures, of the last document that set, in the paper's order. */
+  async outline(): Promise<{ headings: Heading[]; figures: Figure[] }> {
+    const told = expect(await this.#ask({ type: "outline" }), "outline");
+    return { headings: told.headings, figures: told.figures ?? [] };
   }
 
   /**

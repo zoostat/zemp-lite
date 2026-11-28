@@ -8,6 +8,7 @@ import {
   lineNaming,
   megabytes,
   offeredName,
+  figureName,
   outlineOf,
   pagesWords,
   papersOf,
@@ -272,6 +273,69 @@ describe("the Outline of a paper", () => {
       { level: 1, text: "Elsewhere", line: null, from: "output/other.typ", page: 1, y: 80 },
       { level: 1, text: "Made by a function", line: null, from: null, page: 1, y: 80 },
     ]);
+  });
+
+  it("lists the tables and figures among the headings, where they stand on the pages, each by its name", () => {
+    // Release 0.3.1, step 10 (open decision #245).
+    const figure = (
+      more: Partial<Parameters<typeof figureName>[0]> & {
+        y: number;
+        page?: number;
+        line?: number | null;
+        file?: string | null;
+        caption?: string | null;
+      },
+    ) => ({
+      kind: "table",
+      supplement: "Table",
+      number: 1 as number | null,
+      caption: null as string | null,
+      file: "paper/paper.typ" as string | null,
+      line: 5 as number | null,
+      page: 0,
+      x: 72,
+      ...more,
+    });
+    const rows = outlineOf(
+      [
+        heading({ line: 1, y: 80 }),
+        heading({ level: 2, text: "Results", line: 4, y: 200 }),
+        heading({ text: "Appendix", line: 20, page: 1, y: 60 }),
+      ],
+      "paper/paper.typ",
+      '= Returns\n== Results\n#include "tables/fit.typ"\n',
+      [
+        // Above every heading: at the first level, first of the rows.
+        figure({ kind: "image", supplement: "Figure", y: 40, line: null, file: null }),
+        figure({ y: 260, line: 6, caption: "The estimates." }),
+        figure({ kind: "image", supplement: "", number: 2, y: 400, line: 9 }),
+        // Of a file the paper includes: gone to at the line that includes it.
+        figure({ number: 2, y: 500, file: "paper/tables/fit.typ", line: 1 }),
+        figure({ kind: "listing", supplement: "Listing", number: null, page: 1, y: 300, line: 30 }),
+      ],
+    );
+    expect(
+      rows.map((row) => [row.level, row.text, row.line, row.page, row.figure?.kind ?? ""]),
+    ).toEqual([
+      [1, "Figure 1", null, 0, "figure"],
+      [1, "Returns", 1, 0, ""],
+      [2, "Results", 4, 0, ""],
+      [3, "Table 1", 6, 0, "table"],
+      [3, "Figure 2", 9, 0, "figure"],
+      [3, "Table 2", 3, 0, "table"],
+      [1, "Appendix", 20, 1, ""],
+      [2, "Listing", 30, 1, "figure"],
+    ]);
+    expect(rows[3]?.figure?.caption).toBe("The estimates.");
+    expect(rows[5]?.from).toBe("paper/tables/fit.typ");
+    // The name, as the page numbers it: Typst's own word where it gives one.
+    expect(figureName({ kind: "table", supplement: "Tabelle", number: 3 })).toBe("Tabelle 3");
+    expect(figureName({ kind: "table", supplement: "", number: null })).toBe("Table");
+    expect(figureName({ kind: "image", supplement: " ", number: 1 })).toBe("Figure 1");
+    // With no table or figure the rows are the headings alone, as they were.
+    expect(outlineOf([heading({ line: 1 })], "paper/paper.typ", "", [])).toEqual(
+      outlineOf([heading({ line: 1 })], "paper/paper.typ", ""),
+    );
   });
 
   it("marks the heading the cursor is under: the last at or above its line", () => {
