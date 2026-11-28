@@ -226,9 +226,17 @@ test("a page with no See also has none beside it; under the title, and on a page
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 800 });
-  // A code's page, a page of the app's own and Home have their list and no See also.
-  for (const address of ["code/Z0101", "using/finding-help", ""]) {
+  // A code's page, a page of the app's own and Home have their list and no See also. Each is
+  // waited for before the next is asked: on a slow machine an address asked while the one
+  // before it was still being opened was passed over (seen on GitHub, in the check of step 11b).
+  for (const [address, there] of [
+    ["code/Z0101", "Z0101"],
+    ["using/finding-help", "Finding help"],
+    ["", null],
+  ] as const) {
     await page.goto(`/#/help${address === "" ? "" : `/${address}`}`);
+    if (there === null) await expect(page.getByTestId("help-counts")).toBeVisible();
+    else await expect(title(page)).toHaveText(there);
     await expect(list(page), address).toHaveCount(1);
     await expect(also(page), address).toHaveCount(0);
   }
