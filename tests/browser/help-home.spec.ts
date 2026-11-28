@@ -252,7 +252,7 @@ test("there is no Index of functions: every function is reached from its package
   expect(reached).toEqual({ packages: 11, functions: 266, missing: [] });
 
   // From search, and from a link of a page.
-  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
+  const field = page.getByRole("combobox", { name: /^Search Help/ });
   await field.fill("lm");
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");

@@ -29,7 +29,7 @@ The keys the app answers to, place by place. On Windows and Linux, Ctrl takes th
 
 ## In Help
 
-- <kbd>/</kbd>: put the cursor in the search field.
+- <kbd>/</kbd>: put the cursor in the search field, at the top of the index at the left.
 - <kbd>⌘[</kbd> and <kbd>⌘]</kbd>: back and forward through the pages opened.
 
 ## In the Data and Plots places

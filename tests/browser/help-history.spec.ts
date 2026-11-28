@@ -22,7 +22,7 @@ const back = (page: Page) => moving(page).getByRole("button", { name: "Back" });
 const forward = (page: Page) => moving(page).getByRole("button", { name: "Forward" });
 const home = (page: Page) => moving(page).getByRole("button", { name: "Home" });
 const title = (page: Page) => page.getByTestId("help-title");
-const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
+const field = (page: Page) => page.getByRole("combobox", { name: /^Search Help/ });
 const trail = (page: Page) => bar(page).getByRole("navigation", { name: "Where this page stands" });
 
 /** Open a page by its name or its code, typed in the field of the bar. */

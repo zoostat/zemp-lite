@@ -34,7 +34,7 @@ const topics = (page: Page) =>
     .getByRole("complementary", { name: "Help: the left pane" })
     .getByRole("region", { name: "Topics" });
 const trail = (page: Page) => bar(page).getByRole("navigation", { name: "Where this page stands" });
-const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
+const field = (page: Page) => page.getByRole("combobox", { name: /^Search Help/ });
 const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
@@ -186,7 +186,7 @@ test("the pages are found by search and by the trail, and listed on a page of th
   await scratch(page, press);
   // By the title begun, and by a word of the one line.
   await field(page).fill("getting");
-  const options = bar(page).getByRole("listbox", { name: "What was found" }).getByRole("option");
+  const options = page.getByRole("listbox", { name: "What was found" }).getByRole("option");
   await expect(options.first()).toHaveText(
     /^page\s*Getting started\s*Open the Scratch project, run a script, and read what each statement made\.\s*$/,
   );

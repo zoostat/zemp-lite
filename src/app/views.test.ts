@@ -205,6 +205,10 @@ describe("the view state of a project", () => {
     expect(topicOpen(state, TOPICS.packages)).toBe(true);
     expect(topicOpen(state, TOPICS.codes)).toBe(true);
     expect(topicOpen(state, familyTopic("Z01xx"))).toBe(false);
+    // **Functions**, every function by its name, is folded until it is asked for.
+    expect(topicOpen(state, TOPICS.functions)).toBe(false);
+    state.help.topics = { functions: true };
+    expect(topicOpen(state, TOPICS.functions)).toBe(true);
     state.help.topics = { packages: false, "codes:Z01xx": true };
     const read = readViews(writeViews(state));
     expect(read.help).toEqual({ topics: { packages: false, "codes:Z01xx": true } });

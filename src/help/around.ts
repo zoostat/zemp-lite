@@ -141,3 +141,27 @@ export function aroundOf(
   }
   return [];
 }
+
+/** A function in the list of them all: a neighbour, with the package it is of. */
+export interface Listed extends Neighbour {
+  package: string;
+}
+
+/**
+ * Every function the engine has, by its name (release 0.3.1, step 11a; open decision #245:
+ * **Functions** in the index of Help): one row for each function of each package, a name that
+ * is two functions listed twice, each saying which it is (#215); in the order of the names,
+ * and of the packages where a name stands in two. The one whose page is open is marked.
+ */
+export function functionsOf(index: HelpIndex | null, stop: Stop | null): Listed[] {
+  if (index === null) return [];
+  const open = stop?.kind === "name" ? stop : null;
+  const rows = index.packages.flatMap((one) =>
+    (packageAround(index, one.name, open, false)[0]?.rows ?? []).map((row): Listed => ({
+      ...row,
+      package: one.name,
+    })),
+  );
+  const order = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+  return rows.sort((a, b) => order(a.name, b.name) || order(a.package, b.package));
+}

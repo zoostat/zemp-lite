@@ -17,7 +17,7 @@ const places = (page: Page) => page.getByRole("navigation", { name: "Places" });
 const bar = (page: Page) => page.getByRole("toolbar", { name: "Help: its panes and its controls" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
-const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
+const field = (page: Page) => page.getByRole("combobox", { name: /^Search Help/ });
 
 for (const theme of ["light", "dark"] as const) {
   test(`every kind of page of Help keeps to 12.5 pixels, to 4.5 to 1 and to its column, at 1,200 pixels and narrower, in the ${theme} theme`, async ({

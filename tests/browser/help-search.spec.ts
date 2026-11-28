@@ -1,8 +1,10 @@
-// Search as one types, in the field of the Help place's bar (release 0.2.3, step 7; the row
-// of 0.2.3; open decision #211, part 4): from the second letter a list opens under the field
-// with up to eight matches, each saying what it is and why it matched; the arrows move
-// through it, Enter opens the one marked, Escape closes it, and `/` puts the cursor in the
-// field. Nothing found is a sentence and the nearest names. No request leaves the page.
+// Search as one types, in the field at the top of Help's index (release 0.2.3, step 7; open
+// decision #211, part 4; from release 0.3.1, step 11a, in the Topics pane at the left, where
+// #245 draws it, and no longer in the place's bar): from the second letter a list stands
+// under the field, in the index's place, with up to eight matches, each saying what it is and
+// why it matched; the arrows move through it, Enter opens the one marked, Escape closes it,
+// and `/` puts the cursor in the field, opening the pane where it is closed. Nothing found is
+// a sentence and the nearest names. No request leaves the page.
 import type { Locator, Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
@@ -20,8 +22,10 @@ async function scratch(page: Page, press: (target: Locator) => Promise<void>) {
 }
 
 const bar = (page: Page) => page.getByRole("toolbar", { name: "Help: its panes and its controls" });
-const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
-const list = (page: Page) => bar(page).getByRole("listbox", { name: "What was found" });
+const field = (page: Page) => index(page).getByRole("combobox", { name: /^Search Help/ });
+/** The Topics pane, the index of Help, which holds the field and what it finds. */
+const index = (page: Page) => page.locator('[data-pane="topics"]');
+const list = (page: Page) => index(page).getByRole("listbox", { name: "What was found" });
 const options = (page: Page) => list(page).getByRole("option");
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
@@ -35,10 +39,7 @@ test("the field suggests from the second letter: what each match is, its one lin
   press,
 }) => {
   await scratch(page, press);
-  await expect(field(page)).toHaveAttribute(
-    "placeholder",
-    "Search functions, codes, R and Stata names",
-  );
+  await expect(field(page)).toHaveAttribute("placeholder", "Search: a name, a word, R or Stata");
   await expect(field(page)).toHaveAttribute("aria-expanded", "false");
   // One letter opens nothing; the second does.
   await field(page).pressSequentially("l");
@@ -145,7 +146,7 @@ test("nothing found is a sentence and the nearest names, never an empty list", a
 }) => {
   await scratch(page, press);
   await field(page).fill("xtreg");
-  const said = bar(page).getByRole("status");
+  const said = index(page).getByRole("status");
   await expect(said).toHaveText(
     "Nothing here is called or described by “xtreg”. The nearest names:",
   );
@@ -220,7 +221,7 @@ test("the arrows move through the list, Enter opens the marked or the name as ty
   await field(page).fill("test");
   await options(page).nth(3).hover();
   await expect(options(page).nth(3)).toHaveAttribute("aria-selected", "true");
-  // (A press at the page's left edge, clear of the list, which lies over its right.)
+  // (A press on the page, beside the pane that holds the list.)
   await page
     .getByTestId("help")
     .locator(".page")
@@ -263,7 +264,7 @@ test("no request leaves the page while one types and opens what was found", asyn
 });
 
 for (const theme of ["light", "dark"] as const) {
-  test(`the list stays inside the window, is read as a combobox's, and keeps to the sizes and the contrast, in the ${theme} theme`, async ({
+  test(`the list stands in the index's place under the field, is read as a combobox's, and keeps to the sizes and the contrast, in the ${theme} theme`, async ({
     page,
     press,
   }) => {
@@ -271,28 +272,31 @@ for (const theme of ["light", "dark"] as const) {
     await scratch(page, press);
     if (theme === "dark") await press(page.getByRole("switch", { name: "Dark" }));
     const inside = async () => {
-      // The list and its field, measured at one moment.
-      const at = await bar(page)
-        .locator(".search")
-        .evaluate((node) => {
-          const box = node.querySelector(".found")!.getBoundingClientRect();
-          const under = node.querySelector("input")!.getBoundingClientRect();
-          return {
-            left: box.left,
-            right: box.right,
-            top: box.top,
-            bottom: box.bottom,
-            field: under.bottom,
-            wide: innerWidth,
-            high: innerHeight,
-            sideways: document.documentElement.scrollWidth - innerWidth,
-          };
-        });
-      expect(at.left).toBeGreaterThanOrEqual(0);
-      expect(at.right).toBeLessThanOrEqual(at.wide);
-      expect(at.bottom).toBeLessThanOrEqual(at.high);
-      // Under the field, and no part of the page pushed sideways by it.
+      // The list, its field and their pane, measured at one moment.
+      const at = await index(page).evaluate((node) => {
+        const box = node.querySelector(".found")!.getBoundingClientRect();
+        const under = node.querySelector("input")!.getBoundingClientRect();
+        const pane = node.getBoundingClientRect();
+        return {
+          left: box.left,
+          right: box.right,
+          top: box.top,
+          field: under.bottom,
+          pane: { left: pane.left, right: pane.right },
+          // The index gives its place to the list: none of its sections is drawn beside it.
+          sections: [...node.querySelectorAll("section")].filter(
+            (one) => one.getBoundingClientRect().height > 0,
+          ).length,
+          across: node.scrollWidth - node.clientWidth,
+          sideways: document.documentElement.scrollWidth - innerWidth,
+        };
+      });
+      // In the pane, under the field, and nothing pushed sideways by it.
+      expect(at.left).toBeGreaterThanOrEqual(at.pane.left);
+      expect(at.right).toBeLessThanOrEqual(at.pane.right);
       expect(at.top).toBeGreaterThanOrEqual(at.field);
+      expect(at.sections).toBe(0);
+      expect(at.across).toBeLessThanOrEqual(0);
       expect(at.sideways).toBe(0);
     };
     // Eight matches, the longest lines there are; then the same in a narrower window.
@@ -309,24 +313,26 @@ for (const theme of ["light", "dark"] as const) {
     );
     await page.keyboard.press("ArrowDown");
     expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
-    expect(await faintText(bar(page).locator(".found"))).toEqual([]);
+    expect(await faintText(index(page).locator(".found"))).toEqual([]);
     await field(page).fill("lm");
     await expect(options(page)).toHaveCount(3);
-    expect(await faintText(bar(page).locator(".found"))).toEqual([]);
+    expect(await faintText(index(page).locator(".found"))).toEqual([]);
     await page.keyboard.press("ArrowDown");
-    expect(await faintText(bar(page).locator(".found"))).toEqual([]);
+    expect(await faintText(index(page).locator(".found"))).toEqual([]);
     await field(page).fill("xtreg");
-    await expect(bar(page).getByRole("status")).toBeVisible();
-    expect(await faintText(bar(page).locator(".found"))).toEqual([]);
-    // The field's own words, where nothing is typed.
+    await expect(index(page).getByRole("status")).toBeVisible();
+    expect(await faintText(index(page).locator(".found"))).toEqual([]);
+    // The field's own words, where nothing is typed, and the index under it.
     await field(page).fill("");
-    expect(await faintText(bar(page))).toEqual([]);
+    expect(await faintText(index(page))).toEqual([]);
 
     await page.setViewportSize({ width: 1000, height: 700 });
     await field(page).fill("test");
     await expect(options(page)).toHaveCount(8);
     await inside();
-    // The bar holds the field and the trail still.
+    // The index is back in its place once the field is left, and the bar holds its trail still.
+    await page.keyboard.press("Escape");
+    await expect(index(page).getByRole("region", { name: "Start here" })).toBeVisible();
     const fits = await bar(page).evaluate((node) => node.scrollWidth <= node.clientWidth);
     expect(fits).toBe(true);
   });
@@ -388,4 +394,62 @@ test("a name the engine suggests in its sentence is a link to that name's page",
   await other.focus();
   await page.keyboard.press("Enter");
   await expect(title(page)).toHaveText("reg");
+});
+
+test("the field stands at the top of the index and not in the bar, and stays there while the index moves under it", async ({
+  page,
+  press,
+}) => {
+  // Release 0.3.1, step 11a (open decision #245): until then the field stood at the right end
+  // of the place's bar.
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await scratch(page, press);
+  await expect(bar(page).getByRole("combobox")).toHaveCount(0);
+  await expect(field(page)).toBeVisible();
+  await expect(field(page)).toHaveAttribute("title", /an R or a Stata name, or a code$/);
+  // Above every section of the index.
+  const top = async (of: Locator) => (await of.boundingBox())!.y;
+  const first = index(page).getByRole("region", { name: "Start here" });
+  expect(await top(field(page))).toBeLessThan(await top(first));
+  // A long list unfolded, and the pane moved to its end: the field is where it was.
+  await press(index(page).getByRole("button", { name: /^Functions/ }));
+  await expect(index(page).getByRole("list", { name: "Functions" })).toBeVisible();
+  const before = await top(field(page));
+  const side = page.locator("aside", { has: index(page) });
+  await side.evaluate((node) => (node.scrollTop = node.scrollHeight));
+  expect(await side.evaluate((node) => node.scrollTop)).toBeGreaterThan(500);
+  await expect(field(page)).toBeInViewport();
+  expect(await top(field(page))).toBeLessThanOrEqual(before);
+  // And it answers there as it did: a name typed and found, from the end of the long list.
+  await field(page).fill("ttest");
+  await expect(options(page)).toHaveCount(1);
+  await expect(options(page).first()).toBeInViewport();
+  await page.keyboard.press("Enter");
+  await expect(title(page)).toHaveText("t_test");
+});
+
+test("/ and Help: search open the index where it is closed, and put the cursor in its field", async ({
+  page,
+  press,
+}) => {
+  await scratch(page, press);
+  const topics = bar(page).getByRole("button", { name: "Topics", exact: true });
+  await press(topics);
+  await expect(topics).toHaveAttribute("aria-pressed", "false");
+  await expect(index(page)).toHaveCount(0);
+  await bar(page).getByRole("button", { name: "Home" }).focus();
+  await page.keyboard.press("/");
+  await expect(topics).toHaveAttribute("aria-pressed", "true");
+  await expect(field(page)).toBeFocused();
+  await expect(field(page)).toHaveValue("");
+  // From ⌘K too, and from another place.
+  await press(topics);
+  await press(
+    page.getByRole("navigation", { name: "Places" }).getByRole("button", { name: "Script" }),
+  );
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.getByRole("combobox", { name: "Type a command" }).fill("help search");
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("help")).toBeVisible();
+  await expect(field(page)).toBeFocused();
 });

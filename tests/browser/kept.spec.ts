@@ -503,7 +503,9 @@ test("a start opens on the Script place, and Help then on Home with Topics close
   for (const name of [/Packages/, /Errors and warnings/, /Using Zemp Lite/]) {
     await expect(fold(name)).toHaveAttribute("aria-expanded", "false");
   }
-  await expect(topics.getByRole("list")).toHaveCount(0);
+  // (Start here, which folds nothing, is the one list there is: release 0.3.1, step 11a.)
+  await expect(topics.getByRole("list")).toHaveCount(1);
+  await expect(topics.getByRole("list", { name: "Start here" })).toBeVisible();
   // The reader unfolds two sections and a family, and reads a page.
   await press(fold(/Packages/));
   await press(fold(/Errors and warnings/));
@@ -533,7 +535,7 @@ test("a start opens on the Script place, and Help then on Home with Topics close
   for (const name of [/Packages/, /Errors and warnings/, /Using Zemp Lite/]) {
     await expect(fold(name)).toHaveAttribute("aria-expanded", "false");
   }
-  await expect(topics.getByRole("list")).toHaveCount(0);
+  await expect(topics.getByRole("list")).toHaveCount(1);
   // The family the reader had unfolded is folded again inside its section.
   await press(fold(/Errors and warnings/));
   await expect(family).toHaveAttribute("aria-expanded", "false");

@@ -6,6 +6,10 @@
 // place of the packages and the codes: a function's package with its functions, the open one
 // marked; a code's family with its codes; and **‹ All topics**, which returns it to its
 // sections without leaving the page.
+//
+// From release 0.3.1 (step 11a; open decision #245) the pane is the index of Help: under the
+// search field **Start here**, with Home and two pages of the app's own; and **Functions**,
+// every function by its name with its package, folded until it is asked for.
 import type { Locator, Page } from "@playwright/test";
 import { expect, faintText, smallestText, test, useExample } from "./support";
 
@@ -49,7 +53,7 @@ const allTopics = (page: Page) => topics(page).getByRole("button", { name: "All 
 const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
-const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
+const field = (page: Page) => page.getByRole("combobox", { name: /^Search Help/ });
 
 async function ask(page: Page, name: string) {
   await field(page).fill(name);
@@ -78,17 +82,22 @@ test("Topics holds sections that fold, each with its count, by the mouse and by 
   await scratch(page, press, false);
   // Help, first opened after a start: every section closed, each with its count.
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
+    "Start here",
     /^▸\s*Packages\s*11$/,
+    /^▸\s*Functions\s*266$/,
     /^▸\s*Errors and warnings\s*148$/,
     /^▸\s*Using Zemp Lite\s*\d+$/,
   ]);
-  await expect(topics(page).getByRole("list")).toHaveCount(0);
+  // Start here folds nothing: its three pages are the only list.
+  await expect(topics(page).getByRole("list")).toHaveCount(1);
   for (const name of ["Packages", "Errors and warnings", "Using Zemp Lite"]) {
     await press(head(page, name));
   }
   // Unfolded: the packages and the codes, each section open, with its count.
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
+    "Start here",
     /^▾\s*Packages\s*11$/,
+    /^▸\s*Functions\s*266$/,
     /^▾\s*Errors and warnings\s*148$/,
     /^▾\s*Using Zemp Lite\s*\d+$/,
   ]);
@@ -292,7 +301,9 @@ test("beside a function's page Topics holds its package, the open function marke
   await expect(title(page)).toHaveText("t_test");
   await expect(shown(page).getByRole("heading", { level: 3 })).toHaveText("t_test");
   await expect(topics(page).getByRole("heading", { level: 3 })).toHaveText([
+    "Start here",
     /^▾\s*Packages\s*11$/,
+    /^▸\s*Functions\s*266$/,
     /^▾\s*Errors and warnings\s*148$/,
     /^▾\s*Using Zemp Lite\s*\d+$/,
   ]);
@@ -461,5 +472,89 @@ for (const theme of ["light", "dark"] as const) {
     await page.keyboard.press("Enter");
     await expect(head(page, "Packages")).toBeVisible();
     await expect(title(page)).toHaveText("proportion_test");
+  });
+}
+
+test("Start here holds Home and two pages of the app's own, the one open marked", async ({
+  page,
+  press,
+}) => {
+  // Release 0.3.1, step 11a (open decision #245).
+  await scratch(page, press, false);
+  const start = listOf(page, "Start here").getByRole("button");
+  await expect(start).toHaveText(["Help home", "Getting started", "Finding help"]);
+  // On Home, where Help starts, the first is the page open.
+  await expect(start.nth(0)).toHaveAttribute("aria-current", "page");
+  await expect(start.nth(1)).not.toHaveAttribute("aria-current", "page");
+  await expect(start.nth(1)).toHaveAttribute(
+    "title",
+    "Open the Scratch project, run a script, and read what each statement made.",
+  );
+  // A page of the app's own: opened, with its neighbours beside it; All topics has the three
+  // again, that page marked.
+  await press(start.nth(2));
+  await expect(title(page)).toHaveText("Finding help");
+  await press(allTopics(page));
+  await expect(start.nth(2)).toHaveAttribute("aria-current", "page");
+  await expect(start.nth(0)).not.toHaveAttribute("aria-current", "page");
+  // By the keyboard, back to Home.
+  await start.nth(0).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("help-counts")).toBeVisible();
+  await expect(start.nth(0)).toHaveAttribute("aria-current", "page");
+  await expect(back(page)).toHaveAttribute("title", "Back: Finding help");
+});
+
+for (const theme of ["light", "dark"] as const) {
+  test(`Functions lists every function by its name with its package, and opens its page, in the ${theme} theme`, async ({
+    page,
+    press,
+  }) => {
+    // Release 0.3.1, step 11a (open decision #245).
+    await scratch(page, press, false);
+    if (theme === "dark") await press(page.getByRole("switch", { name: "Dark" }));
+    // Folded until it is asked for: 266 rows are a long way to the codes under them.
+    await expect(head(page, "Functions")).toHaveAttribute("aria-expanded", "false");
+    await expect(listOf(page, "Functions")).toHaveCount(0);
+    await press(head(page, "Functions"));
+    const rows = listOf(page, "Functions").getByRole("button");
+    await expect(rows).toHaveCount(266);
+    // In the order of the names, each with its package.
+    const names = await rows.evaluateAll((all) =>
+      all.map((one) => one.querySelector(".mono")!.textContent!),
+    );
+    expect(names).toEqual([...names].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)));
+    const reg = rows.filter({ hasText: /^reg\s*regress$/ });
+    await expect(reg).toHaveCount(1);
+    await expect(reg).toHaveAttribute(
+      "title",
+      "Linear regression by least squares, with fixed effects",
+    );
+    // A name that is two functions is listed twice, each saying which it is (#215).
+    await expect(rows.filter({ hasText: /^summary/ })).toHaveText([
+      /^summary\s*of a frame\s*data$/,
+      /^summary\s*of a result\s*results$/,
+    ]);
+    expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
+    expect(await faintText(topics(page))).toEqual([]);
+    // A row opens its page, which has its package beside it; All topics has the list again,
+    // unfolded as it was left, the function open marked.
+    await press(reg);
+    await expect(title(page)).toHaveText("reg");
+    await press(allTopics(page));
+    await expect(reg).toHaveAttribute("aria-current", "page");
+    expect(await faintText(topics(page))).toEqual([]);
+    // One of two opens its own page, and only it is marked.
+    await press(rows.filter({ hasText: /^summary\s*of a result/ }));
+    await expect(title(page)).toHaveText("of a result");
+    await press(allTopics(page));
+    await expect(listOf(page, "Functions").locator('[aria-current="page"]')).toHaveText(
+      /^summary\s*of a result\s*results$/,
+    );
+    // Folded again by the keyboard, and kept so.
+    await head(page, "Functions").focus();
+    await page.keyboard.press("Enter");
+    await expect(listOf(page, "Functions")).toHaveCount(0);
+    await expect(head(page, "Functions")).toHaveText(/^▸\s*Functions\s*266$/);
   });
 }

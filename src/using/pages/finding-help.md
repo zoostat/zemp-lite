@@ -6,7 +6,7 @@ Every page of Help but these few on the app is the engine's own, in the words `z
 
 ## Search
 
-Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From the second letter a list opens with what was found. You can type:
+Type in the field at the top of the **Topics** pane, at the left of Help; <kbd>/</kbd> puts the cursor there, and opens the pane if it is closed. From the second letter a list of what was found stands under the field, in the pane. You can type:
 
 - a function's name, or its beginning: `summ` finds `summary`;
 - a word of what a function does: `regression`;
@@ -19,7 +19,7 @@ Type in the field at the top of Help; <kbd>/</kbd> puts the cursor there. From t
 
 ## Browse
 
-**Home** is where Help starts: what Zeff and Zemp Lite are, and a card for each kind of page, the packages, the errors and warnings, and these pages on the app. A package's page lists its functions, each with its one line. The **Topics** pane at the left has a section for each of the three; press a section's name to unfold it. Beside a page the pane lists the pages around it. At the right of a page its sections are listed, under the words On this page; press one to go to it.
+**Home** is where Help starts: what Zeff and Zemp Lite are, and a card for each kind of page, the packages, the errors and warnings, and these pages on the app. A package's page lists its functions, each with its one line. The **Topics** pane at the left is the index of Help. Under the search field, the words Start here stand over Home and the two pages to read first. Then a section for each of the three, and **Functions**, which lists every function by its name with its package; press a section's name to unfold it. Beside a page the pane lists the pages around it, and **All topics** brings the index back. At the right of a page its sections are listed, under the words On this page; press one to go to it.
 
 ## From the script
 

@@ -341,6 +341,7 @@ export function writeViews(state: ViewState): string {
 /** The sections of the Topics pane, by their keys; a family of codes is `codes:` and its name. */
 export const TOPICS = {
   packages: "packages",
+  functions: "functions",
   codes: "codes",
   using: "using",
 } as const;
@@ -349,10 +350,11 @@ export const familyTopic = (family: string) => `codes:${family}`;
 
 /**
  * Whether a section of the Topics pane is open: as the reader left it, or as it first stands:
- * the sections open, and each family of codes folded to its name.
+ * the sections open, each family of codes folded to its name, and **Functions**, the long
+ * list of every function by its name, folded too (release 0.3.1, step 11a).
  */
 export function topicOpen(state: ViewState, key: string): boolean {
-  return state.help.topics[key] ?? !key.startsWith("codes:");
+  return state.help.topics[key] ?? !(key.startsWith("codes:") || key === TOPICS.functions);
 }
 
 /**

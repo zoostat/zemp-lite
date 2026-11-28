@@ -26,7 +26,7 @@ const step = (page: Page, name: string) => trail(page).getByRole("button", { nam
 const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
-const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
+const field = (page: Page) => page.getByRole("combobox", { name: /^Search Help/ });
 /** The pane at the right, On this page, and the sections it lists. */
 const onThisPage = (page: Page) => page.getByRole("navigation", { name: "On this page" });
 const outline = (page: Page) => onThisPage(page).getByRole("list");
@@ -303,21 +303,22 @@ for (const theme of ["light", "dark"] as const) {
   });
 }
 
-test("the bar of Help: Topics, Back, Forward, Home, the trail, and the search field at the right end, with nothing after it", async ({
+test("the bar of Help: Topics, Back, Forward, Home and the trail; the search field is under it, at the top of the index", async ({
   page,
   press,
 }) => {
+  // From release 0.3.1 (step 11a; open decision #245) the search field stands at the top of
+  // the index at the left; until then it ended this bar.
   await page.setViewportSize({ width: 1200, height: 700 });
   await scratch(page, press);
-  const field = bar(page).getByRole("combobox", { name: /^Search Help/ });
-  const order = async () => {
+  const field = page.getByRole("combobox", { name: /^Search Help/ });
+  const order = async (index: boolean) => {
     const parts = [
       bar(page).getByRole("button", { name: "Topics", exact: true }),
       back(page),
       bar(page).getByRole("button", { name: "Forward" }),
       home(page),
       ...((await trail(page).count()) > 0 ? [trail(page)] : []),
-      field,
     ];
     const boxes = [];
     for (const part of parts) boxes.push((await part.boundingBox())!);
@@ -328,29 +329,31 @@ test("the bar of Help: Topics, Back, Forward, Home, the trail, and the search fi
         Math.abs(boxes[at]!.y + boxes[at]!.height / 2 - (boxes[0]!.y + boxes[0]!.height / 2)),
       ).toBeLessThan(8);
     }
-    // Nothing stands after the field: it ends the bar (the list of the page's sections has no
-    // link there from 0.2.4; open decision #220, item 7).
+    // The bar holds no field, and nothing of it is cut.
+    await expect(bar(page).locator("input")).toHaveCount(0);
+    expect(await bar(page).evaluate((node) => node.scrollWidth <= node.clientWidth)).toBe(true);
+    // The field is under the bar, in the pane at the left, where that pane is open.
+    await expect(field).toHaveCount(index ? 1 : 0);
+    if (!index) return;
     const end = (await bar(page).boundingBox())!;
-    const last = boxes[boxes.length - 1]!;
-    expect(end.x + end.width - (last.x + last.width)).toBeLessThan(24);
-    const between = await bar(page).evaluate((node) => {
-      const input = node.querySelector("input")!.getBoundingClientRect();
-      return [...node.querySelectorAll("button")].filter(
-        (one) => one.getBoundingClientRect().left >= input.right,
-      ).length;
-    });
-    expect(between).toBe(0);
+    const at = (await field.boundingBox())!;
+    const pane = (await page
+      .getByRole("complementary", { name: "Help: the left pane" })
+      .boundingBox())!;
+    expect(at.y).toBeGreaterThanOrEqual(end.y + end.height);
+    expect(at.x).toBeGreaterThanOrEqual(pane.x);
+    expect(at.x + at.width).toBeLessThanOrEqual(pane.x + pane.width);
   };
   // On Home, where there is no trail; on a page; and in a narrower window.
-  await order();
+  await order(true);
   await ask(page, "proportion_test");
-  await order();
+  await order(true);
   // (Until release 0.3.1 a window this narrow said so in a line at its top, which moved the
   // bar down; the line is gone: open decision #243.)
   await page.setViewportSize({ width: 1000, height: 700 });
-  await order();
-  // With Topics closed the bar is in the same order.
+  await order(true);
+  // With Topics closed the bar is in the same order, and the field is closed with its pane.
   await page.setViewportSize({ width: 1200, height: 700 });
   await press(bar(page).getByRole("button", { name: "Topics", exact: true }));
-  await order();
+  await order(false);
 });

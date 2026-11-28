@@ -30,7 +30,7 @@ const back = (page: Page) => bar(page).getByRole("button", { name: "Back" });
 const forward = (page: Page) => bar(page).getByRole("button", { name: "Forward" });
 const title = (page: Page) => page.getByTestId("help-title");
 const shown = (page: Page) => page.getByTestId("help-page");
-const field = (page: Page) => bar(page).getByRole("combobox", { name: /^Search Help/ });
+const field = (page: Page) => page.getByRole("combobox", { name: /^Search Help/ });
 const options = (page: Page) =>
   page.getByRole("listbox", { name: "What was found" }).getByRole("option");
 const topics = (page: Page) =>

@@ -1803,9 +1803,13 @@ export class Workspace {
    */
   helpSearchAsked = $state(false);
 
-  /** Show the Help place with the cursor in its search field, as `/` puts it there. */
+  /**
+   * Show the Help place with the cursor in its search field, as `/` puts it there. The field
+   * stands at the top of the Topics pane (release 0.3.1, step 11a), which is opened for it.
+   */
   searchHelp(): void {
     this.openHelp();
+    this.setPane("help", "topics", true);
     this.helpSearchAsked = true;
   }
 

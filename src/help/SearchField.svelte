@@ -1,19 +1,23 @@
 <script lang="ts">
-  // The search field of the Help place's bar (release 0.2.3, step 7; the row of 0.2.3; open
-  // decision #211, part 4, and the owner's "search bar was already there, use it"). From the
-  // second letter typed a list opens under the field with what `search.ts` finds, refreshed
+  // The search field of the Help place (release 0.2.3, step 7; open decision #211, part 4;
+  // from release 0.3.1, step 11a, at the top of the index at the left, where #245 draws it:
+  // until then it stood at the right end of the place's bar). From the second letter typed a
+  // list stands under the field, in the index's place, with what `search.ts` finds, refreshed
   // at each key: up to eight matches, each with what it is, its name, its one line and why it
   // matched; or, where nothing is found, a sentence and the nearest names. ↑ and ↓ move
   // through the list, ↵ opens the one marked, Esc closes it, and `/` puts the cursor in the
-  // field from anywhere in the place that is not itself a field. With none marked ↵ opens
-  // the page of the name or the code as typed, as the field did before. A screen reader is
-  // told a combobox and its list. Nothing is asked of any server.
+  // field from anywhere in the place that is not itself a field (`HelpPlace.svelte`, which
+  // opens the pane for it). With none marked ↵ opens the page of the name or the code as
+  // typed, as the field did before. A screen reader is told a combobox and its list. Nothing
+  // is asked of any server.
   import type { Workspace } from "../app/workspace-state.svelte";
   import Named from "../theme/Named.svelte";
   import { USING } from "../using/pages";
   import { entriesOf, search, LEAST, type Entry, type Match, type OwnPage } from "./search";
 
-  let { workspace }: { workspace: Workspace } = $props();
+  // `showing` tells the pane that the list is on the screen, so that the index gives it room.
+  let { workspace, showing = $bindable(false) }: { workspace: Workspace; showing?: boolean } =
+    $props();
 
   // The app's own pages are searched with the engine's: by their titles and their one lines.
   const own: OwnPage[] = USING.map((page) => ({
@@ -37,6 +41,9 @@
   // nothing to search, and the list waits for it: it never says "nothing" of what it has not read.
   const ready = $derived(workspace.helpIndex !== null);
   const shown = $derived(open && ready && (found.matches.length > 0 || found.nothing !== null));
+  $effect(() => {
+    showing = shown;
+  });
 
   const KINDS = {
     function: "function",
@@ -109,21 +116,7 @@
       input.select();
     });
   });
-
-  /** `/`, typed where nothing is being typed, puts the cursor in the field. */
-  function slash(event: KeyboardEvent): void {
-    if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
-    const at = event.target as HTMLElement | null;
-    if (at !== null && (at.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(at.tagName))) {
-      return;
-    }
-    event.preventDefault();
-    field?.focus();
-    field?.select();
-  }
 </script>
-
-<svelte:window onkeydown={slash} />
 
 <div class="search">
   <input
@@ -136,7 +129,8 @@
     aria-controls="help-found"
     aria-autocomplete="list"
     aria-activedescendant={shown && marked !== null ? `help-found-${marked}` : undefined}
-    placeholder="Search functions, codes, R and Stata names"
+    placeholder="Search: a name, a word, R or Stata"
+    title="Search Help by a function's name, a word of what it does, an R or a Stata name, or a code"
     autocomplete="off"
     spellcheck="false"
     oninput={() => {
@@ -148,72 +142,77 @@
     onkeydown={keys}
   />
   <kbd aria-hidden="true">/</kbd>
-  {#if shown}
-    <!-- A press on the list is not to take the cursor from the field before it is answered. -->
-    <div class="found" onmousedown={(event) => event.preventDefault()} role="presentation">
-      {#if found.nothing !== null}
-        <p class="nothing" role="status">{found.nothing.sentence}</p>
-      {/if}
-      <ul id="help-found" role="listbox" aria-label="What was found">
-        {#each offered as one, at (`${one.kind} ${one.name} ${one.packages.join(" ")} ${one.of ?? ""}`)}
-          {@const [before, word, after] = cut(one)}
-          <!-- The keyboard chooses from the field above; the list answers the pointer. -->
-          <!-- svelte-ignore a11y_click_events_have_key_events -->
-          <li
-            id="help-found-{at}"
-            role="option"
-            aria-selected={at === marked}
-            class:on={at === marked}
-            onclick={() => go(one)}
-            onpointermove={() => (marked = at)}
-          >
-            <span class="kind">{KINDS[one.kind]}</span>
-            <span class="what">
-              <span class="name" class:mono={one.kind !== "page"}>{one.name}</span>
-              <!-- A function of a name that has two says which it is, before its package (#215). -->
-              {#if one.of !== undefined}<span class="form">{one.of}</span>{/if}
-              {#if one.packages.length > 0}
-                <span class="of"><Named text={one.packages.join(" · ")} /></span>
-              {/if}
-              <span class="words">{before}<b>{word}</b>{after}</span>
-              {#if one.why}
-                <span class="why">matched {one.why}</span>
-              {/if}
-            </span>
-          </li>
-        {/each}
-      </ul>
-    </div>
-  {:else if open && [...typed.trim()].length < LEAST}
-    <!-- The list is not open yet: its place is named, so that the field's own words hold. -->
-    <ul id="help-found" role="listbox" aria-label="What was found" hidden></ul>
-  {/if}
 </div>
+{#if shown}
+  <!-- A press on the list is not to take the cursor from the field before it is answered. -->
+  <div class="found" onmousedown={(event) => event.preventDefault()} role="presentation">
+    {#if found.nothing !== null}
+      <p class="nothing" role="status">{found.nothing.sentence}</p>
+    {/if}
+    <ul id="help-found" role="listbox" aria-label="What was found">
+      {#each offered as one, at (`${one.kind} ${one.name} ${one.packages.join(" ")} ${one.of ?? ""}`)}
+        {@const [before, word, after] = cut(one)}
+        <!-- The keyboard chooses from the field above; the list answers the pointer. -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <li
+          id="help-found-{at}"
+          role="option"
+          aria-selected={at === marked}
+          class:on={at === marked}
+          onclick={() => go(one)}
+          onpointermove={() => (marked = at)}
+        >
+          <span class="kind">{KINDS[one.kind]}</span>
+          <span class="what">
+            <span class="name" class:mono={one.kind !== "page"}>{one.name}</span>
+            <!-- A function of a name that has two says which it is, before its package (#215). -->
+            {#if one.of !== undefined}<span class="form">{one.of}</span>{/if}
+            {#if one.packages.length > 0}
+              <span class="of"><Named text={one.packages.join(" · ")} /></span>
+            {/if}
+            <span class="words">{before}<b>{word}</b>{after}</span>
+            {#if one.why}
+              <span class="why">matched {one.why}</span>
+            {/if}
+          </span>
+        </li>
+      {/each}
+    </ul>
+  </div>
+{:else if open && [...typed.trim()].length < LEAST}
+  <!-- The list is not open yet: its place is named, so that the field's own words hold. -->
+  <ul id="help-found" role="listbox" aria-label="What was found" hidden></ul>
+{/if}
 
 <style>
+  /* The field stays at the top of the pane while the index, or the list, moves under it. */
   .search {
     align-items: center;
+    background: var(--softer);
     display: flex;
-    flex: 0 1 340px;
-    min-width: 150px;
-    position: relative;
+    padding: 2px 0 8px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
   }
   input {
-    background: var(--soft);
-    border: 1px solid transparent;
-    border-radius: 7px;
+    background: var(--window);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
     box-sizing: border-box;
     color: var(--ink);
     font: inherit;
     font-size: 13px;
+    height: 30px;
+    min-width: 0;
     padding: 4px 30px 4px 9px;
+    text-overflow: ellipsis;
     width: 100%;
   }
   input::placeholder {
     color: var(--ink-3);
   }
   input:focus-visible {
-    background: var(--window);
     border-color: var(--accent);
     outline: 3px solid var(--accent-soft);
   }
@@ -229,19 +228,9 @@
     position: absolute;
     right: 7px;
   }
+  /* What was found: in the pane, in the index's place, each match a few short lines. */
   .found {
-    background: var(--window);
-    border: 1px solid var(--line-strong);
-    border-radius: 9px;
-    box-shadow: 0 14px 40px -14px rgb(0 0 0 / 35%);
-    box-sizing: border-box;
-    max-width: calc(100vw - 16px);
-    padding: 5px;
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    width: 470px;
-    z-index: 40;
+    padding: 0 0 8px;
   }
   .nothing {
     color: var(--ink-2);
@@ -255,11 +244,8 @@
     padding: 0;
   }
   li {
-    align-items: baseline;
     border-radius: 6px;
     cursor: pointer;
-    display: flex;
-    gap: 10px;
     padding: 5px 8px;
   }
   li.on {
@@ -267,13 +253,8 @@
   }
   .kind {
     color: var(--ink-3);
-    flex: none;
     font-size: 12.5px;
-    width: 58px;
-  }
-  .what {
-    flex: 1;
-    min-width: 0;
+    margin-right: 6px;
   }
   .name {
     color: var(--ink);

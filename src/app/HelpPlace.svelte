@@ -9,8 +9,9 @@
   // it was **Related functions**): the sections of the page open, each going to its place,
   // the one in view marked; a page's own See also keeps the links to related functions. F1 on
   // a name in the script, **Explain** in what a run said, a name or a code in the page itself,
-  // and the field at the right end of the bar each open a page; the field suggests as one
-  // types (`help/SearchField.svelte`).
+  // and the search field each open a page; the field suggests as one types
+  // (`help/SearchField.svelte`), and from release 0.3.1 (step 11a; #245) stands at the top of
+  // the index at the left, not in the bar.
   //
   // From 0.2.3 (#211, part 3) the pages opened are a history (`help/history.ts`): **Back** and
   // **Forward** go through them, **Home** returns to where Help starts and is lit while one is
@@ -28,7 +29,6 @@
   import { HOME, after, before, called, here } from "../help/history";
   import HomePage from "../help/HomePage.svelte";
   import ListPage from "../help/ListPage.svelte";
-  import SearchField from "../help/SearchField.svelte";
   import TopicsPane from "../help/TopicsPane.svelte";
   import { homeParts } from "../help/home";
   import { chooserPage, codesPage, packagePage, packagesPage, usingList } from "../help/pages";
@@ -166,8 +166,21 @@
   const later = $derived(after(workspace.helpHistory));
   const atHome = $derived(here(workspace.helpHistory)?.kind === "home");
 
-  /** ⌘[ and ⌘]: back and forward through the pages of Help, not of the browser. */
+  /**
+   * ⌘[ and ⌘]: back and forward through the pages of Help, not of the browser. And `/`, typed
+   * where nothing is being typed, puts the cursor in the search field at the top of the
+   * index, opening that pane where it is closed (release 0.3.1, step 11a).
+   */
   function keys(event: KeyboardEvent): void {
+    if (event.key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+      const at = event.target as HTMLElement | null;
+      const typing =
+        at !== null && (at.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(at.tagName));
+      if (typing) return;
+      event.preventDefault();
+      workspace.searchHelp();
+      return;
+    }
     if (!(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
     if (event.key !== "[" && event.key !== "]") return;
     event.preventDefault();
@@ -270,8 +283,6 @@
       </ol>
     </nav>
   {/if}
-  <span class="gap"></span>
-  <SearchField {workspace} />
 {/snippet}
 
 <svelte:window onkeydown={keys} onmousedown={side} onmouseup={side} onauxclick={side} />
@@ -314,7 +325,7 @@
             <!-- Home before the engine has given its index, or where it cannot. -->
             <p class="quiet">
               Press F1 on a function's name in the script, press Explain on what a run said, or type
-              a name in the field above, to read the engine's page here.
+              a name in the field at the left, to read the engine's page here.
             </p>
           {:else if doc.plain !== null}
             <!-- A page the reader does not know (a package's list): as the engine prints it. -->
@@ -457,9 +468,6 @@
     border-color: transparent;
     color: var(--accent);
     font-weight: 600;
-  }
-  .gap {
-    flex: 1;
   }
   .page {
     flex: 1;

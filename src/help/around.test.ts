@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CodeFamily, HelpIndex } from "../engine/messages";
-import { aroundOf } from "./around";
+import { aroundOf, functionsOf } from "./around";
 import { HOME } from "./history";
 
 /** A function of the index: called on a value of the type `on`, as `data.name()` is. */
@@ -137,5 +137,54 @@ describe("what stands around a page of Help", () => {
     expect(aroundOf({ kind: "name", name: "anova" }, null, families)).toEqual([]);
     expect(aroundOf({ kind: "package", name: "stats" }, null, families)).toEqual([]);
     expect(aroundOf({ kind: "code", code: "Z0103" }, index, null)).toEqual([]);
+  });
+});
+
+describe("every function by its name, for the index of Help", () => {
+  it("lists each function of each package in the order of the names, each with its package", () => {
+    const rows = functionsOf(index, null);
+    expect(rows.map((row) => `${row.name} ${row.package}`)).toEqual([
+      "anova stats",
+      "coef results",
+      "dataset datasets",
+      "datasets datasets",
+      "mean data",
+      "plot plot",
+      "summary data",
+      "summary results",
+      "t_test stats",
+      "text plot",
+    ]);
+    expect(rows[0]).toEqual({
+      name: "anova",
+      words: "what anova does",
+      to: { kind: "name", name: "anova" },
+      here: false,
+      package: "stats",
+    });
+    expect(rows.every((row) => !row.here)).toBe(true);
+  });
+
+  it("lists a name that is two functions twice, each saying which it is and opening its own page", () => {
+    const two = functionsOf(index, null).filter((row) => row.name === "summary");
+    expect(two.map((row) => row.of)).toEqual(["of a frame", "of a result"]);
+    expect(two.map((row) => row.to)).toEqual([
+      { kind: "name", name: "summary", form: { package: "data", on: "Frame" } },
+      { kind: "name", name: "summary", form: { package: "results", on: "Result" } },
+    ]);
+  });
+
+  it("marks the function whose page is open, and the one of two that is", () => {
+    expect(names(functionsOf(index, { kind: "name", name: "mean" }))).toContain("*mean*");
+    const one = functionsOf(index, {
+      kind: "name",
+      name: "summary",
+      form: { package: "results", on: "Result" },
+    });
+    expect(one.filter((row) => row.here).map((row) => row.package)).toEqual(["results"]);
+    // A code's page, a package's and Home mark none; before the index is given there is no list.
+    expect(functionsOf(index, { kind: "code", code: "Z0101" }).some((row) => row.here)).toBe(false);
+    expect(functionsOf(index, HOME).some((row) => row.here)).toBe(false);
+    expect(functionsOf(null, null)).toEqual([]);
   });
 });

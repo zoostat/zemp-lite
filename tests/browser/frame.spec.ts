@@ -145,7 +145,7 @@ test("⌘1 to ⌘5 open the places, from the script, from a field and from anoth
   await page.keyboard.type("1 + 1");
   await page.keyboard.press("ControlOrMeta+5");
   await expect(shown(page, "Help")).toBeVisible();
-  await shown(page, "Help").getByRole("combobox").focus();
+  await page.getByRole("combobox", { name: /^Search Help/ }).focus();
   await page.keyboard.press("ControlOrMeta+2");
   await expect(shown(page, "Data")).toBeVisible();
   // With the commands open, the key closes them and opens its place.

@@ -196,18 +196,30 @@ for (const theme of ["light", "dark"] as const) {
       });
     }
 
-    test("Help: a function's page, the search's list, a page of Using Zemp Lite", async ({
+    test("Help: a function's page, the search's list, the index, a page of Using Zemp Lite", async ({
       page,
+      press,
     }) => {
       await page.goto("/#/help/name/reg");
       await expect(page.getByTestId("help-title")).toHaveText("reg");
       await expect(page.getByRole("status")).toHaveText(READY);
       await whole(page, "Help, the page of reg");
-      const field = bar(page, "Help").getByRole("combobox");
-      await field.fill("lm");
-      await expect(bar(page, "Help").getByRole("listbox")).toBeVisible();
+      // The search's field is at the top of the index at the left (step 11a), and its list
+      // stands under it there: eight matches, the longest list there is.
+      const index = page.locator('[data-pane="topics"]');
+      const field = index.getByRole("combobox", { name: /^Search Help/ });
+      await field.fill("test");
+      await expect(index.getByRole("option")).toHaveCount(8);
       await whole(page, "Help, the search's list open");
+      await field.fill("xtreg");
+      await expect(index.getByRole("status")).toBeVisible();
+      await whole(page, "Help, the search's sentence that nothing was found");
       await field.press("Escape");
+      // The index itself, with every function by its name unfolded.
+      await press(index.getByRole("button", { name: "All topics" }));
+      await press(index.getByRole("button", { name: /^Functions/ }));
+      await expect(index.getByRole("list", { name: "Functions" })).toBeVisible();
+      await whole(page, "Help, the index with Functions unfolded");
       await page.goto("/#/help/using/the-data-place");
       await expect(page.getByTestId("help-title")).toBeVisible();
       await whole(page, "Help, a page of Using Zemp Lite");
