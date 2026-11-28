@@ -395,7 +395,10 @@ test("Paper is opened for the first time at the address: Typst as it travels, th
   await expect(page.getByTestId("paper-page").first().locator("img")).toBeVisible();
   const first = Date.now() - from;
   const firstSet = ((await foot.textContent()) ?? "").replace(/^.* · /, "");
-  await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
+  // The row says the paper, and where its table and figure come from (release 0.3.1, step 10).
+  await expect(page.getByTestId("paper-path")).toHaveText(
+    "paper/paper.typ · its table and figure from scripts/paper.zeff",
+  );
   // Set without a word from Typst: no error, no warning, and no file it lacks.
   await expect(page.getByRole("list", { name: "What Typst says of the paper" })).toHaveCount(0);
   await expect(page.getByTestId("paper-lacking")).toHaveCount(0);
