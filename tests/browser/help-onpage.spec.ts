@@ -3,8 +3,12 @@
 // Help's bar, no pane and no command of ⌘K. It stands at the right of the page's text on the
 // page's own ground, stays in view as the page is read with the part in view marked, and in a
 // place too narrow for it stands once under the page's title. A page with no sections has none.
+//
+// From release 0.3.1 (step 11b; open decision #245) **See also** stands under the list where
+// it is beside the page: the names the page gives, each opening its page. A page with no
+// sections has neither, and is drawn in two columns: the index and the page.
 import type { Page } from "@playwright/test";
-import { expect, test } from "./support";
+import { expect, faintText, smallestText, test } from "./support";
 
 const bar = (page: Page) => page.getByRole("toolbar", { name: "Help: its panes and its controls" });
 const list = (page: Page) => page.getByRole("navigation", { name: "On this page" });
@@ -163,4 +167,96 @@ test("in a place too narrow for it the list stands once under the page's title",
   await page.goto("/#/help/using/finding-help");
   await expect(title(page)).toHaveText("Finding help");
   expect((await placed(page)).insideText).toBe(true);
+});
+
+const also = (page: Page) => page.getByRole("navigation", { name: "See also" });
+
+for (const theme of ["light", "dark"] as const) {
+  test(`See also stands under the list beside a page, each name opening its page, in the ${theme} theme`, async ({
+    page,
+    press,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 800 });
+    await page.goto("/#/help/name/mean");
+    await expect(title(page)).toHaveText("mean");
+    if (theme === "dark") await press(page.getByRole("switch", { name: "Dark" }));
+    await expect(also(page)).toHaveCount(1);
+    await expect(also(page)).toContainText("See also");
+    // The names the page itself gives under See also, in its order.
+    const own = shown(page).getByRole("region", { name: "See also", exact: true });
+    const names = await own.getByRole("button").allTextContents();
+    expect(names).toEqual(["sd", "summary", "describe"]);
+    await expect(also(page).getByRole("button")).toHaveText(names);
+    // Under the list, in its column at the right of the text, and in view with it.
+    const at = await page.evaluate(() => {
+      const box = (query: string) => document.querySelector(query)!.getBoundingClientRect();
+      const list = box('nav[aria-label="On this page"]');
+      const see = box('nav[aria-label="See also"]');
+      const text = box('[data-testid="help-page"]');
+      return {
+        under: see.top >= list.bottom,
+        sameColumn: Math.abs(see.left - list.left) < 2,
+        rightOfText: see.left >= text.right - 1,
+        inWindow: see.right <= innerWidth && see.bottom <= innerHeight,
+      };
+    });
+    expect(at).toEqual({ under: true, sameColumn: true, rightOfText: true, inWindow: true });
+    // It stays in view with the list as the page is read.
+    await page.locator('[data-testid="help"] .page').evaluate((pane) => (pane.scrollTop = 1500));
+    await expect(also(page)).toBeInViewport();
+    expect(await smallestText(page)).toBeGreaterThanOrEqual(12.5);
+    expect(await faintText(also(page))).toEqual([]);
+    // A name opens its page, by the keyboard; Back returns.
+    const sd = also(page).getByRole("button", { name: "sd", exact: true });
+    await expect(sd).toHaveAttribute("title", "Open the page of sd");
+    await sd.focus();
+    await page.keyboard.press("Enter");
+    await expect(title(page)).toHaveText("sd");
+    await expect(also(page).getByRole("button").first()).toBeVisible();
+    await press(bar(page).getByRole("button", { name: "Back" }));
+    await expect(title(page)).toHaveText("mean");
+    // A name that is two functions opens the page that chooses between them, as in the page.
+    await press(also(page).getByRole("button", { name: "summary", exact: true }));
+    await expect(title(page)).toHaveText("summary");
+    await expect(shown(page)).toContainText("summary is two functions.");
+  });
+}
+
+test("a page with no See also has none beside it; under the title, and on a page with no sections, there is none", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 800 });
+  // A code's page, a page of the app's own and Home have their list and no See also.
+  for (const address of ["code/Z0101", "using/finding-help", ""]) {
+    await page.goto(`/#/help${address === "" ? "" : `/${address}`}`);
+    await expect(list(page), address).toHaveCount(1);
+    await expect(also(page), address).toHaveCount(0);
+  }
+  // A page that is a list has no sections: neither stands beside it, and the page is drawn in
+  // two columns, the index and the page, which has the room to the window's edge.
+  await page.goto("/#/help/package/regress");
+  await expect(title(page)).toHaveText("regress");
+  await expect(list(page)).toHaveCount(0);
+  await expect(also(page)).toHaveCount(0);
+  const columns = await page.evaluate(() => {
+    const pane = document.querySelector('[data-testid="help"] .page') as HTMLElement;
+    const index = document.querySelector('[data-pane="topics"]') as HTMLElement;
+    const columned = (pane.querySelector(".with") as HTMLElement).classList.contains("beside");
+    return {
+      columned,
+      rightOfIndex: pane.getBoundingClientRect().left >= index.getBoundingClientRect().right,
+      toTheEdge: Math.round(innerWidth - pane.getBoundingClientRect().right),
+      asides: document.querySelectorAll('[data-testid="help"] aside').length,
+    };
+  });
+  expect(columns).toEqual({ columned: false, rightOfIndex: true, toTheEdge: 0, asides: 1 });
+  // In a place too narrow for the list beside the text, the list is under the title and the
+  // page's own See also is the only one.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto("/#/help/name/mean");
+  await expect(title(page)).toHaveText("mean");
+  await expect(list(page)).toHaveCount(1);
+  expect((await placed(page)).insideText).toBe(true);
+  await expect(also(page)).toHaveCount(0);
+  await expect(shown(page).getByRole("region", { name: "See also", exact: true })).toHaveCount(1);
 });

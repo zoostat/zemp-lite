@@ -82,6 +82,21 @@
     }
   }
 
+  // **Try in the console**, under an example of a help page (release 0.3.1, step 11b; open
+  // decision #245): the statement asked for stands in the field, the cursor at its end, for
+  // the reader to change and to run with Return.
+  $effect(() => {
+    const asked = workspace.consoleAsked;
+    if (asked === null || box === null) return;
+    workspace.consoleAsked = null;
+    typing = asked;
+    const field = box;
+    requestAnimationFrame(() => {
+      field.focus();
+      field.setSelectionRange(asked.length, asked.length);
+    });
+  });
+
   // The newest line of the drawer is kept in view.
   $effect(() => {
     void workspace.entries.length;
@@ -323,9 +338,11 @@
   .entry {
     padding: 4px 0;
   }
+  /* Statements brought from an example of Help stand on their own lines, as they were run. */
   .asked {
     color: var(--ink);
     font-size: calc(var(--code-size, 14px) - 1px);
+    white-space: pre-wrap;
   }
   .asked span {
     color: var(--ink-3);

@@ -276,3 +276,59 @@ export function saidOf(line: string): Said[] {
     { kind: "text", text: found[3] ?? "" },
   ];
 }
+
+/**
+ * The statements some lines hold, each with its lines (release 0.3.1, step 11b). A line set
+ * in from the margin, or begun with a dot or a closing bracket, goes on with the statement
+ * before it; an empty line and a line of comment are no statement.
+ */
+export function statementsIn(lines: string[]): string[][] {
+  const all: string[][] = [];
+  for (const line of lines) {
+    const text = line.trimStart();
+    if (text === "" || text.startsWith("//")) continue;
+    const goesOn = line !== text || /^[.)\]}]/.test(text);
+    const last = all.at(-1);
+    if (goesOn && last !== undefined) last.push(line);
+    else all.push([line]);
+  }
+  return all;
+}
+
+/** The name a statement binds with `let`, or none. */
+export const boundBy = (statement: string): string | null =>
+  /^let\s+([A-Za-z_][A-Za-z0-9_]*)/.exec(statement.trimStart())?.[1] ?? null;
+
+/** What **Try in the console** takes of an example. */
+export interface Tried {
+  /**
+   * The statements the last one may need, in order: the bindings of the examples above it on
+   * the page, and whatever stands before it in its own example.
+   */
+  before: string[];
+  /** The example's last statement, on one line, for the console's field. */
+  last: string;
+}
+
+/**
+ * What **Try in the console** takes of an example (release 0.3.1, step 11b; open decision
+ * #245): its last statement, on one line, to stand in the console's field; and before it what
+ * that statement may need, since an example of a page uses what those above it bound: the
+ * `let` statements of the examples above, as they stand in the page, and every statement of
+ * its own before the last. None where the example holds no statement.
+ */
+export function triedOf(above: string[], own: string[]): Tried | null {
+  const mine = statementsIn(own);
+  const last = mine.at(-1);
+  if (last === undefined) return null;
+  const whole = (statement: string[]) => statement.join("\n");
+  return {
+    before: [
+      ...statementsIn(above)
+        .map(whole)
+        .filter((statement) => boundBy(statement) !== null),
+      ...mine.slice(0, -1).map(whole),
+    ],
+    last: last.map((line) => line.trim()).join(" "),
+  };
+}

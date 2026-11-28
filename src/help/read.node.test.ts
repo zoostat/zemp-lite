@@ -10,6 +10,7 @@ import {
   outlineOf,
   pieces,
   readPage,
+  seeAlsoOf,
   wordsOf,
   wordsOfPrint,
   type Block,
@@ -172,6 +173,35 @@ describe("the reader of a help page, on the kept pages", () => {
     expect(one.every((item) => !item.entry)).toBe(true);
     expect(one.map((item) => item.title)).toContain("Coming from R or Stata");
     expect(outlineOf(readPage("no such page"))).toEqual([]);
+  });
+
+  it("gives the names under See also, in the page's order and each once", () => {
+    expect(seeAlsoOf(readPage(kept("help-add.txt")))).toEqual([
+      "update",
+      "select",
+      "rename",
+      "aggregate",
+    ]);
+    // A page of two functions: those of the first, then those of the second.
+    expect(seeAlsoOf(readPage(kept("help-summary.txt")))).toEqual([
+      "mean",
+      "sd",
+      "describe",
+      "estimates",
+      "export",
+      "reg",
+    ]);
+    // A page with no such section, and what is no page.
+    const page = readPage(kept("help-add.txt"));
+    const without = {
+      ...page,
+      entries: page.entries.map((entry) => ({
+        ...entry,
+        sections: entry.sections.filter((section) => section.heading !== "SEE ALSO"),
+      })),
+    };
+    expect(seeAlsoOf(without)).toEqual([]);
+    expect(seeAlsoOf(readPage("no such page"))).toEqual([]);
   });
 
   it("reads every kind of part of a function's page", () => {

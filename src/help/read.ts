@@ -567,3 +567,19 @@ export function outlineOf(doc: HelpDoc): OutlineItem[] {
     })),
   ]);
 }
+
+/**
+ * The names a page gives under See also, in its order and each once (release 0.3.1, step
+ * 11b; open decision #245), for the list beside the page; none where the page has no such
+ * section, or writes it as prose.
+ */
+export function seeAlsoOf(doc: HelpDoc): string[] {
+  const names = doc.entries.flatMap((entry) =>
+    entry.sections
+      .filter((section) => section.heading === "SEE ALSO")
+      .flatMap((section) =>
+        section.blocks.flatMap((block) => (block.kind === "names" ? block.names : [])),
+      ),
+  );
+  return [...new Set(names)];
+}

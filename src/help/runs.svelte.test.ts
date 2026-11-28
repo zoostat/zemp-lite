@@ -2,11 +2,14 @@ import { describe, expect, it } from "vitest";
 import type { ExampleOutcome, StatementInfo } from "../engine/messages";
 import { readPage } from "./read";
 import {
+  IN_CONSOLE,
+  NOTHING_TO_TRY,
   NO_SCRIPT,
   PageRuns,
   exampleBlocks,
   examplesKey,
   type ExampleRuns,
+  type Item,
   type Ran,
 } from "./runs.svelte";
 
@@ -66,6 +69,11 @@ class Stand implements ExampleRuns {
   copy(text: string): Promise<boolean> {
     if (this.open) this.copied.push(text);
     return Promise.resolve(this.open);
+  }
+
+  tried: { before: string[]; last: string }[] = [];
+  try(before: string[], last: string): void {
+    this.tried.push({ before, last });
   }
 }
 
@@ -178,5 +186,40 @@ describe("the examples of a page, as the page holds them", () => {
     // The next thing done with it takes the words away.
     await page.run(first);
     expect(first.note).toBe("");
+  });
+
+  it("try an example in the console: its last statement, with the bindings above it and what stands before it", async () => {
+    const stand = new Stand();
+    const page = new PageRuns(readPage(PAGE), stand);
+    const [first, second] = page.chain as [Item, Item];
+    // The first example of the page: its binding goes before, its last statement to the field.
+    page.try(first);
+    expect(stand.tried).toEqual([
+      { before: ["let wages = dataset(wages)"], last: "wages.mean(wage)" },
+    ]);
+    expect(first.note).toBe(IN_CONSOLE);
+    // The second uses what the first bound; as the reader has changed them, both.
+    first.held = { ...first.held, text: "let wages = dataset(sleep)\nwages.mean(wage)" };
+    second.held = { ...second.held, text: "wages.mean(hours)\n" };
+    page.try(second);
+    expect(stand.tried[1]).toEqual({
+      before: ["let wages = dataset(sleep)"],
+      last: "wages.mean(hours)",
+    });
+    // One that stands apart from the page's EXAMPLES comes after all of them, as it is run.
+    page.try(page.apart[0]!);
+    expect(stand.tried[2]).toEqual({
+      before: ["let wages = dataset(sleep)"],
+      last: "dataset(wages).mean(log(wage))",
+    });
+    // Nothing is run in the page for it, and an example emptied says so.
+    expect(stand.asked).toEqual([]);
+    second.held = { ...second.held, text: "// nothing\n" };
+    page.try(second);
+    expect(second.note).toBe(NOTHING_TO_TRY);
+    expect(stand.tried).toHaveLength(3);
+    // The next thing done with it takes the words away.
+    await page.run(second);
+    expect(second.note).toBe("");
   });
 });

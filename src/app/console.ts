@@ -115,3 +115,24 @@ export class History {
       : (this.#lines[this.#lines.length - this.#back] as string);
   }
 }
+
+/**
+ * Of the statements an example brings to the console before the one to be tried (release
+ * 0.3.1, step 11b), those the console has still to run. One it has kept already, word for
+ * word, is not run again: every statement kept is run before each new one, so a second copy
+ * would only be run twice. But a binding kept and since bound again by a later statement is
+ * run again, so that the name is once more what the example made it. `bound` says the name a
+ * statement binds, or none.
+ */
+export function stillToRun(
+  kept: string[],
+  wanted: string[],
+  bound: (statement: string) => string | null,
+): string[] {
+  return wanted.filter((statement) => {
+    const at = kept.lastIndexOf(statement);
+    if (at < 0) return true;
+    const name = bound(statement);
+    return name !== null && kept.slice(at + 1).some((later) => bound(later) === name);
+  });
+}

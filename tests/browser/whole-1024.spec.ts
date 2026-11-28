@@ -204,6 +204,24 @@ for (const theme of ["light", "dark"] as const) {
       await expect(page.getByTestId("help-title")).toHaveText("reg");
       await expect(page.getByRole("status")).toHaveText(READY);
       await whole(page, "Help, the page of reg");
+      // An example tried in the console (step 11b): its statement in the field at the foot,
+      // and what it needed run in the drawer over the page.
+      const tried = page.getByRole("textbox", { name: /^Console/ });
+      await press(
+        page.getByTestId("example").first().getByRole("button", { name: "Try in the console" }),
+      );
+      await expect(tried).not.toHaveValue("");
+      await expect(tried).toBeFocused();
+      await whole(page, "Help, an example tried in the console");
+      await tried.fill("");
+      await tried.press("Escape");
+      // With the index closed the page has the room for its list at the right, and See also
+      // under it.
+      const topics = bar(page, "Help").getByRole("button", { name: "Topics", exact: true });
+      await press(topics);
+      await expect(page.getByRole("navigation", { name: "See also" })).toBeVisible();
+      await whole(page, "Help, the index closed: the list and See also beside the page");
+      await press(topics);
       // The search's field is at the top of the index at the left (step 11a), and its list
       // stands under it there: eight matches, the longest list there is.
       const index = page.locator('[data-pane="topics"]');

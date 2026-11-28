@@ -6,7 +6,9 @@
   // printed and said, a code of a warning or an error opening its page, and each plot drawn
   // by the engine. Until the engine's own output arrives the page's kept text stands, so the
   // page does not jump. The buttons and the line beside them are the app's words (`.own`);
-  // every other word is the engine's.
+  // every other word is the engine's. **Copy to script** puts the statements into the open
+  // script; **Try in the console** (release 0.3.1, step 11b; open decision #245) puts the
+  // last of them in the console's field at the foot of the window.
   import Code from "../editor/Code.svelte";
   import { imageOf } from "../plots/figures";
   import { busy, changed, linesOf, saidOf, statusOf } from "./examples";
@@ -95,6 +97,13 @@
         class="copy"
         title="Put these statements into the open script, at the cursor"
         onclick={() => void page.copy(item)}>Copy to script</button
+      >
+      <!-- The example's last statement, to change and run in the reader's own project
+           (release 0.3.1, step 11b; open decision #245). -->
+      <button
+        class="try"
+        title="Put the example's last statement in the console below, to change and run in your project; what it needs from the statements above it is run there first"
+        onclick={() => page.try(item)}>Try in the console</button
       >
       <!-- Not the app's one status line, which says how the reader's own run stands. -->
       <span class="status" role="note" aria-live="polite" data-testid="example-status"

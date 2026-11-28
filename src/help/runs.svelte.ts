@@ -12,6 +12,7 @@ import {
   fresh,
   givenBy,
   linesOf,
+  triedOf,
   type Held,
   type PageExample,
 } from "./examples";
@@ -49,6 +50,12 @@ export interface ExampleRuns {
    * script is open.
    */
   copy(text: string): Promise<boolean>;
+  /**
+   * Try in the console: `last` is put in the console's field with the cursor, and the
+   * statements `before`, which it may need, are run there first where the console has not
+   * kept them already.
+   */
+  try(before: string[], last: string): void;
   /** The seconds an example may run. */
   readonly seconds: number;
 }
@@ -81,6 +88,10 @@ export class Item {
 
 /** What an example says where **Copy to script** finds no script open. */
 export const NO_SCRIPT = "no script is open: open one in the Script place, then copy again";
+/** What an example says where **Try in the console** finds no statement in it. */
+export const NOTHING_TO_TRY = "there is no statement here to try";
+/** What an example says once its statement stands in the console. */
+export const IN_CONSOLE = "in the console below: press Return there to run it";
 
 let pages = 0;
 
@@ -164,6 +175,26 @@ export class PageRuns {
   async copy(item: Item): Promise<void> {
     item.note = "";
     if (!(await this.#runs.copy(statementsOf(item)))) item.note = NO_SCRIPT;
+  }
+
+  /**
+   * Try in the console (release 0.3.1, step 11b; open decision #245): the example's last
+   * statement, as it stands in the page, goes to the console's field for the reader to change
+   * and run in their own project; what it may need is run there before it (`triedOf`): the
+   * bindings of the examples above it on the page, and what stands before it in its own.
+   */
+  try(item: Item): void {
+    const at = this.chain.indexOf(item);
+    const above = (at >= 0 ? this.chain.slice(0, at) : this.chain).flatMap((one) =>
+      linesOf(one.held.text),
+    );
+    const tried = triedOf(above, linesOf(item.held.text));
+    if (tried === null) {
+      item.note = NOTHING_TO_TRY;
+      return;
+    }
+    item.note = IN_CONSOLE;
+    this.#runs.try(tried.before, tried.last);
   }
 
   /** The statements of an example are put back as the page has them, and run. */

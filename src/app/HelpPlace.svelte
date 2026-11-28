@@ -32,7 +32,7 @@
   import TopicsPane from "../help/TopicsPane.svelte";
   import { homeParts } from "../help/home";
   import { chooserPage, codesPage, packagePage, packagesPage, usingList } from "../help/pages";
-  import { outlineOf, readPage } from "../help/read";
+  import { outlineOf, readPage, seeAlsoOf } from "../help/read";
   import { trailOf } from "../help/trail";
   import { headingsOf, readUsing } from "../using/read";
   import UsingPage from "../using/UsingPage.svelte";
@@ -105,6 +105,13 @@
         : list === null
           ? outlineOf(doc)
           : [],
+  );
+  // The names the page gives under See also, for the list beside it (release 0.3.1, step
+  // 11b; open decision #245): of the engine's page of a function or a code, as it is shown.
+  const also = $derived(
+    own === null && home === null && list === null && page !== "" && doc.plain === null
+      ? seeAlsoOf(doc)
+      : [],
   );
   const trail = $derived(trailOf(shown ?? HOME, workspace.helpIndex, workspace.helpCodes));
 
@@ -220,6 +227,24 @@
         {/each}
       </ul>
     </nav>
+    <!-- Beside the page, under its sections: the page's See also, each name opening its page.
+         Where the list stands under the title the page's own section is all there is. -->
+    {#if where === "beside" && also.length > 0}
+      <nav class="also" aria-label="See also">
+        <b>See also</b>
+        <ul>
+          {#each also as name (name)}
+            <li>
+              <button
+                class="mono"
+                title="Open the page of {name}"
+                onclick={() => void workspace.showHelp(name)}>{name}</button
+              >
+            </li>
+          {/each}
+        </ul>
+      </nav>
+    {/if}
   {/if}
 {/snippet}
 
@@ -342,7 +367,9 @@
             />
           {/if}
         </div>
-        {#if beside}{@render onThisPage("beside")}{/if}
+        {#if beside && sections.length > 0}
+          <div class="right">{@render onThisPage("beside")}</div>
+        {/if}
       </div>
     </div>
   </Place>
@@ -513,8 +540,8 @@
   .otp {
     font-size: 13px;
   }
-  /* Beside the text it stays in view as the page is read. */
-  .otp.beside {
+  /* Beside the text the list, with See also under it, stays in view as the page is read. */
+  .right {
     max-height: calc(100vh - 160px);
     overflow: auto;
     position: sticky;
@@ -527,12 +554,41 @@
     max-width: 760px;
     padding: 0 0 10px;
   }
-  .otp b {
+  .otp b,
+  .also b {
     color: var(--ink-3);
     display: block;
     font-size: 12.5px;
     font-weight: 600;
     margin: 0 0 6px;
+  }
+  /* See also: the names the page gives, each a small link in the code's face. */
+  .also {
+    font-size: 13px;
+    margin: 20px 0 0;
+  }
+  .also ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0 2px 2px 0;
+  }
+  .also button {
+    background: none;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 12.5px;
+    padding: 2px 7px;
+  }
+  .also button:hover {
+    background: var(--accent-soft);
+  }
+  .also button:focus-visible {
+    outline: 2px solid var(--accent);
   }
   .outline {
     border-left: 1px solid var(--line-strong);

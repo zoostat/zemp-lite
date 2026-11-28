@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RunEvent } from "../engine/messages";
-import { History, composed, consoleRun, outcomeOf } from "./console";
+import { History, composed, consoleRun, outcomeOf, stillToRun } from "./console";
 
 describe("a statement typed in the console", () => {
   it("is run after the script and the statements kept, the script itself unchanged", () => {
@@ -92,5 +92,30 @@ describe("the console's history", () => {
 
   it("recalls nothing where nothing was typed", () => {
     expect(new History().up("typing")).toBe("typing");
+  });
+});
+
+describe("the statements an example brings to the console", () => {
+  const bound = (statement: string) => /^let (\w+)/.exec(statement)?.[1] ?? null;
+  const wages = 'let wages = dataset("wages")';
+  const fit = "let m = wages.reg(lwage ~ educ)";
+
+  it("are run where the console has not kept them", () => {
+    expect(stillToRun([], [wages, fit], bound)).toEqual([wages, fit]);
+    expect(stillToRun(["1 + 1"], [wages], bound)).toEqual([wages]);
+  });
+
+  it("are not run again where the console has kept them, word for word", () => {
+    expect(stillToRun([wages, fit, "m.coef(educ)"], [wages, fit], bound)).toEqual([]);
+    expect(stillToRun([wages], [wages, fit], bound)).toEqual([fit]);
+    // A statement that binds nothing and is kept is run before each new one as it is.
+    expect(stillToRun(["set_seed(1)"], ["set_seed(1)"], bound)).toEqual([]);
+  });
+
+  it("are run again where a later statement has bound the name to something else", () => {
+    const other = 'let wages = dataset("wages").where(year >= 2010)';
+    expect(stillToRun([wages, fit, other], [wages, fit], bound)).toEqual([wages]);
+    // Bound back since: as it was.
+    expect(stillToRun([wages, other, wages], [wages], bound)).toEqual([]);
   });
 });

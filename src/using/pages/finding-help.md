@@ -19,7 +19,7 @@ Type in the field at the top of the **Topics** pane, at the left of Help; <kbd>/
 
 ## Browse
 
-**Home** is where Help starts: what Zeff and Zemp Lite are, and a card for each kind of page, the packages, the errors and warnings, and these pages on the app. A package's page lists its functions, each with its one line. The **Topics** pane at the left is the index of Help. Under the search field, the words Start here stand over Home and the two pages to read first. Then a section for each of the three, and **Functions**, which lists every function by its name with its package; press a section's name to unfold it. Beside a page the pane lists the pages around it, and **All topics** brings the index back. At the right of a page its sections are listed, under the words On this page; press one to go to it.
+**Home** is where Help starts: what Zeff and Zemp Lite are, and a card for each kind of page, the packages, the errors and warnings, and these pages on the app. A package's page lists its functions, each with its one line. The **Topics** pane at the left is the index of Help. Under the search field, the words Start here stand over Home and the two pages to read first. Then a section for each of the three, and **Functions**, which lists every function by its name with its package; press a section's name to unfold it. Beside a page the pane lists the pages around it, and **All topics** brings the index back. At the right of a page its sections are listed, under the words On this page; press one to go to it. Under them, the words See also stand over the functions the page names as related; press one to open its page.
 
 ## From the script
 
@@ -32,6 +32,8 @@ Every example on a function's page can be run where it stands. The engine in you
 An example runs in a session of its own. It sees the datasets that come with Zeff and nothing of your project, and it changes nothing there: your script, its results and your files stay as they are. An example is run together with those above it on its page, because a later one often uses what an earlier one made.
 
 **Copy to script** puts an example's statements, as they stand, into your open script at the cursor, and shows the script. Undo takes them out again.
+
+**Try in the console** puts the example's last statement in the console's field, at the foot of the window, with the cursor in it: change it if you wish, and press <kbd>↵</kbd> to run it in your own project, after your script. A statement of an example often uses a name bound above it on the page, such as the frame it reads; those bindings are run in the console first, so that the statement finds them. Nothing is added to your script.
 
 On the page of an error or a warning the example is an illustration of the message. It is not run until you press **Run**, and it may name a frame that the page does not make.
 

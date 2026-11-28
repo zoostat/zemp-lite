@@ -60,6 +60,7 @@ import {
   type History as HelpHistory,
   type Stop,
 } from "../help/history";
+import { boundBy } from "../help/examples";
 import { formIn, formsOf } from "../help/forms";
 import { namesFor, shownFor, type Shown as Card } from "../help/hover";
 import { once } from "../help/once";
@@ -89,7 +90,15 @@ import {
 } from "../plots/figures";
 import { compared, moved, ordered, toggled } from "../plots/viewer";
 import { Session } from "../project/session";
-import { CONSOLE_HELP, History, composed, consoleRun, outcomeOf, type Entry } from "./console";
+import {
+  CONSOLE_HELP,
+  History,
+  composed,
+  consoleRun,
+  outcomeOf,
+  stillToRun,
+  type Entry,
+} from "./console";
 import { ENGINE } from "./version";
 import { parts } from "../project/folder";
 import {
@@ -245,6 +254,7 @@ export class Workspace {
     },
     drop: (owner) => this.#examples.drop(owner),
     copy: (text) => this.copyExample(text),
+    try: (before, last) => void this.tryInConsole(before, last),
   };
   readonly session: Session;
 
@@ -2745,6 +2755,36 @@ export class Workspace {
       await this.#command(statement);
       return;
     }
+    await this.#entered(statement, [statement]);
+  }
+
+  /**
+   * A statement asked of the console from elsewhere, to stand in its field with the cursor
+   * (**Try in the console**, under an example of a help page); the field takes it and sets
+   * this down again.
+   */
+  consoleAsked = $state<string | null>(null);
+
+  /**
+   * Try in the console (release 0.3.1, step 11b; open decision #245): `last`, the last
+   * statement of an example of a help page, stands in the console's field for the reader to
+   * change and to run with Return, in this project and after its script. What it may need,
+   * `before`, is run in the console first, as one entry, where the console has not kept it
+   * already (`stillToRun`); it is not added to what ↑ recalls, the reader not having typed it.
+   */
+  async tryInConsole(before: string[], last: string): Promise<void> {
+    this.consoleOpen = true;
+    this.consoleAsked = last;
+    const wanted = stillToRun(this.#kept, before, boundBy);
+    if (wanted.length > 0) await this.#entered(wanted.join("\n"), wanted);
+  }
+
+  /**
+   * Run what was entered in the console, after the script and the statements kept; `keep` is
+   * what the console keeps of it once it has run: the statement itself, or, of several
+   * brought together from an example, each by itself.
+   */
+  async #entered(statement: string, keep: string[]): Promise<void> {
     this.entries.push({ statement, state: "running", printed: "", said: [], told: "" });
     const entry = this.entries[this.entries.length - 1] as Entry;
     // A statement entered while something runs waits its turn: none is dropped.
@@ -2762,7 +2802,7 @@ export class Workspace {
         told.end(outcome);
         Object.assign(entry, outcomeOf(told.run, from));
         // A statement that ran is kept, so that the next one typed sees what it made.
-        if (entry.state === "done") this.#kept.push(statement);
+        if (entry.state === "done") this.#kept.push(...keep);
         this.frames = outcome.frames;
         // What a statement of the console line wrote is the script's, as it stands.
         await this.#keepWritten(outcome, script, this.buffers[script]?.text ?? "");

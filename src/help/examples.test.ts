@@ -4,6 +4,7 @@ import {
   answered,
   apartFrom,
   asPages,
+  boundBy,
   busy,
   changed,
   composed,
@@ -13,7 +14,9 @@ import {
   isExcerpt,
   saidOf,
   stale,
+  statementsIn,
   statusOf,
+  triedOf,
   type Held,
 } from "./examples";
 import { readPage } from "./read";
@@ -371,5 +374,58 @@ describe("a line of an example's output", () => {
     expect(saidOf("  wage       18,201       211")).toEqual([
       { kind: "text", text: "  wage       18,201       211" },
     ]);
+  });
+});
+
+describe("what Try in the console takes of an example", () => {
+  it("is its last statement, with the bindings above it on the page and what stands before it in its own", () => {
+    // The page of `reg`, as the specification prints it: the first example binds the frame
+    // and the fit, the second uses the fit.
+    const first = [
+      'let wages = import("zeff:wages.csv")',
+      "let m = wages.reg(lwage ~ educ)",
+      "m.coef(educ)",
+    ];
+    expect(triedOf([], first)).toEqual({
+      before: ['let wages = import("zeff:wages.csv")', "let m = wages.reg(lwage ~ educ)"],
+      last: "m.coef(educ)",
+    });
+    // Of the examples above, the bindings alone: what they printed is not asked for again.
+    expect(triedOf(first, ["m.std_errors(educ)"])).toEqual({
+      before: ['let wages = import("zeff:wages.csv")', "let m = wages.reg(lwage ~ educ)"],
+      last: "m.std_errors(educ)",
+    });
+    // An example of one statement, with nothing above it.
+    expect(triedOf([], ["mean([1, 2, 3])"])).toEqual({ before: [], last: "mean([1, 2, 3])" });
+  });
+
+  it("takes a statement written on several lines whole, and sets the last on one line", () => {
+    const own = [
+      "let d = wages",
+      "  .where(year >= 2010)",
+      "d",
+      "  .reg(lwage ~ educ,",
+      "       cluster: firm)",
+    ];
+    expect(statementsIn(own)).toEqual([own.slice(0, 2), own.slice(2)]);
+    expect(triedOf(["wages.n_rows()", "let wages = dataset(", '  "wages"', ")"], own)).toEqual({
+      before: ['let wages = dataset(\n  "wages"\n)', "let d = wages\n  .where(year >= 2010)"],
+      last: "d .reg(lwage ~ educ, cluster: firm)",
+    });
+  });
+
+  it("passes over empty lines and lines of comment, and is nothing where no statement stands", () => {
+    expect(
+      statementsIn(["// The rows that meet two conditions.", "", "wages.n_rows()", "  "]),
+    ).toEqual([["wages.n_rows()"]]);
+    expect(triedOf([], ["// only a comment", ""])).toBeNull();
+    expect(triedOf(["let a = 1"], [])).toBeNull();
+  });
+
+  it("knows the name a statement binds", () => {
+    expect(boundBy('let wages = dataset("wages")')).toBe("wages");
+    expect(boundBy("  let m_2 = wages.reg(y ~ x)")).toBe("m_2");
+    expect(boundBy("wages.reg(y ~ x)")).toBeNull();
+    expect(boundBy("letter.count()")).toBeNull();
   });
 });
