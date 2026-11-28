@@ -3858,3 +3858,11 @@ The wait is there at the trial address every time and at the address once in fou
 
 **The registers** are reviewed in the notes ("For the coordinating session: the registers"): none of the open decisions is due at this release; #247 and #232 are the owner's to decide at the planning of Zemp Lite 0.4; R4, R11 and R13 are as they were.
 
+## 28 November 2026: after release 0.3.1: GitHub's check of the release's commit
+
+**What happened.** GitHub checked the release's commit twice, the branch and the tag. The tag's check passed in both browsers. The branch's failed at one test in WebKit, and so the release's build was not sent to the addresses. I asked GitHub to run the failed check again; it passed, and the build was deployed: 18 checks at the trial address and 18 at the address, all passing, and the address shows 0.3.1.
+
+**The test, and its mending.** It is the test of step 11b for pages with no See also, the same that had asked for four pages without waiting (corrected before the release). Its last part made the window narrower and read at once whether the list of a page's sections stood under the title; the page moves the list a moment after it has measured its new width. The test now waits for that, as the older test beside it does. The app was right both times. The tag stays on the release's commit; the mended test is the commit after it.
+
+**A habit taken from it.** A test of mine that reads where something stands after the window's size changes, or after an address is asked, waits for what it reads; I looked through the tests written at steps 11 to 13 for the same haste: the others that read after a change of the window's size read what the styles alone decide, which is settled at once, and not what the page moves after measuring itself.
+

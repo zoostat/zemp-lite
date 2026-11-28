@@ -264,7 +264,10 @@ test("a page with no See also has none beside it; under the title, and on a page
   await page.goto("/#/help/name/mean");
   await expect(title(page)).toHaveText("mean");
   await expect(list(page)).toHaveCount(1);
-  expect((await placed(page)).insideText).toBe(true);
+  // The list moves under the title once the page has measured its new width: waited for, not
+  // read at once (read at once it was still beside the text on GitHub's machine, in WebKit,
+  // at the check of the release's commit).
+  await expect.poll(async () => (await placed(page)).insideText).toBe(true);
   await expect(also(page)).toHaveCount(0);
   await expect(shown(page).getByRole("region", { name: "See also", exact: true })).toHaveCount(1);
 });
