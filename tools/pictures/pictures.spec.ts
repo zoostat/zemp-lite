@@ -116,14 +116,16 @@ const SCENES: Record<string, (page: Page, press: Press) => Promise<void>> = {
     await page.getByLabel("The name of the new project").fill("Returns to schooling");
     await press(page.getByRole("button", { name: "Create" }));
     await expect(page.getByRole("status")).toHaveText(READY);
-    await press(page.getByTitle("Back to the projects of this browser"));
+    await press(places(page).getByRole("button", { name: "All projects" }));
     await press(page.getByRole("button", { name: "Actions for Returns to schooling" }));
     await expect(page.getByRole("menuitem", { name: "Export project…" })).toBeVisible();
   },
-  // Where the work is kept: the screen of projects, with its sentence on where they are kept.
+  // Where the work is kept: the screen of projects on a first visit, with its note on where
+  // they are kept at the foot of the column on the left.
   "the-screen-of-projects": async (page) => {
     await page.goto("/");
     await expect(page.getByRole("button", { name: /^Scratch project/ })).toBeVisible();
+    await expect(page.getByTestId("first-visit")).toBeVisible();
   },
   // Reporting a problem: the report of a script that fails, shown whole.
   "the-report": async (page, press) => {
@@ -145,7 +147,7 @@ const SCENES: Record<string, (page: Page, press: Press) => Promise<void>> = {
     // As a visitor who has not been given the sample before.
     await page.evaluate(() => localStorage.removeItem("zemp-scratch-paper"));
     await press(places(page).getByRole("button", { name: "Paper" }));
-    await expect(page.getByTestId("paper-path")).toHaveText("paper/paper.typ");
+    await expect(page.getByTestId("paper-path")).toContainText("paper/paper.typ");
     await expect(page.getByTestId("paper-pages")).toHaveText("1 page", { timeout: 60_000 });
     const picture = page.getByTestId("paper-page").first().locator("img");
     await expect

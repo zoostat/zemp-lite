@@ -162,8 +162,14 @@ const SCREENS: Record<
     await see();
     await scratch(page, press);
     await see();
+    // Back on the screen of projects, where the project has its row, with Export… at its end.
+    await press(page.getByRole("button", { name: "All projects" }));
+    await expect(page.getByRole("button", { name: "Actions for Scratch" })).toBeVisible();
+    await see();
   },
   "where-the-work-is-kept": async (page, press, see) => {
+    // The screen of projects, with its note and what exports every project; then a project.
+    await see();
     await scratch(page, press);
     await see();
   },
@@ -171,6 +177,11 @@ const SCREENS: Record<
     await scratch(page, press);
     await run(page, press);
     await see();
+    // The list that Projects opens, at the top left, has the report too.
+    await press(page.getByRole("button", { name: /^Projects/ }));
+    await expect(page.getByRole("menuitem", { name: "Report a problem…" })).toBeVisible();
+    await see();
+    await page.keyboard.press("Escape");
     // A script that fails, and its report.
     await write(
       page,

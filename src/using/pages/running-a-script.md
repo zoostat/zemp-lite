@@ -20,6 +20,6 @@ On Windows and Linux, <kbd>Ctrl</kbd> takes the place of <kbd>⌘</kbd>.
 
 ## How the run went
 
-The bar over the script says which run this is, when it was made, how many statements it ran and how long they took. The line at the foot of the window says how the results stand to the script: in sync, or stale after an edit.
+The row over the script says which run this is, when it was made, how many statements it ran and how long they took. The line at the foot of the window says how the results stand to the script: in sync, or stale after an edit.
 
 If a statement fails, its error is shown under it, with the line and what to do, and the statements after it are marked `not run`. A warning does not stop a run: it is shown over the result it is about, with **Explain** to open the page of its code.

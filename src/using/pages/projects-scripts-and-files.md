@@ -4,13 +4,13 @@ A project is a folder of scripts and data kept in this browser: make one, fill i
 
 ## Projects
 
-The screen of projects lists the projects this browser keeps. **New project…** makes one, with a first script. **Scratch project** is always there, with its examples, for trying things. From inside a project, **All projects**, at the foot of the icons down the left, goes back to the list. **Projects**, at the top left, opens a short list for the project as a whole: back to all projects, export it, rename it, report a problem.
+The screen of projects lists the projects this browser keeps, as a table, the one opened last first: each with its scripts, how its last run went here (clean, with warnings, stopped by an error, or not run), its size, and when it was opened and exported. Press a row to open its project. **Find a project**, over the table, keeps the rows whose name, or a script's name, holds what you type. In the column on the left, **New project…** makes one, with a first script, and **Scratch project** is always there, with its examples, for trying things. From inside a project, **All projects**, at the foot of the icons down the left, goes back to the list. **Projects**, at the top left, opens a short list for the project as a whole: back to all projects, export it, rename it, report a problem.
 
-Each project in the list has a menu at the right of its row: **Rename…**, **Duplicate…**, **Export project…** and **Delete…**. The Scratch project cannot be renamed or deleted; it can be duplicated into a project of your own, and reset to its examples.
+Each project in the table has **Open** and **Export…** at the end of its row, and beside them a menu: **Rename…**, **Duplicate…**, **Export project…** and **Delete…**. The Scratch project cannot be renamed or deleted; it can be duplicated into a project of your own, and reset to its examples.
 
 ## The files of a project
 
-**Project**, at the left of the bar under the top bar, opens the pane of the project's files. Press a file to open it.
+**Project**, at the left of the row over the script, opens the pane of the project's files. Press a file to open it.
 
 ![The Script place with the Project pane open at the left: the folders of the Scratch project, scripts and data, with a menu button at the right of each row.](the-project-pane)
 
@@ -19,7 +19,7 @@ The **+** at the head of the list, beside the project's name, adds to the projec
 - **New script** and **New folder**: type the name in the row where it will stand.
 - **Add files…**: data files from this computer, which a script can then read.
 
-A script, a paper and a plain note open to be written. Any other file that is text, such as a table a script exported or a data file of comma-separated values, opens to be read: its tab says that it is read only, and nothing typed changes it. A file that is not text does not open; **Save a copy…**, in its menu, saves it to this computer.
+A script, a paper and a plain note open to be written. Any other file that is text, such as a table a script exported or a data file of comma-separated values, opens to be read: the line at the top of the window says that it is read only, beside its name, and nothing typed changes it. A file that is not text does not open; **Save a copy…**, in its menu, saves it to this computer.
 
 Each file and folder has a menu at the right of its row: **Rename…**, **Move to…**, **Duplicate**, **Delete…** and **Save a copy…**, which saves the file to this computer. The files Zeff opens by name, the main script and `zeff.toml` among them, keep their names and places: their menus have no rename, move or delete.
 

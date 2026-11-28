@@ -94,6 +94,8 @@ Opened on the owner's word once Zeff 0.9.0 was released, planned (`docs/releases
 
 **Done, step 13 `[function]`.** The front page (#245, as completed): the headline "Reproducible empirical research, in your browser.", its line, Start, three facts; the engine's card with its three steps and three lines of script with what the engine prints for them, taken at the build; the watermark faint; a foot with the versions and the licence. The narrow window's notice is drawn the same way. Green in Chromium; in WebKit here the same tests as before fail at the locked screen.
 
-**Next.** Step 14 `[function]`: Using Zemp Lite's fourteen pages and their fourteen pictures remade for the new screens.
+**Done, step 14 `[function]`.** Using Zemp Lite (#245): the fourteen pages say what the new screens hold, and their fourteen pictures are made again from the running app; none shows the old frame. What 0.3.1 built is listed, screen by screen, for the coordinating session (the entry of step 14 in `docs/decisions.md`). Green in Chromium; in WebKit here the same tests as before fail at the locked screen.
+
+**Next.** Step 15 `[engine]`: the pre-release routine of the testing handbook, section 2.4, the notes of the release and the registers; the release itself waits for the owner's "Release 0.3.1".
 
 **For the owner to decide.** Nothing. **His to read when he wishes:** the words of the page a narrow window is shown (the entry of step 3 in `docs/decisions.md`, choice 4). **For him to know:** at a tablet's width the foot shortens the note on where the work is kept to its last words ("… · not exported yet"), the one text of the frame that is shortened there (step 5, choice 4); and Data's row shortens a panel's facts there ("15,571 rows × 13 variables · panel worker × year"), whole in the frames' menu (step 8a, choice 5). **His to try by hand, in his own browser:** whether ⌘1 to ⌘5 open the places or the browser keeps them for its tabs (step 4, choice 5).

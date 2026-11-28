@@ -6,7 +6,7 @@ Zemp Lite runs the Zeff engine inside this browser. Nothing is installed, there 
 
 ## Run the example
 
-1. On the screen of projects, press **Scratch project**. It holds worked examples to run and change.
+1. The front page starts the engine and opens the app when it is ready. On the screen of projects that follows, press **Scratch project**, at the head of the column on the left. It holds worked examples to run and change.
 2. Press **Run**, or <kbd>⌘⇧↵</kbd> (<kbd>Ctrl ⇧ ↵</kbd> on Windows and Linux). The script runs from its first statement to its last.
 3. Read the note beside each statement: it says what the statement made. A note with more to show is a button; press it to unfold what the statement printed.
 

@@ -6,7 +6,7 @@ Look at the frames a run made: sort them, keep some rows, search them, and read 
 
 Run the script, then open Data, the second of the icons down the left. The row over the table names the frame shown, with its size and the line of the statement that made it. Press the frame's name there for the list of the frames the run made, and press one to show it. In the script, the note of a frame opens Data on that frame.
 
-![The Data place: the frames of the run listed at the left, and in the middle the rows of a frame as a table, each column headed by its name, its type and a small picture of its values.](the-data-place)
+![The Data place: one row over the table, with the frame's name, its size and the line that made it, the words Data and Variables, and the fields that keep and search rows; under it the rows of a frame as a table, each column headed by its name, its type and a small picture of its values.](the-data-place)
 
 Each column is headed by the variable's name, its type, how many of its values are missing, and a small picture of how its values are spread. A missing value is written `NA`, never left blank.
 

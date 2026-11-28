@@ -8,7 +8,7 @@ A comment line written `// # Describe` begins a section called Describe, which r
 
 ## The Outline pane
 
-**Outline**, in the bar under the top bar, opens the pane. It lists the sections of the script with their lines, a subsection under its section, and follows the script as you type.
+**Outline**, in the row over the script, opens the pane. It lists the sections of the script with their lines, a subsection under its section, and follows the script as you type.
 
 ![The Script place with the Outline pane open at the left, listing the four sections of the example, Sample, Describe, Models and Figure, each with the line it begins on.](the-outline)
 

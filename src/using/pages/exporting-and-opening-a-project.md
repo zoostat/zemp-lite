@@ -4,7 +4,9 @@ A project leaves the browser as one zip, and comes back from one: to keep it saf
 
 ## Exporting
 
-**Export project…** saves the project as a zip on this computer. It is in three places: in a project's menu on the screen of projects; in the list of commands, as `Project: export…`, while the project is open; and at the foot of the window, beside the reminder to export, when there is one.
+**Export project…** saves the project as a zip on this computer. On the screen of projects, **Export…** at the end of a project's row saves it without opening it, and the menu beside it has the same. With the project open, it is in **Projects**, at the top left; in the list of commands, as `Project: export…`; and at the foot of the window, beside the reminder to export, when there is one.
+
+**Export all projects…**, at the foot of the column on the left of the screen of projects, saves every project of this browser, each as a zip of its own. A browser may ask, once, whether this site may save several files.
 
 ![The screen of projects with the menu of a project's row open: Rename…, Duplicate…, Export project… and Delete….](the-menu-of-a-project)
 

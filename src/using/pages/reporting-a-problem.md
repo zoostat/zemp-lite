@@ -4,7 +4,7 @@ When a script fails in a way that looks like a fault of Zeff, the app builds a r
 
 ## Building the report
 
-With the project open, press <kbd>⌘K</kbd> and choose `Report a problem`. The engine runs the script, then the failing statement with only the statements it needs, and writes what it found.
+With the project open, press <kbd>⌘K</kbd> and choose `Report a problem`, or choose **Report a problem…** in **Projects**, at the top left. The engine runs the script, then the failing statement with only the statements it needs, and writes what it found.
 
 ![The window Report a problem over the script: what the report is, a sentence saying nothing has been sent, the text of the report, and the button Save the report….](the-report)
 
