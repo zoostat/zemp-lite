@@ -3846,3 +3846,15 @@ The wait is there at the trial address every time and at the address once in fou
 
 **For the owner, at "Release 0.3.1":** nothing to decide. The release then sets the version to 0.3.1, makes the pictures that show the version again, tags `v0.3.1`, pushes, and publishes the GitHub release with the notes.
 
+## 28 November 2026: release 0.3.1
+
+**Released, on the owner's word ("Release 0.3.1").** The version is 0.3.1 in the seven places that carry it; the commit is "Release 0.3.1", tagged `v0.3.1` as `v0.3.0` was (a tag on the commit, with no message of its own), and the GitHub release carries the notes and is marked a pre-release, as every release of the preview is.
+
+**At the release.** The tree was clean and `v0.3.0` tagged; GitHub's check of the commit before (`abaaefd`) was green in both browsers and that commit had passed all 18 checks at the trial address and at the address. On the release's own tree the whole routine is green on the owner's Mac in both browsers (604 unit tests; 936 browser tests passed and 4 skipped by design), the Mac's screen being unlocked again: the tests that had failed there at a real press of the mouse through the release pass. The nine checks of the address pass there against the built app.
+
+**The pictures.** Made again after the version was set: eleven of the fourteen changed, for the version they show or a time of day.
+
+**The functions' catalogue** (`docs/spec/zeff_functions.csv`) has no status to update for this release: it ships no function, and the file here is a copy of the Zeff repository's.
+
+**The registers** are reviewed in the notes ("For the coordinating session: the registers"): none of the open decisions is due at this release; #247 and #232 are the owner's to decide at the planning of Zemp Lite 0.4; R4, R11 and R13 are as they were.
+
