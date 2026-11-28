@@ -1,12 +1,21 @@
-// The fact the loading screen is built from (release 0.2.4, step 4), as the app has it: it is
-// there once the worker is built, and it is written as the drawings write it.
+// The facts the front page is built from (release 0.2.4, step 4; the example from release
+// 0.3.1, step 13), as the app has them: they are there once the worker is built, and the size
+// is written as the drawings write it.
 import { describe, expect, it } from "vitest";
 import { FACTS, megabytes } from "./facts";
 
 describe("the fact of the engine the build carries", () => {
-  it("is there, and is the size alone", () => {
+  it("is there: the size, and the front page's example with its print", () => {
     expect(FACTS).not.toBeNull();
-    expect(Object.keys(FACTS ?? {})).toEqual(["travels"]);
+    expect(Object.keys(FACTS ?? {})).toEqual(["travels", "example"]);
+  });
+
+  it("gives an example of three lines of script, and what the engine printed for it", () => {
+    const example = FACTS?.example;
+    expect(example?.script.split("\n")).toHaveLength(3);
+    expect(example?.script.endsWith("\n")).toBe(false);
+    expect(example?.printed).toMatch(/\S/);
+    expect(example?.printed.endsWith("\n")).toBe(false);
   });
 
   it("gives the size that travels, under the limit of risk R4", () => {

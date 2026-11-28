@@ -1,0 +1,3 @@
+let w = dataset(wages).where(year >= 2012)
+let m = w.reg(log(wage) ~ educ, cluster: worker)
+m.coef(educ)

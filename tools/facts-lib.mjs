@@ -94,3 +94,34 @@ export function travelling(web, kept = null) {
   }
   return bytes;
 }
+
+/**
+ * What the front page shows of a run (release 0.3.1, step 13; open decision #245): a short
+ * script, as it is kept (`examples/front/example.zeff`), and what the engine this build
+ * carries prints for it, to the character. `engine` is the worker as built for Node. The
+ * build stops where the script does not run to its end on this engine, prints nothing, or is
+ * not the three lines the page is drawn for.
+ */
+export function exampleOf(engine, script) {
+  const lines = script.replace(/\n+$/, "").split("\n");
+  if (lines.length !== 3 || lines.some((line) => line.trim() === "")) {
+    throw new FactError("the front page's example is not three lines of script");
+  }
+  const project = new engine.Project("front");
+  let done;
+  try {
+    done = JSON.parse(project.run("scripts/main.zeff", script, 0));
+  } finally {
+    project.free?.();
+  }
+  if (done.exit_code !== 0) {
+    throw new FactError(
+      `the front page's example did not run on this engine (exit code ${done.exit_code}): ${String(done.stderr).trim()}`,
+    );
+  }
+  const printed = String(done.stdout).replace(/\n+$/, "");
+  if (printed.trim() === "") {
+    throw new FactError("the front page's example printed nothing on this engine");
+  }
+  return { script: lines.join("\n"), printed };
+}

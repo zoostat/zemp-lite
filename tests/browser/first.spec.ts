@@ -173,7 +173,9 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
   }) => {
     await page.goto("/");
     const start = page.getByTestId("start");
-    await expect(start.getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
+    await expect(start.getByRole("heading", { level: 1 })).toHaveText(
+      "Reproducible empirical research, in your browser.",
+    );
     await expect(page.getByTestId("version")).toContainText("0.3");
     await expect(page.getByTestId("alpha")).toHaveText("alpha");
     await expect(page.getByText("The first public preview: much is still to come")).toBeVisible();
@@ -185,14 +187,9 @@ test.describe("a first visit, in a browser that has never opened Zemp Lite", () 
     await expect(start.getByTestId("step-start")).toHaveClass(/done/);
     await expect(start.getByTestId("step-start")).toContainText("Zeff 0.9.0 ready");
     await expect(start.getByTestId("start-whole")).toHaveText(/Ready\s*100 %/);
-    // The four promises, in their band.
-    const promises = page.getByRole("region", { name: "What Zemp Lite promises" });
-    for (const promise of [
-      "It runs here",
-      "Your data stays on this computer",
-      "No account",
-      "The next visit opens at once",
-    ]) {
+    // The three facts, under the button.
+    const promises = page.getByRole("list", { name: "What Zemp Lite promises" });
+    for (const promise of ["Runs here", "Stays here", "No account"]) {
       await expect(promises.getByText(promise, { exact: true })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: "What is counted" })).toBeVisible();

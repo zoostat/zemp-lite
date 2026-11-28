@@ -14,7 +14,10 @@ declare const __ENGINE_BYTES__: number | null;
  * What the loading screen says of the engine's size, taken from the engine the build carries
  * (`tools/facts.mjs`); `null` before the worker is built, which a build refuses.
  */
-declare const __ZEMP_FACTS__: { travels: number } | null;
+declare const __ZEMP_FACTS__: {
+  travels: number;
+  example: { script: string; printed: string };
+} | null;
 
 /** A file of the Paper module as the build carries it: its size, its SHA-256 in hex, and its size as it travels. */
 interface PaperFile {

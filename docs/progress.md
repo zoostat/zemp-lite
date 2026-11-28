@@ -8,7 +8,7 @@ of the choice of repository in `docs/decisions.md`, the Apache 2.0 licence, and 
 **Next.** Release 0.1, the prototype (Zemp Specification, section 15): the owner says "Start release 0.1"
 in a session opened in this folder. Zeff 0.7.0 is released, which is the engine 0.1 runs on.
 
-**For the owner to decide.** Nothing. **His to read when he wishes:** the words of two cards under the table of projects, which differ from the mockup where the mockup said more than the engine holds (the entry of step 12b in `docs/decisions.md`, choice 6).
+**For the owner to decide.** Nothing. **His to read when he wishes:** the words of two cards under the table of projects, which differ from the mockup where the mockup said more than the engine holds (the entry of step 12b in `docs/decisions.md`, choice 6); and on the front page the first fact, which does not say "works offline" because the app does not yet, and the example of three lines (the entry of step 13, choices 1 and 3).
 
 ## 15 to 20 November 2026: release 0.1, the prototype (folded)
 
@@ -92,6 +92,8 @@ Opened on the owner's word once Zeff 0.9.0 was released, planned (`docs/releases
 
 **Done, step 12b `[function]`.** The projects screen (#245, as completed): a column of what can be done at the left (Scratch project, New project…, Open project…, Open folder… marked for the desktop app), with the note on where the work is kept, the space used and **Export all projects…** at its foot; the projects as a table (scripts, last run, size, opened, exported, with Open, Export… and ⋯), a field that finds a project, and three cards. A first visit's table has the Scratch project alone. The address's own checks are now run here before each commit: step 10's deployment had stopped at one I had not updated (corrected in a commit of its own). Green in Chromium; in WebKit here the same tests as before fail at the locked screen.
 
-**Next.** Step 13 `[function]`: the front page (#245, as completed): the headline "Reproducible empirical research, in your browser.", Start, three facts, and the engine's card with its three steps and a three-line example.
+**Done, step 13 `[function]`.** The front page (#245, as completed): the headline "Reproducible empirical research, in your browser.", its line, Start, three facts; the engine's card with its three steps and three lines of script with what the engine prints for them, taken at the build; the watermark faint; a foot with the versions and the licence. The narrow window's notice is drawn the same way. Green in Chromium; in WebKit here the same tests as before fail at the locked screen.
+
+**Next.** Step 14 `[function]`: Using Zemp Lite's fourteen pages and their fourteen pictures remade for the new screens.
 
 **For the owner to decide.** Nothing. **His to read when he wishes:** the words of the page a narrow window is shown (the entry of step 3 in `docs/decisions.md`, choice 4). **For him to know:** at a tablet's width the foot shortens the note on where the work is kept to its last words ("… · not exported yet"), the one text of the frame that is shortened there (step 5, choice 4); and Data's row shortens a panel's facts there ("15,571 rows × 13 variables · panel worker × year"), whole in the frames' menu (step 8a, choice 5). **His to try by hand, in his own browser:** whether ⌘1 to ⌘5 open the places or the browser keeps them for its tabs (step 4, choice 5).

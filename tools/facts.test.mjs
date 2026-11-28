@@ -1,6 +1,7 @@
-// The fact the loading screen is built from (release 0.2.4, step 4; pared at 0.2.5, when the
-// landing page went with the others): the engine's travelling size is the built files' own,
-// and where it cannot be had the tool says so and stops the build.
+// The facts the front page is built from (release 0.2.4, step 4; pared at 0.2.5, when the
+// landing page went with the others; the example from release 0.3.1, step 13): the engine's
+// travelling size is the built files' own, the example's print is this engine's, and where
+// either cannot be had the tool says so and stops the build.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -9,7 +10,8 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import zlib from "node:zlib";
-import { HOST_QUALITY, travelling } from "./facts-lib.mjs";
+import { createRequire } from "node:module";
+import { FactError, HOST_QUALITY, exampleOf, travelling } from "./facts-lib.mjs";
 import { pack, packedBeside } from "./pack-lib.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -62,8 +64,9 @@ test("the tool prints the fact of this build as one line; its travelling size is
   const ran = spawnSync(process.execPath, [at("tools", "facts.mjs")], { encoding: "utf8" });
   assert.equal(ran.status, 0, ran.stderr);
   const facts = JSON.parse(ran.stdout);
-  // The size alone: what the landing page took besides went with it at 0.2.5.
-  assert.deepEqual(Object.keys(facts), ["travels"]);
+  // The size, and the front page's example with what this engine prints for it.
+  assert.deepEqual(Object.keys(facts), ["travels", "example"]);
+  assert.deepEqual(Object.keys(facts.example), ["script", "printed"]);
   // The measure of risk R4 packs both files at brotli's highest setting, the least a host
   // could send, and with gzip, which every host can. The engine travels packed at that highest
   // setting (open decision #224), with a wider window than the measure uses, and the small
@@ -84,4 +87,60 @@ test("the tool prints the fact of this build as one line; its travelling size is
   assert.ok(facts.travels < least * 1.01, `${facts.travels} is not within a hundredth of ${least}`);
   assert.ok(facts.travels < gzip, `${facts.travels} is not less than ${gzip}`);
   assert.ok(facts.travels < 5_000_000);
+});
+
+test("the front page's example is the kept script, and its print is what this engine prints for it, to the character", () => {
+  const script = fs.readFileSync(at("examples", "front", "example.zeff"), "utf8");
+  globalThis.zeffHost = { event() {}, cancelled: () => false };
+  const engine = createRequire(import.meta.url)(at("worker", "pkg", "node", "zemp_worker.js"));
+  const example = exampleOf(engine, script);
+  // The script as it is kept: three lines, the last of which prints.
+  assert.equal(example.script, script.trimEnd());
+  assert.equal(example.script.split("\n").length, 3);
+  // The print: run again here, the engine gives the same, and it is one coefficient.
+  const project = new engine.Project("again");
+  const done = JSON.parse(project.run("scripts/main.zeff", script, 0));
+  project.free();
+  assert.equal(done.exit_code, 0);
+  assert.equal(example.printed, done.stdout.trimEnd());
+  assert.match(example.printed, /^0\.\d+$/);
+  // The tool gives the build the same.
+  const ran = spawnSync(process.execPath, [at("tools", "facts.mjs")], { encoding: "utf8" });
+  assert.deepEqual(JSON.parse(ran.stdout).example, example);
+});
+
+test("an example that does not run to its end, prints nothing, or is not three lines stops the build with a sentence", () => {
+  /** An engine that answers every script as a test says. */
+  const answering = (answer) => ({
+    Project: class {
+      run() {
+        return JSON.stringify(answer);
+      }
+    },
+  });
+  const three = "let a = 1\nlet b = 2\na + b\n";
+  assert.deepEqual(exampleOf(answering({ exit_code: 0, stdout: "3\n", stderr: "" }), three), {
+    script: "let a = 1\nlet b = 2\na + b",
+    printed: "3",
+  });
+  assert.throws(
+    () =>
+      exampleOf(
+        answering({ exit_code: 1, stdout: "", stderr: "error[Z0101]: no such name\n" }),
+        three,
+      ),
+    (error) =>
+      error instanceof FactError &&
+      /did not run on this engine \(exit code 1\): error\[Z0101\]/.test(error.message),
+  );
+  assert.throws(
+    () => exampleOf(answering({ exit_code: 0, stdout: "\n", stderr: "" }), three),
+    /printed nothing on this engine/,
+  );
+  for (const script of ["a + b\n", "let a = 1\n\nlet b = 2\na + b\n", "1\n2\n3\n4\n"]) {
+    assert.throws(
+      () => exampleOf(answering({ exit_code: 0, stdout: "3\n", stderr: "" }), script),
+      /not three lines of script/,
+    );
+  }
 });

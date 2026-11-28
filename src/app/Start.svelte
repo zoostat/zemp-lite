@@ -1,4 +1,13 @@
 <script lang="ts">
+  // The front page (open decision #245, as completed on 28 November 2026; redrawn at release
+  // 0.3.1, step 13). At the left the headline, "Reproducible empirical research, in your
+  // browser.", its line, **Start** and three facts; at the right the card of the engine being
+  // started, with its three numbered steps under one bar and, under them, three lines of
+  // script with what the engine prints for them, taken from the carried engine when the app is
+  // built (`facts.ts`; #220's rule). The watermark stands faint behind, and a line at the foot
+  // gives the versions, the licence, what is counted and how to report a problem. What follows
+  // is the page as it was built, which the redrawing keeps:
+  //
   // The loading screen of a first visit (the design guide, section 9, "Loading screen"; open
   // decision #220, item 3; release 0.2.4, step 6; first built at release 0.2, step 18b): the
   // name large with what Zemp Lite is in one line and **Start** (named **Open Zemp Lite** until
@@ -13,13 +22,13 @@
   // section 13).
   import engineUrl from "../../worker/pkg/web/zemp_worker_bg.wasm?url";
   import type { Engine } from "../engine/engine";
-  import HexIcon from "../theme/HexIcon.svelte";
-  import Name from "../theme/Name.svelte";
+  import Code from "../editor/Code.svelte";
+  import Named from "../theme/Named.svelte";
   import Watermark from "../theme/Watermark.svelte";
   import { FACTS, megabytes } from "./facts";
   import FrontBar from "./FrontBar.svelte";
   import { came, glided, marked, reached, type Came, type State } from "./start";
-  import { ENGINE, ENGINE_BYTES, ENGINE_SHA256 } from "./version";
+  import { ENGINE, ENGINE_BYTES, ENGINE_SHA256, VERSION, shown as versionShown } from "./version";
 
   let { engine, onopen }: { engine: Engine; onopen: () => void } = $props();
 
@@ -155,6 +164,9 @@
     failed: "failed",
   };
 
+  /** The break between two lines of the example, kept as the script has it. */
+  const BREAK = "\n";
+
   // Once the engine runs the cursor is on **Start**, so that Return presses it too.
   let open = $state<HTMLButtonElement | null>(null);
   $effect(() => {
@@ -176,23 +188,50 @@
 {/snippet}
 
 <div class="screen">
-  <Watermark />
+  <Watermark faint />
   <FrontBar />
   <main class="start-main" data-testid="start">
     <section class="hero">
-      <h1><Name /></h1>
+      <h1>Reproducible empirical research, <em>in&nbsp;your&nbsp;browser.</em></h1>
       <p class="lede">
-        <strong>Zeff in your browser.</strong> Write a script, run it and read the results, with nothing
-        to install and nothing uploaded.
+        Regressions, tests, tables and figures from a short script, run on this computer with
+        nothing installed. The same script gives the same numbers wherever it runs.
       </p>
-      <button class="open" bind:this={open} disabled={!ready} onclick={onopen}>Start</button>
-      <p class="hint" data-testid="open-hint">
-        {ready ? "or press ↵" : "Opens as soon as the engine is ready."}
-      </p>
+      <div class="go">
+        <button class="open" bind:this={open} disabled={!ready} onclick={onopen}>Start</button>
+        <p class="hint" data-testid="open-hint">
+          {#if ready}
+            The engine is ready · press <kbd>Return</kbd>
+          {:else}
+            Opens as soon as the engine is ready
+          {/if}
+        </p>
+      </div>
+      <ul class="facts" aria-label="What Zemp Lite promises">
+        <li>
+          <b>Runs here</b>
+          <span
+            >The engine runs in this browser; your scripts and data are never sent anywhere.</span
+          >
+        </li>
+        <li>
+          <b>Stays here</b>
+          <span>Projects live in this browser until you export them.</span>
+        </li>
+        <li>
+          <b>No account</b>
+          <span>Nothing to sign up for; open the page and start.</span>
+        </li>
+      </ul>
     </section>
 
     <section class="card" aria-label="Starting the engine" data-engine={starting}>
-      <h2>Starting the engine</h2>
+      <header>
+        <h2>Starting the engine</h2>
+        <p class="barnote" data-testid="start-whole">
+          <span>{ready ? "Ready" : `Step ${step} of 3`}</span><span>{whole} %</span>
+        </p>
+      </header>
       <div
         class="bar"
         role="progressbar"
@@ -203,9 +242,6 @@
       >
         <i style:width="{whole}%"></i>
       </div>
-      <p class="barnote" data-testid="start-whole">
-        <span>{ready ? "Ready" : `Step ${step} of 3`}</span><span>{whole} %</span>
-      </p>
       <ol class="steps">
         <li class={shown.fetching} data-testid="step-fetch">
           {@render mark(shown.fetching, 1)}
@@ -253,45 +289,32 @@
           {problem}. <button class="word" onclick={() => void begin()}>Try again</button>
         </p>
       {/if}
+      {#if FACTS !== null}
+        <!-- Three lines of script and what the engine this release carries prints for them:
+             taken from that engine when the app is built, not written here. -->
+        <figure class="peek" data-testid="start-example">
+          <figcaption>What a run looks like</figcaption>
+          <pre
+            class="mono script"
+            data-testid="start-example-script">{#each FACTS.example.script.split("\n") as line, at (at)}{#if at > 0}{BREAK}{/if}<Code
+                text={line}
+                inline
+              />{/each}</pre>
+          <pre class="mono printed" data-testid="start-example-printed">{FACTS.example
+              .printed}</pre>
+        </figure>
+      {/if}
     </section>
   </main>
 
-  <section class="promise-band" aria-label="What Zemp Lite promises">
-    <ul class="promises">
-      <li>
-        <HexIcon name="here" size={40} />
-        <div>
-          <b>It runs here</b>
-          <span>The engine runs in this browser; your scripts are never sent anywhere.</span>
-        </div>
-      </li>
-      <li>
-        <HexIcon name="lock" size={40} />
-        <div>
-          <b>Your data stays on this computer</b>
-          <span>In this browser's private storage.</span>
-        </div>
-      </li>
-      <li>
-        <HexIcon name="no-account" size={40} />
-        <div>
-          <b>No account</b>
-          <span>There is nothing to sign up for.</span>
-        </div>
-      </li>
-      <li>
-        <HexIcon name="bolt" size={40} />
-        <div>
-          <b>The next visit opens at once</b>
-          <span>The browser keeps the engine.</span>
-        </div>
-      </li>
-    </ul>
-  </section>
   <footer class="bottom">
-    <span class="gap"></span>
+    <span data-testid="start-versions"
+      ><Named text={`Zemp Lite ${versionShown(VERSION)} · engine Zeff ${ENGINE}`} /></span
+    >
+    <span>Apache 2.0 licence</span>
     <a class="counted" href="/counted.html">What is counted</a>
-    <span class="engine">engine Zeff {ENGINE} · in this browser</span>
+    <span class="gap"></span>
+    <span class="report">Something wrong? In a project, ⌘K → <b>Report a problem</b></span>
   </footer>
 </div>
 
@@ -315,46 +338,47 @@
     display: grid;
     flex: 1 0 auto;
     gap: 56px;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
     margin: 0 auto;
-    max-width: 1180px;
-    padding: 56px 32px 40px;
+    max-width: 1440px;
+    padding: 24px 56px 32px;
     width: 100%;
   }
+  /* The headline: Newsreader, large, its last words in italic and in the accent. */
   h1 {
     font:
-      600 84px/1 "Newsreader",
+      500 76px/1.02 "Newsreader",
       serif;
-    letter-spacing: -0.01em;
-    margin: 0 0 20px;
+    letter-spacing: -0.02em;
+    margin: 0 0 18px;
   }
-  /* The badge of a page's title is 0.26 of the name (the design guide, "The name drawn"). */
-  h1 :global(.lite) {
-    font-size: 0.26em;
-    margin-left: 0.08em;
-    top: -0.35em;
+  h1 em {
+    color: var(--accent);
+    font-style: italic;
   }
   .lede {
     color: var(--ink-2);
-    font-size: 21px;
-    line-height: 1.45;
-    margin: 0 0 34px;
-    max-width: 520px;
+    font-size: 19px;
+    line-height: 1.5;
+    margin: 0 0 28px;
+    max-width: 560px;
   }
-  .lede strong {
-    color: var(--ink);
+  .go {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 30px;
   }
   .open {
     background: var(--button);
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: 9px;
     box-shadow: 0 8px 24px -10px color-mix(in srgb, var(--button) 70%, transparent);
     color: var(--button-ink);
+    flex: none;
     font-size: 17px;
     font-weight: 700;
-    letter-spacing: 0.06em;
-    padding: 18px 40px;
-    text-transform: uppercase;
+    padding: 13px 34px;
   }
   .open:hover:not(:disabled) {
     background: var(--accent-hover);
@@ -368,52 +392,93 @@
   .hint {
     color: var(--ink-3);
     font-size: 13.5px;
-    margin: 10px 0 0;
+    margin: 0;
+  }
+  kbd {
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    font: inherit;
+    font-size: 12.5px;
+    padding: 0 5px;
+  }
+  .facts {
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    list-style: none;
+    margin: 0;
+    max-width: 640px;
+    padding: 0;
+  }
+  .facts li {
+    padding: 14px 18px 0 0;
+  }
+  .facts b {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 3px;
+  }
+  .facts span {
+    color: var(--ink-2);
+    font-size: 13.5px;
+    line-height: 1.45;
   }
   .card {
-    background: var(--window);
+    background: var(--softer);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 18px;
     box-shadow: 0 24px 48px -36px rgba(20, 42, 102, 0.5);
-    padding: 26px 28px 14px;
+    overflow: hidden;
+  }
+  .card header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 18px;
   }
   h2 {
-    font:
-      600 22px/1.2 "Newsreader",
-      serif;
-    margin: 0 0 16px;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .barnote {
+    color: var(--ink-2);
+    display: flex;
+    font-size: 13px;
+    gap: 14px;
+    margin: 0;
+  }
+  .barnote span:last-child {
+    font-variant-numeric: tabular-nums;
+    min-width: 4ch;
+    text-align: right;
   }
   .bar {
     background: var(--line);
-    border-radius: 999px;
-    height: 6px;
+    height: 4px;
     overflow: hidden;
   }
   .bar i {
-    background: linear-gradient(90deg, var(--mark-2), var(--mark-3));
-    border-radius: 999px;
+    background: var(--accent);
     display: block;
     height: 100%;
-  }
-  .barnote {
-    color: var(--ink-3);
-    display: flex;
-    font-size: 13px;
-    justify-content: space-between;
-    margin: 6px 0 10px;
   }
   .steps {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 6px 18px 4px;
   }
   .steps li {
-    align-items: start;
-    border-top: 1px solid var(--line);
+    align-items: center;
+    border-bottom: 1px solid var(--line);
     display: grid;
-    gap: 14px;
+    gap: 12px;
     grid-template-columns: 30px minmax(0, 1fr) auto;
-    padding: 14px 0;
+    padding: 12px 0;
+  }
+  .steps li:last-child {
+    border-bottom: 0;
   }
   .mark {
     border: 1.5px solid var(--line-strong);
@@ -424,18 +489,18 @@
     font:
       600 13px/1 "Atkinson Hyperlegible Next",
       sans-serif;
-    height: 28px;
+    height: 26px;
     place-items: center;
-    width: 28px;
+    width: 26px;
   }
   .mark svg {
     fill: none;
-    height: 16px;
+    height: 15px;
     stroke: currentColor;
     stroke-linecap: round;
     stroke-linejoin: round;
     stroke-width: 2.4;
-    width: 16px;
+    width: 15px;
   }
   .done .mark {
     background: var(--ok-soft);
@@ -464,13 +529,13 @@
   }
   .t b {
     display: block;
-    font-size: 15px;
+    font-size: 14.5px;
     font-weight: 600;
   }
   .t span {
     color: var(--ink-3);
     display: block;
-    font-size: 13.5px;
+    font-size: 13px;
   }
   .waiting .t b {
     color: var(--ink-3);
@@ -478,9 +543,8 @@
   }
   .steps em {
     color: var(--ink-3);
-    font-size: 13.5px;
+    font-size: 13px;
     font-style: normal;
-    padding-top: 2px;
     white-space: nowrap;
   }
   .done em {
@@ -498,7 +562,7 @@
     color: var(--error);
     font-size: 13.5px;
     margin: 0;
-    padding: 12px 0;
+    padding: 12px 18px;
   }
   .word {
     background: none;
@@ -507,37 +571,32 @@
     padding: 0;
     text-decoration: underline;
   }
-  .promise-band {
-    background: var(--deep);
-    color: var(--deep-ink);
-    flex: none;
+  /* What a run looks like: the script in the editor's colours, its print under it. */
+  .peek {
+    background: var(--window);
+    border-top: 1px solid var(--line);
+    margin: 0;
+    padding: 14px 18px 16px;
   }
-  .promises {
-    box-sizing: border-box;
-    display: grid;
-    gap: 28px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    list-style: none;
-    margin: 0 auto;
-    max-width: 1180px;
-    padding: 28px 32px;
+  .peek figcaption {
+    color: var(--ink-3);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
   }
-  .promises li {
-    align-items: flex-start;
-    display: flex;
-    gap: 14px;
+  /* The three lines fit the card at every width the page is laid out for; were a window
+     narrower still, a line would be broken, not cut. */
+  .peek pre {
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
   }
-  .promises :global(svg) {
-    color: var(--deep-muted);
-  }
-  .promises b {
-    display: block;
-    font-size: 15px;
-    margin-bottom: 2px;
-  }
-  .promises span {
-    color: var(--deep-muted);
-    font-size: 13.5px;
+  .peek .printed {
+    color: var(--ink-2);
   }
   .bottom {
     align-items: center;
@@ -546,14 +605,37 @@
     color: var(--ink-3);
     display: flex;
     flex: none;
+    flex-wrap: wrap;
     font-size: 13px;
-    gap: 18px;
-    padding: 9px 32px;
+    gap: 6px 22px;
+    padding: 11px 28px;
   }
   .gap {
     flex: 1;
   }
   .counted {
     color: var(--ink-2);
+  }
+  .report b {
+    color: var(--ink-2);
+  }
+  /* Where the window is narrower the headline is set smaller, so that the page keeps to one
+     screen at a laptop's and a tablet's size. */
+  @media (max-width: 1280px) {
+    .start-main {
+      gap: 36px;
+      padding: 16px 36px 24px;
+    }
+    h1 {
+      font-size: 60px;
+    }
+  }
+  @media (max-width: 1100px) {
+    h1 {
+      font-size: 50px;
+    }
+    .lede {
+      font-size: 17px;
+    }
   }
 </style>

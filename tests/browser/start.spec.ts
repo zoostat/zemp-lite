@@ -1,15 +1,18 @@
-// The loading screen redrawn (release 0.2.4, step 6; open decision #220, item 3; the design
-// guide, section 9, "Loading screen"): the name large with **Start** (named **Open Zemp Lite**
-// until 0.2.5; open decision #225, item 5), grey until the
-// engine runs; the card **Starting the engine**, one bar over three steps; a failure with its
-// sentence and **Try again**; the four promises in their band. And item 10 (step 6b): the bar
+// The front page (redrawn at release 0.3.1, step 13; open decision #245, as completed): the
+// headline "Reproducible empirical research, in your browser.", its line, **Start**, grey
+// until the engine runs, and three facts; the card **Starting the engine**, one bar over
+// three steps, with three lines of script and what the engine prints for them, taken from
+// the carried engine at the build; the watermark faint behind; a foot with the versions, the
+// licence, what is counted and how to report a problem. As built at 0.2.4 (step 6; open
+// decision #220, item 3): a failure with its sentence and **Try again**. And item 10 (step 6b): the bar
 // glides however fast the steps finish, the button opens when the bar is full, and the first
 // step says how the engine came, over the network with the bytes that travelled or from the
 // browser's own keeping.
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { Page, Route } from "@playwright/test";
-import { expect, faintText, smallestText, test } from "./support";
+import { readFileSync } from "node:fs";
+import { expect, faintText, printed, smallestText, test, write } from "./support";
 
 test.use({ firstVisit: true });
 
@@ -18,11 +21,11 @@ const open = (page: Page) => page.getByRole("button", { name: "Start", exact: tr
 const whole = (page: Page) => page.getByTestId("start-whole");
 
 /** The facts the build took from the engine (`tools/facts.mjs`), asked for as the build asks. */
-function facts(): { travels: number } {
+function facts(): { travels: number; example: { script: string; printed: string } } {
   const tool = fileURLToPath(new URL("../../tools/facts.mjs", import.meta.url));
   const ran = spawnSync(process.execPath, [tool], { encoding: "utf8" });
   if (ran.status !== 0) throw new Error(ran.stderr);
-  return JSON.parse(ran.stdout) as { travels: number };
+  return JSON.parse(ran.stdout) as ReturnType<typeof facts>;
 }
 
 test("while the engine is fetched the button is grey and says when it will open; then it opens, by Return too", async ({
@@ -38,10 +41,11 @@ test("while the engine is fetched the button is grey and says when it will open;
     await route.continue();
   });
   await page.goto("/");
-  await expect(start(page).getByRole("heading", { level: 1 })).toHaveText("Zemp Lite");
-  await expect(start(page)).toContainText("Zeff in your browser.");
+  await expect(start(page).getByRole("heading", { level: 1 })).toHaveText(
+    "Reproducible empirical research, in your browser.",
+  );
   await expect(open(page)).toBeDisabled();
-  await expect(page.getByTestId("open-hint")).toHaveText("Opens as soon as the engine is ready.");
+  await expect(page.getByTestId("open-hint")).toHaveText("Opens as soon as the engine is ready");
   await expect(whole(page)).toHaveText(/Step 1 of 3\s*0 %/);
   await expect(page.getByTestId("step-fetch")).toHaveClass(/going/);
   await expect(page.getByTestId("step-check")).toHaveClass(/waiting/);
@@ -53,7 +57,7 @@ test("while the engine is fetched the button is grey and says when it will open;
   await expect(open(page)).toBeEnabled({ timeout: 30_000 });
   await expect(whole(page)).toHaveText(/Ready\s*100 %/);
   await expect(bar).toHaveAttribute("aria-valuenow", "100");
-  await expect(page.getByTestId("open-hint")).toHaveText("or press ↵");
+  await expect(page.getByTestId("open-hint")).toHaveText("The engine is ready · press Return");
   // The cursor is on the button once the engine runs: Return opens the app.
   await expect(open(page)).toBeFocused();
   await page.keyboard.press("Enter");
@@ -78,13 +82,13 @@ test("the button is named Start: no arrow and no name after it, grey with its li
   await expect(button).toHaveText("Start");
   await expect(button).toHaveAccessibleName("Start");
   await expect(button).toBeDisabled();
-  await expect(page.getByTestId("open-hint")).toHaveText("Opens as soon as the engine is ready.");
+  await expect(page.getByTestId("open-hint")).toHaveText("Opens as soon as the engine is ready");
   release();
   await expect(button).toBeEnabled({ timeout: 30_000 });
   // Open, it says the same: nothing is added to it, and the name is not drawn in it.
   await expect(button).toHaveText("Start");
   expect(await button.locator("*").count()).toBe(0);
-  await expect(page.getByTestId("open-hint")).toHaveText("or press ↵");
+  await expect(page.getByTestId("open-hint")).toHaveText("The engine is ready · press Return");
   await expect(page.getByRole("button", { name: /Open Zemp Lite/ })).toHaveCount(0);
   await expect(start(page)).not.toContainText("→");
   await button.click();
@@ -277,12 +281,155 @@ for (const theme of ["light", "dark"] as const) {
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );
       expect(over, `wider than the window at ${width}`).toBeLessThanOrEqual(0);
-      // The four promises are all there, and the way on can be reached.
+      // The three facts and the example are all there, and the way on can be reached.
       await expect(
-        page.getByRole("region", { name: "What Zemp Lite promises" }).getByRole("listitem"),
-      ).toHaveCount(4);
+        page.getByRole("list", { name: "What Zemp Lite promises" }).getByRole("listitem"),
+      ).toHaveCount(3);
+      await expect(page.getByTestId("start-example-printed")).toBeVisible();
       await open(page).scrollIntoViewIfNeeded();
       await expect(open(page)).toBeVisible();
+      // No line of the example is cut or broken: each of its three is on one line of the card.
+      const lines = await page.getByTestId("start-example-script").evaluate((node) => {
+        const high = Number.parseFloat(getComputedStyle(node).lineHeight);
+        return {
+          lines: Math.round(node.getBoundingClientRect().height / high),
+          across: node.scrollWidth - node.clientWidth,
+        };
+      });
+      expect(lines, `the example at ${width}`).toEqual({ lines: 3, across: 0 });
     }
   });
 }
+
+test("the page: the headline with its last words in the accent, its line, three facts, and a foot with the versions and the licence", async ({
+  page,
+}) => {
+  // Release 0.3.1, step 13 (open decision #245, as completed on 28 November 2026).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await expect(open(page)).toBeEnabled({ timeout: 30_000 });
+  const headline = start(page).getByRole("heading", { level: 1 });
+  await expect(headline).toHaveText("Reproducible empirical research, in your browser.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  // Newsreader, large; "in your browser." in italic and in the accent, on a line of its own.
+  const drawn = await headline.evaluate((node) => {
+    const last = node.querySelector("em") as HTMLElement;
+    const probe = document.createElement("i");
+    probe.style.color = "var(--accent)";
+    document.body.append(probe);
+    const accent = getComputedStyle(probe).color;
+    probe.remove();
+    return {
+      face: getComputedStyle(node).fontFamily.split(",")[0]!.replace(/"/g, ""),
+      size: Number.parseFloat(getComputedStyle(node).fontSize),
+      last: last.textContent,
+      italic: getComputedStyle(last).fontStyle,
+      accent: getComputedStyle(last).color === accent,
+      unbroken: last.getClientRects().length,
+    };
+  });
+  expect(drawn).toEqual({
+    face: "Newsreader",
+    size: 76,
+    last: "in\u00a0your\u00a0browser.",
+    italic: "italic",
+    accent: true,
+    unbroken: 1,
+  });
+  await expect(start(page).locator(".lede")).toHaveText(
+    "Regressions, tests, tables and figures from a short script, run on this computer with nothing installed. The same script gives the same numbers wherever it runs.",
+  );
+  // The three facts, side by side under the button.
+  const facts3 = page.getByRole("list", { name: "What Zemp Lite promises" }).getByRole("listitem");
+  await expect(facts3).toHaveText([
+    "Runs here The engine runs in this browser; your scripts and data are never sent anywhere.",
+    "Stays here Projects live in this browser until you export them.",
+    "No account Nothing to sign up for; open the page and start.",
+  ]);
+  const tops = await facts3.evaluateAll((every) =>
+    every.map((one) => Math.round(one.getBoundingClientRect().top)),
+  );
+  expect(new Set(tops).size).toBe(1);
+  expect(tops[0]).toBeGreaterThan((await open(page).boundingBox())!.y);
+  // The band of four promises, and the words of the page it was, are gone.
+  await expect(page.getByRole("region", { name: "What Zemp Lite promises" })).toHaveCount(0);
+  for (const old of ["Zeff in your browser.", "The next visit opens at once", "or press ↵"]) {
+    await expect(page.getByText(old)).toHaveCount(0);
+  }
+  // The watermark stands behind, at half the strength it had.
+  expect(await page.locator(".watermark").evaluate((node) => getComputedStyle(node).opacity)).toBe(
+    "0.08",
+  );
+  // The foot: the versions, the licence, what is counted, and how to report a problem.
+  const foot = page.getByRole("contentinfo");
+  await expect(page.getByTestId("start-versions")).toHaveText(
+    /^Zemp\s*Lite 0\.3\S* · engine Zeff 0\.9\.0$/,
+  );
+  await expect(foot).toContainText("Apache 2.0 licence");
+  await expect(foot.getByRole("link", { name: "What is counted" })).toHaveAttribute(
+    "href",
+    "/counted.html",
+  );
+  await expect(foot).toContainText("Something wrong? In a project, ⌘K → Report a problem");
+  // The page keeps to one screen at a laptop's size and at a tablet's held sideways.
+  for (const [width, height] of [
+    [1440, 900],
+    [1280, 800],
+    [1024, 768],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    const over = await page.evaluate(() => {
+      const screen = document.querySelector(".screen") as HTMLElement;
+      return {
+        down: screen.scrollHeight - screen.clientHeight,
+        across: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    expect(over, `the page at ${width} by ${height}`).toEqual({ down: 0, across: 0 });
+  }
+});
+
+test("the example is the kept script in the editor's colours, and its print is what the engine prints: at the build, and in this browser", async ({
+  page,
+  press,
+}) => {
+  await page.goto("/");
+  await expect(open(page)).toBeEnabled({ timeout: 30_000 });
+  const kept = readFileSync(
+    fileURLToPath(new URL("../../examples/front/example.zeff", import.meta.url)),
+    "utf8",
+  );
+  const built = facts().example;
+  const example = page.getByTestId("start-example");
+  await expect(example.locator("figcaption")).toHaveText("What a run looks like");
+  // The script as it is kept, three lines; and what the build took from the engine for it.
+  const script = page.getByTestId("start-example-script");
+  expect(await script.evaluate((node) => node.textContent)).toBe(kept.trimEnd());
+  expect(kept.trimEnd().split("\n")).toHaveLength(3);
+  expect(built.script).toBe(kept.trimEnd());
+  const shown = await page
+    .getByTestId("start-example-printed")
+    .evaluate((node) => node.textContent);
+  expect(shown).toBe(built.printed);
+  // In the editor's colours: a keyword and a function are not in the ink of plain code.
+  const colours = await script.evaluate((node) => {
+    const of = (word: string) => {
+      const found = [...node.querySelectorAll("span")].find((one) => one.textContent === word);
+      return found === undefined ? null : getComputedStyle(found).color;
+    };
+    return { keyword: of("let"), fn: of("reg"), plain: getComputedStyle(node).color };
+  });
+  expect(colours.keyword).not.toBeNull();
+  expect(colours.fn).not.toBeNull();
+  expect(colours.keyword).not.toBe(colours.plain);
+  expect(colours.fn).not.toBe(colours.keyword);
+  // Run in this browser, by the engine the page has just started, the script prints the same.
+  await page.keyboard.press("Enter");
+  await press(page.getByRole("button", { name: /^Scratch project/ }));
+  await expect(page.getByRole("status")).toHaveText("engine Zeff 0.9.0 ready");
+  await write(page, kept);
+  await press(page.getByRole("button", { name: "Run", exact: true }));
+  await expect(page.getByRole("status")).toHaveText("done");
+  await press(page.getByRole("button", { name: "Unfold all", exact: true }));
+  await expect.poll(() => printed(page)).toBe(`${shown}\n`);
+});

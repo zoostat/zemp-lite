@@ -69,8 +69,9 @@ test.describe("a first visit", () => {
     await expect(open).toBeEnabled({ timeout: 30_000 });
     await drawnOn(page, "the Start screen");
     const found = await nameOn(page);
-    // In its heading and in its sentence; the button, **Start** from 0.2.5 (open decision #225,
-    // item 5), no longer carries it.
+    // In its bar and in its foot, with the version (until release 0.3.1 in its heading and in
+    // its sentence: the heading is now the headline, open decision #245); the button, **Start**
+    // from 0.2.5 (open decision #225, item 5), no longer carries it.
     expect(found.drawn).toBeGreaterThanOrEqual(2);
     await expect(open).toHaveText("Start");
     expect(await faintText(page.getByTestId("start"))).toEqual([]);
