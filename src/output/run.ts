@@ -278,6 +278,22 @@ export function refused(run: Run): boolean {
   );
 }
 
+/**
+ * The errors and the warnings a run gave, counted, for the record the projects screen reads
+ * (release 0.3.1, step 12a; open decision #245): those its statements said and those the
+ * engine's check found before any ran. A run that failed and named no error counts one. None
+ * for a run the reader stopped or that is still going: it says nothing of how the script goes.
+ */
+export function countedOf(run: Run): { errors: number; warnings: number } | null {
+  if (run.state !== "done" && run.state !== "failed") return null;
+  const all = blocks(run).flatMap((block) => block.said);
+  const errors = all.filter((one) => one.kind === "error").length;
+  return {
+    errors: run.state === "failed" ? Math.max(1, errors) : errors,
+    warnings: all.filter((one) => one.kind === "warning").length,
+  };
+}
+
 /** A block of output: what there is to show for one line of the script. */
 export interface Block {
   /** The line of the script it stands under; `null` for what belongs to no line. */

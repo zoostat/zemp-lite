@@ -287,6 +287,97 @@ describe("the projects of a browser", () => {
   });
 });
 
+describe("the projects as the projects screen lists them", () => {
+  it("gives each its scripts by their paths, the bytes it holds, and no run where none is remembered", async () => {
+    const { projects, root } = empty();
+    await projects.create("Wages");
+    await root.write("projects/wages/scripts/robustness.zeff", bytes("let a = 1\n"));
+    await root.write("projects/wages/data/wages.csv", bytes("wage\n1\n2\n"));
+    // The interface's own folder and the engine's count for the size and hold no script.
+    await root.write("projects/wages/.zemp/console.zeff", bytes("1 + 1\n"));
+    await root.write("projects/wages/.zeff/cache/x.bin", bytes("0123456789"));
+    const [row] = await projects.rows();
+    expect(row?.scripts).toEqual(["scripts/main.zeff", "scripts/robustness.zeff"]);
+    let size = 0;
+    const within = async (path: string): Promise<void> => {
+      for (const entry of await root.list(path)) {
+        if (entry.kind === "folder") await within(`${path}/${entry.name}`);
+        else size += entry.size;
+      }
+    };
+    await within("projects/wages");
+    expect(row?.size).toBe(size);
+    expect(size).toBeGreaterThan(10 + 6 + 11 + 10);
+    expect(row?.ran).toBeNull();
+    // What `list` gives is there as it gives it, and in its order.
+    await projects.create("Alpha");
+    await projects.open("wages");
+    const rows = await projects.rows();
+    expect(rows.map((one) => one.folder)).toEqual(["wages", "alpha"]);
+    const listed = await projects.list();
+    expect(rows.map((row) => listed.find((one) => one.folder === row.folder))).toEqual(listed);
+    for (const [at, row] of rows.entries()) expect(row).toMatchObject(listed[at]!);
+  });
+
+  it("remembers how a project's last run went, the newest in place of the one before", async () => {
+    const { projects, clock } = empty();
+    await projects.create("Wages");
+    await projects.create("Other");
+    clock.now = 5_000;
+    projects.noteRan("wages", { errors: 0, warnings: 2 });
+    const ran = async () =>
+      Object.fromEntries((await projects.rows()).map((row) => [row.folder, row.ran]));
+    expect(await ran()).toEqual({ wages: { at: 5_000, errors: 0, warnings: 2 }, other: null });
+    clock.now = 6_000;
+    projects.noteRan("wages", { errors: 1, warnings: 0 });
+    expect((await ran())["wages"]).toEqual({ at: 6_000, errors: 1, warnings: 0 });
+    // An open project notes its own.
+    clock.now = 7_000;
+    (await projects.open("other"))!.noteRan({ errors: 0, warnings: 0 });
+    expect((await ran())["other"]).toEqual({ at: 7_000, errors: 0, warnings: 0 });
+    // A project removed is forgotten: one made later in a folder of its name has not run.
+    await projects.remove("wages");
+    await projects.create("Wages");
+    expect((await ran())["wages"]).toBeNull();
+    expect((await ran())["other"]).not.toBeNull();
+  });
+
+  it("passes over what is not a record of a run, and a browser that keeps nothing", async () => {
+    const root = new MemoryFolder();
+    const store = kept();
+    const projects = new Projects(root, store, () => 9);
+    await projects.create("Wages");
+    await projects.create("Other");
+    store.held["zemp-ran"] = JSON.stringify({
+      wages: { at: 1, errors: "none", warnings: 0 },
+      other: { at: 2, errors: 0, warnings: 1 },
+      gone: null,
+    });
+    const rows = await projects.rows();
+    expect(rows.find((row) => row.folder === "wages")?.ran).toBeNull();
+    expect(rows.find((row) => row.folder === "other")?.ran).toEqual({
+      at: 2,
+      errors: 0,
+      warnings: 1,
+    });
+    store.held["zemp-ran"] = "not a record";
+    expect((await projects.rows()).every((row) => row.ran === null)).toBe(true);
+    // A store that refuses to keep: the run is not remembered, and nothing fails.
+    const refusing = new Projects(
+      root,
+      {
+        getItem: () => null,
+        setItem: () => {
+          throw new Error("full");
+        },
+      },
+      () => 9,
+    );
+    refusing.noteRan("wages", { errors: 0, warnings: 0 });
+    expect((await refusing.rows()).every((row) => row.ran === null)).toBe(true);
+  });
+});
+
 describe("a project renamed, duplicated and deleted", () => {
   it("renames by the line of the name in its manifest, and keeps its folder", async () => {
     const { projects, root } = empty();

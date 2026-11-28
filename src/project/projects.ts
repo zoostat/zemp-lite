@@ -28,6 +28,29 @@ export interface ProjectInfo {
   made: number | null;
 }
 
+/** How a project's last run of a whole script went, as this browser saw it. */
+export interface Ran {
+  /** When it ended, in milliseconds since 1970. */
+  at: number;
+  /** The errors it gave: those the check found before anything ran, or the one that stopped it. */
+  errors: number;
+  /** The warnings it gave. */
+  warnings: number;
+}
+
+/**
+ * A project as the projects screen lists it (release 0.3.1, step 12a; open decision #245):
+ * what is known of it, and what it holds.
+ */
+export interface ProjectRow extends ProjectInfo {
+  /** Its scripts, by their paths from the project's folder, in the order of the paths. */
+  scripts: string[];
+  /** The bytes of all it holds in this browser, the interface's and the engine's own counted. */
+  size: number;
+  /** How its last run went, or `null` where none is remembered. */
+  ran: Ran | null;
+}
+
 /** A file or a folder of a project, with what a folder holds. */
 export interface TreeNode extends Entry {
   /** Its path from the project's folder. */
@@ -43,6 +66,8 @@ const OPENED = "zemp-opened";
 const EXPORTED = "zemp-exported";
 /** When each project was made here, or first seen, by its folder. */
 const MADE = "zemp-made";
+/** How each project's last run went, by its folder. */
+const RAN = "zemp-ran";
 /** The examples the Scratch project of this browser has been given, each given once. */
 const GIVEN = "zemp-scratch-examples";
 
@@ -228,6 +253,70 @@ export class Projects {
     return at;
   }
 
+  /** What the browser keeps of each project's last run; empty where it keeps none. */
+  #ran(): Record<string, Ran> {
+    try {
+      const read = JSON.parse(this.#kept.getItem(RAN) ?? "{}") as unknown;
+      if (typeof read !== "object" || read === null) return {};
+      const whole = (value: unknown): value is number =>
+        typeof value === "number" && Number.isFinite(value) && value >= 0;
+      return Object.fromEntries(
+        Object.entries(read as Record<string, Partial<Ran> | null>).filter(
+          ([, one]) =>
+            one !== null &&
+            typeof one === "object" &&
+            whole(one.at) &&
+            whole(one.errors) &&
+            whole(one.warnings),
+        ),
+      ) as Record<string, Ran>;
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Note how a run of a project's script went, now (release 0.3.1, step 12a): the projects
+   * screen says it in the project's row.
+   */
+  noteRan(folder: string, counted: { errors: number; warnings: number }): void {
+    const ran: Ran = { at: this.#now(), errors: counted.errors, warnings: counted.warnings };
+    try {
+      this.#kept.setItem(RAN, JSON.stringify({ ...this.#ran(), [folder]: ran }));
+    } catch {
+      // It is not kept; the run is as it was.
+    }
+  }
+
+  /**
+   * The projects as the projects screen lists them, in the order of `list`: each with its
+   * scripts, the bytes it holds and how its last run went.
+   */
+  async rows(): Promise<ProjectRow[]> {
+    const ran = this.#ran();
+    const rows: ProjectRow[] = [];
+    for (const info of await this.list()) {
+      const scripts: string[] = [];
+      let size = 0;
+      const within = async (path: string, from: string): Promise<void> => {
+        for (const entry of await this.#root.list(path)) {
+          const inside = from === "" ? entry.name : `${from}/${entry.name}`;
+          if (entry.kind === "folder") {
+            await within(`${path}/${entry.name}`, inside);
+            continue;
+          }
+          size += entry.size;
+          // The interface's own folder and the engine's hold no script of the reader's.
+          const own = inside.startsWith(".zemp/") || inside.startsWith(".zeff/");
+          if (!own && entry.name.endsWith(".zeff")) scripts.push(inside);
+        }
+      };
+      await within(`${ROOT}/${info.folder}`, "");
+      rows.push({ ...info, scripts: scripts.sort(), size, ran: ran[info.folder] ?? null });
+    }
+    return rows;
+  }
+
   /** The projects, the one opened last first, and those never opened after them by name. */
   async list(): Promise<ProjectInfo[]> {
     const opened = this.#opened();
@@ -366,9 +455,14 @@ export class Projects {
       exported: this.#times(EXPORTED)[folder] ?? null,
       made: this.#made(folder),
     };
-    return new Project(info, new Inside(this.#root, `${ROOT}/${folder}`), () => {
-      info.exported = this.noteExported(folder);
-    });
+    return new Project(
+      info,
+      new Inside(this.#root, `${ROOT}/${folder}`),
+      () => {
+        info.exported = this.noteExported(folder);
+      },
+      (counted) => this.noteRan(folder, counted),
+    );
   }
 
   /**
@@ -525,9 +619,11 @@ export class Projects {
   async remove(folder: string): Promise<void> {
     await this.#root.remove(`${ROOT}/${folder}`);
     // What was kept of it is forgotten: a project made later in a folder of this name is new.
-    for (const key of [OPENED, EXPORTED, MADE]) {
+    for (const key of [OPENED, EXPORTED, MADE, RAN]) {
       const times = Object.fromEntries(
-        Object.entries(this.#times(key)).filter(([name]) => name !== folder),
+        Object.entries(key === RAN ? this.#ran() : this.#times(key)).filter(
+          ([name]) => name !== folder,
+        ),
       );
       try {
         this.#kept.setItem(key, JSON.stringify(times));
@@ -543,12 +639,27 @@ export class Project {
   readonly info: ProjectInfo;
   readonly #files: Folder;
   readonly #exported: () => void;
+  readonly #ran: (counted: { errors: number; warnings: number }) => void;
 
-  /** `exported` is told when the project has been given to the computer as a zip. */
-  constructor(info: ProjectInfo, files: Folder, exported: () => void = () => {}) {
+  /**
+   * `exported` is told when the project has been given to the computer as a zip; `ran`, how a
+   * run of a script of it went.
+   */
+  constructor(
+    info: ProjectInfo,
+    files: Folder,
+    exported: () => void = () => {},
+    ran: (counted: { errors: number; warnings: number }) => void = () => {},
+  ) {
     this.info = info;
     this.#files = files;
     this.#exported = exported;
+    this.#ran = ran;
+  }
+
+  /** A run of a script of the project has ended: how it went is remembered for its row. */
+  noteRan(counted: { errors: number; warnings: number }): void {
+    this.#ran(counted);
   }
 
   /** The project was exported now: when is remembered, for the reminder to export. */

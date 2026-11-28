@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Outcome, RunEvent } from "../engine/messages";
-import { begin, blocks, clockOf, end, hear, refused, said, took, type Run } from "./run";
+import { begin, blocks, clockOf, countedOf, end, hear, refused, said, took, type Run } from "./run";
 
 const done = (exitCode: number, stderr = ""): Outcome => ({
   exitCode,
@@ -289,5 +289,73 @@ describe("the passes of a loop", () => {
     ]);
     expect(passes[1]!.saidRaw).toBe("warning[W0201]: …\n");
     expect(blocks(run)[0]!.passes).toHaveLength(3);
+  });
+});
+
+describe("the errors and the warnings of a run, counted", () => {
+  const warning = (line: number) =>
+    `warning[W0201]: 3 rows with NA in wage were skipped (line ${line})\n`;
+
+  it("is none of either for a run that said nothing, and the warnings of one that gave some", () => {
+    const quiet = told(
+      [
+        { type: "started", statement: 1, of: 1, line: 1 },
+        { type: "output", stdout: "a\n", stderr: "" },
+        { type: "finished", statement: 1, of: 1, line: 1, failed: false },
+      ],
+      done(0),
+    );
+    expect(countedOf(quiet)).toEqual({ errors: 0, warnings: 0 });
+    const warned = told(
+      [
+        { type: "started", statement: 1, of: 2, line: 1 },
+        { type: "output", stdout: "", stderr: warning(1) },
+        { type: "finished", statement: 1, of: 2, line: 1, failed: false },
+        { type: "started", statement: 2, of: 2, line: 2 },
+        { type: "output", stdout: "", stderr: warning(2) },
+        { type: "finished", statement: 2, of: 2, line: 2, failed: false },
+      ],
+      done(0, warning(1) + warning(2)),
+    );
+    expect(countedOf(warned)).toEqual({ errors: 0, warnings: 2 });
+  });
+
+  it("counts the error that stopped a run, what the check found before any ran, and one where none is named", () => {
+    const error = "error[Z0715]: no file `data/none.csv` in the project\n";
+    const stopped = told(
+      [
+        { type: "started", statement: 1, of: 2, line: 1 },
+        { type: "output", stdout: "", stderr: warning(1) },
+        { type: "finished", statement: 1, of: 2, line: 1, failed: false },
+        { type: "started", statement: 2, of: 2, line: 2 },
+        { type: "output", stdout: "", stderr: error },
+        { type: "finished", statement: 2, of: 2, line: 2, failed: true },
+      ],
+      done(1, warning(1) + error),
+    );
+    expect(countedOf(stopped)).toEqual({ errors: 1, warnings: 1 });
+    // The engine's check refused the script: nothing ran, and two errors were found.
+    const found =
+      "error[Z0101]: no such name `a`\n --> scripts/main.zeff:1:1\n" +
+      "error[Z0101]: no such name `b`\n --> scripts/main.zeff:2:1\n";
+    const refusedRun = told([{ type: "output", stdout: "", stderr: found }], done(1, found));
+    expect(refused(refusedRun)).toBe(true);
+    expect(countedOf(refusedRun)).toEqual({ errors: 2, warnings: 0 });
+    // Failed, and no error named.
+    expect(countedOf(told([], done(3)))).toEqual({ errors: 1, warnings: 0 });
+  });
+
+  it("is nothing for a run that is still going, or that the reader stopped", () => {
+    const going = begin("scripts/main.zeff", "the text\n", 0, "15:42");
+    expect(countedOf(going)).toBeNull();
+    const ended = told([{ type: "started", statement: 1, of: 1, line: 1 }], {
+      ...done(1),
+      stopped: true,
+    });
+    expect(ended.state).toBe("stopped");
+    expect(countedOf(ended)).toBeNull();
+    const cancelled = told([], done(1, "error[Z0705]: the run was cancelled\n"));
+    expect(cancelled.state).toBe("cancelled");
+    expect(countedOf(cancelled)).toBeNull();
   });
 });

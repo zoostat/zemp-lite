@@ -76,7 +76,18 @@ import {
 } from "../project/projects";
 import { followed } from "../margin/follow";
 import { merged } from "../margin/stale";
-import { begin, blocks, clockOf, end, hear, refused, said, type Run, oneRun } from "../output/run";
+import {
+  begin,
+  blocks,
+  clockOf,
+  countedOf,
+  end,
+  hear,
+  refused,
+  said,
+  type Run,
+  oneRun,
+} from "../output/run";
 import {
   keyOf,
   millimetres,
@@ -1382,6 +1393,10 @@ export class Workspace {
       } else {
         end(run, outcome, performance.now());
       }
+      // How the run went is remembered for the project's row of the projects screen (release
+      // 0.3.1, step 12a); a run the reader stopped says nothing of how the script goes.
+      const counted = countedOf(shown ? run : fresh);
+      if (counted !== null) this.project.noteRan(counted);
       // A script that was refused made no frames: those of the results kept are kept too.
       if (shown) this.frames = outcome.frames;
       await this.#keepWritten(outcome, script, text);
