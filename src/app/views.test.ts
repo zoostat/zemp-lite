@@ -24,7 +24,7 @@ describe("the view state of a project", () => {
     state.panes = {
       script: { project: true, outline: true, notes: false },
       data: { variables: true },
-      plots: { list: false, about: false },
+      plots: { about: false },
       paper: { project: true, outline: true, page: false },
       help: { topics: false },
     };
@@ -104,7 +104,7 @@ describe("the view state of a project", () => {
     expect(usual().panes).toEqual({
       script: { project: false, outline: false, notes: true },
       data: { variables: false },
-      plots: { list: true, about: true },
+      plots: { about: true },
       paper: { project: false, outline: false, page: true },
       help: { topics: true },
     });
@@ -127,7 +127,7 @@ describe("the view state of a project", () => {
     expect(read.panes).toEqual({
       script: { project: true, outline: false, notes: true },
       data: { variables: false },
-      plots: { list: true, about: false },
+      plots: { about: false },
       paper: { project: false, outline: false, page: true },
       help: { topics: true },
     });
@@ -147,13 +147,14 @@ describe("the view state of a project", () => {
     // (Until 0.3.1 the list of frames was a pane, and a file of version 2 said whether it was
     // open; the frames are a menu now, open decision #245, and that word is passed over.)
     expect(read.panes.data).toEqual({ variables: false });
-    expect(read.panes.plots).toEqual({ list: false, about: true });
+    // (And the plots of a run are a strip of the Plots place's row, not a pane.)
+    expect(read.panes.plots).toEqual({ about: true });
     // A file of version 3 says them under `panes` alone.
     const later = readViews(
       JSON.stringify({ version: 3, panes: {}, script: { notes: false }, plots: { list: false } }),
     );
     expect(later.panes.script.notes).toBe(true);
-    expect(later.panes.plots.list).toBe(true);
+    expect(later.panes.plots).toEqual({ about: true });
   });
 
   it("passes over the layouts an earlier file names, which are gone, and does not keep them", () => {
@@ -234,11 +235,16 @@ describe("the view state of a project", () => {
     const read = readViews(
       JSON.stringify({
         version: 5,
-        panes: { data: { frames: false, variables: true }, script: { project: true } },
+        panes: {
+          data: { frames: false, variables: true },
+          plots: { list: false, about: false },
+          script: { project: true },
+        },
         data: { frame: "w2010", variable: "wage", hidden: { w2010: ["firm"] } },
       }),
     );
     expect(read.panes.data).toEqual({ variables: true });
+    expect(read.panes.plots).toEqual({ about: false });
     expect(read.panes.script.project).toBe(true);
     expect(read.data.frame).toBe("w2010");
     expect(read.data.variable).toBe("wage");
@@ -339,7 +345,7 @@ describe("the view state of a project", () => {
       shown: null,
       page: "fit",
     });
-    expect(read.panes.plots.list).toBe(true);
+    expect(read.panes.plots).toEqual({ about: true });
   });
 
   it("drops a tab written twice and one of no known kind, and shows a tab that is open", () => {

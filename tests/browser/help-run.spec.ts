@@ -179,11 +179,25 @@ test("a plot of an example is drawn by the engine in the page, light in both the
   // A narrower page, at a tablet's width with Topics drawn wide by the keyboard (until release
   // 0.3.1, a window of 760 pixels: open decision #243): the figures are laid out again, by a
   // run of the examples as they last ran, and are at their own size again.
-  const before = await asked("example");
-  await page.setViewportSize({ width: 1024, height: 900 });
+  // Topics is drawn wide first and the page left to settle, so that the narrowing counted
+  // below is one move, answered by one run. (In two moves a slower machine answered each, and
+  // GitHub's check of step 8b of release 0.3.1 failed here in WebKit, rightly.)
   const edge = page.getByRole("separator", { name: "The width of the left pane" });
   await edge.focus();
   for (let step = 0; step < 40; step += 1) await page.keyboard.press("ArrowRight");
+  await expect
+    .poll(
+      async () => {
+        const runs = await asked("example");
+        const size = (await sizes(figures.first())).shown;
+        await page.waitForTimeout(1200);
+        return (await asked("example")) === runs && (await sizes(figures.first())).shown === size;
+      },
+      { timeout: 30_000 },
+    )
+    .toBe(true);
+  const before = await asked("example");
+  await page.setViewportSize({ width: 1024, height: 900 });
   await expect
     .poll(
       async () => {

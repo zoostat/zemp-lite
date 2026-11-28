@@ -153,10 +153,10 @@ test("a plot is under its statement in the script and in the Plots place, laid o
   await expect(plots.locator(".stage").getByRole("heading", { level: 2 })).toHaveText(
     /line 17\s+w2010 · log\(wage\) against educ/,
   );
-  // Both panes of the Plots place closed, so that the plot has the place's whole width.
-  await press(plots.getByRole("button", { name: "Plots of the run", exact: true }));
+  // The plot's panel closed, so that the plot has the place's whole width. (Until release
+  // 0.3.1 the plots of the run were a pane too; they are a strip of the row, always there.)
   await press(plots.getByRole("button", { name: "The plot", exact: true }));
-  await expect(plots.getByRole("list", { name: "Plots of the last run" })).toBeHidden();
+  await expect(page.getByRole("complementary", { name: "The plot" })).toHaveCount(0);
   // The plot is laid out again for the wider place, by the engine from the plot its run kept:
   // it is read once the place has widened and the drawing shown is the one made for it, the same at two
   // readings in a row (on a slow machine the place can still be widening, or the drawing on
@@ -171,6 +171,8 @@ test("a plot is under its statement in the script and in the Plots place, laid o
   // Larger than under its statement, and a different drawing: laid out for this place.
   expect(inPlots.shown[0]!).toBeGreaterThan(inScript.shown[0]!);
   expect(inPlots.svg).not.toBe(inScript.svg);
+  // (How long the engine took is said in the plot's panel, which is opened again for it.)
+  await press(plots.getByRole("button", { name: "The plot", exact: true }));
   await expect(page.getByTestId("draw-time")).toHaveText(/^laid out by the engine in \d/);
   test.info().annotations.push({
     type: "redraw",
@@ -261,10 +263,7 @@ test("a name bound to a plot and bound again is drawn at each statement, each pl
   );
   const plots = page.getByTestId("plots");
   await expect(
-    page
-      .getByRole("complementary", { name: "Plots: the left pane" })
-      .getByRole("region", { name: "Plots of the run" })
-      .getByRole("listitem"),
+    page.getByRole("list", { name: "Plots of the last run" }).getByRole("listitem"),
   ).toHaveCount(2);
   const large = await figure(page, 2, plots.locator(".stage"));
   expect(wordsOf(large.svg)).toContain("Years of schooling");

@@ -24,8 +24,7 @@ export const WORDS: { [P in PlaceName]: { [N in PaneName<P>]: Words } } = {
     variables: { label: "Variables", holds: "the variables of the frame" },
   },
   plots: {
-    list: { label: "Plots of the run", holds: "the plots of the run" },
-    about: { label: "The plot", holds: "the plot's statement and size" },
+    about: { label: "The plot", holds: "the plot's statement and size, and Save" },
   },
   paper: {
     project: { label: "Project", holds: "the files of the project" },

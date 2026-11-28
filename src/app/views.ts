@@ -14,7 +14,9 @@
 // its panes are open, the paper it has open, and the page's share of its width. From 0.3.1
 // (version 6; open decision #245) the frames of a run are a menu of the Data place's row, not
 // a pane, so the file no longer says whether that pane is open; and **Variables** is what the
-// Data place shows in place of the grid, said by the same word as the pane it was.
+// Data place shows in place of the grid, said by the same word as the pane it was; and the
+// plots of a run are a strip of the Plots place's row, no longer a pane; the plot's panel at
+// the right is still shown and hidden, under the word it had.
 
 import type { View } from "../engine/messages";
 
@@ -25,14 +27,15 @@ export const VIEWS_VERSION = 6;
  * The panes of each place, and whether each is open in a project opened for the first time
  * (#203): beside the script, Project and Outline closed and Notes open; in the Data place,
  * the grid shown and not the variables (#245; the list of frames was a pane until 0.3.1);
- * beside a plot, both open; beside a page of Help,
+ * in the Plots place the plot's panel open (#245: the plots of the run are a strip of the
+ * row, always there; they were a pane until 0.3.1); beside a page of Help,
  * Topics open (the sections of the page open are a part of the page from 0.2.4, not a pane:
  * open decision #220, item 7); beside a paper, Project and Outline closed and the page open.
  */
 export const PANES = {
   script: { project: false, outline: false, notes: true },
   data: { variables: false },
-  plots: { list: true, about: true },
+  plots: { about: true },
   paper: { project: false, outline: false, page: true },
   help: { topics: true },
 } as const;
@@ -325,7 +328,6 @@ export function readViews(text: string | null): ViewState {
     if (page === "fit" || page === "one_column" || page === "two_column" || page === "slide") {
       state.plots.page = page;
     }
-    if (earlier && typeof plots["list"] === "boolean") state.panes.plots.list = plots["list"];
   }
   return state;
 }

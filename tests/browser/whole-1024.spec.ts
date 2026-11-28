@@ -154,6 +154,22 @@ for (const theme of ["light", "dark"] as const) {
         await whole(page, `${place}, as it opens`);
         await openPanes(page, press, place);
         await whole(page, `${place}, every pane open`);
+        if (place === "Plots") {
+          // Plots (step 9): the strip with its sizes, the plot and its panel; two plots
+          // compared; a slide's size; and the panel closed.
+          const strip = page.getByRole("list", { name: "Plots of the last run" });
+          await expect(page.getByRole("complementary", { name: "The plot" })).toBeVisible();
+          for (const box of await strip.getByRole("checkbox", { name: "Compare" }).all()) {
+            await press(box);
+          }
+          await expect(page.getByTestId("comparing")).toBeVisible();
+          await whole(page, "Plots, two plots compared");
+          await press(bar(page, "Plots").getByRole("button", { name: "Unpin all" }));
+          await press(bar(page, "Plots").getByRole("button", { name: "Slide", exact: true }));
+          await whole(page, "Plots, at a slide's size");
+          await press(bar(page, "Plots").getByRole("button", { name: "The plot", exact: true }));
+          await whole(page, "Plots, the plot's panel closed");
+        }
         if (place === "Data") {
           // Data's row (step 8a): the frames' menu open, and Variables in the grid's place,
           // as the list and as one variable.

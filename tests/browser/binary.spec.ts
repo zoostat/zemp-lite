@@ -93,9 +93,7 @@ test("the ROC curve is drawn under its statement and stands in the Plots place, 
   await expect(figure).toBeVisible({ timeout: 30_000 });
   expect(await figure.getAttribute("src")).toMatch(/^data:image\/svg\+xml/);
   await press(places(page).getByRole("button", { name: "Plots" }));
-  const list = page
-    .getByRole("complementary", { name: "Plots: the left pane" })
-    .getByRole("region", { name: "Plots of the run" });
+  const list = page.getByRole("list", { name: "Plots of the last run" });
   await expect(list.getByRole("listitem")).toHaveCount(1);
   const large = page.getByTestId("plots").locator(".stage img");
   await expect(large).toBeVisible({ timeout: 30_000 });

@@ -132,8 +132,7 @@ test("a plot is previewed at the sizes of a journal column, a page's width and a
   press,
 }) => {
   const plots = await viewer(page, press);
-  // Both panes of the Plots place closed, so that a slide has room at its true size.
-  await press(plots.getByRole("button", { name: "Plots of the run", exact: true }));
+  // The plot's panel closed, so that a slide has room at its true size.
   await press(plots.getByRole("button", { name: "The plot", exact: true }));
   const image = plots.locator(".stage img");
   const group = plots.getByRole("group", { name: "Size" });
@@ -277,7 +276,7 @@ test("the viewer says so where the last run drew no plot", async ({ page, press 
   await expect(page.getByTestId("plots")).toContainText("Run the script to see its plots here.");
 });
 
-test("the Plots place: the plots of the run at its left and the plot's facts at its right, each closed by its link", async ({
+test("the Plots place: the plots of the run as a strip of its row, the plot in the middle, and its panel at the right with its statement, its size and Save", async ({
   page,
   press,
 }) => {
@@ -297,15 +296,13 @@ test("the Plots place: the plots of the run at its left and the plot's facts at 
     "aria-current",
     "page",
   );
-  // Both panes are open at first (open decision #203), each with its link pressed.
+  // Release 0.3.1, step 9 (open decision #245): until then the plots were a pane at the left
+  // and the plot's facts a pane at the right, each with a link and a × of its own.
   const bar = page.getByRole("toolbar", { name: "Plots: its panes and its controls" });
-  const listLink = bar.getByRole("button", { name: "Plots of the run", exact: true });
+  await expect(page.getByRole("button", { name: "Plots of the run" })).toHaveCount(0);
   const aboutLink = bar.getByRole("button", { name: "The plot", exact: true });
-  await expect(listLink).toHaveAttribute("aria-pressed", "true");
   await expect(aboutLink).toHaveAttribute("aria-pressed", "true");
-  const list = page
-    .getByRole("complementary", { name: "Plots: the left pane" })
-    .getByRole("region", { name: "Plots of the run" });
+  const list = page.getByRole("list", { name: "Plots of the last run" });
   await expect(list).toBeVisible();
   // Each plot by its name, its line and its kind, as the engine's table of what it drew names it.
   await expect(list).toContainText("w2010 · log(wage) against educ");
@@ -313,9 +310,7 @@ test("the Plots place: the plots of the run at its left and the plot's facts at 
   await expect(list).toContainText("line 21 · histogram");
   // The plot's own pane: its statement as the script has it, its line, its kind and the size
   // it is saved at, which is the size it is shown at while it is drawn to fit.
-  const about = page
-    .getByRole("complementary", { name: "Plots: the right pane" })
-    .getByRole("region", { name: "The plot" });
+  const about = page.getByRole("complementary", { name: "The plot" });
   // The plot was printed by its name: the statement that bound the name stands over it.
   await expect(about.getByTestId("code")).toHaveText(
     "let schooling = w2010.scatter(educ, log(wage), fit: linear) schooling",
@@ -342,18 +337,49 @@ test("the Plots place: the plots of the run at its left and the plot's facts at 
   await expect(page.locator(".cm-lineNumbers .cm-activeLineGutter")).toHaveText("21");
   await press(places.getByRole("button", { name: "Plots" }));
   await expect(about.getByTestId("code")).toContainText("let shape");
-  // Each link closes and opens its pane, and the pane's own × closes it too.
-  await press(listLink);
-  await expect(list).toHaveCount(0);
-  await expect(listLink).toHaveAttribute("aria-pressed", "false");
-  await press(listLink);
-  await expect(list).toBeVisible();
-  await press(about.getByRole("button", { name: "Close The plot" }));
+  // The strip is in the row, across the place's top, its plots side by side; the sizes and
+  // Pop out stand after it; the plot is under the row, and its panel at the plot's right.
+  const boxes = {
+    row: (await bar.boundingBox())!,
+    strip: (await list.boundingBox())!,
+    first: (await list.getByRole("listitem").first().boundingBox())!,
+    last: (await list.getByRole("listitem").last().boundingBox())!,
+    sizes: (await bar.getByRole("group", { name: "Size" }).boundingBox())!,
+    out: (await bar.getByRole("button", { name: "Pop out" }).boundingBox())!,
+    stage: (await page.getByTestId("plots").locator(".stage").boundingBox())!,
+    panel: (await about.boundingBox())!,
+  };
+  expect(boxes.strip.y).toBeGreaterThanOrEqual(boxes.row.y);
+  expect(boxes.strip.y + boxes.strip.height).toBeLessThanOrEqual(boxes.row.y + boxes.row.height);
+  expect(boxes.last.x).toBeGreaterThanOrEqual(boxes.first.x + boxes.first.width);
+  expect(Math.abs(boxes.last.y - boxes.first.y)).toBeLessThan(2);
+  expect(boxes.sizes.x).toBeGreaterThanOrEqual(boxes.strip.x + boxes.strip.width);
+  expect(boxes.out.x).toBeGreaterThanOrEqual(boxes.sizes.x + boxes.sizes.width);
+  expect(boxes.stage.y).toBeGreaterThanOrEqual(boxes.row.y + boxes.row.height - 1);
+  expect(boxes.panel.x).toBeGreaterThanOrEqual(boxes.stage.x + boxes.stage.width - 1);
+  expect(Math.round(boxes.panel.x + boxes.panel.width)).toBe(page.viewportSize()!.width);
+  expect(boxes.panel.width).toBe(300);
+  // The panel holds, under the plot's facts, the format with Save… and the statement that
+  // saves the figure, with Copy as Zeff.
+  await expect(about.getByRole("heading", { level: 3 })).toHaveText(["The plot", "Save it"]);
+  await expect(about.getByRole("combobox", { name: "Save as" })).toHaveValue("svg");
+  await expect(about.getByRole("button", { name: "Save…" })).toBeVisible();
+  await expect(about.getByTestId("export-statement")).toHaveText(
+    /^shape\.export\("output\/shape\.svg", size: \[[\d.]+, [\d.]+\]\)$/,
+  );
+  await expect(about.getByRole("button", { name: "Copy as Zeff" })).toBeVisible();
+  // The plot stands on a white ground, in the dark theme too: the engine draws it for print.
+  // The panel's word closes and opens it; closed, the plot has the place's whole width.
+  await press(aboutLink);
   await expect(about).toHaveCount(0);
   await expect(aboutLink).toHaveAttribute("aria-pressed", "false");
+  await expect
+    .poll(async () => {
+      const stage = (await page.getByTestId("plots").locator(".stage").boundingBox())!;
+      return Math.round(stage.x + stage.width);
+    })
+    .toBe(page.viewportSize()!.width);
   await press(aboutLink);
   await expect(about).toBeVisible();
-  // Back to the script, where it was.
-  await press(places.getByRole("button", { name: "Script" }));
-  await expect(page.getByTestId("note").first()).toBeVisible();
+  await expect(list).toBeVisible();
 });

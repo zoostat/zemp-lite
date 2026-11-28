@@ -159,9 +159,7 @@ test("the two plots the returns to schooling binds with `let` are drawn under th
   );
   const places = page.getByRole("navigation", { name: "Places" });
   await press(places.getByRole("button", { name: "Plots" }));
-  const list = page
-    .getByRole("complementary", { name: "Plots: the left pane" })
-    .getByRole("region", { name: "Plots of the run" });
+  const list = page.getByRole("list", { name: "Plots of the last run" });
   await expect(list).toContainText("shape");
   await expect(list).toContainText("schooling");
 });

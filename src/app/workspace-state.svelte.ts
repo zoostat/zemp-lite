@@ -2316,11 +2316,6 @@ export class Workspace {
     }
   }
 
-  /** Show or hide the list of plots at the left of the plot viewer. */
-  setPlotList(shown: boolean): void {
-    this.setPane("plots", "list", shown);
-  }
-
   /** Open the plot viewer: its tab is added where it is not there, and shown. */
   openPlots(): void {
     Object.assign(this.views, withTab(this.views, PLOTS));

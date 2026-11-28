@@ -4,11 +4,11 @@ See every plot of the last run, compare them side by side, and save one at the s
 
 ## The plots of a run
 
-A plot is drawn under the statement that made it, in the script. Press **Plots** to see the plots of the last run together: a strip of small pictures at the left, and the one you choose drawn large.
+A plot is drawn under the statement that made it, in the script. Open Plots, the third of the icons down the left, to see the plots of the last run together: a strip of small pictures across the top, and the one you choose drawn large under it. In the script, the arrow beside a plot's note opens Plots on that plot.
 
 ![The Plots place: a strip of the run's plots at the left, the chosen plot drawn large in the middle, and at the right its statement and the size it would be saved at.](the-plots-place)
 
-**Plots of the run** and **The plot**, in the bar, open and close the two panes. The pane at the right gives the plot's statement and its line, which goes to the statement in the script.
+The panel at the right gives the plot's statement and its line, which goes to the statement in the script, and under them the format, **Save…** and the statement that saves the figure. **The plot**, at the end of the row, hides the panel and shows it again, so that the plot can have the place's whole width.
 
 ## Comparing
 
