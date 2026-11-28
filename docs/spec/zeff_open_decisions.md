@@ -272,6 +272,12 @@ Date: 17 October 2026 · Source: Zeff Specification section 15, Zemp Specificati
 | 243 | Zemp Lite on phones and tablets | Phones: no layout and no test, as #33 ruled for 1.0, and the phone rules of the design guide withdrawn; tablets: recommended, a tablet held sideways (1,024 pixels wide or more) treated as a small laptop and tested at that width, a tablet held upright told, as a phone is, that the app is made for a wider screen | phones decided 27 November 2026 (the owner: "zeff-lite is not built for mobile usage as of now. Tablets may be."); tablets decided 28 November 2026 (the owner: "Yes, all three"): option A, a tablet held sideways a small laptop, tested at 1,024 × 768; built at Zemp Lite 0.3.1 |
 | 244 | The accent colour: cobalt in place of the logo's violet | Decided: cobalt, `#2448A8` in light and `#9db2ff` in dark, for the logo, the Lite badge, the filled button, links and selections on the website and in Zemp Lite; function names in code turn teal and operators slate grey, so that no word of code looks like a button; figures keep the Okabe–Ito palette and viridis | decided 27 November 2026 (the owner: "I choose cobalt."); built at Zemp Lite 0.3.1 (placed 28 November 2026 by the owner), and on the website when it is next rebuilt |
 | 245 | Zemp Lite revamped: the front page, the projects screen, a side menu of places, and each place laid out for the most room | Decided as drawn in the mockup of 27 November 2026: the front page "Reproducible empirical research, in your browser."; projects as a table; one slim top bar and one thin line below; a side menu of icons named on hover (#33 amended); a toolbar row in Script and in Paper; the Project panel in Script and Paper only; Data, Plots, Paper and Help laid out for space; for computers only (#243), in cobalt (#244) | decided 27 November 2026 (the owner: "Yes, record it"); built at Zemp Lite 0.3.1 (placed 28 November 2026 by the owner); revises #146, #203 and #220 where they differ |
+| 246 | Which independencies `g.implied_independencies()` lists: section 7.3 says "the basis set, as dagitty returns it", and dagitty has two lists that could be meant | Recommended A: one statement for each pair of observed variables with no edge between them that some set of observed variables separates, with a smallest such set (dagitty's default, `type = "missing.edge"`), since the catalogue's row 431 and #158 both speak of two variables and a conditioning set tested by one partial correlation; dagitty's `basis.set` (one statement to a variable, several variables at once) and `all.pairs` stay with the `type:` option of #99 | open; raised 28 November 2026 at step 13 of 0.10.0; taken as recommended under the standing instruction and built at that step, the owner's to overturn; deadline the close of 0.10.0 |
+| 247 | Zemp Lite after 0.3.1: eight things the revamp's mockup drew that the build left for a ruling (a page "Coming from R or Stata", working with no network, a favicon, ⇧⌘E, coloured dots on the notes, a regression on the front page, past runs, the numbering of a paper's figures) | Recommended: the page made from the engine's sections, working with no network, the favicon and ⇧⌘E at Zemp Lite 0.4; the dots left out; the front page's example a regression whose whole print fits; past runs with the run records at Zemp Lite 0.5; figures numbered in the paper's order, as built | open; raised 28 November 2026 by the Zemp Lite session at the close of 0.3.1; the owner's to decide; deadline the planning of Zemp Lite 0.4 |
+| 248 | `fit.check`: the line under a warning, what the check gives back, and an exposure that is instrumented | Recommended A for each: the line under a warning is `= help:`, the one kind the engine prints (the example of section 7.3 had `= note:`); the check gives back a table of the regressors with the part of each in the graph, under a line saying whether they are sufficient; for a fit of `ivreg` whose exposure is instrumented the back-door paths are not held against the regressors, and W0510 is given all the same | open; raised 28 November 2026 at step 15 of 0.10.0; taken as recommended under the standing instruction and built at that step, the owner's to overturn; deadline the close of 0.10.0 |
+| 249 | `iv.exclusion_check`: a code for an instrument that fails, whether the check also says that the graph relates the instrument to the exposure, and a regressor that the exposure brings about | Recommended A for each: a failed instrument is warned of under a new code, W0512, with the path named, as `check` warns under W0510 and W0511; the table has a third line, whether the graph relates the instrument to the exposure, and a note when it does not, which is no failure of the exclusion restriction; a regressor of the fit that is a descendant of the exposure fails the check, which the rule as worded would miss | open; raised 28 November 2026 at step 16 of 0.10.0; taken as recommended under the standing instruction and built at that step, the owner's to overturn; deadline the close of 0.10.0 |
+| 250 | What `g.instruments()` counts as an instrument, and which conditioning set it lists | Recommended A for each: the conditions of `exclusion_check` (every arrow out of the exposure removed, no descendant of the exposure or of the outcome held fixed) with relevance made a condition, so that what the one lists the other passes; each instrument once, with the smallest set, the first by the names | open; raised 28 November 2026 at step 17 of 0.10.0; taken as recommended under the standing instruction and built at that step, the owner's to overturn; deadline the close of 0.10.0 |
+| 251 | `g.implied_independencies(data:)`: the adjustment of the p values, the test and its interval, and variables that are not numbers | Recommended A for each: `adjust:` with the methods of `p_adjust`, `holm` by default, the unadjusted p value printed beside it; the t test of the partial correlation with Fisher's interval, as `cor.test` has them; a yes or no and a category of two levels as 1 and 0, a category given held fixed level by level, a category of more levels on either side not tested | open; raised 28 November 2026 at step 18 of 0.10.0; taken as recommended under the standing instruction and built at that step, the owner's to overturn; deadline the close of 0.10.0 |
 | 204 | `curve`: `type:` required, how the result is read, weights | Recommended A for each: `type:` has no default; the area by `statistic()`, the points by `estimates()`, the figure by `plot()`; rows counted by their weights, frequency or sampling | decided at 0.9.0, step 14, under the standing instruction (A); the owner's to overturn before 1.0 |
 | 203 | One layout of three panes on every page (Zemp Lite) | Every place (Script, Data, Plots, Help) has a left pane, the place in the middle and a right pane, each pane opened and closed by its own link; the Panes layout, the Margin link and the Objects panel are removed; Run unfolds every output; revises #174 and #176 (R2) | decided 21 November 2026 (the owner's ruling, given in the Zemp Lite session, passed on in the shared notes and confirmed by him in the Zeff session on 22 November 2026); Zemp Lite 0.2.1, on Zeff 0.8.0 |
 | 202 | `margins`: the average under weights, the call with no variable, the reference distribution, the printed table, a category under `type: mem` | Recommended A for each: the average weighted by the fit's weights; with no variable named, the adjusted prediction; Student's t on the fit's degrees of freedom after `reg`; the table of step 11a; a category held at the shares of its levels | (a), (c) and (d) decided at 0.9.0, step 11a, under the standing instruction (A), (d) shown to the owner; (b) and (e) built at step 11b (22 November 2026); the owner's to overturn before 1.0 |
@@ -4856,6 +4862,8 @@ Not yet looked at: the phone's width and the outline that shows where the keyboa
 
 *Decided.* All ten, at Zemp Lite 0.4, each shown in light and dark beside the screen as it was; an item found to change the design after all is put to the owner, not built. Engine: none (P9's figure uses layers the engine has). Deadline: Zemp Lite 0.4.
 
+*Since (28 November 2026, #247).* Two of the ten came with the redrawing of #245 at Zemp Lite 0.3.1: P5 is built, and P7 is overtaken, the project screen's cards and its Recent card having given way to the projects as a table. The other eight stand for Zemp Lite 0.4.
+
 ### 233. R's list and grouping idioms that Zeff lacks
 
 Raised on 27 November 2026 by the owner, who asked in turn for Zeff's counterparts of R's `do.call` and `map`; of `apply`, `sweep` and `outer`; and of `expand.grid`, `split` and `tapply`. Each counterpart was run on the engine as built that day (0.10.0 in development; every function used is of 0.7.0 or earlier) on the shipped `wages` data. Most have a direct form: `map`, `filter` and `reduce` (#79); a record spread into a call, `f(..opts)`, for `do.call(f, args)`; `[for ...]` for a list of fits; `row`, `max` and `min` row by row, and arithmetic inside `add`, for `apply` over rows; `center`, `standardize` and a reducer inside `add`, with `by:` for groups, for `sweep`; `summary(by:)`, `aggregate(by:)` and `add(by:)` for `tapply`. Where a form exists only as a workaround, or not at all, it is listed below. Shown the gap of `expand.grid`, the owner asked that it be recorded "and any new function that you would suggest based on above discussions". Under his rule of #98 and #99, every method R or Stata offers for a procedure is to be an option in Zeff, and under #97 an option on one function is preferred to a family of names.
@@ -5170,3 +5178,157 @@ Raised on 27 November 2026 by the owner, in steps: "zeff-lite environment and de
 *Where and when.* At the Zemp Lite release that next changes its layout, under section 15 of the Zemp Specification. Its section 5 (the look, the screens and the places) and the design guide are amended then, logged in `docs/spec_changes.md`, and the pictures in Zemp Lite's Help are taken again at that release, so that Help agrees with the build.
 
 *Placed and completed (28 November 2026).* The owner placed #243, #244 and this entry at Zemp Lite 0.3.1, a release of its own on Zeff 0.9.0, and answered its plan's two questions on this entry ("Yes, all three"). Plots keeps every way of laying out that it has today (Fit, One column, Two columns, Slide, Compare and Pop out) in the new strip, since nothing is taken away; the mockup's **One | Side by side** stood for them. The watermark of #146 stays, faint, behind the front page and the projects screen, which the mockup left out only for simplicity. Under an example in Help, **Try in the console** joins 0.3's **Run** and **Copy to script**. The plan is kept in the handbook folder (`zemp-lite-0.3.1-plan.md`), for the Zemp Lite session to adopt as `docs/releases/0.3.1.md`.
+
+### 246. Which independencies `g.implied_independencies()` lists
+
+Raised on 28 November 2026 at step 13 of release 0.10.0, before anything of the function was built.
+
+*The texts.* Section 7.3 of the Language Reference says of `g.implied_independencies(data:)`: "Conditional independencies the graph implies, which the data can test; the basis set, as dagitty returns it, since the full set grows exponentially with the number of nodes." The catalogue's row 431 says: "each names two variables and the conditioning set". Open decision #158, decided, has each one "tested on it by a partial correlation", and its two findings on `wages` are of that form (age and union; union and experience given sex).
+
+*What dagitty has.* Read from the manual page of `impliedConditionalIndependencies` (rdrr.io, the page built in January 2021; dagitty itself is not installed on this machine and was not run). Its usage is `impliedConditionalIndependencies(x, type = "missing.edge", max.results = Inf)`, and `type` "can be one of "missing.edge", "basis.set", or "all.pairs"". Of the first, the default, the page says that one or more minimal testable implication, with the smallest possible conditioning set, is returned per missing edge of the graph; of the second, that one testable implication is returned per vertex that has non-descendants other than its parents, and that basis sets "can be smaller, but they involve higher-dimensional independencies"; of the third, that it returns all implied independencies between two variables at a time. Its example gives `x _||_ y | m` for `x -> m -> y` and nothing once `m` is latent.
+
+*The question.* What dagitty calls the basis set is a statement about a variable and a set of others at once, which one partial correlation does not test; what the catalogue and #158 describe is dagitty's default list, one statement to a missing edge. The two texts of the specification cannot both be meant literally.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **One statement for each pair of observed variables with no edge between them that some set of observed variables separates, with a smallest such set** (dagitty's `missing.edge`, its default) | What the catalogue's row and #158 describe; each statement is two variables and a set, tested at step 18 by one partial correlation; the list a user of dagitty sees first | The word "basis set" of section 7.3 is corrected to say what is listed |
+| B. dagitty's `basis.set`: for each variable, its independence of its non-descendants given its parents | The literal reading of section 7.3; fewer statements | Each statement holds several variables at once, so step 18 cannot test it by a partial correlation as #158 decided; a variable with a latent parent has none |
+| C. Wait until dagitty is installed, and print what it prints | No reading of a manual page | The step waits for an install only the owner can make; the choice between the two lists is still to be made |
+
+*Recommendation.* A. Where several smallest sets separate a pair, Zeff lists one, the first in its canonical order (by size, then by name), so that the same graph always prints the same list; dagitty's page says it may return more than one. A latent variable is in no statement, on either side or in a conditioning set; a variable the data are selected on is conditioned on in every statement and is named once, under the list. A graph with an undirected edge is refused, as section 7.3 refuses adjustment sets for it. dagitty's other two lists stay where #99 (section 6, class B) put them, as words of a `type:` option after 1.0. When dagitty is installed its list is compared with Zeff's: the pairs must be the same and each of its sets must be one of the smallest, and where it chooses another smallest set than Zeff's the difference is recorded, not hidden.
+
+*Status (28 November 2026).* Open. Under the owner's standing instruction for the steps of a release, option A is taken as recommended and built at step 13; section 7.3 is amended to say what is listed, logged in `docs/spec_changes.md`. The owner's to overturn: B would change what the function lists and what step 18 tests.
+
+### 247. Zemp Lite after 0.3.1: what the revamp's mockup drew and the build left for a ruling
+
+Raised on 28 November 2026 by the Zemp Lite session at the last step of Zemp Lite 0.3.1, which built #243, #244 and #245 as ruled (its decisions file, the entry "28 November 2026: release 0.3.1, step 14", lists the build screen by screen). The mockup of #245 drew more than its table rules, and in four places it said more than holds; the build left those out or said less, and each is put here. None blocks the release of 0.3.1.
+
+*Where the app's words are not the mockup's, because the mockup said too much.* The front page does not say that the engine "works offline once loaded": the app keeps the engine but not its own page, so a visit with no network does not start; it says "The engine runs in this browser; your scripts and data are never sent anywhere." The front page's example is three lines whose whole print is one number, where the mockup showed a regression's table cut short by hand, which no print of the engine is. The card on R and Stata says "most pages say what they match", since 64 of the engine's 266 pages at 0.9.0 have no section *Coming from R or Stata*. Help's **Start here** has **Finding help** where the mockup listed a page "Coming from R or Stata", which does not exist. These need no ruling; the questions they raise are K1, K2 and K6 below.
+
+| # | Drawn in the mockup | Built at 0.3.1 | Proposed |
+| --- | --- | --- | --- |
+| K1 | A page "Coming from R or Stata" under Help's **Start here** | Not written; **Finding help** says how to search by an R or Stata name | A. A page of Help made at the build from the engine's own sections *Coming from R or Stata*: one table per package (Zeff, R, Stata), each row linking to the function's page, so that it agrees with the carried engine (#211, item 12) and is the same table the website's translation page is to be generated from at 1.0. At Zemp Lite 0.4, which carries Zeff 0.10.0, the release whose steps 40 to 42 give the last old pages their section. B. No page; the search by R and Stata names is enough |
+| K2 | The app working with no network once loaded | The engine kept by the browser, the app's own page not | A. At Zemp Lite 0.4: the release's own files kept by the browser (a service worker), each checked against the fingerprint the release publishes as the engine already is, replaced whole when a newer release is published, never mixed; the front page then says that it works with no network once loaded, and a test opens the app with the network cut. B. Not before 1.0, when the hosting of section 17 is settled |
+| K3 | A favicon | None | A. The mark D4 in cobalt, as a scalable picture and at 16 and 32 pixels, with its dark colours where the browser asks for them; at Zemp Lite 0.4 with the polish of #232. B. None |
+| K4 | ⇧⌘E beside **Export project…** | No key; ⌘1 to ⌘5 are the only new keys | A. ⇧⌘E for **Export project…**, shown in the menu, in ⌘K and on the page Keyboard shortcuts; if a browser Zemp Lite supports keeps the key for itself, none is given, as for any other key. At Zemp Lite 0.4. B. No key; ⌘K finds the command |
+| K5 | A coloured dot before each note, by its kind (a frame, a table, a fit, a plot) | No dot; the note names its type in words, as #174 has it | A. The dots, each kind in a colour of its own, the word kept. B. No dots: the note's words already say its kind; teal now marks a function's name (#244), the accent marks what can be pressed, and the quiet look of #174 keeps colour for state (a warning, an error, in sync); four colours more would carry no meaning the words do not |
+| K6 | A regression's table on the front page | Three lines whose whole print is one number | A. The front page's example a short regression on the shipped `wages` whose whole print fits the card at 1,024 pixels (its coefficients as the engine prints them, not cut), made at the build from the carried engine, as the example is now. B. As built |
+| K7 | "Past runs" in the Project panel | Not shown: the browser keeps no run before the last | A. With the run records of Zeff 0.11.0 (#179), at Zemp Lite 0.5, which carries that engine; nothing before. B. Not before 1.0 |
+| K8 | Figures and tables numbered in the Outline of a paper | Numbered in the order of the paper, as the set PDF numbers them | A. As built, so that the Outline and the PDF always agree |
+
+*Found in the engine, needing no ruling.* The 64 pages without *Coming from R or Stata* are the datasets' pages and pages of `plot`, `results` and `regress` written before the contract of 0.8.0 (#103), `reg`'s among them. Steps 40 to 42 of 0.10.0 revise them to that contract, which asks for the section wherever the catalogue's `equivalent` column is filled; Zemp Lite has them when it carries Zeff 0.10.0.
+
+*Where the polish of #232 stands.* Two of its ten came with #245's drawing: P5 (**Start** in the case of the other buttons) is built, and P7 (the project screen's cards and its Recent card) is overtaken by the projects as a table. The other eight stand for Zemp Lite 0.4.
+
+*Recommendation.* K1 A, K2 A, K3 A, K4 A, K5 B, K6 A, K7 A, K8 A. The owner's choices are which of these Zemp Lite gains and when; K5 is a matter of look, and K2 of what the front page may promise. The exact sizes, the colours of K5 if it is taken, the key's fallback and the order of building are engineering. Deadline: the planning of Zemp Lite 0.4.
+
+### 248. `fit.check`: the line under a warning, what the check gives back, and an exposure that is instrumented
+
+Raised on 28 November 2026 at step 15 of release 0.10.0, where `fit.check(g, exposure:)` was built. Three things the specification leaves open or shows in a form the engine does not have.
+
+*1. The line under a warning.* The example of section 7.3 sets `= note:` under W0510 and `= help:` under W0511. The engine has one kind of line under a message, `= help:`, in its printed form and in the record that leaves it for the editor and for Zemp; the only other `= note:` in the specification is in an example of the bootstrap of a later release (section 6).
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **One kind of line, `= help:`**; the example of section 7.3 is corrected | Nothing new in the record, the editor or Zemp; the sentence in question ends in advice ("drop tenure to estimate the total effect") | The example's word changes |
+| B. A second kind of line, `= note:`, for explanation as against advice | The example stands | A new field in every diagnostic record, the language server and Zemp's panel, for two examples; where explanation ends and advice begins is a judgement on every message |
+
+*2. What the check gives back.* The catalogue's row says what it warns of and not what it returns. A check that prints nothing when nothing is wrong cannot be told from one that did not run.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **A table of the regressors, each with its part in the graph** (the exposure; a mediator; a collider; closes a path that is no effect; harmless; not in the graph), under one line saying whether they are a sufficient adjustment set; the number of warnings by `statistic()` | The reader sees why each regressor is there; a clean model says so in words | More to print than the two warnings |
+| B. Nothing but the warnings | The example of section 7.3 shows no more | Silence for a right model; nothing to use in a script |
+| C. `true` or `false` | Short, and usable in `if` | Says less than the table and prints a bare word |
+
+*3. A fit of `ivreg` whose exposure is instrumented.* The adjustment criterion asks whether the regressors close every back-door path. An instrument is used because they cannot, so W0511 on such a fit would be given to every well-made model by instrumental variables.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **The back-door paths are not held against the regressors** when the exposure is instrumented; the table's first line says so; a regressor that takes away part of the effect is still W0510; whether the instrument is a good one is `exclusion_check` (step 16) | No false warning on a model that is right by its own design | The check says less of such a fit |
+| B. The same check as for `reg` | One rule | Warns of the very thing the instrument is there for |
+
+*Recommendation.* A, A and A.
+
+*Status (28 November 2026).* Open. Under the owner's standing instruction for the steps of a release, the three are taken as recommended and built at step 15; the example of section 7.3 is corrected and the rows of W0510 and W0511 entered in section 11, logged in `docs/spec_changes.md`. The owner's to overturn: B on the first would add a kind of line to every message; B or C on the second changes what `check` prints; B on the third adds W0511 to fits by instrumental variables.
+
+### 249. `iv.exclusion_check`: a code for an instrument that fails, whether relevance is said, and a regressor that the exposure brings about
+
+Raised on 28 November 2026 at step 16 of release 0.10.0, where `iv.exclusion_check(g, instrument:)` was built. The catalogue's row 436 and section 7.3 say what is checked: the instrument d-separated from the outcome, given the regressors, in the graph with the exposure's outgoing edges removed, and no descendant of the exposure. They do not say how a failure is told, and they ask nothing of the instrument's relation to the exposure.
+
+*1. How a failure is told.*
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **A warning under a new code, W0512**, naming the path that joins the instrument to the outcome, or the exposure it is a descendant of; the result prints a table as `check` does (#248) | As `check` tells a bad control (W0510, W0511): the failure has a line number, appears in a report's footer and can be allowed with a reason; one code to explain | One code more in section 11 |
+| B. The printed result alone, no warning | No new code | A script that binds the result with `let` would say nothing of an instrument that fails |
+
+*2. Whether the graph relates the instrument to the exposure.* An instrument the graph joins to nothing passes the exclusion restriction, and is no instrument.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **Said as a third line of the table, with a note when the graph does not relate the two**; it is no failure of the exclusion restriction and draws no warning | A reader is not told that a variable the graph leaves unconnected is a good instrument | The function says a little more than its name |
+| B. Not said | The name of the function, to the letter | A graph with the instrument left out of it, or misspelt arrows, passes in silence |
+
+*3. A regressor that the exposure brings about.* Found while the list of instruments (step 17) was being defined. The rule as worded asks its question in the graph without the arrows that leave the exposure. In that graph a regressor that is a descendant of the exposure no longer is one, and the instrument is found separated from the outcome with it held fixed. But such a regressor is a consequence of the exposure: it carries whatever confounds the exposure with the outcome, and in a model by instrumental variables it is an endogenous regressor treated as given, so the estimate is wrong whatever the instrument. Take `offer -> training -> productivity`, `training -> tenure`, and a latent `ability` acting on training and productivity: with tenure held fixed, the path `offer -> training <- ability -> productivity` is open at training, because a descendant of that collider is held; the graph without training's arrows cannot show it. The conditional instruments of the literature guard against the same thing by allowing no descendant of the outcome in the conditioning set, in a graph that loses one arrow only (Brito and Pearl 2002; van der Zander, Textor and Liśkiewicz 2015).
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **A regressor of the fit that is a descendant of the exposure fails the check**, named under W0512, and the question of the path is asked with the other regressors given; section 7.3 says so | The check no longer passes a model that is wrong; one rule for a mediator and for any other effect of the exposure | A condition the row of the catalogue did not list |
+| B. The rule to the letter | Nothing added | An instrument is called valid beside a control that makes the estimate inconsistent |
+| C. Leave it to `fit.check` | One place for controls | `check` calls a descendant of the exposure off every causal path harmless, which for adjustment it is; only beside an instrument is it not |
+
+*Recommendation.* A, A and A. The strength of the instrument in the data is `first_stage`'s business and is not touched here.
+
+*Status (28 November 2026).* Open. Under the owner's standing instruction for the steps of a release, the three are taken as recommended and built at step 16; the row of W0512 is entered in section 11 and the rule of section 7.3 gains its condition, logged in `docs/spec_changes.md`. The owner's to overturn; part 3 is a statistical definition and is his above all.
+
+### 250. What `g.instruments()` counts as an instrument, and which conditioning set it lists
+
+Raised on 28 November 2026 at step 17 of release 0.10.0. Open decision #159 adopted `g.instruments(exposure:, outcome:)`, "the instruments and conditional instruments with their conditioning sets, held to dagitty". dagitty is not installed and was not run; what follows of it is from the literature it cites.
+
+*1. The definition.* The conditional instruments of the literature (Brito and Pearl 2002; van der Zander, Textor and Liśkiewicz 2015, on which dagitty's `instrumentalVariables` rests) are defined for the coefficient of one arrow in a linear model: the set must d-separate the instrument from the outcome in the graph without the arrow from the exposure to the outcome, hold no descendant of the outcome, and not d-separate the instrument from the exposure. Zeff's `exclusion_check` (row 436; #249) asks about the total effect: every arrow out of the exposure is removed, and nothing the exposure brings about may be held fixed.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **The conditions of `exclusion_check`, with relevance made a condition**: the variable is no descendant of the exposure; the set holds no descendant of the exposure or of the outcome; the set d-separates the variable from the outcome in the graph without the arrows out of the exposure; the set does not d-separate it from the exposure in the whole graph | What `instruments` lists, `exclusion_check` passes, in a model that holds the set fixed: one notion of an instrument in the language; right for the total effect, which `ivreg` estimates, when the exposure acts through a mediator | Can differ from dagitty's list on a graph with a mediator between the exposure and the outcome |
+| B. The definition of the literature, one arrow removed | The list dagitty is expected to give | With `x -> m -> y` beside `x -> y`, an instrument for the total effect is refused; the list and `exclusion_check` would disagree |
+
+*2. Which sets.* Several sets may make one variable an instrument.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **One line to an instrument: the smallest set, the first by the names**, an instrument that needs none first | The same graph always prints the same short list, as `implied_independencies` does (#246); the smallest set is the model with the fewest controls | Other sets that would do are not shown |
+| B. Every minimal set of every instrument | Complete | Long on any graph of size; grows quickly |
+
+*Recommendation.* A and A. A variable declared `latent` is no instrument and in no set; a variable the data are selected on is held fixed in every question, and when the data are selected on a descendant of the exposure or of the outcome nothing is listed. When dagitty is installed its list is compared on the same graphs and every difference accounted for by part 1.
+
+*Status (28 November 2026).* Open. Under the owner's standing instruction for the steps of a release, both are taken as recommended and built at step 17; section 7.3 says what is listed, logged in `docs/spec_changes.md`. The owner's to overturn; part 1 is a statistical definition and is his above all.
+
+### 251. `g.implied_independencies(data:)`: the adjustment of the p values, the test, and variables that are not numbers
+
+Raised on 28 November 2026 at step 18 of release 0.10.0. Open decision #158 decided that each implied independence is "tested on it by a partial correlation and printed with its estimate, interval and p value, under `p_adjust`'s methods", and the catalogue's row 431 left "the adjustment of the p values for the number of tests" to be settled at this step.
+
+*1. The adjustment.* A graph of any size implies several statements, and each is a test; without an adjustment a true graph is "contradicted" somewhere one time in twenty for each statement.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **`adjust: holm | bonferroni | hochberg | hommel | bh | by | sidak | none = holm`**, the methods and the default of `p_adjust`; the table prints the p value of each test alone and the adjusted one beside it; a statement is contradicted when its adjusted p value is below one minus `level:` | One rule with `p_adjust`; a graph is not rejected by chance alone; both p values are in view, so nothing is hidden | The interval is that of the one test and is not adjusted, so an interval may leave out zero where the adjusted p value does not reject |
+| B. No adjustment unless asked (`adjust: none` the default) | What dagitty's `localTests` prints | Many statements, many chances to reject a true graph, in the default print |
+
+*2. The test and its interval.* The partial correlation is the correlation of the residuals of the two variables after a regression on those given.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **The t test, t = r √(ν / (1 − r²)) on ν = n − 2 − k, with Fisher's interval tanh(atanh r ± z / √(n − 3 − k))** | With nothing given, exactly R's `cor.test`; the t test is the test of the coefficient in a regression and is exact under normal errors; a reference in base R stands behind every figure without dagitty | The test and the interval rest on two approximations, as `cor.test`'s do |
+| B. Fisher's z for both | One approximation | Not what `cor.test` gives; the figures drawn for the Zemp Lite mock-up used it for the p value, and differ in the third digit of p |
+
+*3. Variables that are not numbers.* A correlation is of numbers.
+
+| Option | For | Against |
+| --- | --- | --- |
+| A. **A yes or no, and a category of two levels, count as 1 and 0; a category among those given is held fixed level by level; a category of more than two levels as one of the two is not tested, and the result says why** | Nothing is given a number it does not have; holding a category fixed is what a regression on its levels does | A statement about a category of several levels (a region) stays untested |
+| B. A category of several levels tested by the joint F test of its levels | Every statement tested | Not a partial correlation: no single r and no interval, in a table of them |
+
+*Recommendation.* A, A and A. A statement is tested on the rows that have every one of its variables. A statement is not tested, and is given no number, when the variables given determine one of the two (less than one part in ten thousand million of its variation left), when one of the two has one value, or when the rows are too few. The list of statements is the one of #246: each pair once, with its smallest set, the first by the names; on the graph of #158 this lists experience and union given schooling where the mock-up of 18 November tested them given sex, a set of the same size, and the data contradict the statement either way.
+
+*Status (28 November 2026).* Open. Under the owner's standing instruction for the steps of a release, the three are taken as recommended and built at step 18; section 7.3 and row 431 say so, logged in `docs/spec_changes.md`. The owner's to overturn; all three are statistical choices and are his above all.

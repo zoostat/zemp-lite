@@ -3830,3 +3830,19 @@ The wait is there at the trial address every time and at the address once in fou
 
 **Tests.** The help suite (`using-controls.spec.ts`): every control a page names is on the screen by that name, with the scenes extended to the projects' table with a row, the note on the screen of projects, and the list **Projects** opens; the unit test that holds the pages and the pictures to each other; the pictures' suite, whose scenes for the menu of a project, the screen of projects and the Paper place were brought to the new screens. Each of the fourteen pictures was looked at: none shows the old frame.
 
+## 28 November 2026: release 0.3.1, step 15: the pre-release routine
+
+**Done.** The whole routine is green on GitHub in both browsers on the commit of step 14 (`f4dccdd`): 604 unit tests, 936 browser tests passed and 4 skipped by design, the ten samples identical, the engine 3,089.0 kB with its script and the Paper module 7,542.9 kB. That commit was sent to the trial address and then to the address, and all 18 checks passed at each. The notes are `docs/releases/0.3.1-notes.md`. The release itself waits for the owner's word.
+
+**Measures, and how they were taken.**
+
+1. **What the release added to the interface's own files: 9.9 kB packed** (270,073 to 279,935 bytes; every script, style and page of the built app but the engine, Typst and the fonts, each packed at brotli's highest setting). The build of 0.3 was made for the comparison from the tag `v0.3.0` in a scratch folder outside the repository, with this tree's installed packages and built engine; nothing of it is kept.
+2. **The first start is no slower than at 0.3.** At the address it is the network's time and moves by half a second between deployments (1.45 to 1.67 s in Chromium and 1.67 to 1.98 s in WebKit at this release's two; 1.05 s and 2.00 s at 0.3). So the two builds were also started on the owner's Mac, three times each, with the check of the address's own clock: 0.22 to 0.35 s for 0.3, 0.21 to 0.22 s for this one.
+3. **The ten sample projects were not read by eye again:** the engine is the one of 0.3, where they were read, and the routine holds each to `zeff run`'s print byte for byte.
+
+**The walk at the address** was made in the app's own browser pane, which was 410 pixels wide: the address showed the page for a narrow window, as it should. At 1,280 pixels: the front page, Start, the projects screen on a first visit, the Scratch project run. The pane was not on the screen, the owner being away, and the bar of the front page, which moves with the screen's own drawing, waited some seconds there before it filled; on a screen that is being drawn it fills within a second, as the checks of the address time it.
+
+**The specification's copy.** The coordinating session entered the release's report in the Zeff repository at its commit `97634636` (section 5 of the Zemp Specification, the design guide, and the open decision #247 for the eight things left for a ruling) and asked that the copy here be brought to it. `docs/spec/` is now that commit's, each file taken from the commit itself and compared byte for byte; six files changed. The unit tests that read the catalogue pass on it.
+
+**For the owner, at "Release 0.3.1":** nothing to decide. The release then sets the version to 0.3.1, makes the pictures that show the version again, tags `v0.3.1`, pushes, and publishes the GitHub release with the notes.
+
